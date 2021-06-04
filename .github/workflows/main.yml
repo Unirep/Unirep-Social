@@ -29,3 +29,6 @@ jobs:
       - uses: borales/actions-yarn@v2.0.0
         with:
           cmd: test # will run `yarn test` command
+      - uses: borales/actions-yarn@v2.0.0
+        with:
+          cmd: test-cli # will run `yarn test-cli` command
