@@ -1,10 +1,10 @@
 {
-    "name": "unirep",
+    "name": "unirep-social",
     "version": "0.0.1",
     "description": "",
     "main": "index.ts",
     "scripts": {
-        "build": "npm run installZkutil && npm run buildVerifyEpochKeySnark && npm run buildUserStateTransitionSnark && npm run buildProveReputationSnark && npm run buildProveReputationFromAttesterSnark",
+        "build": "yarn run installZkutil && yarn run buildVerifyEpochKeySnark && yarn run buildUserStateTransitionSnark && yarn run buildProveReputationSnark && yarn run buildProveReputationFromAttesterSnark",
         "start": "npx hardhat node & npx ts-node database/EventsListeners.ts",
         "installZkutil": "./scripts/installZkutil.sh",
         "buildVerifyEpochKeySnark": "./scripts/buildVerifyEpochKeySnark.sh",
@@ -12,21 +12,21 @@
         "buildProveReputationSnark": "./scripts/buildProveReputationSnark.sh",
         "buildProveReputationFromAttesterSnark": "./scripts/buildProveReputationFromAttesterSnark.sh",
         "test-cli": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts && ./scripts/testCLI.sh",
-        "test": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts && npm run contractUintTests && npm run circuitUintTests && npm run integrationTest",
+        "test": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts && yarn run contractUintTests && yarn run circuitUintTests && yarn run integrationTest",
         "contractUintTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/contracts -name '*.ts')",
         "circuitUintTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/circuits -name '*.ts')",
         "integrationTest": "npx ts-node scripts/buildPoseidon.ts && NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/integration -name '*.ts')"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/NIC619/UniRep.git"
+        "url": "git+https://github.com/vivianjeng/Unirep-Social.git"
     },
     "author": "",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/NIC619/UniRep/issues"
+        "url": "https://github.com/vivianjeng/Unirep-Social/issues"
     },
-    "homepage": "https://github.com/NIC619/UniRep#readme",
+    "homepage": "https://github.com/vivianjeng/Unirep-Social#readme",
     "devDependencies": {
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-waffle": "^2.0.1",
