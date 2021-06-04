@@ -1,0 +1,13 @@
+node_modules
+.DS_Store
+
+#Buidler files
+cache
+artifacts
+build
+
+#Verifier solidity contracts
+EpochKeyValidityVerifier.sol
+ReputationVerifier.sol
+ReputationFromAttesterVerifier.sol
+UserStateTransitionVerifier.sol
