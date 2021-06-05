@@ -1,17 +1,17 @@
-# Unirep With MongoDB
+# Unirep Social With MongoDB
 
-For more information about Unirep, refer to the [documentation](https://vivi432.gitbook.io/unirep-social/)
+For more information about Unirep Social, refer to the [documentation](https://vivi432.gitbook.io/unirep-social/)
 
 ## Install and build
 
 ```
-npm install
+yarn install
 ```
 
 then run
 
 ```
-npm run build
+yarn run build
 ``` 
 to build the circuits
 
