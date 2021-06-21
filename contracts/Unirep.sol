@@ -183,7 +183,7 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         uint8 _numAttestationsPerEpochKey,
         uint256 _epochLength,
         uint256 _attestingFee
-    ) public {
+    ) {
 
         treeDepths = _treeDepths;
 

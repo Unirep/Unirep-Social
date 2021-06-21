@@ -40,7 +40,7 @@ contract DomainObjs is Hasher {
         uint256 negativeKarma;
     }
 
-    function hashAttestation(Attestation memory attestation) internal returns (uint256) {
+    function hashAttestation(Attestation memory attestation) internal pure returns (uint256) {
         uint256 overwriteGraffiti = attestation.overwriteGraffiti ? 1 : 0;
         uint256[5] memory attestationData;
         attestationData[0] = attestation.attesterId;
