@@ -19,25 +19,25 @@ import { saveSettingsFromContract,
   initDB,}from '../database/utils'
 
 const configureSubparser = (subparsers: any) => {
-const parser = subparsers.addParser(
+const parser = subparsers.add_parser(
       'eventListeners',
-      { addHelp: true },
+      { add_help: true },
   )
 
-  parser.addArgument(
-      ['-e', '--eth-provider'],
+  parser.add_argument(
+      '-e', '--eth-provider',
       {
           action: 'store',
-          type: 'string',
+          type: 'str',
           help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
       }
   )
 
-  parser.addArgument(
-      ['-x', '--contract'],
+  parser.add_argument(
+      '-x', '--contract',
       {
           required: true,
-          type: 'string',
+          type: 'str',
           help: 'The Unirep contract address',
       }
   )

@@ -27,40 +27,40 @@ import { genProveReputationCircuitInputsFromDB } from '../database/utils'
 import { MAX_KARMA_BUDGET } from '../config/socialMedia'
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'vote',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-epk', '--epoch-key'],
+    parser.add_argument(
+        '-epk', '--epoch-key',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The user\'s epoch key to attest to (in hex representation)',
         }
     )
 
-    parser.addArgument(
-        ['-id', '--identity'],
+    parser.add_argument(
+        '-id', '--identity',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The (serialized) user\'s identity',
         }
     )
 
-    parser.addArgument(
-        ['-n', '--epoch-key-nonce'],
+    parser.add_argument(
+        '-n', '--epoch-key-nonce',
         {
             required: true,
             type: 'int',
@@ -68,8 +68,8 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-kn', '--karma-nonce'],
+    parser.add_argument(
+        '-kn', '--karma-nonce',
         {
             required: true,
             type: 'int',
@@ -77,71 +77,71 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-mr', '--min-rep'],
+    parser.add_argument(
+        '-mr', '--min-rep',
         {
             type: 'int',
             help: 'The minimum reputation score the attester has',
         }
     )
 
-    parser.addArgument(
-        ['-uv', '--upvote-value'],
+    parser.add_argument(
+        '-uv', '--upvote-value',
         {
             type: 'int',
             help: 'Score of positive reputation to give to the user and substract from attester\'s epoch key',
         }
     )
 
-    parser.addArgument(
-        ['-dv', '--downvote-value'],
+    parser.add_argument(
+        '-dv', '--downvote-value',
         {
             type: 'int',
             help: 'Score of negative reputation to give to the user and substract from attester\'s epoch key',
         }
     )
 
-    parser.addArgument(
-        ['-gf', '--graffiti'],
+    parser.add_argument(
+        '-gf', '--graffiti',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: 'Graffiti for the reputation given to the user (in hex representation)',
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The Unirep contract address',
         }
     )
 
-    parser.addArgument(
-        ['-db', '--from-database'],
+    parser.add_argument(
+        '-db', '--from-database',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Indicate if to generate proving circuit from database',
         }
     )
 
-    const privkeyGroup = parser.addMutuallyExclusiveGroup({ required: true })
+    const privkeyGroup = parser.add_mutually_exclusive_group({ required: true })
 
-    privkeyGroup.addArgument(
-        ['-dp', '--prompt-for-eth-privkey'],
+    privkeyGroup.add_argument(
+        '-dp', '--prompt-for-eth-privkey',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Whether to prompt for the user\'s Ethereum private key and ignore -d / --eth-privkey',
         }
     )
 
-    privkeyGroup.addArgument(
-        ['-d', '--eth-privkey'],
+    privkeyGroup.add_argument(
+        '-d', '--eth-privkey',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: 'The deployer\'s Ethereum private key',
         }
     )

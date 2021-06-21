@@ -21,31 +21,31 @@ import { identityPrefix } from './prefix'
 import { genUserStateTransitionCircuitInputsFromDB } from '../database/utils'
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'userStateTransition',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-id', '--identity'],
+    parser.add_argument(
+        '-id', '--identity',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The (serialized) user\'s identity',
         }
     )
 
-    parser.addArgument(
-        ['-b', '--start-block'],
+    parser.add_argument(
+        '-b', '--start-block',
         {
             action: 'store',
             type: 'int',
@@ -53,38 +53,38 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The Unirep contract address',
         }
     )
 
-    parser.addArgument(
-        ['-db', '--from-database'],
+    parser.add_argument(
+        '-db', '--from-database',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Indicate if to generate proving circuit from database',
         }
     )
 
-    const privkeyGroup = parser.addMutuallyExclusiveGroup({ required: true })
+    const privkeyGroup = parser.add_mutually_exclusive_group({ required: true })
 
-    privkeyGroup.addArgument(
-        ['-dp', '--prompt-for-eth-privkey'],
+    privkeyGroup.add_argument(
+        '-dp', '--prompt-for-eth-privkey',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Whether to prompt for the user\'s Ethereum private key and ignore -d / --eth-privkey',
         }
     )
 
-    privkeyGroup.addArgument(
-        ['-d', '--eth-privkey'],
+    privkeyGroup.add_argument(
+        '-d', '--eth-privkey',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: 'The deployer\'s Ethereum private key',
         }
     )
