@@ -17,22 +17,22 @@ import { reputationProofPrefix } from './prefix'
 import { hash5 } from 'maci-crypto'
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'verifyReputationProof',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-ep', '--epoch'],
+    parser.add_argument(
+        '-ep', '--epoch',
         {
             action: 'store',
             type: 'int',
@@ -40,52 +40,52 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-epk', '--epoch-key'],
+    parser.add_argument(
+        '-epk', '--epoch-key',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The user\'s epoch key (in hex representation)',
         }
     )
 
-    parser.addArgument(
-        ['-pf', '--proof'],
+    parser.add_argument(
+        '-pf', '--proof',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The snark proof of the user\'s epoch key and reputation ',
         }
     )
 
-    parser.addArgument(
-        ['-act', '--action'],
+    parser.add_argument(
+        '-act', '--action',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'Which action the user spends reputation',
         }
     )
 
-    parser.addArgument(
-        ['-th', '--transaction-hash'],
+    parser.add_argument(
+        '-th', '--transaction-hash',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The transaction hash of where user submit the reputation nullifiers ',
         }
     )
 
-    parser.addArgument(
-        ['-mr', '--min-rep'],
+    parser.add_argument(
+        '-mr', '--min-rep',
         {
             type: 'int',
             help: 'The minimum reputation score the user has',
         }
     )
 
-    parser.addArgument(
-        ['-b', '--start-block'],
+    parser.add_argument(
+        '-b', '--start-block',
         {
             action: 'store',
             type: 'int',
@@ -93,11 +93,11 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The Unirep contract address',
         }
     )

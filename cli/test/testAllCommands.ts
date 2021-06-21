@@ -264,9 +264,7 @@ describe('test all CLI subcommands', function() {
             postID = idRegMatch[1]
             const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(postRegMatch).not.equal(null)
-            if(postRegMatch){
-                transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
-            }
+            transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
             const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)$/)
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
@@ -353,9 +351,7 @@ describe('test all CLI subcommands', function() {
             epk = epkRegMatch[1]
             const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(txRegMatch).not.equal(null)
-            if(txRegMatch){
-                transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
-            }
+            transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
             const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)$/)
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]

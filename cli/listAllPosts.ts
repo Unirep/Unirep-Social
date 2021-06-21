@@ -11,25 +11,25 @@ import { DEFAULT_ETH_PROVIDER } from './defaults'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'listAllPosts',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The Unirep contract address',
         }
     )
@@ -62,16 +62,8 @@ const listAllPosts = async (args: any) => {
     )
 
     let postEvents
-    try {
-        const postFilter = unirepContract.filters.PostSubmitted()
-        postEvents = await unirepContract.queryFilter(postFilter)
-    } catch(e) {
-        console.error('Error: the transaction failed')
-        if (e.message) {
-            console.error(e.message)
-        }
-        return
-    }
+    const postFilter = unirepContract.filters.PostSubmitted()
+    postEvents = await unirepContract.queryFilter(postFilter)
 
     for (let i = 0; i < postEvents.length; i++) {
         console.log('Post ', postEvents[i].args._postId.toString())
