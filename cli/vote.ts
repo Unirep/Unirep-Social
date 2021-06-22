@@ -22,6 +22,7 @@ import { add0x } from '../crypto/SMT'
 import { Attestation } from '../core'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { reputationProofPrefix, identityPrefix } from './prefix'
 import { genProveReputationCircuitInputsFromDB } from '../database/utils'
 import { MAX_KARMA_BUDGET } from '../config/socialMedia'
@@ -115,7 +116,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -149,9 +150,9 @@ const configureSubparser = (subparsers: any) => {
 
 const vote = async (args: any) => {
     
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
@@ -166,7 +167,7 @@ const vote = async (args: any) => {
         console.error('Error: upvote and downvote cannot be at the same time')
         return
     }
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -194,15 +195,22 @@ const vote = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        wallet,
+    )
+    const unirepAddress = await unirepSocialContract.unirep()
+
     const unirepContract = new ethers.Contract(
         unirepAddress,
         Unirep.abi,
-        wallet,
+        provider,
     )
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const attestingFee = await unirepContract.attestingFee()
@@ -313,17 +321,24 @@ const vote = async (args: any) => {
         overwriteGraffiti,
     )
 
+    // Sign the message
+    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
+    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
+
+    // set vote fee
+    const voteFee = attestingFee.mul(2)
+
     console.log(`Attesting to epoch key ${args.epoch_key} with pos rep ${upvoteValue}, neg rep ${downvoteValue} and graffiti ${graffiti.toString(16)} (overwrite graffit: ${overwriteGraffiti})`)
     let tx
     try {
-        tx = await unirepContract.vote(
+        tx = await unirepSocialContract.vote(
+            attesterSig,
             attestationToEpochKey,
             BigInt(add0x(args.epoch_key)),
             fromEpochKey,
             publicSignals,
             proof,
-            nullifiers,
-            { value: attestingFee, gasLimit: 1000000 }
+            { value: voteFee, gasLimit: 3000000 }
         )
     } catch(e) {
         console.error('Error: the transaction failed')

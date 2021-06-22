@@ -12,7 +12,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import { genUnirepStateFromContract } from '../core'
 import { add0x } from '../crypto/SMT'
 
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { reputationProofFromAttesterPrefix } from './prefix'
 
 const configureSubparser = (subparsers: any) => {
@@ -103,36 +103,38 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 }
 
 const verifyReputationProofFromAttester = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
 
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
-    const unirepContract = new ethers.Contract(
-        unirepAddress,
-        Unirep.abi,
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
         provider,
     )
+
+    const unirepAddress = await unirepSocialContract.unirep()
 
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const unirepState = await genUnirepStateFromContract(
@@ -171,7 +173,7 @@ const verifyReputationProofFromAttester = async (args: any) => {
         minPosRep,
         maxNegRep,
         graffitiPreImage]
-    const isProofValid = await unirepContract.verifyReputationFromAttester(
+    const isProofValid = await unirepSocialContract.verifyReputationFromAttester(
         publicInput,
         proof
     )

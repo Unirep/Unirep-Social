@@ -10,6 +10,7 @@ const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { Attestation } from "../../core"
+import { DEFAULT_AIRDROPPED_KARMA } from '../../config/socialMedia'
 
 
 describe('Attesting', () => {
@@ -40,7 +41,7 @@ describe('Attesting', () => {
         console.log('User sign up')
         userId = genIdentity()
         userCommitment = genIdentityCommitment(userId)
-        let tx = await unirepContract.userSignUp(userCommitment)
+        let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 

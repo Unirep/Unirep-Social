@@ -5,10 +5,11 @@ import { attestingFee, epochLength, circuitEpochTreeDepth, circuitGlobalStateTre
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { genRandomSalt, IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
 import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { deployUnirepSocial } from '../../core/utils'
 
 const { expect } = chai
 
-import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
 import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
@@ -20,6 +21,7 @@ describe('Post', function () {
 
     let circuit
     let unirepContract
+    let unirepSocialContract
     let GSTree
     let emptyUserStateRoot
     const ids = new Array(2)
@@ -30,8 +32,9 @@ describe('Post', function () {
     let attesterAddresses = new Array(2)
     
     let accounts: ethers.Signer[]
+    let attesterSig: string[] = new Array(2)
     let provider
-    let unirepContractCalledByAttesters = new Array(2)
+    let contractCalledByAttesters = new Array(2)
 
     const epochKeyNonce = 0
     let proof
@@ -47,6 +50,7 @@ describe('Post', function () {
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
 
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
         GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
@@ -71,6 +75,15 @@ describe('Post', function () {
         expect(circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
         expect(circuitNullifierTreeDepth).equal(treeDepths_.nullifierTreeDepth)
         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
+
+        const postReputation_ = await unirepSocialContract.postReputation()
+        expect(postReputation_).equal(DEFAULT_POST_KARMA)
+        const commentReputation_ = await unirepSocialContract.commentReputation()
+        expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+        const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
+        expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+        const unirepAddress_ = await unirepSocialContract.unirep()
+        expect(unirepAddress_).equal(unirepContract.address)
     })
 
     it('should have the correct default value', async () => {
@@ -100,7 +113,7 @@ describe('Post', function () {
             for (let i = 0; i < 2; i++) {
                 ids[i] = genIdentity()
                 commitments[i] = genIdentityCommitment(ids[i])
-                const tx = await unirepContract.userSignUp(commitments[i])
+                const tx = await unirepSocialContract.userSignUp(commitments[i])
                 const receipt = await tx.wait()
 
                 expect(receipt.status).equal(1)
@@ -146,8 +159,10 @@ describe('Post', function () {
             for (let i = 0; i < 2; i++) {
                 attesters[i] = accounts[i+1]
                 attesterAddresses[i] = await attesters[i].getAddress()
-                unirepContractCalledByAttesters[i] = await hardhatEthers.getContractAt(Unirep.abi, unirepContract.address, attesters[i])
-                const tx = await unirepContractCalledByAttesters[i].attesterSignUp()
+                contractCalledByAttesters[i] = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attesters[i])
+                const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddresses[i], unirepContract.address])
+                attesterSig[i] = await attesters[i].signMessage(ethers.utils.arrayify(message))
+                const tx = await contractCalledByAttesters[i].attesterSignUp(attesterSig[i])
                 const receipt = await tx.wait()
 
                 expect(receipt.status).equal(1)
@@ -181,7 +196,7 @@ describe('Post', function () {
         })
 
         it('reputation proof should be verified valid on-chain', async() => {
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -194,20 +209,14 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
 
-            const tx = await unirepContractCalledByAttesters[0].publishPost(
+            const tx = await contractCalledByAttesters[0].publishPost(
+                attesterSig[0],
                 postId, 
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
@@ -234,28 +243,21 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[0].publishPost(
+            await expect(contractCalledByAttesters[0].publishPost(
+                attesterSig[0],
                 postId, 
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
+            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
         })
 
         it('submit a post with the same epoch key should fail', async() => {
@@ -279,26 +281,19 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[0].publishPost(
+            await expect(contractCalledByAttesters[0].publishPost(
+                attesterSig[0],
                 postId, 
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
@@ -322,28 +317,21 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is valid").to.be.false
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[0].publishPost(
+            await expect(contractCalledByAttesters[0].publishPost(
+                attesterSig[0],
                 postId, 
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the proof is not valid')
+            )).to.be.revertedWith('Unirep Social: the proof is not valid')
         })
     })
 
@@ -367,7 +355,7 @@ describe('Post', function () {
         })
 
         it('reputation proof should be verified valid on-chain', async() => {
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -377,21 +365,15 @@ describe('Post', function () {
         it('submit comment should succeed', async() => {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
 
-            const tx = await unirepContractCalledByAttesters[1].leaveComment(
+            const tx = await contractCalledByAttesters[1].leaveComment(
+                attesterSig[1],
                 postId, 
                 commentId,
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
@@ -418,33 +400,25 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[1].leaveComment(
+            await expect(contractCalledByAttesters[1].leaveComment(
+                attesterSig[1],
                 postId, 
                 commentId,
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
+            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
         })
 
         it('submit a comment with the same epoch key should fail', async() => {
-            
             
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
@@ -464,27 +438,20 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[1].leaveComment(
+            await expect(contractCalledByAttesters[1].leaveComment(
+                attesterSig[1],
                 postId, 
                 commentId,
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
@@ -508,29 +475,22 @@ describe('Post', function () {
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is valid").to.be.false
 
-            const isProofValid = await unirepContract.verifyReputation(
+            const isProofValid = await unirepSocialContract.verifyReputation(
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[1].leaveComment(
+            await expect(contractCalledByAttesters[1].leaveComment(
+                attesterSig[1],
                 postId, 
                 commentId,
                 epk,
                 text, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the proof is not valid')
+            )).to.be.revertedWith('Unirep Social: the proof is not valid')
         })
     })
 })

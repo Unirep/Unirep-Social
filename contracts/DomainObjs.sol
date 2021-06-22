@@ -7,16 +7,16 @@ contract DomainObjs is Hasher {
     struct StateLeaf {
         uint256 identityCommitment;
         uint256 userStateRoot;
-        uint256 positiveKarma;
-        uint256 negativeKarma;
+        uint256 positiveRepScore;
+        uint256 negativeRepScore;
     }
 
     function hashStateLeaf(StateLeaf memory _stateLeaf) public pure returns (uint256) {
         uint256[5] memory hashElements;
         hashElements[0] = _stateLeaf.identityCommitment;
         hashElements[1] = _stateLeaf.userStateRoot;
-        hashElements[2] = _stateLeaf.positiveKarma;
-        hashElements[3] = _stateLeaf.negativeKarma;
+        hashElements[2] = _stateLeaf.positiveRepScore;
+        hashElements[3] = _stateLeaf.negativeRepScore;
         return hash5(hashElements);
     }
 
@@ -31,13 +31,6 @@ contract DomainObjs is Hasher {
         uint256 graffiti;
         // Whether or not to overwrite the graffiti in the user’s state
         bool overwriteGraffiti;
-    }
-
-    struct Karma {
-        // Total positive karma
-        uint256 positiveKarma;
-        // Total negative karma
-        uint256 negativeKarma;
     }
 
     function hashAttestation(Attestation memory attestation) internal pure returns (uint256) {

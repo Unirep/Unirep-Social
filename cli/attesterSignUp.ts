@@ -12,6 +12,7 @@ import {
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -33,7 +34,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -59,13 +60,13 @@ const configureSubparser = (subparsers: any) => {
 
 const attesterSignup = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -93,20 +94,32 @@ const attesterSignup = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
-    const unirepContract = new ethers.Contract(
-        unirepAddress,
-        Unirep.abi,
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
         wallet,
     )
 
+    const unirepAddress = await unirepSocialContract.unirep()
+
+    const unirepContract = new ethers.Contract(
+        unirepAddress,
+        Unirep.abi,
+        provider,
+    )
+    
+    // Sign the message
+    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
+    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
+
     let tx
     try {
-        tx = await unirepContract.attesterSignUp({ gasLimit: 1000000 })
+        tx = await unirepSocialContract.attesterSignUp(attesterSig, { gasLimit: 1000000 })
     } catch(e) {
         console.error('Error: the transaction failed')
         if (e.message) {

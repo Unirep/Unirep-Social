@@ -9,10 +9,13 @@ import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting
 const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
+import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { Attestation, UnirepState, UserState } from '../../core'
 import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
+import { deployUnirepSocial } from '../../core/utils'
+import { vote } from '../../cli/vote'
 
 
 describe('Vote', function () {
@@ -20,6 +23,7 @@ describe('Vote', function () {
 
     let circuit
     let unirepContract
+    let unirepSocialContract
     let GSTree
     let emptyUserStateRoot
     let userNum = 4
@@ -29,10 +33,11 @@ describe('Vote', function () {
     let unirepState
     let attesters = new Array(userNum)
     let attesterAddresses = new Array(userNum)
+    let attesterSigs = new Array(userNum)
     
     let accounts: ethers.Signer[]
     let provider
-    let unirepContractCalledByAttesters = new Array(userNum)
+    let contractCalledByAttesters = new Array(userNum)
 
     let proof
     let publicSignals
@@ -54,6 +59,7 @@ describe('Vote', function () {
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
 
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
         GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
@@ -78,6 +84,15 @@ describe('Vote', function () {
         expect(circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
         expect(circuitNullifierTreeDepth).equal(treeDepths_.nullifierTreeDepth)
         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
+
+        const postReputation_ = await unirepSocialContract.postReputation()
+        expect(postReputation_).equal(DEFAULT_POST_KARMA)
+        const commentReputation_ = await unirepSocialContract.commentReputation()
+        expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+        const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
+        expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+        const unirepAddress_ = await unirepSocialContract.unirep()
+        expect(unirepAddress_).equal(unirepContract.address)
     })
 
     it('should have the correct default value', async () => {
@@ -107,7 +122,7 @@ describe('Vote', function () {
             for (let i = 0; i < userNum; i++) {
                 ids[i] = genIdentity()
                 commitments[i] = genIdentityCommitment(ids[i])
-                const tx = await unirepContract.userSignUp(commitments[i])
+                const tx = await unirepSocialContract.userSignUp(commitments[i])
                 const receipt = await tx.wait()
 
                 expect(receipt.status).equal(1)
@@ -153,8 +168,10 @@ describe('Vote', function () {
             for (let i = 0; i < userNum; i++) {
                 attesters[i] = accounts[i+1]
                 attesterAddresses[i] = await attesters[i].getAddress()
-                unirepContractCalledByAttesters[i] = await hardhatEthers.getContractAt(Unirep.abi, unirepContract.address, attesters[i])
-                const tx = await unirepContractCalledByAttesters[i].attesterSignUp()
+                contractCalledByAttesters[i] = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attesters[i])
+                const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddresses[i], unirepContract.address])
+                attesterSigs[i] = await attesters[i].signMessage(ethers.utils.arrayify(message))
+                const tx = await contractCalledByAttesters[i].attesterSignUp(attesterSigs[i])
                 const receipt = await tx.wait()
 
                 expect(receipt.status).equal(1)
@@ -209,6 +226,7 @@ describe('Vote', function () {
         )
         const fromUser = 0
         const toUser = 1
+        const voteFee = attestingFee.mul(2)
 
         it('submit upvote should succeed', async() => {
             currentEpoch = (await unirepContract.currentEpoch()).toNumber()
@@ -217,21 +235,14 @@ describe('Vote', function () {
 
             toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce)
 
-            const nullifiers: BigInt[] = [] 
-
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            const tx = await unirepContractCalledByAttesters[fromUser].vote(
+            const tx = await contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 attestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
+                { value: voteFee, gasLimit: 3000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
@@ -264,22 +275,15 @@ describe('Vote', function () {
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[fromUser].vote(
+            await expect(contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 attestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
+                { value: voteFee, gasLimit: 3000000 }
+            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
         })
 
         it('submit upvote from the same epoch key should fail', async() => {
@@ -309,21 +313,14 @@ describe('Vote', function () {
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[fromUser].vote(
+            await expect(contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 attestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
+                { value: voteFee, gasLimit: 3000000 }
             )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
 
@@ -354,22 +351,15 @@ describe('Vote', function () {
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[fromUser].vote(
+            await expect(contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 attestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: the proof is not valid')
+                { value: voteFee, gasLimit: 3000000 }
+            )).to.be.revertedWith('Unirep Social: the proof is not valid')
         })
 
         it('submit vote with 0 value should fail', async() => {
@@ -382,22 +372,15 @@ describe('Vote', function () {
                 overwriteGraffiti,
             )
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[fromUser].vote(
+            await expect(contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 zeroAttestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: should submit a positive vote value')
+                { value: voteFee, gasLimit: 3000000 }
+            )).to.be.revertedWith('Unirep Social: should submit a positive vote value')
         })
 
         it('submit vote with both upvote value and downvote value should fail', async() => {
@@ -410,22 +393,15 @@ describe('Vote', function () {
                 overwriteGraffiti,
             )
 
-            const nullifiers: BigInt[] = [] 
-            
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const variableName = 'main.karma_nullifiers['+i+']'
-                nullifiers.push(getSignalByNameViaSym('proveReputation', witness, variableName))
-            }
-
-            await expect(unirepContractCalledByAttesters[fromUser].vote(
+            await expect(contractCalledByAttesters[fromUser].vote(
+                attesterSigs[fromUser],
                 invalidAttestation, 
                 toEpk,
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                nullifiers,
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: should only choose to upvote or to downvote')
+                { value: voteFee, gasLimit: 3000000 }
+            )).to.be.revertedWith('Unirep Social: should only choose to upvote or to downvote')
         })
     })
 })

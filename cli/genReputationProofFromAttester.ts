@@ -1,5 +1,6 @@
 import base64url from 'base64url'
 import { ethers as hardhatEthers } from 'hardhat'
+import { ethers } from 'ethers'
 import { genIdentityCommitment, unSerialiseIdentity } from 'libsemaphore'
 
 import {
@@ -10,12 +11,12 @@ import {
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 
 import { genUserStateFromContract } from '../core'
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { formatProofForVerifierContract, genVerifyReputationFromAttesterProofAndPublicSignals, verifyProveReputationFromAttesterProof } from '../circuits/utils'
-import { hashLeftRight, hashOne, stringifyBigInts } from 'maci-crypto'
+import { stringifyBigInts } from 'maci-crypto'
 import { add0x } from '../crypto/SMT'
 import { identityPrefix, reputationProofFromAttesterPrefix } from './prefix'
 import { genProveReputationFromAttesterCircuitInputsFromDB } from '../database/utils'
-import { compileAndLoadCircuit, executeCircuit } from '../test/circuits/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -96,7 +97,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -116,20 +117,20 @@ const genReputationProofFromAttester = async (args: any) => {
         console.warn('Warning: no reputation and graffiti to prove')
     }
     
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
 
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
@@ -140,6 +141,14 @@ const genReputationProofFromAttester = async (args: any) => {
     const decodedIdentity = base64url.decode(encodedIdentity)
     const id = unSerialiseIdentity(decodedIdentity)
     const commitment = genIdentityCommitment(id)
+
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        provider,
+    )
+
+    const unirepAddress = await unirepSocialContract.unirep()
 
     // Gen reputation proof
     const userState = await genUserStateFromContract(

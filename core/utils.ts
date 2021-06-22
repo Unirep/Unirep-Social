@@ -7,13 +7,14 @@ import Keyv from "keyv"
 import assert from 'assert'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import PoseidonT3 from "../artifacts/contracts/Poseidon.sol/PoseidonT3.json"
 import PoseidonT6 from "../artifacts/contracts/Poseidon.sol/PoseidonT6.json"
 import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitNullifierTreeDepth, circuitUserStateTreeDepth, epochLength, epochTreeDepth, globalStateTreeDepth, maxUsers, nullifierTreeDepth, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch, userStateTreeDepth } from '../config/testLocal'
 import { Attestation, IEpochTreeLeaf, UnirepState } from './UnirepState'
 import { IUserStateLeaf, UserState } from './UserState'
 import { hash5, hashLeftRight, IncrementalQuinTree, SnarkBigInt } from 'maci-crypto'
-import { DEFAULT_AIRDROPPED_KARMA } from '../config/socialMedia'
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
 import { ATTESTATION_NULLIFIER_DOMAIN, EPOCH_KEY_NULLIFIER_DOMAIN, KARMA_NULLIFIER_DOMAIN } from '../config/nullifierDomainSeparator'
 import { SparseMerkleTreeImpl } from '../crypto/SMT'
 
@@ -150,6 +151,43 @@ const deployUnirep = async (
     return c
 }
 
+const deployUnirepSocial = async (
+    deployer: ethers.Signer,
+    UnirepAddr: string,
+    _settings?: any): Promise<ethers.Contract> => {
+
+    console.log('Deploying Unirep Social')
+
+    const _defaultAirdroppedRep = DEFAULT_AIRDROPPED_KARMA
+    const _postReputation = DEFAULT_POST_KARMA
+    const _commentReputation = DEFAULT_COMMENT_KARMA
+
+    const f = await hardhatEthers.getContractFactory(
+        "UnirepSocial",
+        {
+            signer: deployer,
+        }
+    )
+    const c = await (f.deploy(
+        UnirepAddr,
+        _postReputation,
+        _commentReputation,
+        _defaultAirdroppedRep,
+        {
+            gasLimit: 9000000,
+        }
+    ))
+
+    // Print out deployment info
+    console.log("-----------------------------------------------------------------")
+    console.log("Bytecode size of Unirep Social:", Math.floor(UnirepSocial.bytecode.length / 2), "bytes")
+    let receipt = await c.provider.getTransactionReceipt(c.deployTransaction.hash)
+    console.log("Gas cost of deploying Unirep Social:", receipt.gasUsed.toString())
+    console.log("-----------------------------------------------------------------")
+
+    return c
+}
+
 const genEpochKey = (identityNullifier: SnarkBigInt, epoch: number, nonce: number, _epochTreeDepth: number = epochTreeDepth): SnarkBigInt => {
     const values: any[] = [
         identityNullifier,
@@ -237,15 +275,6 @@ const genUnirepStateFromContract = async (
     const attestationSubmittedFilter = unirepContract.filters.AttestationSubmitted()
     const attestationSubmittedEvents =  await unirepContract.queryFilter(attestationSubmittedFilter, startBlock)
 
-    const postSubmittedFilter = unirepContract.filters.PostSubmitted()
-    const postSubmittedEvents =  await unirepContract.queryFilter(postSubmittedFilter, startBlock)
-
-    const commentSubmittedFilter = unirepContract.filters.CommentSubmitted()
-    const commentSubmittedEvents =  await unirepContract.queryFilter(commentSubmittedFilter, startBlock)
-
-    const reputationSubmittedFilter = unirepContract.filters.ReputationNullifierSubmitted()
-    const reputationSubmittedEvents =  await unirepContract.queryFilter(reputationSubmittedFilter, startBlock)
-
     const epochEndedFilter = unirepContract.filters.EpochEnded()
     const epochEndedEvents =  await unirepContract.queryFilter(epochEndedFilter, startBlock)
 
@@ -258,9 +287,6 @@ const genUnirepStateFromContract = async (
     // Reverse the events so pop() can start from the first event
     newGSTLeafInsertedEvents.reverse()
     attestationSubmittedEvents.reverse()
-    postSubmittedEvents.reverse()
-    commentSubmittedEvents.reverse()
-    reputationSubmittedEvents.reverse()
     epochEndedEvents.reverse()
     userStateTransitionedEvents.reverse()
     for (let i = 0; i < sequencerEvents.length; i++) {
@@ -290,26 +316,6 @@ const genUnirepStateFromContract = async (
                 _attestation.overwriteGraffiti
             )
             unirepState.addAttestation(attestationEvent.args?._epochKey.toString(), attestation)
-        } else if (occurredEvent === "PostSubmitted") {
-            const postEvent = postSubmittedEvents.pop()
-            assert(postEvent !== undefined, `Event sequence mismatch: missing postSubmittedEvent`)
-            const epoch = postEvent.args?._epoch.toNumber()
-            assert(
-                epoch === unirepState.currentEpoch,
-                `Post epoch (${epoch}) does not match current epoch (${unirepState.currentEpoch})`
-            )
-        } else if (occurredEvent === "CommentSubmitted") {
-            const commentEvent = commentSubmittedEvents.pop()
-            assert(commentEvent !== undefined, `Event sequence mismatch: missing commentSubmittedEvent`)
-            const epoch = commentEvent.args?._epoch.toNumber()
-            assert(
-                epoch === unirepState.currentEpoch,
-                `Comment epoch (${epoch}) does not match current epoch (${unirepState.currentEpoch})`
-            )
-        } else if (occurredEvent === "ReputationNullifierSubmitted") {
-            const reputationEvent = reputationSubmittedEvents.pop()
-            assert(reputationEvent !== undefined, `Event sequence mismatch: missing ReputationNullifierSubmitted`)
-            unirepState.addKarmaNullifiers(reputationEvent.args?.karmaNullifiers.map((n) => BigInt(n)))
         } else if (occurredEvent === "EpochEnded") {
             const epochEndedEvent = epochEndedEvents.pop()
             assert(epochEndedEvent !== undefined, `Event sequence mismatch: missing epochEndedEvent`)
@@ -347,6 +353,7 @@ const genUnirepStateFromContract = async (
                 userStateTransitionedEvent.args?.userTransitionedData.epkNullifiers,
                 userStateTransitionedEvent.args?.userTransitionedData.fromEpoch,
                 userStateTransitionedEvent.args?.userTransitionedData.fromGlobalStateTree,
+                DEFAULT_AIRDROPPED_KARMA,
                 userStateTransitionedEvent.args?.userTransitionedData.fromEpochTree,
                 userStateTransitionedEvent.args?.userTransitionedData.proof,
             )
@@ -488,15 +495,6 @@ const _genUserStateFromContract = async (
     const attestationSubmittedFilter = unirepContract.filters.AttestationSubmitted()
     const attestationSubmittedEvents =  await unirepContract.queryFilter(attestationSubmittedFilter, startBlock)
 
-    const postSubmittedFilter = unirepContract.filters.PostSubmitted()
-    const postSubmittedEvents =  await unirepContract.queryFilter(postSubmittedFilter, startBlock)
-
-    const commentSubmittedFilter = unirepContract.filters.CommentSubmitted()
-    const commentSubmittedEvents =  await unirepContract.queryFilter(commentSubmittedFilter, startBlock)
-
-    const reputationSubmittedFilter = unirepContract.filters.ReputationNullifierSubmitted()
-    const reputationSubmittedEvents =  await unirepContract.queryFilter(reputationSubmittedFilter, startBlock)
-
     const epochEndedFilter = unirepContract.filters.EpochEnded()
     const epochEndedEvents =  await unirepContract.queryFilter(epochEndedFilter, startBlock)
 
@@ -509,9 +507,6 @@ const _genUserStateFromContract = async (
     // Reverse the events so pop() can start from the first event
     newGSTLeafInsertedEvents.reverse()
     attestationSubmittedEvents.reverse()
-    postSubmittedEvents.reverse()
-    commentSubmittedEvents.reverse()
-    reputationSubmittedEvents.reverse()
     epochEndedEvents.reverse()
     userStateTransitionedEvents.reverse()
     // Variables used to keep track of data required for user to transition
@@ -557,26 +552,6 @@ const _genUserStateFromContract = async (
             if(userHasSignedUp){
                 userState.updateAttestation(epochKey, attestation.posRep, attestation.negRep)
             }
-        } else if (occurredEvent === "PostSubmitted") {
-            const postEvent = postSubmittedEvents.pop()
-            assert(postEvent !== undefined, `Event sequence mismatch: missing postSubmittedEvent`)
-            const epoch = postEvent.args?._epoch.toNumber()
-            assert(
-                epoch === unirepState.currentEpoch,
-                `Post epoch (${epoch}) does not match current epoch (${unirepState.currentEpoch})`
-            )
-        } else if (occurredEvent === "CommentSubmitted") {
-            const commentEvent = commentSubmittedEvents.pop()
-            assert(commentEvent !== undefined, `Event sequence mismatch: missing commentSubmittedEvent`)
-            const epoch = commentEvent.args?._epoch.toNumber()
-            assert(
-                epoch === unirepState.currentEpoch,
-                `Comment epoch (${epoch}) does not match current epoch (${unirepState.currentEpoch})`
-            )
-        } else if (occurredEvent === "ReputationNullifierSubmitted") {
-            const reputationEvent = reputationSubmittedEvents.pop()
-            assert(reputationEvent !== undefined, `Event sequence mismatch: missing ReputationNullifierSubmitted`)
-            unirepState.addKarmaNullifiers(reputationEvent.args?.karmaNullifiers.map((n) => BigInt(n)))
         } else if (occurredEvent === "EpochEnded") {
             const epochEndedEvent = epochEndedEvents.pop()
             assert(epochEndedEvent !== undefined, `Event sequence mismatch: missing epochEndedEvent`)
@@ -624,6 +599,7 @@ const _genUserStateFromContract = async (
                 userStateTransitionedEvent.args?.userTransitionedData.epkNullifiers,
                 userStateTransitionedEvent.args?.userTransitionedData.fromEpoch,
                 userStateTransitionedEvent.args?.userTransitionedData.fromGlobalStateTree,
+                DEFAULT_AIRDROPPED_KARMA,
                 userStateTransitionedEvent.args?.userTransitionedData.fromEpochTree,
                 userStateTransitionedEvent.args?.userTransitionedData.proof,
             )
@@ -721,6 +697,7 @@ export {
     computeEmptyUserStateRoot,
     getTreeDepthsForTesting,
     deployUnirep,
+    deployUnirepSocial,
     genEpochKey,
     genAttestationNullifier,
     genEpochKeyNullifier,
