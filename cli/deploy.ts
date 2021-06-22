@@ -1,12 +1,17 @@
+// @ts-ignore
+import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { DEFAULT_AIRDROPPED_KARMA } from '../config/socialMedia'
 import { maxUsers } from '../config/testLocal'
-import { deployUnirep, getTreeDepthsForTesting } from '../core/utils'
+import { deployUnirep, deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
 import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY, DEFAULT_TREE_DEPTHS_CONFIG } from './defaults'
+import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import {
     checkDeployerProviderConnection,
+    contractExists,
     genJsonRpcDeployer,
     promptPwd,
+    validateEthAddress,
     validateEthSk,
 } from './utils'
 
@@ -36,6 +41,14 @@ const configureSubparser = (subparsers: any) => {
     )
 
     deployParser.add_argument(
+        '-x', '--contract',
+        {
+            type: 'str',
+            help: 'Unirep contract address. If it is not provided, a Unirep contract will be created in the process.',
+        }
+    )
+
+    deployParser.add_argument(
         '-e', '--eth-provider',
         {
             action: 'store',
@@ -43,15 +56,6 @@ const configureSubparser = (subparsers: any) => {
             help: 'A connection string to an Ethereum provider. Default: http://localhost:8545',
         }
     )
-
-    // deployParser.add_argument(
-    //     '-kn', '--max-epoch-key-nonce',
-    //     {
-    //         action: 'store',
-    //         type: 'int',
-    //         help: 'The maximum supported epoch key nonce. Default: 2',
-    //     }
-    // )
 
     deployParser.add_argument(
         '-l', '--epoch-length',
@@ -135,21 +139,44 @@ const deploy = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
 
     if (! (await checkDeployerProviderConnection(deployerPrivkey, ethProvider))) {
         console.error('Error: unable to connect to the Ethereum provider at', ethProvider)
         return
     }
     const deployer = genJsonRpcDeployer(deployerPrivkey, ethProvider)
-    debugger
+    
+    let unirepContract
+    if(args.contract == null){
+        unirepContract = await deployUnirep(
+            deployer.signer,
+            treeDepths,
+            settings,
+        )
+    } else {
+        // Check if Unirep address is valid
+        if (!validateEthAddress(args.contract)) {
+            console.error('Error: invalid Unirep contract address')
+            return
+        }
 
-    const contract = await deployUnirep(
+        if (! await contractExists(provider, args.contract)) {
+            console.error('Error: there is no contract deployed at the specified address')
+            return
+        }
+
+        unirepContract = new ethers.Contract(args.contract, Unirep.abi)
+    }
+
+    const unirepSocialContract = await deployUnirepSocial(
         deployer.signer,
-        treeDepths,
+        unirepContract.address,
         settings,
     )
 
-    console.log('Unirep:', contract.address)
+    console.log('Unirep:', unirepContract.address)
+    console.log('Unirep Social:', unirepSocialContract.address)
 }
 
 export {

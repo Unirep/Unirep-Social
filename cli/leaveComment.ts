@@ -19,6 +19,7 @@ import { add0x } from '../crypto/SMT'
 import { genUserStateFromContract } from '../core'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { reputationProofPrefix, identityPrefix } from './prefix'
 
 import Comment, { IComment } from "../database/models/comment";
@@ -49,7 +50,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The text written in the post',
+            help: 'The text written in the comment',
         }
     )
 
@@ -102,7 +103,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -136,13 +137,13 @@ const configureSubparser = (subparsers: any) => {
 
 const leaveComment = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -170,17 +171,26 @@ const leaveComment = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        wallet,
+    )
+
+    const unirepAddress = await unirepSocialContract.unirep()
+
     const unirepContract = new ethers.Contract(
         unirepAddress,
         Unirep.abi,
-        wallet,
+        provider,
     )
+    
     const attestingFee = await unirepContract.attestingFee()
 
     // Validate epoch key nonce
@@ -277,16 +287,20 @@ const leaveComment = async (args: any) => {
         status: 0
     });
 
+    // Sign the message
+    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
+    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
+
     let tx
     try {
-        tx = await unirepContract.leaveComment(
+        tx = await unirepSocialContract.leaveComment(
+            attesterSig,
             BigInt(add0x(args.post_id)),
             BigInt(add0x(newComment._id.toString())), 
             epochKey,
             args.text,
             publicSignals,
             proof,
-            nullifiers,
             { value: attestingFee, gasLimit: 1000000 }
         )
         if(args.from_database){
@@ -312,7 +326,6 @@ const leaveComment = async (args: any) => {
         return
     }
 
-    const receipt = await tx.wait()
     console.log('Transaction hash:', tx.hash)
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${epk}`)
     console.log(reputationProofPrefix + encodedProof)

@@ -14,6 +14,7 @@ import {
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { genUserStateFromContract } from '../core'
 import { formatProofForVerifierContract, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
 import { stringifyBigInts } from 'maci-crypto'
@@ -58,7 +59,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -92,13 +93,13 @@ const configureSubparser = (subparsers: any) => {
 
 const userStateTransition = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -126,10 +127,18 @@ const userStateTransition = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
+
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        wallet,
+    )
+
+    const unirepAddress = await unirepSocialContract.unirep()
 
     const unirepContract = new ethers.Contract(
         unirepAddress,
@@ -214,7 +223,7 @@ const userStateTransition = async (args: any) => {
 
     let tx
     try {
-        tx = await unirepContract.updateUserStateRoot(
+        tx = await unirepSocialContract.updateUserStateRoot(
             newGSTLeaf,
             outputAttestationNullifiers,
             outputEPKNullifiers,

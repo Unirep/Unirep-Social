@@ -10,6 +10,7 @@ const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { Attestation } from "../../core"
+import { DEFAULT_AIRDROPPED_KARMA } from '../../config/socialMedia'
 
 
 describe('EventSequencing', () => {
@@ -35,7 +36,7 @@ describe('EventSequencing', () => {
         let userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
         userCommitments.push(userCommitment)
-        let tx = await unirepContract.userSignUp(userCommitment)
+        let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
         expectedEventsInOrder.push(events[0])
@@ -74,7 +75,7 @@ describe('EventSequencing', () => {
         userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
         userCommitments.push(userCommitment)
-        tx = await unirepContract.userSignUp(userCommitment)
+        tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
         expectedEventsInOrder.push(events[0])

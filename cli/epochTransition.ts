@@ -12,6 +12,7 @@ import {
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -41,7 +42,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The Unirep contract address',
+            help: 'The Unirep Social contract address',
         }
     )
 
@@ -67,13 +68,13 @@ const configureSubparser = (subparsers: any) => {
 
 const epochTransition = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -101,15 +102,23 @@ const epochTransition = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        wallet,
+    )
+
+    const unirepAddress = await unirepSocialContract.unirep()
+
     const unirepContract = new ethers.Contract(
         unirepAddress,
         Unirep.abi,
-        wallet,
+        provider,
     )
 
     // Fast-forward to end of epoch if in test environment
@@ -122,7 +131,7 @@ const epochTransition = async (args: any) => {
     let tx
     try {
         const numEpochKeysToSeal = await unirepContract.getNumEpochKey(currentEpoch)
-        tx = await unirepContract.beginEpochTransition(
+        tx = await unirepSocialContract.beginEpochTransition(
             numEpochKeysToSeal,
             { gasLimit: 9000000 }
         )
