@@ -1,96 +1,283 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import chai from "chai"
-import { attestingFee, epochLength, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
+import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitNullifierTreeDepth, circuitUserStateTreeDepth, epochLength, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
 import { genRandomSalt } from '../../crypto/crypto'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { deployUnirep, genEpochKey, getTreeDepthsForTesting } from '../utils'
 
 const { expect } = chai
 
-import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-import { Attestation } from "../../core"
-import { DEFAULT_AIRDROPPED_KARMA } from '../../config/socialMedia'
+import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
+import { Attestation, UnirepState, UserState } from "../../core"
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { deployUnirepSocial } from '../../core/utils'
+import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../../circuits/utils'
+import { getSignalByNameViaSym } from '../circuits/utils'
 
 
 describe('EventSequencing', () => {
-    const events = ["UserSignUp", "AttestationSubmitted", "EpochEnded", "UserStateTransitioned"]
-    let expectedEventsInOrder: string[] = []
+    enum unirepEvents { 
+        UserSignUp,
+        AttestationSubmitted,
+        EpochEnded,
+        UserStateTransitioned
+    }
+
+    let expectedUnirepEventsInOrder: number[] = []
+    let expectedSignUpEventsLength: number = 0
+    let expectedPostEventsLength: number = 0
+    let expectedCommentEventsLength: number = 0
+    let expectedVoteEventsLength: number = 0
 
     let unirepContract
+    let unirepSocialContract
 
     let accounts: ethers.Signer[]
 
+    let currentEpoch
+    let GSTree
+    let GSTreeLeafIndex: number = 0
+    let emptyUserStateRoot
+    let unirepState
+    let users: any[] = []
     let userIds: any[] = [], userCommitments: any[] = []
+    const postId = genRandomSalt()
+    const commentId = genRandomSalt()
+    const voteFee = attestingFee.mul(2)
 
-    let attester, attesterAddress, attesterId, unirepContractCalledByAttester
+    let attester, attesterAddress, attesterId, attesterSig, contractCalledByAttester
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        const _treeDepths = getTreeDepthsForTesting()
+        const _treeDepths = getTreeDepthsForTesting('circuit')
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
+        console.log(unirepContract.address)
+        console.log(unirepSocialContract.address)
+    })
 
-        // 1. Fisrt user sign up
-        let userId = genIdentity()
-        let userCommitment = genIdentityCommitment(userId)
+    it('should sign up first user', async () => {
+        const userId = genIdentity()
+        const userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
         userCommitments.push(userCommitment)
-        let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
-        let receipt = await tx.wait()
+        const tx = await unirepSocialContract.userSignUp(userCommitment)
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[0])
+        expectedUnirepEventsInOrder.push(unirepEvents.UserSignUp)
+        expectedSignUpEventsLength++
+    })
 
-        // Attester sign up, no events emitted
+    it('should sign up attester', async () => {
         attester = accounts[1]
         attesterAddress = await attester.getAddress()
-        unirepContractCalledByAttester = await hardhatEthers.getContractAt(Unirep.abi, unirepContract.address, attester)
-        tx = await unirepContractCalledByAttester.attesterSignUp()
-        receipt = await tx.wait()
+        contractCalledByAttester = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attester)
+        const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddress, unirepContract.address])
+        attesterSig = await attester.signMessage(ethers.utils.arrayify(message))
+        const tx = await contractCalledByAttester.attesterSignUp(attesterSig)
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         attesterId = await unirepContract.attesters(attesterAddress)
+    })
 
-        // 2. Attest to first user
-        let currentEpoch = await unirepContract.currentEpoch()
+    it('should publish a post by first user', async () => {
         let epochKeyNonce = 0
-        let epochKey = genEpochKey(userIds[0].identityNullifier, currentEpoch.toNumber(), epochKeyNonce)
-        let attestation: Attestation = new Attestation(
+        const nonceStarter = 0
+
+        currentEpoch = await unirepContract.currentEpoch()
+        emptyUserStateRoot = await unirepContract.emptyUserStateRoot()
+        unirepState = new UnirepState(
+            circuitGlobalStateTreeDepth,
+            circuitUserStateTreeDepth,
+            circuitEpochTreeDepth,
+            circuitNullifierTreeDepth,
+            attestingFee,
+            epochLength,
+            numEpochKeyNoncePerEpoch,
+            numAttestationsPerEpochKey,
+        )
+
+        const hashedStateLeaf = await unirepContract.hashStateLeaf(
+            [
+                userCommitments[0],
+                emptyUserStateRoot,
+                BigInt(DEFAULT_AIRDROPPED_KARMA),
+                BigInt(0)
+            ]
+        )
+        const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
+        GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
+        GSTree.insert(hashedStateLeaf)
+
+        unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
+        const userState = new UserState(
+            unirepState,
+            userIds[0],
+            userCommitments[0],
+            false
+        )
+        users.push(userState)
+        users[0].signUp(currentEpoch, GSTreeLeafIndex)
+        GSTreeLeafIndex ++
+
+        const circuitInputs = await users[0].genProveReputationCircuitInputs(
+            epochKeyNonce,
+            DEFAULT_POST_KARMA,
+            nonceStarter,
+            0
+        )
+        
+        const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
+        expect(isValid, 'reputation proof is not valid').to.be.true
+
+        const proof = formatProofForVerifierContract(results['proof'])
+        const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+        const publicSignals = results['publicSignals']
+        
+        const tx = await contractCalledByAttester.publishPost(
+            attesterSig,
+            postId, 
+            epochKey,
+            'postText', 
+            publicSignals, 
+            proof,
+            { value: attestingFee, gasLimit: 1000000 }
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status, 'Submit post failed').to.equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedPostEventsLength++
+    })
+
+    it('should sign up seconde user', async () => {
+        const userId = genIdentity()
+        const userCommitment = genIdentityCommitment(userId)
+        userIds.push(userId)
+        userCommitments.push(userCommitment)
+        const tx = await unirepSocialContract.userSignUp(userCommitment)
+        const receipt = await tx.wait()
+        expect(receipt.status).equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.UserSignUp)
+        expectedSignUpEventsLength++
+    })
+
+    it('should leave a comment by seconde user', async () => {
+        const hashedStateLeaf = await unirepContract.hashStateLeaf(
+            [
+                userCommitments[1],
+                emptyUserStateRoot,
+                BigInt(DEFAULT_AIRDROPPED_KARMA),
+                BigInt(0)
+            ]
+        )
+        GSTree.insert(hashedStateLeaf)
+
+        unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
+        const user2State = new UserState(
+            unirepState,
+            userIds[1],
+            userCommitments[1],
+            false
+        )
+        users.push(user2State)
+        users[1].signUp(currentEpoch, GSTreeLeafIndex)
+        GSTreeLeafIndex ++
+
+        let epochKeyNonce = 0
+        const nonceStarter = 0
+
+        const circuitInputs = await users[1].genProveReputationCircuitInputs(
+            epochKeyNonce,
+            DEFAULT_POST_KARMA,
+            nonceStarter,
+            0
+        )
+        
+        const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
+        expect(isValid, 'reputation proof is not valid').to.be.true
+
+        const proof = formatProofForVerifierContract(results['proof'])
+        const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+        const publicSignals = results['publicSignals']
+        
+        const tx = await contractCalledByAttester.leaveComment(
+            attesterSig,
+            postId,
+            commentId, 
+            epochKey,
+            'commentText',
+            publicSignals,
+            proof,
+            { value: attestingFee, gasLimit: 1000000 }
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status, 'Submit comment failed').to.equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedCommentEventsLength++
+    })
+        
+    it('first user should upvote second user', async () => {
+        let voteValue = 3
+        let epochKeyNonce = 1
+        const nonceStarter = 10
+        const epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
+
+        let attestation = new Attestation(
             BigInt(attesterId),
-            BigInt(1),
+            BigInt(voteValue),
             BigInt(0),
             genRandomSalt(),
             true,
         )
-        tx = await unirepContractCalledByAttester.submitAttestation(
+
+        const circuitInputs = await users[0].genProveReputationCircuitInputs(
+            epochKeyNonce,
+            DEFAULT_POST_KARMA,
+            nonceStarter,
+            0
+        )
+        
+        const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
+        expect(isValid, 'reputation proof is not valid').to.be.true
+
+        const proof = formatProofForVerifierContract(results['proof'])
+        const fromEpochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+        const publicSignals = results['publicSignals']
+        
+        const tx = await contractCalledByAttester.vote(
+            attesterSig,
             attestation,
             epochKey,
-            {value: attestingFee}
+            fromEpochKey,
+            publicSignals,
+            proof,
+            { value: voteFee, gasLimit: 3000000 }
         )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[1])
+        const receipt = await tx.wait()
+        expect(receipt.status, 'Submit upvote failed').to.equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedVoteEventsLength++
+    })
 
-        // 3. Second user sign up
-        userId = genIdentity()
-        userCommitment = genIdentityCommitment(userId)
-        userIds.push(userId)
-        userCommitments.push(userCommitment)
-        tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[0])
-
-        // 4. First epoch end
+    it('first epoch ended', async () => {
+        let currentEpoch = unirepContract.currentEpoch()
         let numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
-        expect(numEpochKey).equal(1)
         await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        tx = await unirepContract.beginEpochTransition(numEpochKey)
-        receipt = await tx.wait()
+        const tx = await unirepSocialContract.beginEpochTransition(numEpochKey)
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
-        expectedEventsInOrder.push(events[2])
+        expectedUnirepEventsInOrder.push(unirepEvents.EpochEnded)
+    })
 
-        // 5. Second user transition
+    it('Second user should perform transition', async () => {
         let transitionFromEpoch = 1
         const numAttestationsPerEpoch = numEpochKeyNoncePerEpoch * numAttestationsPerEpochKey
         const attestationNullifiers: BigInt[] = []
@@ -105,7 +292,7 @@ describe('EventSequencing', () => {
         for (let i = 0; i < 8; i++) {
             proof.push(BigInt(0))
         }
-        tx = await unirepContract.updateUserStateRoot(
+        const tx = await unirepContract.updateUserStateRoot(
             genRandomSalt(),
             attestationNullifiers,
             epkNullifiers,
@@ -115,91 +302,118 @@ describe('EventSequencing', () => {
             genRandomSalt(),
             proof,
         )
-        receipt = await tx.wait()
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[3])
-
-        // 6. Attest to second user
-        epochKeyNonce = 0
-        epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch.toNumber(), epochKeyNonce)
-        attestation = new Attestation(
-            BigInt(attesterId),
-            BigInt(2),
-            BigInt(1),
-            genRandomSalt(),
-            true,
-        )
-        tx = await unirepContractCalledByAttester.submitAttestation(
-            attestation,
-            epochKey,
-            {value: attestingFee}
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[1])
-
-        // 7. Second epoch end
-        numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
-        expect(numEpochKey).equal(1)
-        await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        tx = await unirepContract.beginEpochTransition(numEpochKey)
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        currentEpoch = await unirepContract.currentEpoch()
-        expectedEventsInOrder.push(events[2])
-
-        // 8. Third epoch end
-        numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
-        expect(numEpochKey).equal(0)
-        await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        tx = await unirepContract.beginEpochTransition(numEpochKey)
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        currentEpoch = await unirepContract.currentEpoch()
-        expectedEventsInOrder.push(events[2])
-
-        // 9. First user transition
-        transitionFromEpoch = 1
-        tx = await unirepContract.updateUserStateRoot(
-            genRandomSalt(),
-            attestationNullifiers,
-            epkNullifiers,
-            transitionFromEpoch,
-            genRandomSalt(),
-            genRandomSalt(),
-            genRandomSalt(),
-            proof,
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[3])
-
-        // 10. Second user transition
-        transitionFromEpoch = 2
-        tx = await unirepContract.updateUserStateRoot(
-            genRandomSalt(),
-            attestationNullifiers,
-            epkNullifiers,
-            transitionFromEpoch,
-            genRandomSalt(),
-            genRandomSalt(),
-            genRandomSalt(),
-            proof,
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        expectedEventsInOrder.push(events[3])
+        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
     })
 
-    it('Events order should match sequencer order', async () => {
+    
+    it('second epoch ended', async () => {
+        const numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
+        await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
+        const tx = await unirepContract.beginEpochTransition(numEpochKey)
+        const receipt = await tx.wait()
+        expect(receipt.status).equal(1)
+        currentEpoch = await unirepContract.currentEpoch()
+        expectedUnirepEventsInOrder.push(unirepEvents.EpochEnded)
+    })
+    
+    it('Third epoch ended', async () => {
+        const numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
+        await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
+        const tx = await unirepContract.beginEpochTransition(numEpochKey)
+        const receipt = await tx.wait()
+        expect(receipt.status).equal(1)
+        currentEpoch = await unirepContract.currentEpoch()
+        expectedUnirepEventsInOrder.push(unirepEvents.EpochEnded)
+    })
+
+    it('First user should perform transition', async () => {
+        const transitionFromEpoch = 1
+        const numAttestationsPerEpoch = numEpochKeyNoncePerEpoch * numAttestationsPerEpochKey
+        const attestationNullifiers: BigInt[] = []
+        for (let i = 0; i < numAttestationsPerEpoch; i++) {
+            attestationNullifiers.push(BigInt(16 + i))
+        }
+        const epkNullifiers: BigInt[] = []
+        for (let i = 0; i < numEpochKeyNoncePerEpoch; i++) {
+            epkNullifiers.push(BigInt(255))
+        }
+        const proof: BigInt[] = []
+        for (let i = 0; i < 8; i++) {
+            proof.push(BigInt(0))
+        }
+        const tx = await unirepContract.updateUserStateRoot(
+            genRandomSalt(),
+            attestationNullifiers,
+            epkNullifiers,
+            transitionFromEpoch,
+            genRandomSalt(),
+            genRandomSalt(),
+            genRandomSalt(),
+            proof,
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status).equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
+    })
+
+    it('Second user should perform transition', async () => {
+        const transitionFromEpoch = 1
+        const numAttestationsPerEpoch = numEpochKeyNoncePerEpoch * numAttestationsPerEpochKey
+        const attestationNullifiers: BigInt[] = []
+        for (let i = 0; i < numAttestationsPerEpoch; i++) {
+            attestationNullifiers.push(BigInt(16 + i))
+        }
+        const epkNullifiers: BigInt[] = []
+        for (let i = 0; i < numEpochKeyNoncePerEpoch; i++) {
+            epkNullifiers.push(BigInt(255))
+        }
+        const proof: BigInt[] = []
+        for (let i = 0; i < 8; i++) {
+            proof.push(BigInt(0))
+        }
+        const tx = await unirepContract.updateUserStateRoot(
+            genRandomSalt(),
+            attestationNullifiers,
+            epkNullifiers,
+            transitionFromEpoch,
+            genRandomSalt(),
+            genRandomSalt(),
+            genRandomSalt(),
+            proof,
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status).equal(1)
+        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
+    })
+
+    it('Unirep events order should match sequencer order', async () => {
         const sequencerFilter = unirepContract.filters.Sequencer()
         const sequencerEvents =  await unirepContract.queryFilter(sequencerFilter)
-        expect(sequencerEvents.length).to.be.equal(10)
 
         for (let i = 0; i < sequencerEvents.length; i++) {
             const event = sequencerEvents[i]
-            expect(event.args._event).equal(expectedEventsInOrder[i])
+            expect(event.args._event).equal(unirepEvents[expectedUnirepEventsInOrder[i]])
         }
+    })
+
+    it('Unirep Social events should match all actions', async () => {
+        const userSignUpFilter = unirepSocialContract.filters.UserSignedUp()
+        const userSignUpEvents =  await unirepSocialContract.queryFilter(userSignUpFilter)
+        expect(userSignUpEvents.length).equal(expectedSignUpEventsLength)
+
+        const postFilter = unirepSocialContract.filters.PostSubmitted()
+        const postEvents =  await unirepSocialContract.queryFilter(postFilter)
+        expect(postEvents.length).equal(expectedPostEventsLength)
+
+        const commentFilter = unirepSocialContract.filters.CommentSubmitted()
+        const commentEvents =  await unirepSocialContract.queryFilter(commentFilter)
+        expect(commentEvents.length).equal(expectedCommentEventsLength)
+
+        const voteFilter = unirepSocialContract.filters.VoteSubmitted()
+        const voteEvents =  await unirepSocialContract.queryFilter(voteFilter)
+        expect(voteEvents.length).equal(expectedVoteEventsLength)
 
     })
 })
