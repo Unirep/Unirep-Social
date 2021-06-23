@@ -437,7 +437,7 @@ describe('User State Transition circuits', function () {
                             oldGraffities.push(reputationRecords[attesterId.toString()]['graffiti'])
 
                             // Get old attestation record proof
-                            const oldReputationRecordProof = await userStateTree.getMerkleProof(BigInt(attesterId))
+                            const oldReputationRecordProof = await userStateTree.getMerkleProof(attesterId)
                             userStateLeafPathElements.push(oldReputationRecordProof)
 
                             // Update attestation record
@@ -449,7 +449,7 @@ describe('User State Transition circuits', function () {
                             )
                             currentEpochPosRep += Number(attestation['posRep'])
                             currentEpochNegRep += Number(attestation['negRep'])
-                            await userStateTree.update(BigInt(attesterId), reputationRecords[attesterId.toString()].hash())
+                            await userStateTree.update(attesterId, reputationRecords[attesterId.toString()].hash())
 
                             const attestation_hash = attestation.hash()
                             hashChainResult = hashLeftRight(attestation_hash, hashChainResult)

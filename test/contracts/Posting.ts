@@ -144,9 +144,9 @@ describe('Post', function () {
                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
                 
 
-                for (let i = 0; i < newLeafEvents.length; i++) {
-                    if(BigInt(newLeafEvents[i]?.args?._hashedLeaf) == BigInt(hashedStateLeaf)){
-                        GSTreeLeafIndex = newLeafEvents[i]?.args?._leafIndex.toNumber()
+                for (let j = 0; j < newLeafEvents.length; j++) {
+                    if(BigInt(newLeafEvents[j]?.args?._hashedLeaf) == BigInt(hashedStateLeaf)){
+                        GSTreeLeafIndex = newLeafEvents[j]?.args?._leafIndex.toNumber()
                     }
                 }
                 expect(GSTreeLeafIndex).to.equal(i)

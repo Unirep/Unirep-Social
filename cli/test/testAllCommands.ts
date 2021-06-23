@@ -331,7 +331,7 @@ describe('test all CLI subcommands', function() {
 
 
     describe('upvote CLI subcommand', () => {
-        it('should upvote to user', async () => {
+        it('should upvote to user 1', async () => {
             const command = `npx ts-node cli/index.ts vote` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${attesterPrivKey} ` +
