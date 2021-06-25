@@ -560,7 +560,6 @@ class UserState {
     public genProveReputationCircuitInputs = async (
         epochKeyNonce: number,
         proveKarmaAmount: number,
-        nonceStarter: number,
         minRep: number,
     ) => {
         assert(this.hasSignedUp, "User has not signed up yet")
@@ -586,6 +585,18 @@ class UserState {
         ])
         const selectors: BigInt[] = []
         const nonceList: BigInt[] = []
+        let nonceStarter = -1
+
+        // find valid nonce starter
+        for (let n = 0; n < this.transitionedPosRep - this.transitionedNegRep; n++) {
+            const karmaNullifier = genKarmaNullifier(this.id.identityNullifier, epoch, n, this.unirepState.nullifierTreeDepth)
+            if(!this.unirepState.karmaNullifiersMap[karmaNullifier.toString()]) {
+                nonceStarter = n
+                break
+            }
+        }
+        assert(nonceStarter != -1, "Cannot find valid nonce")
+        assert((nonceStarter + proveKarmaAmount) <= this.transitionedPosRep - this.transitionedNegRep, "Not enough karma to spend")
         for (let i = 0; i < proveKarmaAmount; i++) {
             nonceList.push( BigInt(nonceStarter + i) )
             selectors.push(BigInt(1));

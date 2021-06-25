@@ -10,7 +10,7 @@ const { expect } = chai
 
 import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { Attestation, UnirepState, UserState } from "../../core"
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../../circuits/utils'
@@ -21,6 +21,7 @@ describe('EventSequencing', () => {
     enum unirepEvents { 
         UserSignUp,
         AttestationSubmitted,
+        ReputationNullifierSubmitted,
         EpochEnded,
         UserStateTransitioned
     }
@@ -85,7 +86,6 @@ describe('EventSequencing', () => {
 
     it('should publish a post by first user', async () => {
         let epochKeyNonce = 0
-        const nonceStarter = 0
 
         currentEpoch = await unirepContract.currentEpoch()
         emptyUserStateRoot = await unirepContract.emptyUserStateRoot()
@@ -126,7 +126,6 @@ describe('EventSequencing', () => {
         const circuitInputs = await users[0].genProveReputationCircuitInputs(
             epochKeyNonce,
             DEFAULT_POST_KARMA,
-            nonceStarter,
             0
         )
         
@@ -150,7 +149,13 @@ describe('EventSequencing', () => {
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedPostEventsLength++
+
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            unirepState.addKarmaNullifiers(modedNullifier)
+        }
     })
 
     it('should sign up seconde user', async () => {
@@ -188,12 +193,10 @@ describe('EventSequencing', () => {
         GSTreeLeafIndex ++
 
         let epochKeyNonce = 0
-        const nonceStarter = 0
 
         const circuitInputs = await users[1].genProveReputationCircuitInputs(
             epochKeyNonce,
             DEFAULT_POST_KARMA,
-            nonceStarter,
             0
         )
         
@@ -218,13 +221,18 @@ describe('EventSequencing', () => {
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit comment failed').to.equal(1)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedCommentEventsLength++
+
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            unirepState.addKarmaNullifiers(modedNullifier)
+        }
     })
         
     it('first user should upvote second user', async () => {
         let voteValue = 3
         let epochKeyNonce = 1
-        const nonceStarter = 10
         const epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
 
         let attestation = new Attestation(
@@ -238,7 +246,6 @@ describe('EventSequencing', () => {
         const circuitInputs = await users[0].genProveReputationCircuitInputs(
             epochKeyNonce,
             DEFAULT_POST_KARMA,
-            nonceStarter,
             0
         )
         
@@ -257,13 +264,19 @@ describe('EventSequencing', () => {
             fromEpochKey,
             publicSignals,
             proof,
-            { value: voteFee, gasLimit: 3000000 }
+            { value: attestingFee, gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit upvote failed').to.equal(1)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
         expectedVoteEventsLength++
+
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            unirepState.addKarmaNullifiers(modedNullifier)
+        }
     })
 
     it('first epoch ended', async () => {

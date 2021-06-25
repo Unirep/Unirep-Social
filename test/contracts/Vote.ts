@@ -15,7 +15,6 @@ import { Attestation, UnirepState, UserState } from '../../core'
 import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 import { deployUnirepSocial } from '../../core/utils'
-import { vote } from '../../cli/vote'
 
 
 describe('Vote', function () {
@@ -188,11 +187,9 @@ describe('Vote', function () {
     describe('Generate reputation proof for verification', () => {
 
         it('reputation proof should be verified valid off-chain', async() => {
-            const nonceStarter = 0
             const circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 upvoteValue,
-                nonceStarter,
                 0
             )
 
@@ -226,7 +223,6 @@ describe('Vote', function () {
         )
         const fromUser = 0
         const toUser = 1
-        const voteFee = attestingFee.mul(2)
 
         it('submit upvote should succeed', async() => {
             currentEpoch = (await unirepContract.currentEpoch()).toNumber()
@@ -242,7 +238,7 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
+                { value: attestingFee, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
@@ -254,11 +250,9 @@ describe('Vote', function () {
 
             toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce2, circuitEpochTreeDepth)
 
-            const nonceStarter = 1
             const circuitInputs = await users[fromUser].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 upvoteValue,
-                nonceStarter,
                 0
             )
 
@@ -282,8 +276,13 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
-            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
+                { value: attestingFee, gasLimit: 1000000 }
+            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
+
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
         })
 
         it('submit upvote from the same epoch key should fail', async() => {
@@ -292,11 +291,9 @@ describe('Vote', function () {
 
             toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce2, circuitEpochTreeDepth)
 
-            const nonceStarter = 10
             const circuitInputs = await users[fromUser].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 upvoteValue,
-                nonceStarter,
                 0
             )
 
@@ -320,7 +317,7 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
+                { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
 
@@ -330,12 +327,11 @@ describe('Vote', function () {
 
             toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce2, circuitEpochTreeDepth)
             
-            const nonceStarter = 20
+            const minRep = 21
             const circuitInputs = await users[fromUser].genProveReputationCircuitInputs(
                 epochKeyNonce2,
                 upvoteValue,
-                nonceStarter,
-                0
+                minRep
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -358,8 +354,8 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
-            )).to.be.revertedWith('Unirep Social: the proof is not valid')
+                { value: attestingFee, gasLimit: 1000000 }
+            )).to.be.revertedWith('Unirep: the proof is not valid')
         })
 
         it('submit vote with 0 value should fail', async() => {
@@ -379,7 +375,7 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
+                { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should submit a positive vote value')
         })
 
@@ -400,7 +396,7 @@ describe('Vote', function () {
                 fromEpk, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
-                { value: voteFee, gasLimit: 3000000 }
+                { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should only choose to upvote or to downvote')
         })
     })

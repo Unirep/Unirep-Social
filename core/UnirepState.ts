@@ -202,9 +202,9 @@ class UnirepState {
     * Add karma nullifiers to the map state
     */
     public addKarmaNullifiers = (
-        nullifiers: BigInt[]
+        nullifier: BigInt
     ) => {
-        for(const nullifier of nullifiers){
+        if (nullifier > BigInt(0)) {
             this.karmaNullifiersMap[nullifier.toString()] = true
         }
     }

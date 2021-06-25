@@ -22,6 +22,7 @@ import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { dbUri } from '../config/database'
 import { Reputation } from '../core/UserState'
+import { genKarmaNullifier } from '../core/utils'
 
 enum action {
     UpVote = 0,
@@ -471,7 +472,6 @@ const genProveReputationCircuitInputsFromDB = async (
     id: any,
     epochKeyNonce: number,
     proveKarmaAmount: number,
-    nonceStarter: number,
     minRep: number,
 ) => {
     const db = await mongoose.connect(
@@ -505,10 +505,24 @@ const genProveReputationCircuitInputsFromDB = async (
     const hashedLeaf = hash5([
         genIdentityCommitment(id),
         userStateTree.getRootHash(),
-        BigInt(userState[epoch].transitionedPosRep),
-        BigInt(userState[epoch].transitionedNegRep),
+        userState[epoch].transitionedPosRep,
+        userState[epoch].transitionedNegRep,
         BigInt(0)
     ])
+    let nonceStarter = -1
+    const repDiff: number = Number(userState[epoch].transitionedPosRep) - Number(userState[epoch].transitionedNegRep)
+
+    // find valid nonce starter
+    for (let n = 0; n < repDiff ; n++) {
+        const karmaNullifier = genKarmaNullifier(id.identityNullifier, epoch, n, nullifierTreeDepth)
+        const res = await ReputationNullifier?.findOne({nullifiers: karmaNullifier.toString()})
+        if(!res) {
+            nonceStarter = n
+            break
+        }
+    }
+    assert(nonceStarter != -1, "Cannot find valid nonce")
+    assert((nonceStarter + proveKarmaAmount) <= repDiff, "Not enough karma to spend")
     const selectors: BigInt[] = []
     const nonceList: BigInt[] = []
     for (let i = 0; i < proveKarmaAmount; i++) {
@@ -597,8 +611,8 @@ const genProveReputationFromAttesterCircuitInputsFromDB = async (
     const hashedLeaf = hash5([
         genIdentityCommitment(id),
         userStateTree.getRootHash(),
-        BigInt(transitionedPosRep),
-        BigInt(transitionedNegRep),
+        transitionedPosRep,
+        transitionedNegRep,
         BigInt(0)
     ])
     const GSTree = await genGSTreeFromDB(epoch)
@@ -630,8 +644,8 @@ const genProveReputationFromAttesterCircuitInputsFromDB = async (
         neg_rep: negRep,
         graffiti: graffiti,
         UST_path_elements: USTPathElements,
-        positive_karma: BigInt(transitionedPosRep),
-        negative_karma: BigInt(transitionedNegRep),
+        positive_karma: transitionedPosRep,
+        negative_karma: transitionedNegRep,
         prove_pos_rep: provePosRep,
         prove_neg_rep: proveNegRep,
         prove_rep_diff: proveRepDiff,
@@ -695,7 +709,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
     // User state tree
     const userStateTreeRoot = userState[fromEpoch].userStateTree.getRootHash()
     const transitionedPosRep = userState[fromEpoch].transitionedPosRep
-    const transitionedNegRep = BigInt(userState[fromEpoch].transitionedNegRep)
+    const transitionedNegRep = userState[fromEpoch].transitionedNegRep
 
     const hashedLeaf = hash5([
         genIdentityCommitment(id),
@@ -974,16 +988,21 @@ const updateDBFromCommentSubmittedEvent = async (
 const updateDBFromReputationNullifierSubmittedEvent = async (
     event: ethers.Event,
 ) => {
+    const _settings = await Settings.findOne()
+    if (!_settings) {
+        throw new Error('Error: should save settings first')
+    } 
     const iface = new ethers.utils.Interface(Unirep.abi)
     const decodedData = iface.decodeEventLog("ReputationNullifierSubmitted",event.data)
     const default_nullifier = hash5([BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)])
 
-    for (let nullifier of decodedData.karmaNullifiers) {
+    for (let nullifier of decodedData.reputationNullifiers) {
         if ( BigInt(nullifier) != default_nullifier ){
+            const modedNullifier = BigInt(nullifier) % BigInt(2 ** _settings.nullifierTreeDepth)
             const newReputationNullifier: IReputationNullifier = new ReputationNullifier({
                 transactionHash: event.transactionHash,
                 action: action[decodedData.actionChoice],
-                nullifiers: nullifier.toString()
+                nullifiers: modedNullifier.toString()
             })
     
             const res = await newReputationNullifier.save()

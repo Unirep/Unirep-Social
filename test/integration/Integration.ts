@@ -11,7 +11,7 @@ const { expect } = chai
 import { Attestation, IAttestation, IEpochTreeLeaf, IUserStateLeaf, UnirepState, UserState, genUserStateFromContract } from "../../core"
 import { formatProofForVerifierContract, genVerifyEpochKeyProofAndPublicSignals, genVerifyReputationProofAndPublicSignals, genVerifyReputationFromAttesterProofAndPublicSignals,
 genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyEPKProof, verifyProveReputationProof, verifyUserStateTransitionProof, verifyProveReputationFromAttesterProof } from "../circuits/utils"
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { add0x } from '../../crypto/SMT'
 import { deployUnirepSocial } from '../../core/utils'
 
@@ -398,7 +398,6 @@ describe('Integration', function () {
 
             // gen nullifier nonce list
             const proveKarmaAmount = DEFAULT_POST_KARMA
-            const nonceStarter: number = 0
 
             // gen minRep proof
             const minRep = 0
@@ -406,7 +405,6 @@ describe('Integration', function () {
             const circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,                       // generate epoch key from epoch nonce
                 proveKarmaAmount,               // the amount of output karma nullifiers
-                nonceStarter,                      // nonce to generate karma nullifiers
                 minRep                          // the amount of minimum reputation the user wants to prove
             )
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -448,6 +446,11 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
+
             // User submit a post through Unirep Social should be found in Unirep Social Events
             const postFilter = unirepSocialContract.filters.PostSubmitted(currentEpoch, BigInt(add0x(postId)), epochKey)
             const postEvents = await unirepSocialContract.queryFilter(postFilter)
@@ -472,7 +475,6 @@ describe('Integration', function () {
             const voteValue = 3
             const proveKarmaAmount = voteValue
             const upvoteValue = BigInt(voteValue)       
-            const nonceStarter: number = 0
    
             // gen minRep proof
             const minRep =  0
@@ -486,7 +488,6 @@ describe('Integration', function () {
             const circuitInputs = await users[secondUser].genProveReputationCircuitInputs(
                 nonce,                       // generate epoch key from epoch nonce
                 proveKarmaAmount,               // the amount of output karma nullifiers
-                nonceStarter,                      // nonce to generate karma nullifiers
                 minRep                          // the amount of minimum reputation the user wants to prove
             )
 
@@ -529,6 +530,11 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit attestation failed').to.equal(1)
 
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
+
             // User submit a vote through Unirep Social should be found in Unirep Social Events
             const voteFilter = unirepSocialContract.filters.VoteSubmitted(currentEpoch, fromEpochKey, firstUserEpochKey)
             const voteEvents = await unirepSocialContract.queryFilter(voteFilter)
@@ -553,7 +559,6 @@ describe('Integration', function () {
 
             // gen nullifier nonce list
             const proveKarmaAmount = DEFAULT_COMMENT_KARMA
-            const nonceStarter: number = 10
 
             // gen minRep proof
             const minRep = 0
@@ -561,7 +566,6 @@ describe('Integration', function () {
             const circuitInputs = await users[firstUser].genProveReputationCircuitInputs(
                 epochKeyNonce,                       // generate epoch key from epoch nonce
                 proveKarmaAmount,               // the amount of output karma nullifiers
-                nonceStarter,                      // nonce to generate karma nullifiers
                 minRep                          // the amount of minimum reputation the user wants to prove
             )
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -603,6 +607,11 @@ describe('Integration', function () {
 
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit comment failed').to.equal(1)
+
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
 
             // User submit a comment through Unirep Social should be found in Unirep Social Events
             const commentFilter = unirepSocialContract.filters.CommentSubmitted(currentEpoch, BigInt(add0x(postId)), epochKey)
