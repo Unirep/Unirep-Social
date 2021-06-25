@@ -26,7 +26,7 @@ import Comment, { IComment } from "../database/models/comment";
 import Post from "../database/models/post";
 import { DEFAULT_COMMENT_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
-import { stringifyBigInts } from 'maci-crypto'
+import { hash5, stringifyBigInts } from 'maci-crypto'
 import { genEpochKey } from '../core/utils'
 import { genProveReputationCircuitInputsFromDB } from '../database/utils'
 
@@ -78,15 +78,6 @@ const configureSubparser = (subparsers: any) => {
             required: true,
             type: 'int',
             help: 'The epoch key nonce',
-        }
-    )
-
-    parser.add_argument(
-        '-kn', '--karma-nonce',
-        {
-            required: true,
-            type: 'int',
-            help: `The first nonce to generate karma nullifiers. It will generate ${DEFAULT_COMMENT_KARMA} nullifiers`,
         }
     )
 
@@ -211,7 +202,6 @@ const leaveComment = async (args: any) => {
     
     // gen reputation proof 
     const proveKarmaAmount = DEFAULT_COMMENT_KARMA
-    const nonceStarter: number = args.karma_nonce
     const minRep = args.min_rep != null ? args.min_rep : 0
     
     let circuitInputs: any
@@ -226,7 +216,6 @@ const leaveComment = async (args: any) => {
            id,
            epkNonce,                       // generate epoch key from epoch nonce
            proveKarmaAmount,               // the amount of output karma nullifiers
-           nonceStarter,                      // nonce to generate karma nullifiers
            minRep                          // the amount of minimum reputation the user wants to prove
         )
 
@@ -246,7 +235,6 @@ const leaveComment = async (args: any) => {
         circuitInputs = await userState.genProveReputationCircuitInputs(
             epkNonce,                       // generate epoch key from epoch nonce
             proveKarmaAmount,               // the amount of output karma nullifiers
-            nonceStarter,                      // nonce to generate karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
     }

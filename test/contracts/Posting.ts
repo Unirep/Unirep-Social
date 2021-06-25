@@ -40,6 +40,7 @@ describe('Post', function () {
     let proof
     let publicSignals
     let witness
+    let circuitInputs
     const postId = genRandomSalt()
     const commentId = genRandomSalt()
     const text = genRandomSalt().toString()
@@ -179,11 +180,9 @@ describe('Post', function () {
     describe('Generate reputation proof for verification', () => {
 
         it('reputation proof should be verified valid off-chain', async() => {
-            const nonceStarter = 0
-            const circuitInputs = await users[0].genProveReputationCircuitInputs(
+            circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_POST_KARMA,
-                nonceStarter,
                 0
             )
 
@@ -221,6 +220,11 @@ describe('Post', function () {
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
+
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
         })
 
         it('submit a post with duplicated nullifiers should fail', async() => {
@@ -228,13 +232,6 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 1
-            const circuitInputs = await users[0].genProveReputationCircuitInputs(
-                epochKeyNonce,
-                DEFAULT_POST_KARMA,
-                nonceStarter,
-                0
-            )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
@@ -257,20 +254,17 @@ describe('Post', function () {
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
+            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
         })
 
         it('submit a post with the same epoch key should fail', async() => {
             
-            
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 10
-            const circuitInputs = await users[0].genProveReputationCircuitInputs(
+            circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_POST_KARMA,
-                nonceStarter,
                 0
             )
 
@@ -302,12 +296,12 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 15
-            const circuitInputs = await users[0].genProveReputationCircuitInputs(
+            // use minRep to make the proof invalid
+            const minRep = 30
+            circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_POST_KARMA,
-                nonceStarter,
-                0
+                minRep
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -331,18 +325,16 @@ describe('Post', function () {
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep Social: the proof is not valid')
+            )).to.be.revertedWith('Unirep: the proof is not valid')
         })
     })
 
     describe('Comment a post', () => {
         const epochKeyNonce = 0
         it('reputation proof should be verified valid off-chain', async() => {
-            const nonceStarter = 0
-            const circuitInputs = await users[1].genProveReputationCircuitInputs(
+            circuitInputs = await users[1].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_COMMENT_KARMA,
-                nonceStarter,
                 0
             )
 
@@ -378,20 +370,18 @@ describe('Post', function () {
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit comment failed').to.equal(1)
+
+            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                unirepState.addKarmaNullifiers(modedNullifier)
+            }
         })
 
         it('submit a comment with duplicated nullifiers should fail', async() => {
             const text = genRandomSalt().toString()
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
-            const epochKeyNonce = 0
+            const epochKeyNonce = 1
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 1
-            const circuitInputs = await users[1].genProveReputationCircuitInputs(
-                epochKeyNonce,
-                DEFAULT_POST_KARMA,
-                nonceStarter,
-                0
-            )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
@@ -415,7 +405,7 @@ describe('Post', function () {
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep Social: the nullifier has been submitted')
+            )).to.be.revertedWith('Unirep: the nullifier has been submitted')
         })
 
         it('submit a comment with the same epoch key should fail', async() => {
@@ -423,11 +413,9 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 10
-            const circuitInputs = await users[1].genProveReputationCircuitInputs(
+            circuitInputs = await users[1].genProveReputationCircuitInputs(
                 epochKeyNonce,
-                DEFAULT_POST_KARMA,
-                nonceStarter,
+                DEFAULT_COMMENT_KARMA,
                 0
             )
 
@@ -460,12 +448,12 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
-            const nonceStarter = 15
-            const circuitInputs = await users[1].genProveReputationCircuitInputs(
+            // use minRep to make the proof invalid
+            const minRep = 30
+            circuitInputs = await users[1].genProveReputationCircuitInputs(
                 epochKeyNonce,
-                DEFAULT_POST_KARMA,
-                nonceStarter,
-                0
+                DEFAULT_COMMENT_KARMA,
+                minRep
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -490,7 +478,7 @@ describe('Post', function () {
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep Social: the proof is not valid')
+            )).to.be.revertedWith('Unirep: the proof is not valid')
         })
     })
 })

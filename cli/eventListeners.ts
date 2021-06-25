@@ -84,11 +84,11 @@ const unirepContract = new ethers.Contract(
 
   const NewGSTLeafInsertedFilter = unirepContract.filters.NewGSTLeafInserted()
   const AttestationSubmittedFilter = unirepContract.filters.AttestationSubmitted()
+  const reputationSubmittedFilter = unirepContract.filters.ReputationNullifierSubmitted()
   const epochEndedFilter = unirepContract.filters.EpochEnded()
   const userStateTransitionedFilter = unirepContract.filters.UserStateTransitioned()
   const postSubmittedFilter = unirepSocialContract.filters.PostSubmitted()
   const commentSubmittedFilter = unirepSocialContract.filters.CommentSubmitted()
-  const reputationSubmittedFilter = unirepSocialContract.filters.ReputationNullifierSubmitted()
   
 
   // NewGSTLeaf listeners

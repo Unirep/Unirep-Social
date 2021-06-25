@@ -48,7 +48,9 @@ describe('Prove reputation circuit', function () {
     const epochKeyNonce = 0
     const epochKey = genEpochKey(user['identityNullifier'], epoch, epochKeyNonce, circuitEpochTreeDepth)
     const nonceStarter = 0
-    let minRep = null
+    const selectors: BigInt[] = []
+    const nonceList: BigInt[] = []
+    let minRep = BigInt(0)
 
     before(async () => {
         const startCompileTime = Math.floor(new Date().getTime() / 1000)
@@ -94,13 +96,8 @@ describe('Prove reputation circuit', function () {
 
         epkNullifier = genEpochKeyNullifier(user['identityNullifier'], epoch, nonce, circuitNullifierTreeDepth)
         epkNullifierProof = await nullifierTree.getMerkleProof(epkNullifier)
-    })
 
-    it('successfully prove reputation', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
+        // selectors and karma nonce
         for (let i = 0; i < proveKarmaAmount; i++) {
             nonceList.push( BigInt(nonceStarter + i) )
             selectors.push(BigInt(1));
@@ -109,6 +106,9 @@ describe('Prove reputation circuit', function () {
             nonceList.push(BigInt(0))
             selectors.push(BigInt(0))
         }
+    })
+
+    it('successfully prove reputation', async () => {
 
         const circuitInputs = {
             epoch: epoch,
@@ -132,7 +132,7 @@ describe('Prove reputation circuit', function () {
             prove_karma_amount: BigInt(proveKarmaAmount),
             karma_nonce: nonceList,
             prove_min_rep: minRep != null ? true: false,
-            min_rep: minRep != null ? BigInt(minRep) : BigInt(0),
+            min_rep: minRep,
         }
 
         const witness = await executeCircuit(circuit, circuitInputs)
@@ -145,18 +145,6 @@ describe('Prove reputation circuit', function () {
     })
 
     it('successfully prove min reputation', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
-        for (let i = 0; i < proveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
-        }
-        for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
-        }
 
         const circuitInputs = {
             epoch: epoch,
@@ -193,18 +181,16 @@ describe('Prove reputation circuit', function () {
     })
 
     it('prove reputation with reputation amount less than required amount should fail', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
+        const wrongSelectors: BigInt[] = []
+        const wrongNonceList: BigInt[] = []
         const wrongProveKarmaAmount = 8
         for (let i = 0; i < wrongProveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
+            wrongNonceList.push( BigInt(nonceStarter + i) )
+            wrongSelectors.push(BigInt(1));
         }
         for (let i = wrongProveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
+            wrongNonceList.push(BigInt(0))
+            wrongSelectors.push(BigInt(0))
         }
 
         const circuitInputs = {
@@ -222,14 +208,14 @@ describe('Prove reputation circuit', function () {
             GST_root: GSTreeRoot,
             nullifier_tree_root: nullifierTreeRoot,
             nullifier_path_elements: epkNullifierProof,
-            selectors: selectors,
+            selectors: wrongSelectors,
             positive_karma: transitionedPosRep,
             negative_karma: transitionedNegRep,
             prove_karma_nullifiers: BigInt(Boolean(proveKarmaAmount)),
             prove_karma_amount: BigInt(wrongProveKarmaAmount),
-            karma_nonce: nonceList,
+            karma_nonce: wrongNonceList,
             prove_min_rep: minRep != null ? true: false,
-            min_rep: minRep != null ? BigInt(minRep) : BigInt(0),
+            min_rep: minRep,
         }
 
         let error
@@ -244,18 +230,16 @@ describe('Prove reputation circuit', function () {
     })
 
     it('successfully prove wrong reputation nullifiers when flag is set false', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
+        const wrongSelectors: BigInt[] = []
+        const wrongNonceList: BigInt[] = []
         const wrongProveKarmaAmount = 8
         for (let i = 0; i < wrongProveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
+            wrongNonceList.push( BigInt(nonceStarter + i) )
+            wrongSelectors.push(BigInt(1));
         }
         for (let i = wrongProveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
+            wrongNonceList.push(BigInt(0))
+            wrongSelectors.push(BigInt(0))
         }
 
         const circuitInputs = {
@@ -273,14 +257,14 @@ describe('Prove reputation circuit', function () {
             GST_root: GSTreeRoot,
             nullifier_tree_root: nullifierTreeRoot,
             nullifier_path_elements: epkNullifierProof,
-            selectors: selectors,
+            selectors: wrongSelectors,
             positive_karma: transitionedPosRep,
             negative_karma: transitionedNegRep,
             prove_karma_nullifiers: false,
             prove_karma_amount: BigInt(wrongProveKarmaAmount),
-            karma_nonce: nonceList,
+            karma_nonce: wrongNonceList,
             prove_min_rep: minRep != null ? true: false,
-            min_rep: minRep != null ? BigInt(minRep) : BigInt(0),
+            min_rep: minRep,
         }
 
         const witness = await executeCircuit(circuit, circuitInputs)
@@ -293,18 +277,6 @@ describe('Prove reputation circuit', function () {
     })
 
     it('prove reputation with reputation amount more than claimed min rep amount should fail', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
-        for (let i = 0; i < proveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
-        }
-        for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
-        }
 
         const circuitInputs = {
             epoch: epoch,
@@ -343,18 +315,6 @@ describe('Prove reputation circuit', function () {
     })
 
     it('successfully prove wrong min reputation when flag is set false', async () => {
-        const attesterIds = Object.keys(reputationRecords)
-        const attesterId = attesterIds[Math.floor(Math.random() * NUM_ATTESTERS)]
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
-        for (let i = 0; i < proveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
-        }
-        for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
-        }
 
         const circuitInputs = {
             epoch: epoch,
@@ -397,18 +357,7 @@ describe('Prove reputation circuit', function () {
         const _nullifierTree = await genNewNullifierTree("circuit")
         await _nullifierTree.update(BigInt(attesterId), SMT_ONE_LEAF)
         const _nullifierTreeRoot = _nullifierTree.getRootHash()
-        const selectors: BigInt[] = []
-        const nonceList: BigInt[] = []
-        for (let i = 0; i < proveKarmaAmount; i++) {
-            nonceList.push( BigInt(nonceStarter + i) )
-            selectors.push(BigInt(1));
-        }
-        for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
-            nonceList.push(BigInt(0))
-            selectors.push(BigInt(0))
-        }
-
-
+    
         const circuitInputs = {
             epoch: epoch,
             nonce: nonce,
@@ -431,7 +380,7 @@ describe('Prove reputation circuit', function () {
             prove_karma_amount: BigInt(proveKarmaAmount),
             karma_nonce: nonceList,
             prove_min_rep: minRep != null ? true: false,
-            min_rep: minRep != null ? BigInt(minRep) : BigInt(0),
+            min_rep: minRep,
         }
 
         let error

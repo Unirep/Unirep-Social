@@ -48,6 +48,8 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
     // The maximum number of signups allowed
     uint256 immutable public maxUsers;
 
+    uint256 immutable public zeroNullifier = hash5([uint256(0),uint256(0),uint256(0),uint256(0),uint256(0)]);
+
     uint256 public numUserSignUps = 0;
 
     uint256 public nextGSTLeafIndex = 0;
@@ -88,6 +90,9 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
     // Mpapping of epoch to epoch key list
     mapping(uint256 => EpochKeyList) internal epochKeys;
 
+    // Indicate if the reputation nullifiers is submitted
+    mapping(uint256 => bool) public isReputationNullifierSubmitted;
+
     TreeDepths public treeDepths;
 
 
@@ -107,6 +112,12 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         uint256 indexed _epochKey,
         address indexed _attester,
         Attestation attestation
+    );
+
+    event ReputationNullifierSubmitted(
+        uint256 indexed _epoch,
+        uint256 spendReputationAmount,
+        uint256[] reputationNullifiers
     );
 
     event EpochEnded(uint256 indexed _epoch);
@@ -200,7 +211,12 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         nextGSTLeafIndex ++;
     }
 
-    function verifySignature(address attester, bytes calldata signature) internal view {
+    /*
+     * Verify if the attester has a valid signature as claimed
+     * @param attester The address of user who wants to perform an action
+     * @param siganture The signature signed by the attester
+     */
+    function verifySignature(address attester, bytes memory signature) internal view {
         // Attester signs over it's own address concatenated with this contract address
         bytes32 messageHash = keccak256(
             abi.encodePacked(
@@ -216,6 +232,9 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         );
     }
 
+    /*
+     * Sign up an attester using the address who sends the transaction
+     */
     function attesterSignUp() external {
         require(attesters[msg.sender] == 0, "Unirep: attester has already signed up");
 
@@ -223,6 +242,11 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         nextAttesterId ++;
     }
 
+    /*
+     * Sign up an attester using the claimed address and the signature
+     * @param attester The address of the attester who wants to sign up
+     * @param signature The signature of the attester
+     */
     function attesterSignUpViaRelayer(address attester, bytes calldata signature) external {
         require(attesters[attester] == 0, "Unirep: attester has already signed up");
         verifySignature(attester, signature);
@@ -231,29 +255,150 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         nextAttesterId ++;
     }
 
+    /*
+     * An attester submit the attestation with a reputation proof
+     * @param attestation The attestation that the attester wants to send to the epoch key
+     * @param fromEpochKey The epoch key of the attester. Unirep will send a negative reputation to the attester
+     * @param toEpochKey The attester wants to send attestation to
+     * @param publicSignals Public signals in the reputation proof
+     * @param _proof The ZK proof
+     */
+    function submitAttestation(
+        Attestation memory attestation,
+        uint256 fromEpochKey,
+        uint256 toEpochKey,
+        uint256[] memory publicSignals,
+        uint256[8] memory _proof
+    ) public payable {
+        require(msg.value == attestingFee, "Unirep: no attesting fee or incorrect amount");
+         // Add to the cumulated attesting fee
+        collectedAttestingFee = collectedAttestingFee.add(msg.value);
+        processSpendReputation(msg.sender, fromEpochKey, publicSignals, _proof, attestation.posRep + attestation.negRep);
+        processAttestation(msg.sender, attestation, toEpochKey);
+    }
+
+    /*
+     * An attester submit the attestation with a reputation proof via a relayer
+     * @param attester The address of the attester
+     * @param signature The signature of the attester
+     * @param attestation The attestation including positive reputaiton, negative reputaiton or graffiti
+     * @param fromEpochKey The epoch key of the attester. Unirep will send a negative reputation to the attester
+     * @param toEpochKey The attester wants to send attestation to
+     * @param publicSignals Public signals in the reputation proof
+     * @param _proof The ZK proof
+     */
     function submitAttestationViaRelayer(
         address attester,
-        bytes calldata signature,
+        bytes memory signature,
         Attestation memory attestation,
-        uint256 epochKey
+        uint256 fromEpochKey,
+        uint256 toEpochKey,
+        uint256[] memory publicSignals,
+        uint256[8] memory _proof
     ) public payable {
         verifySignature(attester, signature);
         require(msg.value == attestingFee, "Unirep: no attesting fee or incorrect amount");
          // Add to the cumulated attesting fee
         collectedAttestingFee = collectedAttestingFee.add(msg.value);
-        processAttestation(attester, attestation, epochKey);
+        processSpendReputation(attester, fromEpochKey, publicSignals, _proof, attestation.posRep + attestation.negRep);
+        processAttestation(attester, attestation, toEpochKey);
     }
 
-    function submitAttestation(
-        Attestation memory attestation,
-        uint256 epochKey
+    /*
+     * User performs an action which costs reputation in an application
+     * @param epochKey The epoch key of the user. Unirep will send a negative reputation to the user
+     * @param publicSignals Public signals in the reputation proof
+     * @param _proof The ZK proof
+     * @param spendReputationAmount The number of expected reputation spent
+     */
+    function spendReputation(
+        uint256 epochKey,
+        uint256[] memory publicSignals,
+        uint256[8] memory _proof,
+        uint256 spendReputationAmount
     ) public payable {
         require(msg.value == attestingFee, "Unirep: no attesting fee or incorrect amount");
          // Add to the cumulated attesting fee
         collectedAttestingFee = collectedAttestingFee.add(msg.value);
-        processAttestation(msg.sender, attestation, epochKey);
+        processSpendReputation(msg.sender, epochKey, publicSignals, _proof, spendReputationAmount);
     }
 
+    /*
+     * User performs an action which costs reputation in an application via a relayer
+     * @param attester The address of the attester
+     * @param signature The signature of the attester
+     * @param epochKey The epoch key of the user. Unirep will send a negative reputation to the user
+     * @param publicSignals Public signals in the reputation proof
+     * @param _proof The ZK proof
+     * @param spendReputationAmount The number of expected reputation spent
+     */
+    function spendReputationViaRelayer(
+        address attester, 
+        bytes memory signature,
+        uint256 epochKey,
+        uint256[] memory publicSignals,
+        uint256[8] memory _proof,
+        uint256 spendReputationAmount
+    ) public payable{
+        require(msg.value == attestingFee, "Unirep: no attesting fee or incorrect amount");
+         // Add to the cumulated attesting fee
+        collectedAttestingFee = collectedAttestingFee.add(msg.value);
+        verifySignature(attester, signature);
+        processSpendReputation(attester, epochKey, publicSignals, _proof, spendReputationAmount);
+    }
+
+    /*
+     * process the reputation spending whether it is called via a relayer
+     * @param attester The address of the attester
+     * @param epochKey The epoch key of the user. Unirep will send a negative reputation to the user
+     * @param publicSignals Public signals in the reputation proof
+     * @param _proof The ZK proof
+     * @param spendReputationAmount The number of expected reputation spent
+     */
+    function processSpendReputation(
+        address attester,
+        uint256 epochKey,
+        uint256[] memory publicSignals,
+        uint256[8] memory _proof,
+        uint256 spendReputationAmount
+    ) internal {
+        // Determine if repuataion nullifiers are submitted before
+        // The first spendRepuatationAmount of public signals are valid repuation nullifiers
+        uint256[] memory reputationNullifiers = new uint256[](spendReputationAmount);
+        for (uint i = 0; i < spendReputationAmount; i++) {
+            require(isReputationNullifierSubmitted[publicSignals[i]] == false, "Unirep: the nullifier has been submitted");
+            require(publicSignals[i] != zeroNullifier, "Unirep: incorrect amount of nullifiers submitted");
+            isReputationNullifierSubmitted[publicSignals[i]] = true;
+            reputationNullifiers[i] = publicSignals[i];
+        }
+
+        bool proofIsValid = verifyReputation(publicSignals, _proof);
+        require(proofIsValid, "Unirep: the proof is not valid");
+
+        // Verify epoch key and its proof
+        // Then submit negative attestation to this epoch key
+        Unirep.Attestation memory attestation;
+        attestation.attesterId = attesters[attester];
+        attestation.posRep = 0;
+        attestation.negRep = spendReputationAmount;
+        attestation.graffiti = 0;
+        attestation.overwriteGraffiti = false;
+        processAttestation(attester, attestation, epochKey);
+
+        emit Sequencer("ReputationNullifierSubmitted");
+        emit ReputationNullifierSubmitted(
+            currentEpoch,
+            spendReputationAmount,
+            reputationNullifiers
+        );
+    }
+
+    /*
+     * process an attestation whether it is called via a relayer
+     * @param attester The address of the attester
+     * @param attestation The attestation including positive reputaiton, negative reputaiton or graffiti
+     * @param epochKey The epoch key where the attester wants to send attestation to
+     */
     function processAttestation(
         address attester,
         Attestation memory attestation,

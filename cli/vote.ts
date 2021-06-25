@@ -70,15 +70,6 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
-        '-kn', '--karma-nonce',
-        {
-            required: true,
-            type: 'int',
-            help: `The first nonce to generate karma nullifiers. It will generate number of nullifiers which equals to the number of upvote/downvote`,
-        }
-    )
-
-    parser.add_argument(
         '-mr', '--min-rep',
         {
             type: 'int',
@@ -247,7 +238,6 @@ const vote = async (args: any) => {
 
     // gen nullifier nonce list
     const proveKarmaAmount = voteValue
-    const nonceStarter: number = args.karma_nonce
     const minRep = args.min_rep != null ? args.min_rep : 0
     
     let circuitInputs: any
@@ -262,7 +252,6 @@ const vote = async (args: any) => {
            id,
            epkNonce,                       // generate epoch key from epoch nonce
            proveKarmaAmount,               // the amount of output karma nullifiers
-           nonceStarter,                      // nonce to generate karma nullifiers
            minRep                          // the amount of minimum reputation the user wants to prove
         )
 
@@ -282,7 +271,6 @@ const vote = async (args: any) => {
         circuitInputs = await userState.genProveReputationCircuitInputs(
             epkNonce,                       // generate epoch key from epoch nonce
             proveKarmaAmount,               // the amount of output karma nullifiers
-            nonceStarter,                      // nonce to generate karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
     }

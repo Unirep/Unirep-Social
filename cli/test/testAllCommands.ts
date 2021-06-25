@@ -29,9 +29,6 @@ describe('test all CLI subcommands', function() {
     const attestingFee = ethers.BigNumber.from(10).pow(18)
     const epochKeyNonce = 0
     const epochKeyNonce2 = 1
-    const postNonce = 0
-    const commentNonce = 10
-    const attestNonce = 15
     const epochLength = 5
     let unirepSocialContract: ethers.Contract
     let unirepState: UnirepState
@@ -251,7 +248,6 @@ describe('test all CLI subcommands', function() {
                 ` -d ${userPrivKey}` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce}` + 
-                ` -kn ${postNonce}` +
                 dbOption
 
             const output = exec(command).stdout.trim()
@@ -315,7 +311,6 @@ describe('test all CLI subcommands', function() {
                 ` -d ${userPrivKey}` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce2}` +
-                ` -kn ${commentNonce}` +
                 ` -mr ${minRepDiff}` +
                 dbOption
 
@@ -338,7 +333,6 @@ describe('test all CLI subcommands', function() {
                 ` -epk ${epk} ` +
                 ` -id ${userIdentity2}` +
                 ` -n ${epochKeyNonce}` +
-                ` -kn ${attestNonce}` +
                 ` -uv ${posRep} ` +
                 ` -gf ${graffiti.toString(16)} `  +
                 dbOption

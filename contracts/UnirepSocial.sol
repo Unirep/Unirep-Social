@@ -22,14 +22,6 @@ contract UnirepSocial {
     // The amount of karma airdropped to user when user signs up and executes user state transition
     uint256 immutable public airdroppedReputation;
 
-    // Indicate if the reputation nullifiers is submitted
-    mapping(uint256 => bool) public isReputationNullifierSubmitted;
-
-    // Unirep Social Events
-    event Sequencer(
-        string _event
-    );
-
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -62,12 +54,6 @@ contract UnirepSocial {
         Unirep.Attestation attestation,
         uint256[] publicSignals,
         uint256[8] proof
-    );
-
-    event ReputationNullifierSubmitted(
-        uint256 indexed _epoch,
-        uint256 spendReputationAmount,
-        uint256[] reputationNullifiers
     );
 
     event UserStateTransitioned(
@@ -107,43 +93,6 @@ contract UnirepSocial {
         unirep.attesterSignUpViaRelayer(msg.sender, signature);
     }
 
-    function spendReputation(
-        bytes memory signature,
-        uint256 epochKey,
-        uint256[] memory publicSignals,
-        uint256[8] memory _proof,
-        uint256 spendReputationAmount
-    ) public payable {
-        // Determine if repuataion nullifiers are submitted before
-        // The first spendRepuatationAmount of public signals are valid repuation nullifiers
-        uint256[] memory reputationNullifiers = new uint256[](spendReputationAmount);
-        for (uint i = 0; i < spendReputationAmount; i++) {
-            require(isReputationNullifierSubmitted[publicSignals[i]] == false, "Unirep Social: the nullifier has been submitted");
-            isReputationNullifierSubmitted[publicSignals[i]] = true;
-            reputationNullifiers[i] = publicSignals[i];
-        }
-
-        bool proofIsValid = unirep.verifyReputation(publicSignals, _proof);
-        require(proofIsValid, "Unirep Social: the proof is not valid");
-
-        // Verify epoch key and its proof
-        // Then submit negative attestation to this epoch key
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = unirep.attesters(msg.sender);
-        attestation.posRep = 0;
-        attestation.negRep = spendReputationAmount;
-        attestation.graffiti = 0;
-        attestation.overwriteGraffiti = false;
-        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, epochKey);
-
-        emit Sequencer("ReputationNullifierSubmitted");
-        emit ReputationNullifierSubmitted(
-            unirep.currentEpoch(),
-            spendReputationAmount,
-            reputationNullifiers
-        );
-    }
-
     function publishPost(
         bytes calldata signature,
         uint256 postId, 
@@ -153,7 +102,7 @@ contract UnirepSocial {
         uint256[8] calldata proof) external payable {
 
         // Call Unirep contract to perform reputation spending
-        spendReputation(signature, epochKey, publicSignals, proof, postReputation);
+        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, publicSignals, proof, postReputation);
         
         emit PostSubmitted(
             unirep.currentEpoch(),
@@ -174,8 +123,8 @@ contract UnirepSocial {
         uint256[] calldata publicSignals, 
         uint256[8] calldata proof) external payable {
 
-        // Call Unirep contract to perform reputation spending
-        spendReputation(signature, epochKey, publicSignals, proof, commentReputation);
+        // Call Unirep contract to perform reputation spending        
+        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, publicSignals, proof, commentReputation);
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -201,10 +150,7 @@ contract UnirepSocial {
 
         // Spend attester's reputation
         // Call Unirep contract to perform reputation spending
-        spendReputation(signature, fromEpochKey, publicSignals, proof, voteValue);
-
-        // Send Reputation to others
-        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, toEpochKey);
+        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, fromEpochKey, toEpochKey, publicSignals, proof);
 
         emit VoteSubmitted(
             unirep.currentEpoch(),

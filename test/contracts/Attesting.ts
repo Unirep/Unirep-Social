@@ -1,7 +1,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import chai from "chai"
-import { attestingFee, circuitEpochTreeDepth, epochLength, maxUsers, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
+import { attestingFee, epochLength, maxUsers, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
 import { genRandomSalt, hashLeftRight, SNARK_FIELD_SIZE } from '../../crypto/crypto'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { deployUnirep, genEpochKey, getTreeDepthsForTesting } from '../utils'
@@ -9,8 +9,10 @@ import { deployUnirep, genEpochKey, getTreeDepthsForTesting } from '../utils'
 const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-import { Attestation } from "../../core"
-import { DEFAULT_AIRDROPPED_KARMA } from '../../config/socialMedia'
+import { Attestation, UnirepState, UserState } from "../../core"
+import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
+import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 
 
 describe('Attesting', () => {
@@ -18,11 +20,19 @@ describe('Attesting', () => {
 
     let accounts: ethers.Signer[]
 
-    let userId, userCommitment
+    let userId, userCommitment, userId2, userCommitment2
 
     let attester, attesterAddress, attesterId, unirepContractCalledByAttester
     let attester2, attester2Address, attester2Id, unirepContractCalledByAttester2
+    let attester3, attester3Address
+    let submittedAttestNum: number = 0
 
+    let unirepState
+    let userState
+    let GSTree
+
+    let circuitInputs
+    let results
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -38,12 +48,49 @@ describe('Attesting', () => {
         }
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
 
+        const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
+        GSTree = new IncrementalQuinTree(_treeDepths.globalStateTreeDepth, blankGSLeaf, 2)
+
+        const currentEpoch = await unirepContract.currentEpoch()
+        unirepState = new UnirepState(
+            _treeDepths.globalStateTreeDepth,
+            _treeDepths.userStateTreeDepth,
+            _treeDepths.epochTreeDepth,
+            _treeDepths.nullifierTreeDepth,
+            attestingFee,
+            epochLength,
+            numEpochKeyNoncePerEpoch,
+            numAttestationsPerEpochKey,
+        )
+
         console.log('User sign up')
         userId = genIdentity()
         userCommitment = genIdentityCommitment(userId)
+        userId2 = genIdentity()
+        userCommitment2 = genIdentityCommitment(userId2)
         let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
+
+        const emptyUserStateRoot = await unirepContract.emptyUserStateRoot()
+        const hashedStateLeaf = await unirepContract.hashStateLeaf(
+            [
+                userCommitment,
+                emptyUserStateRoot,
+                BigInt(DEFAULT_AIRDROPPED_KARMA),
+                BigInt(0)
+            ]
+        )
+        GSTree.insert(hashedStateLeaf)
+
+        unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
+        userState = new UserState(
+            unirepState,
+            userId,
+            userCommitment,
+            false
+        )
+        userState.signUp(currentEpoch, 0)
 
         console.log('Attesters sign up')
         attester = accounts[1]
@@ -66,7 +113,8 @@ describe('Attesting', () => {
     it('submit attestation should succeed', async () => {
         let epoch = await unirepContract.currentEpoch()
         let nonce = 0
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attestation: Attestation = new Attestation(
             BigInt(attesterId),
             BigInt(1),
@@ -75,10 +123,18 @@ describe('Attesting', () => {
             true,
         )
         // Assert no attesting fees are collected yet
-        expect(await unirepContract.collectedAttestingFee()).to.be.equal(0)
-        const tx = await unirepContractCalledByAttester.submitAttestation(
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        let tx = await unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )
         const receipt = await tx.wait()
@@ -93,43 +149,67 @@ describe('Attesting', () => {
             attestation.hash(),
             BigInt(0)
         )
-        let attestationHashChain_ = await unirepContract.epochKeyHashchain(epochKey)
+        let attestationHashChain_ = await unirepContract.epochKeyHashchain(toEpochKey)
         expect(attestationHashChain).equal(attestationHashChain_)
 
-        // Verify the number of attestations to the epoch key
-        let numAttestationsToEpochKey_ = await unirepContract.numAttestationsToEpochKey(epochKey)
-        expect(numAttestationsToEpochKey_).equal(1)
         // Verify epoch key is added to epoch key list
         let numEpochKey = await unirepContract.getNumEpochKey(epoch)
-        expect(numEpochKey).equal(1)
-        let epochKey_ = await unirepContract.getEpochKey(epoch, 0)
-        expect(epochKey).equal(epochKey_)
+        expect(numEpochKey).equal(2)
+
+        // Verify the number of attestations to the sender's epoch key
+        let numAttestationsToEpochKey_ = await unirepContract.numAttestationsToEpochKey(fromEpochKey)
+        expect(numAttestationsToEpochKey_).equal(1)
+        let fromEpochKey_ = await unirepContract.getEpochKey(epoch, 0)
+        expect(fromEpochKey).equal(fromEpochKey_)
+
+        // Verify the number of attestations to the receiver's epoch key
+        numAttestationsToEpochKey_ = await unirepContract.numAttestationsToEpochKey(toEpochKey)
+        expect(numAttestationsToEpochKey_).equal(1)
+        let toEpochKey_ = await unirepContract.getEpochKey(epoch, 1)
+        expect(toEpochKey).equal(toEpochKey_)
+
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const modedNullifier = BigInt(results['publicSignals'][i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            unirepState.addKarmaNullifiers(modedNullifier)
+        }
+        submittedAttestNum++
     })
 
     it('attest to same epoch key again should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         let nonce = 0
         // Same identity nullifier, epoch and nonce will result in the same epoch key
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attestation: Attestation = new Attestation(
             BigInt(attesterId),
             BigInt(0),
-            BigInt(1000),
+            BigInt(3),
             genRandomSalt(),
             true,
         )
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
-            {value: attestingFee})
-        ).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
+            {value: attestingFee}
+        )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
     })
 
     it('attestation with incorrect attesterId should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         // Increment nonce to get different epoch key
         let nonce = 1
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attestation: Attestation = new Attestation(
             BigInt(999),
             BigInt(1),
@@ -139,44 +219,54 @@ describe('Attesting', () => {
         )
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
-            {value: attestingFee})
-        ).to.be.revertedWith('Unirep: mismatched attesterId')
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
+            {value: attestingFee}
+        )).to.be.revertedWith('Unirep: mismatched attesterId')
     })
 
     it('attestation with invalid repuation should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         // Increment nonce to get different epoch key
         let nonce = 1
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
+        // let attestation: Attestation = new Attestation(
+        //     BigInt(attesterId),
+        //     SNARK_FIELD_SIZE,
+        //     BigInt(0),
+        //     genRandomSalt(),
+        //     true,
+        // )
+        // await expect(unirepContractCalledByAttester["submitAttestation((uint256,uint256,uint256,uint256,bool),uint256,uint256,uint256[],uint256[8])"](
+        //     attestation,
+        //     epochKey,
+        //     toEpochKey,
+        //     results['publicSignals'],
+        //     formatProofForVerifierContract(results['proof']),
+        //     {value: attestingFee}
+        // )).to.be.revertedWith('Unirep: invalid attestation posRep')
+
+        // attestation = new Attestation(
+        //     BigInt(attesterId),
+        //     BigInt(1),
+        //     SNARK_FIELD_SIZE,
+        //     genRandomSalt(),
+        //     true,
+        // )
+        // await expect(unirepContractCalledByAttester["submitAttestation((uint256,uint256,uint256,uint256,bool),uint256,uint256,uint256[],uint256[8])"](
+        //     attestation,
+        //     epochKey,
+        //     toEpochKey,
+        //     results['publicSignals'],
+        //     formatProofForVerifierContract(results['proof']),
+        //     {value: attestingFee}
+        // )).to.be.revertedWith('Unirep: invalid attestation negRep')
+
         let attestation: Attestation = new Attestation(
             BigInt(attesterId),
-            SNARK_FIELD_SIZE,
-            BigInt(0),
-            genRandomSalt(),
-            true,
-        )
-        await expect(unirepContractCalledByAttester.submitAttestation(
-            attestation,
-            epochKey,
-            {value: attestingFee})
-        ).to.be.revertedWith('Unirep: invalid attestation posRep')
-
-        attestation = new Attestation(
-            BigInt(attesterId),
-            BigInt(1),
-            SNARK_FIELD_SIZE,
-            genRandomSalt(),
-            true,
-        )
-        await expect(unirepContractCalledByAttester.submitAttestation(
-            attestation,
-            epochKey,
-            {value: attestingFee})
-        ).to.be.revertedWith('Unirep: invalid attestation negRep')
-
-        attestation = new Attestation(
-            BigInt(attesterId),
             BigInt(1),
             BigInt(0),
             SNARK_FIELD_SIZE,
@@ -184,16 +274,20 @@ describe('Attesting', () => {
         )
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
-            {value: attestingFee})
-        ).to.be.revertedWith('Unirep: invalid attestation graffiti')
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
+            {value: attestingFee}
+        )).to.be.revertedWith('Unirep: invalid attestation graffiti')
     })
 
     it('submit attestation with incorrect fee amount should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         // Increment nonce to get different epoch key
         let nonce = 1
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attestation: Attestation = new Attestation(
             BigInt(attesterId),
             BigInt(1),
@@ -201,16 +295,29 @@ describe('Attesting', () => {
             genRandomSalt(),
             true,
         )
-        await expect(unirepContractCalledByAttester.submitAttestation(attestation, epochKey))
-            .to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof'])
+        )).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
+
+        await expect(unirepContractCalledByAttester.submitAttestation(
+            attestation,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
             {value: (attestingFee.sub(1))})
         ).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
+
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
-            epochKey,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
             {value: (attestingFee.add(1))})
         ).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
     })
@@ -224,7 +331,8 @@ describe('Attesting', () => {
         let unirepContractCalledByNonAttester = await hardhatEthers.getContractAt(Unirep.abi, unirepContract.address, nonAttester)
         let epoch = await unirepContract.currentEpoch()
         let nonce = 0
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attestation: Attestation = new Attestation(
             BigInt(nonAttesterId),
             BigInt(0),
@@ -234,7 +342,10 @@ describe('Attesting', () => {
         )
         await expect(unirepContractCalledByNonAttester.submitAttestation(
             attestation,
-            epochKey,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
             {value: attestingFee})
         ).to.be.revertedWith('Unirep: attester has not signed up yet')
     })
@@ -245,8 +356,9 @@ describe('Attesting', () => {
         let epoch = await unirepContract.currentEpoch()
         let nonce = 0
         // Same identity nullifier, epoch and nonce will result in the same epoch key
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
-        let attestationHashChainBefore = await unirepContract.epochKeyHashchain(epochKey)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
+        let attestationHashChainBefore = await unirepContract.epochKeyHashchain(toEpochKey)
 
         // Attester2 attest
         let attestation: Attestation = new Attestation(
@@ -258,17 +370,22 @@ describe('Attesting', () => {
         )
         let tx = await unirepContractCalledByAttester2.submitAttestation(
             attestation,
-            epochKey,
-            {value: attestingFee}
-        )
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
+            {value: attestingFee})
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
-        // Verify the number of attestations to the epoch key
-        let numAttestationsToEpochKey_ = await unirepContract.numAttestationsToEpochKey(epochKey)
-        expect(numAttestationsToEpochKey_).equal(2)
+        // Verify the number of attestations to the sender's epoch key
+        let numAttestationsToSenderEpochKey_ = await unirepContract.numAttestationsToEpochKey(fromEpochKey)
+        expect(numAttestationsToSenderEpochKey_).equal(2)
+        // Verify the number of attestations to the receiver's epoch key
+        let numAttestationsToReceiverEpochKey_ = await unirepContract.numAttestationsToEpochKey(toEpochKey)
+        expect(numAttestationsToReceiverEpochKey_).equal(2)
         // Verify attestation hash chain
-        let attestationHashChainAfter = await unirepContract.epochKeyHashchain(epochKey)
+        let attestationHashChainAfter = await unirepContract.epochKeyHashchain(toEpochKey)
         let attestationHashChain = hashLeftRight(
             attestation.hash(),
             attestationHashChainBefore
@@ -277,13 +394,19 @@ describe('Attesting', () => {
 
         // Verify epoch key is NOT added into epoch key list again
         let numEpochKey = await unirepContract.getNumEpochKey(epoch)
-        expect(numEpochKey).equal(1)
+        expect(numEpochKey).equal(2)
+
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const modedNullifier = BigInt(results['publicSignals'][i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            unirepState.addKarmaNullifiers(modedNullifier)
+        }
+        submittedAttestNum++
     })
 
     it('number of attestations exceeding limit should fail', async () => {
         // Sign up attester3
-        let attester3 = accounts[3]
-        let attester3Address = await attester3.getAddress()
+        attester3 = accounts[3]
+        attester3Address = await attester3.getAddress()
         let unirepContractCalledByAttester3 = unirepContract.connect(attester3)
         let tx = await unirepContractCalledByAttester3.attesterSignUp()
         let receipt = await tx.wait()
@@ -292,24 +415,36 @@ describe('Attesting', () => {
         let epoch = await unirepContract.currentEpoch()
         let nonce = 0
         // Same identity nullifier, epoch and nonce will result in the same epoch key
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
         let attester3Id = await unirepContract.attesters(attester3Address)
         let attestation: Attestation = new Attestation(
             BigInt(attester3Id),
-            BigInt(50),
+            BigInt(5),
             BigInt(5),
             genRandomSalt(),
             true,
         )
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
         await expect(unirepContractCalledByAttester3.submitAttestation(
             attestation,
-            epochKey,
+            fromEpochKey,
+            toEpochKey,
+            results['publicSignals'],
+            formatProofForVerifierContract(results['proof']),
             {value: attestingFee})
         ).to.be.revertedWith('Unirep: no more attestations to the epoch key is allowed')
     })
 
+    // TODO: test attestation via relayer
+
     it('burn collected attesting fee should work', async () => {
-        expect(await unirepContract.collectedAttestingFee()).to.be.equal(attestingFee.mul(2))
+        expect(await unirepContract.collectedAttestingFee()).to.be.equal(attestingFee.mul(submittedAttestNum))
         await unirepContractCalledByAttester.burnAttestingFee()
         expect(await unirepContract.collectedAttestingFee()).to.be.equal(0)
         expect(await hardhatEthers.provider.getBalance(unirepContract.address)).to.equal(0)
