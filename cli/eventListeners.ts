@@ -1,5 +1,6 @@
 import { dbUri } from '../config/database';
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import {
@@ -19,38 +20,38 @@ import { saveSettingsFromContract,
   initDB,}from '../database/utils'
 
 const configureSubparser = (subparsers: any) => {
-const parser = subparsers.addParser(
+const parser = subparsers.add_parser(
       'eventListeners',
-      { addHelp: true },
+      { add_help: true },
   )
 
-  parser.addArgument(
-      ['-e', '--eth-provider'],
+  parser.add_argument(
+      '-e', '--eth-provider',
       {
           action: 'store',
-          type: 'string',
+          type: 'str',
           help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
       }
   )
 
-  parser.addArgument(
-      ['-x', '--contract'],
+  parser.add_argument(
+      '-x', '--contract',
       {
           required: true,
-          type: 'string',
-          help: 'The Unirep contract address',
+          type: 'str',
+          help: 'The Unirep Social contract address',
       }
   )
 }
 
 const eventListeners = async (args: any) => {
 
-  // Unirep contract
+  // Unirep Social contract
   if (!validateEthAddress(args.contract)) {
-    console.error('Error: invalid Unirep contract address')
+    console.error('Error: invalid contract address')
     return
   }
-  const unirepAddress = args.contract
+  const unirepSocialAddress = args.contract
 
   // Ethereum provider
   const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -65,22 +66,29 @@ const eventListeners = async (args: any) => {
   }
 
   const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
-  const unirepContract = new ethers.Contract(
+  const unirepSocialContract = new ethers.Contract(
+    unirepSocialAddress,
+    UnirepSocial.abi,
+    provider,
+)
+
+const unirepAddress = await unirepSocialContract.unirep()
+
+const unirepContract = new ethers.Contract(
     unirepAddress,
     Unirep.abi,
     provider,
-  )
+)
 
   await saveSettingsFromContract(unirepContract)
-  
 
   const NewGSTLeafInsertedFilter = unirepContract.filters.NewGSTLeafInserted()
   const AttestationSubmittedFilter = unirepContract.filters.AttestationSubmitted()
-  const postSubmittedFilter = unirepContract.filters.PostSubmitted()
-  const commentSubmittedFilter = unirepContract.filters.CommentSubmitted()
   const reputationSubmittedFilter = unirepContract.filters.ReputationNullifierSubmitted()
   const epochEndedFilter = unirepContract.filters.EpochEnded()
   const userStateTransitionedFilter = unirepContract.filters.UserStateTransitioned()
+  const postSubmittedFilter = unirepSocialContract.filters.PostSubmitted()
+  const commentSubmittedFilter = unirepSocialContract.filters.CommentSubmitted()
   
 
   // NewGSTLeaf listeners

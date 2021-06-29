@@ -8,70 +8,62 @@ import {
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'listAllPosts',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
-            help: 'The Unirep contract address',
+            type: 'str',
+            help: 'The Unirep Social contract address',
         }
     )
 }
 
 const listAllPosts = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
 
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
     
-    const unirepContract = new ethers.Contract(
-        unirepAddress,
-        Unirep.abi,
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
         provider
     )
 
     let postEvents
-    try {
-        const postFilter = unirepContract.filters.PostSubmitted()
-        postEvents = await unirepContract.queryFilter(postFilter)
-    } catch(e) {
-        console.error('Error: the transaction failed')
-        if (e.message) {
-            console.error(e.message)
-        }
-        return
-    }
+    const postFilter = unirepSocialContract.filters.PostSubmitted()
+    postEvents = await unirepSocialContract.queryFilter(postFilter)
 
     for (let i = 0; i < postEvents.length; i++) {
         console.log('Post ', postEvents[i].args._postId.toString())
