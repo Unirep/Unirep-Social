@@ -12,7 +12,7 @@ const { expect } = chai
 import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
-import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
+import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 
 
@@ -39,7 +39,7 @@ describe('Post', function () {
     const epochKeyNonce = 0
     let proof
     let publicSignals
-    let witness
+    let nullifiers
     let circuitInputs
     const postId = genRandomSalt()
     const commentId = genRandomSalt()
@@ -179,7 +179,7 @@ describe('Post', function () {
 
     describe('Generate reputation proof for verification', () => {
 
-        it('reputation proof should be verified valid off-chain', async() => {
+        it('reputation proof should be verified valid off-chain and on-chain', async() => {
             circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_POST_KARMA,
@@ -189,13 +189,17 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
-        })
-
-        it('reputation proof should be verified valid on-chain', async() => {
+            
+            const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
+            const epochKey = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epochKey,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -214,6 +218,7 @@ describe('Post', function () {
                 postId, 
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -222,7 +227,7 @@ describe('Post', function () {
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
         })
@@ -236,11 +241,15 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -251,6 +260,7 @@ describe('Post', function () {
                 postId, 
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -271,11 +281,15 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
-
+            
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -286,6 +300,7 @@ describe('Post', function () {
                 postId, 
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -307,11 +322,15 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is valid").to.be.false
-
+            
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -322,6 +341,7 @@ describe('Post', function () {
                 postId, 
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -331,7 +351,7 @@ describe('Post', function () {
 
     describe('Comment a post', () => {
         const epochKeyNonce = 0
-        it('reputation proof should be verified valid off-chain', async() => {
+        it('reputation proof should be verified valid off-chain and on-chain', async() => {
             circuitInputs = await users[1].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 DEFAULT_COMMENT_KARMA,
@@ -341,13 +361,17 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
-        })
-
-        it('reputation proof should be verified valid on-chain', async() => {
+            
+            const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
+            const epochKey = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epochKey,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -364,6 +388,7 @@ describe('Post', function () {
                 commentId,
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -372,7 +397,7 @@ describe('Post', function () {
             expect(receipt.status, 'Submit comment failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
         })
@@ -380,17 +405,12 @@ describe('Post', function () {
         it('submit a comment with duplicated nullifiers should fail', async() => {
             const text = genRandomSalt().toString()
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
-            const epochKeyNonce = 1
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
 
-            const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            witness = results['witness']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
-            expect(isValid, "proof is not valid").to.be.true
-
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -402,6 +422,7 @@ describe('Post', function () {
                 commentId,
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -422,11 +443,15 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is not valid").to.be.true
 
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -438,6 +463,7 @@ describe('Post', function () {
                 commentId,
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -459,11 +485,15 @@ describe('Post', function () {
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
             proof = results['proof']
             publicSignals = results['publicSignals']
-            witness = results['witness']
             const isValid = await verifyProveReputationProof(proof, publicSignals)
             expect(isValid, "proof is valid").to.be.false
 
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -475,6 +505,7 @@ describe('Post', function () {
                 commentId,
                 epk,
                 text, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }

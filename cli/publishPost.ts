@@ -193,6 +193,8 @@ const publishPost = async (args: any) => {
     const minRep = args.min_rep != null ? args.min_rep : 0
 
     let circuitInputs: any
+    let GSTRoot: any
+    let nullifierTreeRoot: any
 
     if(args.from_database){
 
@@ -225,6 +227,9 @@ const publishPost = async (args: any) => {
             proveKarmaAmount,               // the amount of output karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
+
+        GSTRoot = userState.getUnirepStateGSTree(currentEpoch).root
+        nullifierTreeRoot = (await userState.getUnirepStateNullifierTree()).getRootHash()
     }
 
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -245,8 +250,16 @@ const publishPost = async (args: any) => {
     const proof = formatProofForVerifierContract(results['proof'])
     const epochKey = BigInt(add0x(epk))
     const encodedProof = base64url.encode(JSON.stringify(proof))
-    
-    const publicSignals = results['publicSignals']
+
+    // generate public signals
+    const publicSignals = [
+        GSTRoot,
+        nullifierTreeRoot,
+        BigInt(true),
+        DEFAULT_POST_KARMA,
+        args.min_rep != null ? BigInt(1) : BigInt(0),
+        args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
+    ]
     
     if(args.min_rep != null){
         console.log(`Prove minimum reputation: ${minRep}`)
@@ -274,6 +287,7 @@ const publishPost = async (args: any) => {
             BigInt(add0x(newpost._id.toString())), 
             epochKey,
             args.text, 
+            nullifiers,
             publicSignals, 
             proof,
             { value: attestingFee, gasLimit: 1000000 }

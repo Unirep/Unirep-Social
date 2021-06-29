@@ -12,7 +12,7 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { Attestation, UnirepState, UserState } from "../../core"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym } from '../circuits/utils'
 
 
 describe('Attesting', () => {
@@ -20,7 +20,7 @@ describe('Attesting', () => {
 
     let accounts: ethers.Signer[]
 
-    let userId, userCommitment, userId2, userCommitment2
+    let userId, userCommitment, userId2
 
     let attester, attesterAddress, attesterId, unirepContractCalledByAttester
     let attester2, attester2Address, attester2Id, unirepContractCalledByAttester2
@@ -33,6 +33,8 @@ describe('Attesting', () => {
 
     let circuitInputs
     let results
+    let nullifiers: BigInt[] = []
+    let publicSignals: BigInt[] = []
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -67,7 +69,6 @@ describe('Attesting', () => {
         userId = genIdentity()
         userCommitment = genIdentityCommitment(userId)
         userId2 = genIdentity()
-        userCommitment2 = genIdentityCommitment(userId2)
         let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -129,11 +130,28 @@ describe('Attesting', () => {
             0
         )
         results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
+
         let tx = await unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )
@@ -194,11 +212,29 @@ describe('Attesting', () => {
             0
         )
         results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = []
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
+
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
@@ -217,53 +253,45 @@ describe('Attesting', () => {
             genRandomSalt(),
             true,
         )
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = []
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )).to.be.revertedWith('Unirep: mismatched attesterId')
     })
 
-    it('attestation with invalid repuation should fail', async () => {
+    it('attestation with invalid reputation should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         // Increment nonce to get different epoch key
         let nonce = 1
         let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
         let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
-        // let attestation: Attestation = new Attestation(
-        //     BigInt(attesterId),
-        //     SNARK_FIELD_SIZE,
-        //     BigInt(0),
-        //     genRandomSalt(),
-        //     true,
-        // )
-        // await expect(unirepContractCalledByAttester["submitAttestation((uint256,uint256,uint256,uint256,bool),uint256,uint256,uint256[],uint256[8])"](
-        //     attestation,
-        //     epochKey,
-        //     toEpochKey,
-        //     results['publicSignals'],
-        //     formatProofForVerifierContract(results['proof']),
-        //     {value: attestingFee}
-        // )).to.be.revertedWith('Unirep: invalid attestation posRep')
-
-        // attestation = new Attestation(
-        //     BigInt(attesterId),
-        //     BigInt(1),
-        //     SNARK_FIELD_SIZE,
-        //     genRandomSalt(),
-        //     true,
-        // )
-        // await expect(unirepContractCalledByAttester["submitAttestation((uint256,uint256,uint256,uint256,bool),uint256,uint256,uint256[],uint256[8])"](
-        //     attestation,
-        //     epochKey,
-        //     toEpochKey,
-        //     results['publicSignals'],
-        //     formatProofForVerifierContract(results['proof']),
-        //     {value: attestingFee}
-        // )).to.be.revertedWith('Unirep: invalid attestation negRep')
 
         let attestation: Attestation = new Attestation(
             BigInt(attesterId),
@@ -272,11 +300,34 @@ describe('Attesting', () => {
             SNARK_FIELD_SIZE,
             true,
         )
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = []
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
         await expect(unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )).to.be.revertedWith('Unirep: invalid attestation graffiti')
@@ -299,7 +350,8 @@ describe('Attesting', () => {
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof'])
         )).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
 
@@ -307,7 +359,8 @@ describe('Attesting', () => {
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: (attestingFee.sub(1))})
         ).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
@@ -316,7 +369,8 @@ describe('Attesting', () => {
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: (attestingFee.add(1))})
         ).to.be.revertedWith('Unirep: no attesting fee or incorrect amount')
@@ -340,11 +394,34 @@ describe('Attesting', () => {
             genRandomSalt(),
             true,
         )
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = []
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
         await expect(unirepContractCalledByNonAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee})
         ).to.be.revertedWith('Unirep: attester has not signed up yet')
@@ -372,7 +449,8 @@ describe('Attesting', () => {
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee})
         let receipt = await tx.wait()
@@ -431,11 +509,28 @@ describe('Attesting', () => {
             0
         )
         results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = []
+        const GSTRoot = unirepState.genGSTree(epoch).root
+        const nullifierTree = await unirepState.genNullifierTree()
+        const nullifierTreeRoot = nullifierTree.getRootHash()
+        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            const variableName = 'main.karma_nullifiers['+i+']'
+            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
+        }
+        publicSignals = [
+            GSTRoot,
+            nullifierTreeRoot,
+            BigInt(true),
+            Number(attestation.posRep) + Number(attestation.negRep),
+            BigInt(0),
+            BigInt(0)
+        ]
         await expect(unirepContractCalledByAttester3.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee})
         ).to.be.revertedWith('Unirep: no more attestations to the epoch key is allowed')

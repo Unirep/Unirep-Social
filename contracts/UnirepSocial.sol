@@ -33,7 +33,8 @@ contract UnirepSocial {
         uint256 indexed _postId,
         uint256 indexed _epochKey,
         string _hahsedContent,
-        uint256[] publicSignals,
+        uint256[] nullifiers,
+        Unirep.ReputationProofSignals proofSignals,
         uint256[8] proof
     );
 
@@ -43,7 +44,8 @@ contract UnirepSocial {
         uint256 indexed _epochKey,
         uint256 _commentId,
         string _hahsedContent,
-        uint256[] publicSignals,
+        uint256[] nullifiers,
+        Unirep.ReputationProofSignals proofSignals,
         uint256[8] proof
     );
 
@@ -52,7 +54,8 @@ contract UnirepSocial {
         uint256 indexed _fromEpochKey,
         uint256 indexed _toEpochKey,
         Unirep.Attestation attestation,
-        uint256[] publicSignals,
+        uint256[] nullifiers,
+        Unirep.ReputationProofSignals proofSignals,
         uint256[8] proof
     );
 
@@ -98,19 +101,21 @@ contract UnirepSocial {
         uint256 postId, 
         uint256 epochKey, 
         string calldata hashedContent, 
-        uint256[] calldata publicSignals, 
-        uint256[8] calldata proof) external payable {
+        uint256[] calldata _nullifiers, 
+        Unirep.ReputationProofSignals memory _proofSignals,
+        uint256[8] calldata _proof) external payable {
 
         // Call Unirep contract to perform reputation spending
-        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, publicSignals, proof, postReputation);
+        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, _nullifiers, _proofSignals, _proof, postReputation);
         
         emit PostSubmitted(
             unirep.currentEpoch(),
             postId,
             epochKey,
             hashedContent,
-            publicSignals,
-            proof
+            _nullifiers,
+            _proofSignals,
+            _proof
         );
     }
 
@@ -120,11 +125,12 @@ contract UnirepSocial {
         uint256 commentId,
         uint256 epochKey, 
         string calldata hashedContent, 
-        uint256[] calldata publicSignals, 
-        uint256[8] calldata proof) external payable {
+        uint256[] calldata _nullifiers, 
+        Unirep.ReputationProofSignals memory _proofSignals,
+        uint256[8] calldata _proof) external payable {
 
         // Call Unirep contract to perform reputation spending        
-        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, publicSignals, proof, commentReputation);
+        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, _nullifiers, _proofSignals, _proof, commentReputation);
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -132,8 +138,9 @@ contract UnirepSocial {
             epochKey,
             commentId,
             hashedContent,
-            publicSignals,
-            proof
+            _nullifiers,
+            _proofSignals,
+            _proof
         );
     }
 
@@ -142,23 +149,25 @@ contract UnirepSocial {
         Unirep.Attestation memory attestation,
         uint256 toEpochKey,
         uint256 fromEpochKey,
-        uint256[] memory publicSignals, 
-        uint256[8] memory proof ) public payable {
+        uint256[] memory _nullifiers,
+        Unirep.ReputationProofSignals memory _proofSignals,
+        uint256[8] memory _proof ) public payable {
         uint256 voteValue = attestation.posRep + attestation.negRep;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(attestation.posRep * attestation.negRep == 0, "Unirep Social: should only choose to upvote or to downvote");
 
         // Spend attester's reputation
         // Call Unirep contract to perform reputation spending
-        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, fromEpochKey, toEpochKey, publicSignals, proof);
+        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, fromEpochKey, toEpochKey, _nullifiers, _proofSignals, _proof);
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
             fromEpochKey, 
             toEpochKey, 
             attestation, 
-            publicSignals, 
-            proof
+            _nullifiers,
+            _proofSignals,
+            _proof
         );
     }
 
@@ -186,9 +195,11 @@ contract UnirepSocial {
 
 
     function verifyEpochKeyValidity(
-        uint256[] memory _publicSignals,
+        uint256 _globalStateTree,
+        uint256 _epoch,
+        uint256 _epochKey,
         uint256[8] memory _proof) public view returns (bool) {
-        return unirep.verifyEpochKeyValidity(_publicSignals, _proof);
+        return unirep.verifyEpochKeyValidity(_globalStateTree, _epoch, _epochKey, _proof);
     }
 
     function verifyUserStateTransition(
@@ -203,15 +214,22 @@ contract UnirepSocial {
     }
 
     function verifyReputation(
-        uint256[] memory _publicSignals,
+        uint256[] memory _nullifiers,
+        uint256 _epoch,
+        uint256 _epochKey,
+        Unirep.ReputationProofSignals memory _proofSignals,
         uint256[8] memory _proof) public view returns (bool) {
-        return unirep.verifyReputation(_publicSignals, _proof);
+        return unirep.verifyReputation(_nullifiers, _epoch, _epochKey, _proofSignals, _proof);
     }
 
     function verifyReputationFromAttester(
-        uint256[] memory _publicSignals,
+        uint256 _epoch,
+        uint256 _globalStateTree,
+        uint256 _nullifierTree,
+        uint256 _attesterId,
+        Unirep.RepFromAttesterProofSignals memory _proofSignals,
         uint256[8] memory _proof) public view returns (bool) {
-        return unirep.verifyReputationFromAttester(_publicSignals, _proof);
+        return unirep.verifyReputationFromAttester(_epoch, _globalStateTree, _nullifierTree, _attesterId, _proofSignals, _proof);
     }
 
     function min(uint a, uint b) internal pure returns (uint) {

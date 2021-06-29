@@ -379,13 +379,14 @@ describe('Integration', function () {
             expect(isValid, 'Verify epoch key proof off-chain failed').to.be.true
             
             // Verify on-chain
+            const GSTree = unirepState.genGSTree(currentEpoch.toNumber())
             const proof = formatProofForVerifierContract(results['proof'])
-            const epochKey = BigInt(add0x(epk))
-            const publicSignals = results['publicSignals']
 
             const firstUserEpochKey = genEpochKey(users[0].id.identityNullifier, currentEpoch.toNumber(), epochKeyNonce, circuitEpochTreeDepth)
             const isProofValid = await unirepContract.verifyEpochKeyValidity(
-                publicSignals,
+                GSTree.root,
+                currentEpoch,
+                firstUserEpochKey,
                 proof
             )
             console.log(`Verifying epk proof with epoch ${currentEpoch} and epk ${firstUserEpochKey}`)
@@ -415,10 +416,14 @@ describe('Integration', function () {
             // Verify on-chain
             const proof = formatProofForVerifierContract(results['proof'])
             const epochKey = BigInt(add0x(epk))
-            const publicSignals = results['publicSignals']
+            const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
 
             const firstUserEpochKey = genEpochKey(users[0].id.identityNullifier, currentEpoch.toNumber(), epochKeyNonce, circuitEpochTreeDepth)
             const isProofValid = await unirepSocialContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epochKey,
                 publicSignals,
                 proof
             )
@@ -438,6 +443,7 @@ describe('Integration', function () {
                 BigInt(add0x(postId)), 
                 epochKey,
                 postText, 
+                nullifiers,
                 publicSignals, 
                 proof,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -447,7 +453,7 @@ describe('Integration', function () {
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
 
@@ -500,7 +506,8 @@ describe('Integration', function () {
             // format proof
             const proof = formatProofForVerifierContract(results['proof'])
             const fromEpochKey = BigInt(add0x(secondUserEpochKey.toString(16)))
-            const publicSignals = results['publicSignals']
+            const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
 
             const attestationToEpochKey = new Attestation(
                 BigInt(attesters[secondAttester].id),
@@ -523,6 +530,7 @@ describe('Integration', function () {
                 attestationToEpochKey,
                 firstUserEpochKey,
                 fromEpochKey,
+                nullifiers,
                 publicSignals,
                 proof,
                 { value: voteFee }
@@ -531,7 +539,7 @@ describe('Integration', function () {
             expect(receipt.status, 'Submit attestation failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
 
@@ -576,10 +584,14 @@ describe('Integration', function () {
             // Verify on-chain
             const proof = formatProofForVerifierContract(results['proof'])
             const epochKey = BigInt(add0x(epk))
-            const publicSignals = results['publicSignals']
+            const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
 
             const firstUserEpochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epochKeyNonce, circuitEpochTreeDepth)
             const isProofValid = await unirepContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epochKey,
                 publicSignals,
                 proof
             )
@@ -600,6 +612,7 @@ describe('Integration', function () {
                 BigInt(add0x(commentId)),
                 epochKey,
                 commentText, 
+                nullifiers,
                 publicSignals, 
                 proof,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -609,7 +622,7 @@ describe('Integration', function () {
             expect(receipt.status, 'Submit comment failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
 
@@ -828,7 +841,7 @@ describe('Integration', function () {
             // Combine nullifiers and mod them
             const allNullifiers = attestationNullifiers.concat(epkNullifiers).map((nullifier) => BigInt(nullifier) % BigInt(2 ** circuitNullifierTreeDepth))
 
-            const latestUserStateLeaves = userStateLeavesAfterTransition[0]
+            const latestUserStateLeaves = userStateLeavesAfterTransition[firstUser]
             users[firstUser].transition(latestUserStateLeaves)
             console.log(`First user finish state transition. AttesterIds in UST: [${latestUserStateLeaves.map((l) => l.attesterId.toString())}]`)
             expect(users[0].latestTransitionedEpoch, 'First user should transition to current epoch').to.equal(currentEpoch.toNumber())
@@ -874,10 +887,6 @@ describe('Integration', function () {
             const nullifierTree = await unirepState.genNullifierTree()
             const nullifierTreeRoot = nullifierTree.getRootHash()
             const publicInput = [
-                users[firstUser].latestTransitionedEpoch,
-                GSTreeRoot,
-                nullifierTreeRoot,
-                attesterId,
                 provePosRep,
                 proveNegRep,
                 proveRepDiff,
@@ -888,6 +897,10 @@ describe('Integration', function () {
                 graffitiPreImage
             ]
             const isProofValid = await unirepSocialContract.verifyReputationFromAttester(
+                users[firstUser].latestTransitionedEpoch,
+                GSTreeRoot,
+                nullifierTreeRoot,
+                attesterId,
                 publicInput,
                 formatProofForVerifierContract(results['proof']),
             )

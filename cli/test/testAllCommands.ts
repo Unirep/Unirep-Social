@@ -270,7 +270,7 @@ describe('test all CLI subcommands', function() {
     })
 
     describe('verifyReputationProof CLI subcommand', () => {
-        it('should verify epoch key proof', async () => {
+        it('should verify reputation proof', async () => {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -epk ${epk} ` +
@@ -354,7 +354,7 @@ describe('test all CLI subcommands', function() {
     })
 
     describe('verifyReputationProof CLI subcommand', () => {
-        it('should verify epoch key proof', async () => {
+        it('should verify reputation proof', async () => {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -epk ${epk} ` +
@@ -423,7 +423,7 @@ describe('test all CLI subcommands', function() {
     })
 
     describe('genReputationProofFromAttester CLI subcommand', () => {
-        it('should generate user reputation proof', async () => {
+        it('should generate user reputation proof from a certain attester id', async () => {
             const command = `npx ts-node cli/index.ts genReputationProofFromAttester` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1} ` +
@@ -445,7 +445,7 @@ describe('test all CLI subcommands', function() {
     })
 
     describe('verifyReputationProofFromAttester CLI subcommand', () => {
-        it('should verify user reputation proof', async () => {
+        it('should verify user reputation proof from a certain attester id', async () => {
             const command = `npx ts-node cli/index.ts verifyReputationProofFromAttester` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -a ${attesterId} ` +
