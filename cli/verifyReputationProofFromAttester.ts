@@ -161,10 +161,7 @@ const verifyReputationProofFromAttester = async (args: any) => {
     const GSTreeRoot = unirepState.genGSTree(epoch).root
     const nullifierTree = await unirepState.genNullifierTree()
     const nullifierTreeRoot = nullifierTree.getRootHash()
-    const publicInput = [epoch,
-        GSTreeRoot,
-        nullifierTreeRoot,
-        attesterId,
+    const publicInput = [
         provePosRep,
         proveNegRep,
         proveRepDiff,
@@ -172,8 +169,14 @@ const verifyReputationProofFromAttester = async (args: any) => {
         minRepDiff,
         minPosRep,
         maxNegRep,
-        graffitiPreImage]
+        graffitiPreImage
+    ]
+
     const isProofValid = await unirepSocialContract.verifyReputationFromAttester(
+        epoch,
+        GSTreeRoot,
+        nullifierTreeRoot,
+        attesterId,
         publicInput,
         proof
     )

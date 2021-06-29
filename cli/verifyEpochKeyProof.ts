@@ -106,14 +106,11 @@ const verifyEpochKeyProof = async (args: any) => {
     const epk = BigInt(add0x(args.epoch_key))
     const decodedProof = base64url.decode(args.proof.slice(epkProofPrefix.length))
     const proof = JSON.parse(decodedProof)
-    const publicInput = [
+    
+    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(
         GSTRoot,
         currentEpoch,
         epk,
-    ]
-    
-    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(
-        publicInput,
         proof,
     )
     if (!isProofValid) {

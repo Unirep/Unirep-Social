@@ -12,11 +12,9 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import { genUnirepStateFromContract } from '../core'
 import { add0x } from '../crypto/SMT'
 
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { reputationProofPrefix } from './prefix'
 import { hash5 } from 'maci-crypto'
-import { MAX_KARMA_BUDGET } from '../config/socialMedia'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -140,7 +138,7 @@ const verifyReputationProof = async (args: any) => {
     // get reputation nullifiers from contract
     const tx = await provider.getTransaction(args.transaction_hash)
     const decodedData = unirepSocialContract.interface.parseTransaction(tx)
-    const nullifiers = decodedData.args.publicSignals.slice(0, MAX_KARMA_BUDGET).map((n) => BigInt(n))
+    const nullifiers = decodedData.args._nullifiers
 
     const proveKarmaNullifiers = BigInt(1)
     let proveKarmaAmount: number = 0
@@ -158,18 +156,19 @@ const verifyReputationProof = async (args: any) => {
     const decodedProof = base64url.decode(args.proof.slice(reputationProofPrefix.length))
     const proof = JSON.parse(decodedProof)
     
-    const publicInput = nullifiers.concat([
-        currentEpoch,
-        epk,
+    const publicInput = [
         GSTRoot,
         nullifierTreeRoot,
         proveKarmaNullifiers,
         proveKarmaAmount,
         proveMinRep,
         minRep
-    ])
+    ]
 
     const isProofValid = await unirepSocialContract.verifyReputation(
+        nullifiers,
+        currentEpoch,
+        epk,
         publicInput,
         proof
     )

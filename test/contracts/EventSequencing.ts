@@ -46,7 +46,6 @@ describe('EventSequencing', () => {
     let userIds: any[] = [], userCommitments: any[] = []
     const postId = genRandomSalt()
     const commentId = genRandomSalt()
-    const voteFee = attestingFee.mul(2)
 
     let attester, attesterAddress, attesterId, attesterSig, contractCalledByAttester
 
@@ -56,8 +55,6 @@ describe('EventSequencing', () => {
         const _treeDepths = getTreeDepthsForTesting('circuit')
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
-        console.log(unirepContract.address)
-        console.log(unirepSocialContract.address)
     })
 
     it('should sign up first user', async () => {
@@ -135,13 +132,15 @@ describe('EventSequencing', () => {
 
         const proof = formatProofForVerifierContract(results['proof'])
         const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
-        const publicSignals = results['publicSignals']
+        const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
         const tx = await contractCalledByAttester.publishPost(
             attesterSig,
             postId, 
             epochKey,
             'postText', 
+            nullifiers,
             publicSignals, 
             proof,
             { value: attestingFee, gasLimit: 1000000 }
@@ -153,7 +152,7 @@ describe('EventSequencing', () => {
         expectedPostEventsLength++
 
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
             unirepState.addKarmaNullifiers(modedNullifier)
         }
     })
@@ -206,7 +205,8 @@ describe('EventSequencing', () => {
 
         const proof = formatProofForVerifierContract(results['proof'])
         const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
-        const publicSignals = results['publicSignals']
+        const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
         const tx = await contractCalledByAttester.leaveComment(
             attesterSig,
@@ -214,6 +214,7 @@ describe('EventSequencing', () => {
             commentId, 
             epochKey,
             'commentText',
+            nullifiers,
             publicSignals,
             proof,
             { value: attestingFee, gasLimit: 1000000 }
@@ -225,7 +226,7 @@ describe('EventSequencing', () => {
         expectedCommentEventsLength++
 
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
             unirepState.addKarmaNullifiers(modedNullifier)
         }
     })
@@ -255,13 +256,15 @@ describe('EventSequencing', () => {
 
         const proof = formatProofForVerifierContract(results['proof'])
         const fromEpochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
-        const publicSignals = results['publicSignals']
+        const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
         const tx = await contractCalledByAttester.vote(
             attesterSig,
             attestation,
             epochKey,
             fromEpochKey,
+            nullifiers,
             publicSignals,
             proof,
             { value: attestingFee, gasLimit: 1000000 }
@@ -274,7 +277,7 @@ describe('EventSequencing', () => {
         expectedVoteEventsLength++
 
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
             unirepState.addKarmaNullifiers(modedNullifier)
         }
     })
@@ -427,6 +430,5 @@ describe('EventSequencing', () => {
         const voteFilter = unirepSocialContract.filters.VoteSubmitted()
         const voteEvents =  await unirepSocialContract.queryFilter(voteFilter)
         expect(voteEvents.length).equal(expectedVoteEventsLength)
-
     })
 })

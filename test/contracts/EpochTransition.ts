@@ -1,7 +1,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import chai from "chai"
-import { attestingFee, epochLength, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
+import { maxUsers, attestingFee, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../../config/testLocal'
 import { genRandomSalt, hashLeftRight } from '../../crypto/crypto'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { deployUnirep, genEpochKey, getTreeDepthsForTesting } from '../utils'
@@ -12,21 +12,19 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
 
 
 describe('Epoch Transition', function (){
     this.timeout(600000)
 
     let unirepContract: ethers.Contract
-
     let accounts: ethers.Signer[]
-
-    let userId, userCommitment, userId2, userCommitment2
-
+    let userId, userCommitment, userId2
     let attester, attesterAddress, attesterId, unirepContractCalledByAttester
 
     let numEpochKey
+    const epochLength = 1000
 
     let unirepState
     let userState
@@ -36,7 +34,14 @@ describe('Epoch Transition', function (){
         accounts = await hardhatEthers.getSigners()
 
         const _treeDepths = getTreeDepthsForTesting()
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            numAttestationsPerEpochKey: numAttestationsPerEpochKey,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
 
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
         GSTree = new IncrementalQuinTree(_treeDepths.globalStateTreeDepth, blankGSLeaf, 2)
@@ -57,7 +62,6 @@ describe('Epoch Transition', function (){
         userId = genIdentity()
         userCommitment = genIdentityCommitment(userId)
         userId2 = genIdentity()
-        userCommitment2 = genIdentityCommitment(userId2)
         let tx = await unirepContract.userSignUp(userCommitment, DEFAULT_AIRDROPPED_KARMA)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -110,11 +114,21 @@ describe('Epoch Transition', function (){
             0
         )
         let results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        circuitInputs = await userState.genProveReputationCircuitInputs(
+            nonce,
+            Number(attestation.posRep) + Number(attestation.negRep),
+            0
+        )
+        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        let nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        let publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+
         tx = await unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )
@@ -122,7 +136,7 @@ describe('Epoch Transition', function (){
         expect(receipt.status).equal(1)
 
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const modedNullifier = BigInt(results['publicSignals'][i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
             unirepState.addKarmaNullifiers(modedNullifier)
         }
         
@@ -142,11 +156,15 @@ describe('Epoch Transition', function (){
             0
         )
         results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+
         tx = await unirepContractCalledByAttester.submitAttestation(
             attestation,
             fromEpochKey,
             toEpochKey,
-            results['publicSignals'],
+            nullifiers,
+            publicSignals,
             formatProofForVerifierContract(results['proof']),
             {value: attestingFee}
         )
@@ -157,7 +175,7 @@ describe('Epoch Transition', function (){
         expect(numEpochKey).equal(4)
 
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const modedNullifier = BigInt(results['publicSignals'][i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+            const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
             unirepState.addKarmaNullifiers(modedNullifier)
         }
     })
@@ -232,6 +250,22 @@ describe('Epoch Transition', function (){
 
         let epoch_ = await unirepContract.currentEpoch()
         expect(epoch_).equal(epoch.add(1))
+
+        // Unirep and user state transition from the first epoch
+        unirepState.epochTransition(1, [])
+        const circuitInputs = await userState.genUserStateTransitionCircuitInputs()
+        const results = await genVerifyUserStateTransitionProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const isValid = await verifyUserStateTransitionProof(results['proof'], results['publicSignals'])
+        expect(isValid, 'Verify user transition circuit off-chain failed').to.be.true
+        const newGSTLeaf = getSignalByNameViaSym('userStateTransition', results['witness'], 'main.new_GST_leaf')
+        const newState = await userState.genNewUserStateAfterTransition()
+        const attestationNullifiers = userState.getAttestationNullifiers(1)
+        const epkNullifiers = userState.getEpochKeyNullifiers(1)
+        console.log()
+        const allNullifiers = attestationNullifiers.concat(epkNullifiers)
+        expect(newGSTLeaf, 'Computed new GST leaf should match').to.equal(newState.newGSTLeaf)
+        userState.transition(newState.newUSTLeaves)
+        unirepState.userStateTransition(epoch_, BigInt(newGSTLeaf), allNullifiers)
     })
 
     it('attesting to a sealed epoch key should fail', async () => {
@@ -252,6 +286,8 @@ describe('Epoch Transition', function (){
             0
         )
         const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+        const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
 
         let prevEpoch = (await unirepContract.currentEpoch()).sub(1)
         let numEpochKey = await unirepContract.getNumEpochKey(prevEpoch)
@@ -262,7 +298,8 @@ describe('Epoch Transition', function (){
                 attestation,
                 fromEpochKey,
                 epochKey_,
-                results['publicSignals'],
+                nullifiers,
+                publicSignals,
                 formatProofForVerifierContract(results['proof']),
                 {value: attestingFee}
             )).to.be.revertedWith('Unirep: hash chain of this epoch key has been sealed')

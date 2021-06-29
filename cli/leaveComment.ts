@@ -26,7 +26,7 @@ import Comment, { IComment } from "../database/models/comment";
 import Post from "../database/models/post";
 import { DEFAULT_COMMENT_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
-import { hash5, stringifyBigInts } from 'maci-crypto'
+import { stringifyBigInts } from 'maci-crypto'
 import { genEpochKey } from '../core/utils'
 import { genProveReputationCircuitInputsFromDB } from '../database/utils'
 
@@ -205,6 +205,8 @@ const leaveComment = async (args: any) => {
     const minRep = args.min_rep != null ? args.min_rep : 0
     
     let circuitInputs: any
+    let GSTRoot: any
+    let nullifierTreeRoot: any
 
     if (args.from_database){
 
@@ -237,6 +239,9 @@ const leaveComment = async (args: any) => {
             proveKarmaAmount,               // the amount of output karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
+
+        GSTRoot = userState.getUnirepStateGSTree(currentEpoch).root
+        nullifierTreeRoot = (await userState.getUnirepStateNullifierTree()).getRootHash()
     }
 
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -258,7 +263,15 @@ const leaveComment = async (args: any) => {
     const epochKey = BigInt(add0x(epk))
     const encodedProof = base64url.encode(JSON.stringify(proof))
 
-    const publicSignals = results['publicSignals']
+    // generate public signals
+    const publicSignals = [
+        GSTRoot,
+        nullifierTreeRoot,
+        BigInt(true),
+        DEFAULT_COMMENT_KARMA,
+        args.min_rep != null ? BigInt(1) : BigInt(0),
+        args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
+    ]
 
     if(args.min_rep != null){
         console.log(`Prove minimum reputation: ${minRep}`)
@@ -287,7 +300,8 @@ const leaveComment = async (args: any) => {
             BigInt(add0x(newComment._id.toString())), 
             epochKey,
             args.text,
-            publicSignals,
+            nullifiers,
+            publicSignals, 
             proof,
             { value: attestingFee, gasLimit: 1000000 }
         )

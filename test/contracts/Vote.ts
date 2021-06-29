@@ -8,19 +8,16 @@ import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting
 
 const { expect } = chai
 
-import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { Attestation, UnirepState, UserState } from '../../core'
-import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
-import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
+import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 import { deployUnirepSocial } from '../../core/utils'
 
 
 describe('Vote', function () {
     this.timeout(300000)
 
-    let circuit
     let unirepContract
     let unirepSocialContract
     let GSTree
@@ -35,12 +32,11 @@ describe('Vote', function () {
     let attesterSigs = new Array(userNum)
     
     let accounts: ethers.Signer[]
-    let provider
     let contractCalledByAttesters = new Array(userNum)
 
     let proof
     let publicSignals
-    let witness
+    let nullifiers
     const epochKeyNonce = 0
     const epochKeyNonce2 = 1
     let fromEpk
@@ -54,7 +50,6 @@ describe('Vote', function () {
     
     before(async () => {
         accounts = await hardhatEthers.getSigners()
-        provider = new hardhatEthers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER)
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
@@ -186,7 +181,7 @@ describe('Vote', function () {
 
     describe('Generate reputation proof for verification', () => {
 
-        it('reputation proof should be verified valid off-chain', async() => {
+        it('reputation proof should be verified valid off-chain and on-chain', async() => {
             const circuitInputs = await users[0].genProveReputationCircuitInputs(
                 epochKeyNonce,
                 upvoteValue,
@@ -194,15 +189,19 @@ describe('Vote', function () {
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            witness = results['witness']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
+            const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
             expect(isValid, "proof is not valid").to.be.true
-        })
 
-        it('reputation proof should be verified valid on-chain', async() => {
+            const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
+            const epochKey = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
+            proof = results['proof']
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+
             const isProofValid = await unirepContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                epochKey,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -236,6 +235,7 @@ describe('Vote', function () {
                 attestation, 
                 toEpk,
                 fromEpk, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -257,13 +257,16 @@ describe('Vote', function () {
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            witness = results['witness']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
+            const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
             expect(isValid, "proof is not valid").to.be.true
-
+            
+            proof = results['proof']
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                fromEpk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -274,13 +277,14 @@ describe('Vote', function () {
                 attestation, 
                 toEpk,
                 fromEpk, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: the nullifier has been submitted')
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const modedNullifier = BigInt(publicSignals[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
+                const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
         })
@@ -298,13 +302,16 @@ describe('Vote', function () {
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            witness = results['witness']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
+            const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
             expect(isValid, "proof is not valid").to.be.true
-
+            
+            proof = results['proof']
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                fromEpk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -315,6 +322,7 @@ describe('Vote', function () {
                 attestation, 
                 toEpk,
                 fromEpk, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -335,13 +343,16 @@ describe('Vote', function () {
             )
 
             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            witness = results['witness']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
+            const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
             expect(isValid, "proof is valid").to.be.false
-
+            
+            proof = results['proof']
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
             const isProofValid = await unirepContract.verifyReputation(
+                nullifiers,
+                currentEpoch,
+                fromEpk,
                 publicSignals,
                 formatProofForVerifierContract(proof)
             )
@@ -352,6 +363,7 @@ describe('Vote', function () {
                 attestation, 
                 toEpk,
                 fromEpk, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -373,6 +385,7 @@ describe('Vote', function () {
                 zeroAttestation, 
                 toEpk,
                 fromEpk, 
+                nullifiers,
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
@@ -393,7 +406,8 @@ describe('Vote', function () {
                 attesterSigs[fromUser],
                 invalidAttestation, 
                 toEpk,
-                fromEpk, 
+                fromEpk,
+                nullifiers, 
                 publicSignals, 
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
