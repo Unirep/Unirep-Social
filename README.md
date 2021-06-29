@@ -94,7 +94,6 @@ npx ts-node cli/index.ts publishPost \
     -d 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
     -id Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd \
     -n 0 \
-    -kn 0 \
     -db
 ```
 - NOTE: epoch key and base64url encoded reputation proof will be printed and they should be handed to attester to be verified, for example:
@@ -140,7 +139,6 @@ npx ts-node cli/index.ts vote \
     -uv 3 \
     -id Unirep.identity.WyIxNzk1MTYyYWM2ZDVkZGQ4NWEyMzA0MDdkMjNiOTk3NDU0YmYwNzY2Zjg5ZThkNTQxNWE3ZTIyNTIyN2IxODRiIiwiZDgyNjA0ODY5Njk4NTU3MGMwYzNmNDlhM2RiZDg4MWJjOWJhYjc4Yzg2ZmM0N2UyOTMwNWVjMDEyMDNkZSIsImRkNmZiNDRkMTY3YjFmOTZiYzViZDUyYjdjNGRjOTNiYjhmNDA0Y2Q5YzBjMjA5ODU0ZWMyZWJlOGE0OTMyIl0 \
     -n 0 \
-    -kn 0 \
     -gf 2098f5fb9e239eab3ceac3f27b81e481dc3124d55ffed523a839ee8446b64864 \
     -db
 ```

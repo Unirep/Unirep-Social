@@ -20,6 +20,7 @@ import { add0x } from '../crypto/SMT'
 import { genUserStateFromContract } from '../core'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { identityPrefix, reputationProofPrefix } from './prefix'
 
 import Post, { IPost } from "../database/models/post";
@@ -29,40 +30,40 @@ import { genEpochKey } from '../core/utils'
 import { genProveReputationCircuitInputsFromDB } from '../database/utils'
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.addParser(
+    const parser = subparsers.add_parser(
         'publishPost',
-        { addHelp: true },
+        { add_help: true },
     )
 
-    parser.addArgument(
-        ['-e', '--eth-provider'],
+    parser.add_argument(
+        '-e', '--eth-provider',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
-    parser.addArgument(
-        ['-tx', '--text'],
+    parser.add_argument(
+        '-tx', '--text',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The text written in the post',
         }
     )
 
-    parser.addArgument(
-        ['-id', '--identity'],
+    parser.add_argument(
+        '-id', '--identity',
         {
             required: true,
-            type: 'string',
+            type: 'str',
             help: 'The (serialized) user\'s identity',
         }
     )
 
-    parser.addArgument(
-        ['-n', '--epoch-key-nonce'],
+    parser.add_argument(
+        '-n', '--epoch-key-nonce',
         {
             required: true,
             type: 'int',
@@ -70,55 +71,46 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
-    parser.addArgument(
-        ['-kn', '--karma-nonce'],
-        {
-            required: true,
-            type: 'int',
-            help: `The first nonce to generate karma nullifiers. It will generate ${DEFAULT_POST_KARMA} nullifiers`,
-        }
-    )
-
-    parser.addArgument(
-        ['-mr', '--min-rep'],
+    parser.add_argument(
+        '-mr', '--min-rep',
         {
             type: 'int',
             help: 'The minimum reputation score the user has',
         }
     )
 
-    parser.addArgument(
-        ['-x', '--contract'],
+    parser.add_argument(
+        '-x', '--contract',
         {
             required: true,
-            type: 'string',
-            help: 'The Unirep contract address',
+            type: 'str',
+            help: 'The Unirep Social contract address',
         }
     )
 
-    parser.addArgument(
-        ['-db', '--from-database'],
+    parser.add_argument(
+        '-db', '--from-database',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Indicate if to generate proving circuit from database',
         }
     )
 
-    const privkeyGroup = parser.addMutuallyExclusiveGroup({ required: true })
+    const privkeyGroup = parser.add_mutually_exclusive_group({ required: true })
 
-    privkeyGroup.addArgument(
-        ['-dp', '--prompt-for-eth-privkey'],
+    privkeyGroup.add_argument(
+        '-dp', '--prompt-for-eth-privkey',
         {
-            action: 'storeTrue',
+            action: 'store_true',
             help: 'Whether to prompt for the user\'s Ethereum private key and ignore -d / --eth-privkey',
         }
     )
 
-    privkeyGroup.addArgument(
-        ['-d', '--eth-privkey'],
+    privkeyGroup.add_argument(
+        '-d', '--eth-privkey',
         {
             action: 'store',
-            type: 'string',
+            type: 'str',
             help: 'The deployer\'s Ethereum private key',
         }
     )
@@ -126,13 +118,13 @@ const configureSubparser = (subparsers: any) => {
 
 const publishPost = async (args: any) => {
 
-    // Unirep contract
+    // Unirep Social contract
     if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid Unirep contract address')
+        console.error('Error: invalid contract address')
         return
     }
 
-    const unirepAddress = args.contract
+    const unirepSocialAddress = args.contract
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -160,16 +152,24 @@ const publishPost = async (args: any) => {
     const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
     const wallet = new ethers.Wallet(ethSk, provider)
 
-    if (! await contractExists(provider, unirepAddress)) {
+    if (! await contractExists(provider, unirepSocialAddress)) {
         console.error('Error: there is no contract deployed at the specified address')
         return
     }
 
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
+    const unirepSocialContract = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        wallet,
+    )
+
+    const unirepAddress = await unirepSocialContract.unirep()
+
     const unirepContract = new ethers.Contract(
         unirepAddress,
         Unirep.abi,
-        wallet,
+        provider,
     )
     const attestingFee = await unirepContract.attestingFee()
     // Validate epoch key nonce
@@ -190,10 +190,11 @@ const publishPost = async (args: any) => {
 
     // gen reputation proof 
     const proveKarmaAmount = DEFAULT_POST_KARMA
-    const nonceStarter: number = args.karma_nonce
     const minRep = args.min_rep != null ? args.min_rep : 0
 
     let circuitInputs: any
+    let GSTRoot: any
+    let nullifierTreeRoot: any
 
     if(args.from_database){
 
@@ -205,7 +206,6 @@ const publishPost = async (args: any) => {
             id,
             epkNonce,                       // generate epoch key from epoch nonce
             proveKarmaAmount,               // the amount of output karma nullifiers
-            nonceStarter,                      // nonce to generate karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
 
@@ -225,9 +225,11 @@ const publishPost = async (args: any) => {
         circuitInputs = await userState.genProveReputationCircuitInputs(
             epkNonce,                       // generate epoch key from epoch nonce
             proveKarmaAmount,               // the amount of output karma nullifiers
-            nonceStarter,                      // nonce to generate karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
+
+        GSTRoot = userState.getUnirepStateGSTree(currentEpoch).root
+        nullifierTreeRoot = (await userState.getUnirepStateNullifierTree()).getRootHash()
     }
 
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
@@ -248,8 +250,16 @@ const publishPost = async (args: any) => {
     const proof = formatProofForVerifierContract(results['proof'])
     const epochKey = BigInt(add0x(epk))
     const encodedProof = base64url.encode(JSON.stringify(proof))
-    
-    const publicSignals = results['publicSignals']
+
+    // generate public signals
+    const publicSignals = [
+        GSTRoot,
+        nullifierTreeRoot,
+        BigInt(true),
+        DEFAULT_POST_KARMA,
+        args.min_rep != null ? BigInt(1) : BigInt(0),
+        args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
+    ]
     
     if(args.min_rep != null){
         console.log(`Prove minimum reputation: ${minRep}`)
@@ -266,15 +276,20 @@ const publishPost = async (args: any) => {
         status: 0
     });
 
+    // Sign the message
+    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
+    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
+
     let tx
     try {
-        tx = await unirepContract.publishPost(
+        tx = await unirepSocialContract.publishPost(
+            attesterSig,
             BigInt(add0x(newpost._id.toString())), 
             epochKey,
             args.text, 
+            nullifiers,
             publicSignals, 
             proof,
-            nullifiers,
             { value: attestingFee, gasLimit: 1000000 }
         )
         if (args.from_database){
