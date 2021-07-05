@@ -6,7 +6,7 @@ export interface IComment extends Document {
     content: string
     hashedContent: string
     epochKey: string
-    epkProof: string
+    epkProof: [ string ]
     proveMinRep: boolean
     minRep: number
     status: number // 0: pending, 1: on-chain, 2: disabled
@@ -17,7 +17,7 @@ export interface IComment extends Document {
     content: { type: String },
     hashedContent: {type: String},
     epochKey: { type: String, required: true },
-    epkProof: { type: String, required: true },
+    epkProof: { type: [], required: true },
     proveMinRep: { type: Boolean },
     minRep: { type: Number },
     status: { type: Number, required: true },

@@ -3,6 +3,7 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { genIdentityCommitment, unSerialiseIdentity } from 'libsemaphore'
 import { stringifyBigInts } from 'maci-crypto'
+import mongoose from 'mongoose'
 
 import {
     promptPwd,
@@ -24,8 +25,9 @@ import { Attestation } from '../core'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { reputationProofPrefix, identityPrefix } from './prefix'
-import { genProveReputationCircuitInputsFromDB } from '../database/utils'
+import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'
 import { MAX_KARMA_BUDGET } from '../config/socialMedia'
+import { dbUri } from '../config/database'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -256,6 +258,17 @@ const vote = async (args: any) => {
            proveKarmaAmount,               // the amount of output karma nullifiers
            minRep                          // the amount of minimum reputation the user wants to prove
         )
+
+        const db = await mongoose.connect(
+            dbUri, 
+            { useNewUrlParser: true, 
+              useFindAndModify: false, 
+              useUnifiedTopology: true
+            }
+        )
+        GSTRoot = (await genGSTreeFromDB(currentEpoch)).root
+        nullifierTreeRoot = (await genNullifierTreeFromDB()).getRootHash()
+        db.disconnect();
 
     } else {
 

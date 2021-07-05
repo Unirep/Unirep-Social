@@ -17,7 +17,9 @@ import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignal
 import { getSignalByNameViaSym } from '../circuits/utils'
 
 
-describe('EventSequencing', () => {
+describe('EventSequencing', function (){
+    this.timeout(600000)
+    
     enum unirepEvents { 
         UserSignUp,
         AttestationSubmitted,
