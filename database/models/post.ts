@@ -1,13 +1,13 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
-import Comment, { IComment } from './comment';
+import { IComment } from './comment';
 
 export interface IPost extends Document {
     transactionHash: string
     content: string
     hashedContent: string
     epochKey: string
-    epkProof: string
+    epkProof: [ string ]
     proveMinRep: boolean
     minRep: number
     comments: [ IComment ]
@@ -19,11 +19,11 @@ export interface IPost extends Document {
     content: { type: String },
     hashedContent: {type: String },
     epochKey: { type: String, required: true },
-    epkProof: { type: String, required: true },
+    epkProof:  { type: [], required: true},
     proveMinRep: { type: Boolean },
     minRep: { type: Number },
     comments: { type: [ ]},
     status: { type: Number, required: true },
-  });
+  }, { collection: 'Posts' });
   
   export default mongoose.model<IPost>('Post', PostSchema);

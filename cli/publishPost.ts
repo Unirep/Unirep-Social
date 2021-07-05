@@ -27,7 +27,7 @@ import Post, { IPost } from "../database/models/post";
 import { DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
 import { genEpochKey } from '../core/utils'
-import { genProveReputationCircuitInputsFromDB } from '../database/utils'
+import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -208,6 +208,17 @@ const publishPost = async (args: any) => {
             proveKarmaAmount,               // the amount of output karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
+        
+        const db = await mongoose.connect(
+            dbUri, 
+            { useNewUrlParser: true, 
+              useFindAndModify: false, 
+              useUnifiedTopology: true
+            }
+        )
+        GSTRoot = (await genGSTreeFromDB(currentEpoch)).root
+        nullifierTreeRoot = (await genNullifierTreeFromDB()).getRootHash()
+        db.disconnect();
 
     } else {
 
@@ -227,7 +238,7 @@ const publishPost = async (args: any) => {
             proveKarmaAmount,               // the amount of output karma nullifiers
             minRep                          // the amount of minimum reputation the user wants to prove
         )
-
+        
         GSTRoot = userState.getUnirepStateGSTree(currentEpoch).root
         nullifierTreeRoot = (await userState.getUnirepStateNullifierTree()).getRootHash()
     }
@@ -269,12 +280,24 @@ const publishPost = async (args: any) => {
         content: args.text,
         // TODO: hashedContent
         epochKey: epk,
-        epkProof: base64url.encode(JSON.stringify(proof)),
+        epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
         proveMinRep: args.min_rep != null ? true : false,
         minRep: Number(minRep),
         comments: [],
         status: 0
     });
+
+    if (args.from_database){
+        const db = await mongoose.connect(
+            dbUri, 
+            { useNewUrlParser: true, 
+              useFindAndModify: false, 
+              useUnifiedTopology: true
+            }
+        )
+        await newpost.save()
+        db.disconnect();
+    }
 
     // Sign the message
     const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
@@ -292,6 +315,12 @@ const publishPost = async (args: any) => {
             proof,
             { value: attestingFee, gasLimit: 1000000 }
         )
+    } catch(e) {
+        console.error('Error: the transaction failed')
+        if (e.message) {
+            console.error(e.message)
+        }
+
         if (args.from_database){
             const db = await mongoose.connect(
                 dbUri, 
@@ -300,13 +329,9 @@ const publishPost = async (args: any) => {
                   useUnifiedTopology: true
                 }
             )
-            const res: IPost = await newpost.save()
+            const res = await Post.deleteOne({_id: newpost._id})
+            console.log(res)
             db.disconnect();
-        }
-    } catch(e) {
-        console.error('Error: the transaction failed')
-        if (e.message) {
-            console.error(e.message)
         }
         return
     }

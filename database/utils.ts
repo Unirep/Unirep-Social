@@ -6,7 +6,8 @@ import { numAttestationsPerEpochKey} from '../config/testLocal'
 import Settings, { ISettings } from './models/settings'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
 import Attestations, { IAttestation } from './models/attestation'
-import Post from "../database/models/post";
+import Post, { IPost } from "../database/models/post";
+import Comment, { IComment } from "../database/models/comment";
 import ReputationNullifier, { IReputationNullifier } from "../database/models/reputationNullifier";
 import UserTransitionedState, { IUserTransitionedState } from "../database/models/userTransitionedState";
 import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../database/models/GSTLeaf'
@@ -18,6 +19,7 @@ import { computeEmptyUserStateRoot, defaultUserStateLeaf, genAttestationNullifie
 
 import { assert } from 'console'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { dbUri } from '../config/database'
@@ -391,14 +393,8 @@ const genCurrentUserStateFromDB = async (
     } 
 
     const idCommitment = genIdentityCommitment(id)
-    const globalStateTreeDepth = settings.globalStateTreeDepth
-    const userStateTreeDepth = settings.userStateTreeDepth
     const epochTreeDepth = settings.epochTreeDepth
-    const nullifierTreeDepth = settings.nullifierTreeDepth
-    const attestingFee = settings.attestingFee
-    const epochLength = settings.epochLength
     const numEpochKeyNoncePerEpoch = settings.numEpochKeyNoncePerEpoch
-    const numAttestationsPerEpochKey = settings.numAttestationsPerEpochKey
 
     const userHasSignedUp = await findUserSignedUpEpochFromDB(id)
     assert(userHasSignedUp, "User has not signed up yet")
@@ -587,7 +583,6 @@ const genProveReputationFromAttesterCircuitInputsFromDB = async (
         throw new Error('Error: should save settings first')
     } 
 
-    const epochTreeDepth = settings.epochTreeDepth
     const nullifierTreeDepth = settings.nullifierTreeDepth
     const userStateTreeDepth = settings.userStateTreeDepth
 
@@ -599,7 +594,6 @@ const genProveReputationFromAttesterCircuitInputsFromDB = async (
     const latestGSTLeafIndex = userState[epoch].transitionedGSTLeafIndex
     assert(latestGSTLeafIndex >= 0, `user haven't transitioned from ${userState[epoch].fromEpoch} epoch`)
 
-    const fromEpoch = userState[epoch].fromEpoch
     const transitionedPosRep = userState[epoch].transitionedPosRep
     const transitionedNegRep = userState[epoch].transitionedNegRep
     const nonce = 0
@@ -674,12 +668,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
         throw new Error('Error: should save settings first')
     } 
 
-    const globalStateTreeDepth = settings.globalStateTreeDepth
-    const userStateTreeDepth = settings.userStateTreeDepth
     const epochTreeDepth = settings.epochTreeDepth
-    const nullifierTreeDepth = settings.nullifierTreeDepth
-    const attestingFee = settings.attestingFee
-    const epochLength = settings.epochLength
     const numEpochKeyNoncePerEpoch = settings.numEpochKeyNoncePerEpoch
     const numAttestationsPerEpochKey = settings.numAttestationsPerEpochKey
     const DefaultHashchainResult = SMT_ONE_LEAF
@@ -847,7 +836,12 @@ const genUserStateTransitionCircuitInputsFromDB = async (
 
 const updateDBFromNewGSTLeafInsertedEvent = async (
     event: ethers.Event,
+    startBlock: number,
 ) => {
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
     const iface = new ethers.utils.Interface(Unirep.abi)
     const decodedData = iface.decodeEventLog("NewGSTLeafInserted",event.data)
 
@@ -899,7 +893,12 @@ const updateDBFromNewGSTLeafInsertedEvent = async (
 */
 const updateDBFromAttestationEvent = async (
     event: ethers.Event,
+    startBlock: number,
 ) => {
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
     const iface = new ethers.utils.Interface(Unirep.abi)
     const _epoch = event.topics[1]
     const _epochKey = BigInt(event.topics[2]).toString(16)
@@ -941,18 +940,39 @@ const updateDBFromAttestationEvent = async (
 */
 const updateDBFromPostSubmittedEvent = async (
     event: ethers.Event,
+    startBlock: number,
 ) => {
-    const postId = mongoose.Types.ObjectId(event.topics[2].slice(-24))
 
-    const newPost = await Post.findByIdAndUpdate(
-        postId,
-        {$set: {
-            status: 1, 
-            transactionHash: event.transactionHash
-        }},
-    )
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
+    const postId = mongoose.Types.ObjectId(event.topics[2].slice(-24))
+    const findPost = await Post.findById(postId)
     
-    if(newPost){
+    if(findPost){
+        findPost?.set('status', 1)
+        findPost?.set('transactionHash', event.transactionHash)
+        await findPost?.save()
+        console.log(`Database: updated ${postId} post`)
+    } else {
+
+        const iface = new ethers.utils.Interface(UnirepSocial.abi)
+        const decodedData = iface.decodeEventLog("PostSubmitted",event.data)
+
+        const newpost: IPost = new Post({
+            _id: mongoose.Types.ObjectId(event.topics[2].slice(-24)),
+            transactionHash: event.transactionHash,
+            content: decodedData?._hahsedContent,
+            // TODO: hashedContent
+            epochKey: BigInt(event.topics[3]).toString(16),
+            epkProof: decodedData?.proof.map((n)=> (n._hex)),
+            proveMinRep: Boolean(decodedData?.proofSignals.proveMinRep._hex),
+            minRep: Number(decodedData?.proofSignals.minRep._hex),
+            comments: [],
+            status: 1
+        });
+
+        await newpost.save()
         console.log(`Database: updated ${postId} post`)
     }
 }
@@ -964,19 +984,49 @@ const updateDBFromPostSubmittedEvent = async (
 */
 const updateDBFromCommentSubmittedEvent = async (
     event: ethers.Event,
+    startBlock: number,
 ) => {
-    const commentId = mongoose.Types.ObjectId(event.topics[2].slice(-24))
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
+    const iface = new ethers.utils.Interface(UnirepSocial.abi)
+    const decodedData = iface.decodeEventLog("CommentSubmitted",event.data)
+    const commentId = mongoose.Types.ObjectId(decodedData?._commentId._hex.slice(-24))
   
-    const res = await Post.findOneAndUpdate(
+    const findComment = await Post.findOne({ "comments._id": commentId })
+    
+    if(findComment) {
+
+        await Post.findOneAndUpdate(
             { "comments._id": commentId },
             {$set: {
               "comments.$.status": 1,
               "comments.$.transactionHash": event.transactionHash
             }},
     )
-    
-    if(res) {
         console.log(`Database: updated ${commentId} comment`)
+
+    } else {
+
+        const newComment: IComment = new Comment({
+            _id: mongoose.Types.ObjectId(decodedData?._commentId._hex.slice(-24)),
+            transactionHash: event.transactionHash,
+            content: decodedData?._hahsedContent,
+            // TODO: hashedContent
+            epochKey: BigInt(event.topics[3]).toString(16),
+            epkProof: decodedData?.proof.map((n)=> (n._hex)),
+            proveMinRep: Boolean(decodedData?.proofSignals.proveMinRep._hex),
+            minRep: Number(decodedData?.proofSignals.minRep._hex),
+            status: 1
+        });
+
+        await Post.findByIdAndUpdate(
+            {_id: mongoose.Types.ObjectId(event.topics[2].slice(-24)) }, 
+            { $push: {comments: newComment }}
+        )
+        console.log(`Database: updated ${commentId} comment`)
+    
     }
 }
 
@@ -987,7 +1037,12 @@ const updateDBFromCommentSubmittedEvent = async (
 */
 const updateDBFromReputationNullifierSubmittedEvent = async (
     event: ethers.Event,
+    startBlock: number,
 ) => {
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
     const _settings = await Settings.findOne()
     if (!_settings) {
         throw new Error('Error: should save settings first')
@@ -1023,7 +1078,12 @@ const updateDBFromReputationNullifierSubmittedEvent = async (
 const updateDBFromEpochEndedEvent = async (
     event: ethers.Event,
     unirepContract: ethers.Contract,
+    startBlock: number,
 ) => {
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
     // update Unirep state
     const epoch = Number(event?.topics[1])
 
@@ -1060,8 +1120,13 @@ const updateDBFromEpochEndedEvent = async (
 * @param event UserstateTransitioned event
 */
 const updateDBFromUserStateTransitionEvent = async (
-    event: ethers.Event
+    event: ethers.Event,
+    startBlock: number,
 ) => {
+
+    // The event has been processed
+    if(event.blockNumber <= startBlock) return
+
     const _settings = await Settings.findOne()
     if (!_settings) {
         throw new Error('Error: should save settings first')
@@ -1143,6 +1208,8 @@ export {
     initDB,
     disconnectDB,
     saveSettingsFromContract,
+    genGSTreeFromDB,
+    genNullifierTreeFromDB,
     genProveReputationCircuitInputsFromDB,
     genProveReputationFromAttesterCircuitInputsFromDB,
     genUserStateTransitionCircuitInputsFromDB,

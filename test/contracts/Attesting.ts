@@ -15,7 +15,8 @@ import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym } from '../circuits/utils'
 
 
-describe('Attesting', () => {
+describe('Attesting', function (){
+    this.timeout(600000)
     let unirepContract
 
     let accounts: ethers.Signer[]
