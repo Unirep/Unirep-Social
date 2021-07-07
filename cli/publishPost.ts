@@ -299,14 +299,9 @@ const publishPost = async (args: any) => {
         db.disconnect();
     }
 
-    // Sign the message
-    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
-    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
-
     let tx
     try {
         tx = await unirepSocialContract.publishPost(
-            attesterSig,
             BigInt(add0x(newpost._id.toString())), 
             epochKey,
             args.text, 

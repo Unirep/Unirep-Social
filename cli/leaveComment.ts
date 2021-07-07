@@ -313,14 +313,9 @@ const leaveComment = async (args: any) => {
         db.disconnect();
     }
 
-    // Sign the message
-    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
-    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
-
     let tx
     try {
         tx = await unirepSocialContract.leaveComment(
-            attesterSig,
             BigInt(add0x(args.post_id)),
             BigInt(add0x(newComment._id.toString())), 
             epochKey,

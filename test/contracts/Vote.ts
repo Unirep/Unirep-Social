@@ -171,10 +171,10 @@ describe('Vote', function () {
                 expect(receipt.status).equal(1)
 
                 const attesterId = await unirepContract.attesters(attesterAddresses[i])
-                expect(i+1).equal(attesterId)
+                expect(i+2).equal(attesterId)
                 const nextAttesterId_ = await unirepContract.nextAttesterId()
                 // nextAttesterId starts with 1 so now it should be 2
-                expect(i+2).equal(nextAttesterId_)
+                expect(i+3).equal(nextAttesterId_)
             }
         })
     })
@@ -212,7 +212,7 @@ describe('Vote', function () {
     // user 1 and user 2
     describe('Upvote', () => {
         let currentEpoch
-        attesterId = 1
+        attesterId = 2
         attestation = new Attestation(
             BigInt(attesterId),
             BigInt(upvoteValue),
@@ -287,46 +287,6 @@ describe('Vote', function () {
                 const modedNullifier = BigInt(nullifiers[i]) % BigInt(2 ** unirepState.nullifierTreeDepth)
                 unirepState.addKarmaNullifiers(modedNullifier)
             }
-        })
-
-        it('submit upvote from the same epoch key should fail', async() => {
-            
-            fromEpk = genEpochKey(ids[fromUser].identityNullifier, currentEpoch, epochKeyNonce, circuitEpochTreeDepth)
-
-            toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce2, circuitEpochTreeDepth)
-
-            const circuitInputs = await users[fromUser].genProveReputationCircuitInputs(
-                epochKeyNonce,
-                upvoteValue,
-                0
-            )
-
-            const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
-            expect(isValid, "proof is not valid").to.be.true
-            
-            proof = results['proof']
-            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
-            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
-            const isProofValid = await unirepContract.verifyReputation(
-                nullifiers,
-                currentEpoch,
-                fromEpk,
-                publicSignals,
-                formatProofForVerifierContract(proof)
-            )
-            expect(isProofValid, "proof is not valid").to.be.true
-
-            await expect(contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
-                attestation, 
-                toEpk,
-                fromEpk, 
-                nullifiers,
-                publicSignals, 
-                formatProofForVerifierContract(proof),
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
 
         it('submit upvote with invalid proof should fail', async() => {

@@ -194,53 +194,6 @@ describe('Attesting', function (){
         submittedAttestNum++
     })
 
-    it('attest to same epoch key again should fail', async () => {
-        let epoch = await unirepContract.currentEpoch()
-        let nonce = 0
-        // Same identity nullifier, epoch and nonce will result in the same epoch key
-        let fromEpochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
-        let toEpochKey = genEpochKey(userId2.identityNullifier, epoch, nonce)
-        let attestation: Attestation = new Attestation(
-            BigInt(attesterId),
-            BigInt(0),
-            BigInt(3),
-            genRandomSalt(),
-            true,
-        )
-        circuitInputs = await userState.genProveReputationCircuitInputs(
-            nonce,
-            Number(attestation.posRep) + Number(attestation.negRep),
-            0
-        )
-        results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-        nullifiers = []
-        const GSTRoot = unirepState.genGSTree(epoch).root
-        const nullifierTree = await unirepState.genNullifierTree()
-        const nullifierTreeRoot = nullifierTree.getRootHash()
-        for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-            const variableName = 'main.karma_nullifiers['+i+']'
-            nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
-        }
-        publicSignals = [
-            GSTRoot,
-            nullifierTreeRoot,
-            BigInt(true),
-            Number(attestation.posRep) + Number(attestation.negRep),
-            BigInt(0),
-            BigInt(0)
-        ]
-
-        await expect(unirepContractCalledByAttester.submitAttestation(
-            attestation,
-            fromEpochKey,
-            toEpochKey,
-            nullifiers,
-            publicSignals,
-            formatProofForVerifierContract(results['proof']),
-            {value: attestingFee}
-        )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
-    })
-
     it('attestation with incorrect attesterId should fail', async () => {
         let epoch = await unirepContract.currentEpoch()
         // Increment nonce to get different epoch key
