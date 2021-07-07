@@ -35,7 +35,7 @@ describe('Integration', function () {
     let unirepSocialContract: ethers.Contract
     let contractCalledByFirstAttester, contractCalledBySecondAttester
     let _treeDepths
-    const voteFee = attestingFee.mul(2)
+    let unirepSocialId
 
     let prevEpoch: ethers.BigNumber
     let currentEpoch: ethers.BigNumber
@@ -59,6 +59,7 @@ describe('Integration', function () {
         _treeDepths = getTreeDepthsForTesting("circuit")
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
+        unirepSocialId = (await unirepContract.attesters(unirepSocialContract.address)).toNumber()
 
         currentEpoch = await unirepContract.currentEpoch()
         emptyUserStateRoot = computeEmptyUserStateRoot(circuitUserStateTreeDepth)
@@ -175,6 +176,7 @@ describe('Integration', function () {
 
     describe('Second epoch', () => {
         const secondEpochEpochKeys: string[] = []
+        let attestationsFromUnirepSocial: number = 0
         let attestationsFromFirstAttester: number = 0
         let attestationsFromSecondAttester: number = 0
         it('begin first epoch epoch transition', async () => {
@@ -431,15 +433,14 @@ describe('Integration', function () {
             expect(isProofValid, 'Verify reputation proof on-chain failed').to.be.true
 
             const attestationToEpochKey = new Attestation(
-                BigInt(attesters[0].id),
+                BigInt(unirepSocialId),
                 BigInt(0),
                 BigInt(DEFAULT_POST_KARMA),
                 BigInt(0),
                 false,
             )
             
-            const tx = await contractCalledByFirstAttester.publishPost(
-                attesterSigs[firstAttester],
+            const tx = await unirepSocialContract.publishPost(
                 BigInt(add0x(postId)), 
                 epochKey,
                 postText, 
@@ -467,11 +468,11 @@ describe('Integration', function () {
             for(const user of users){
                 user.updateAttestation(firstUserEpochKey, attestationToEpochKey.posRep, attestationToEpochKey.negRep)
             }
-            attestationsFromFirstAttester++
+            attestationsFromUnirepSocial++
             epochKeys[epochKey.toString()] = true
         })
 
-        it('Second attester upvote to first user', async () => {
+        it('Second user upvote to first user', async () => {
             const nonce = 0
             const firstUserEpochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), nonce, circuitEpochTreeDepth)
             const graffitiPreImage = genRandomSalt()
@@ -533,7 +534,7 @@ describe('Integration', function () {
                 nullifiers,
                 publicSignals,
                 proof,
-                { value: voteFee }
+                { value: attestingFee }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit attestation failed').to.equal(1)
@@ -599,15 +600,14 @@ describe('Integration', function () {
             expect(isProofValid, 'Verify reputation proof on-chain failed').to.be.true
 
             const attestationToEpochKey = new Attestation(
-                BigInt(attesters[firstAttester].id),
+                BigInt(unirepSocialId),
                 BigInt(0),
                 BigInt(DEFAULT_COMMENT_KARMA),
                 BigInt(0),
                 false,
             )
             
-            const tx = await contractCalledByFirstAttester.leaveComment(
-                attesterSigs[firstAttester],
+            const tx = await unirepSocialContract.leaveComment(
                 BigInt(add0x(postId)), 
                 BigInt(add0x(commentId)),
                 epochKey,
@@ -636,7 +636,7 @@ describe('Integration', function () {
             for(const user of users){
                 user.updateAttestation(firstUserEpochKey, attestationToEpochKey.posRep, attestationToEpochKey.negRep)
             }
-            attestationsFromFirstAttester++
+            attestationsFromUnirepSocial++
             epochKeys[epochKey.toString()] = true
         })
 
@@ -644,14 +644,17 @@ describe('Integration', function () {
             // First filter by epoch
             const attestationsByEpochFilter = unirepContract.filters.AttestationSubmitted(currentEpoch)
             const attestationsByEpochEvent = await unirepContract.queryFilter(attestationsByEpochFilter)
-            const attestationNum = attestationsFromFirstAttester + attestationsFromSecondAttester
+            const attestationNum = attestationsFromUnirepSocial + attestationsFromFirstAttester + attestationsFromSecondAttester
             expect(attestationsByEpochEvent.length, `Number of attestations submitted should be ${attestationNum}`).to.equal(attestationNum)
 
             // Second filter by attester
             for (let attester of attesters) {
                 let attestationsByAttesterFilter = unirepContract.filters.AttestationSubmitted(null, null, attester['addr'])
                 let attestationsByAttesterEvent = await unirepContract.queryFilter(attestationsByAttesterFilter)
-                if (attester.id == attesters[firstAttester].id) {
+                if (attester.id == unirepSocialId){
+                    expect(attestationsByAttesterEvent.length, `Number of attestations from Unirep Social should be ${attestationsFromUnirepSocial}`).to.equal(attestationsFromUnirepSocial)
+                }
+                else if (attester.id == attesters[firstAttester].id) {
                     expect(attestationsByAttesterEvent.length, `Number of attestations from first attester should be ${attestationsFromFirstAttester}`).to.equal(attestationsFromFirstAttester)
                 } else if (attester.id == attesters[secondAttester].id) {
                     expect(attestationsByAttesterEvent.length, `Number of attestations from second attester should be ${attestationsFromSecondAttester}`).to.equal(attestationsFromSecondAttester)

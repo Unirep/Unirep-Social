@@ -137,8 +137,7 @@ describe('EventSequencing', function (){
         const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
-        const tx = await contractCalledByAttester.publishPost(
-            attesterSig,
+        const tx = await unirepSocialContract.publishPost(
             postId, 
             epochKey,
             'postText', 
@@ -210,8 +209,7 @@ describe('EventSequencing', function (){
         const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
-        const tx = await contractCalledByAttester.leaveComment(
-            attesterSig,
+        const tx = await unirepSocialContract.leaveComment(
             postId,
             commentId, 
             epochKey,

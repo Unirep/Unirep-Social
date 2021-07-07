@@ -60,6 +60,8 @@ describe('Signup', () => {
         expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
         const unirepAddress_ = await unirepSocialContract.unirep()
         expect(unirepAddress_).equal(unirepContract.address)
+        const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)
+        expect(unirepSocialAttesterId.toNumber()).equal(1)
     })
 
     it('should have the correct default value', async () => {
@@ -133,10 +135,11 @@ describe('Signup', () => {
             expect(receipt.status).equal(1)
 
             const attesterId = await unirepContract.attesters(attesterAddress)
-            expect(1).equal(attesterId)
+            // attesterId 1 is the Unirep Social contract so it starts from 2
+            expect(2).equal(attesterId)
             const nextAttesterId_ = await unirepContract.nextAttesterId()
-            // nextAttesterId starts with 1 so now it should be 2
-            expect(2).equal(nextAttesterId_)
+            // nextAttesterId starts with 1 after Unirep Social and attester sign up it should be 2
+            expect(3).equal(nextAttesterId_)
         })
 
         it('sign up with invalid signature should fail', async () => {

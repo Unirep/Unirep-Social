@@ -28,13 +28,9 @@ describe('Post', function () {
     const commitments = new Array(2)
     let users: UserState[] = new Array(2)
     let unirepState
-    let attesters = new Array(2)
-    let attesterAddresses = new Array(2)
     
     let accounts: ethers.Signer[]
-    let attesterSig: string[] = new Array(2)
     let provider
-    let contractCalledByAttesters = new Array(2)
 
     const epochKeyNonce = 0
     let proof
@@ -155,26 +151,6 @@ describe('Post', function () {
                 users[i].signUp(latestTransitionedToEpoch, GSTreeLeafIndex)
             }
         })
-
-        it('sign up should succeed', async () => {
-            for (let i = 0; i < 2; i++) {
-                attesters[i] = accounts[i+1]
-                attesterAddresses[i] = await attesters[i].getAddress()
-                contractCalledByAttesters[i] = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attesters[i])
-                const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddresses[i], unirepContract.address])
-                attesterSig[i] = await attesters[i].signMessage(ethers.utils.arrayify(message))
-                const tx = await contractCalledByAttesters[i].attesterSignUp(attesterSig[i])
-                const receipt = await tx.wait()
-
-                expect(receipt.status).equal(1)
-
-                const attesterId = await unirepContract.attesters(attesterAddresses[i])
-                expect(i+1).equal(attesterId)
-                const nextAttesterId_ = await unirepContract.nextAttesterId()
-                // nextAttesterId starts with 1 so now it should be 2
-                expect(i+2).equal(nextAttesterId_)
-            }
-        })
     })
 
     describe('Generate reputation proof for verification', () => {
@@ -213,8 +189,7 @@ describe('Post', function () {
             const epochKeyNonce = 0
             const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
 
-            const tx = await contractCalledByAttesters[0].publishPost(
-                attesterSig[0],
+            const tx = await unirepSocialContract.publishPost(
                 postId, 
                 epk,
                 text, 
@@ -255,8 +230,7 @@ describe('Post', function () {
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            await expect(contractCalledByAttesters[0].publishPost(
-                attesterSig[0],
+            await expect(unirepSocialContract.publishPost(
                 postId, 
                 epk,
                 text, 
@@ -265,46 +239,6 @@ describe('Post', function () {
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: the nullifier has been submitted')
-        })
-
-        it('submit a post with the same epoch key should fail', async() => {
-            
-            const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
-            const epochKeyNonce = 0
-            const epk = genEpochKey(ids[0].identityNullifier, currentEpoch, epochKeyNonce)
-            circuitInputs = await users[0].genProveReputationCircuitInputs(
-                epochKeyNonce,
-                DEFAULT_POST_KARMA,
-                0
-            )
-
-            const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
-            expect(isValid, "proof is not valid").to.be.true
-            
-            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
-            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
-            const isProofValid = await unirepSocialContract.verifyReputation(
-                nullifiers,
-                currentEpoch,
-                epk,
-                publicSignals,
-                formatProofForVerifierContract(proof)
-            )
-            expect(isProofValid, "proof is not valid").to.be.true
-
-            await expect(contractCalledByAttesters[0].publishPost(
-                attesterSig[0],
-                postId, 
-                epk,
-                text, 
-                nullifiers,
-                publicSignals, 
-                formatProofForVerifierContract(proof),
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
 
         it('submit a post with invalid proof should fail', async() => {
@@ -336,8 +270,7 @@ describe('Post', function () {
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            await expect(contractCalledByAttesters[0].publishPost(
-                attesterSig[0],
+            await expect(unirepSocialContract.publishPost(
                 postId, 
                 epk,
                 text, 
@@ -382,8 +315,7 @@ describe('Post', function () {
             const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
             const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
 
-            const tx = await contractCalledByAttesters[1].leaveComment(
-                attesterSig[1],
+            const tx = await unirepSocialContract.leaveComment(
                 postId, 
                 commentId,
                 epk,
@@ -416,8 +348,7 @@ describe('Post', function () {
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            await expect(contractCalledByAttesters[1].leaveComment(
-                attesterSig[1],
+            await expect(unirepSocialContract.leaveComment(
                 postId, 
                 commentId,
                 epk,
@@ -427,47 +358,6 @@ describe('Post', function () {
                 formatProofForVerifierContract(proof),
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: the nullifier has been submitted')
-        })
-
-        it('submit a comment with the same epoch key should fail', async() => {
-            
-            const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
-            const epochKeyNonce = 0
-            const epk = genEpochKey(ids[1].identityNullifier, currentEpoch, epochKeyNonce)
-            circuitInputs = await users[1].genProveReputationCircuitInputs(
-                epochKeyNonce,
-                DEFAULT_COMMENT_KARMA,
-                0
-            )
-
-            const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-            proof = results['proof']
-            publicSignals = results['publicSignals']
-            const isValid = await verifyProveReputationProof(proof, publicSignals)
-            expect(isValid, "proof is not valid").to.be.true
-
-            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
-            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
-            const isProofValid = await unirepSocialContract.verifyReputation(
-                nullifiers,
-                currentEpoch,
-                epk,
-                publicSignals,
-                formatProofForVerifierContract(proof)
-            )
-            expect(isProofValid, "proof is not valid").to.be.true
-
-            await expect(contractCalledByAttesters[1].leaveComment(
-                attesterSig[1],
-                postId, 
-                commentId,
-                epk,
-                text, 
-                nullifiers,
-                publicSignals, 
-                formatProofForVerifierContract(proof),
-                { value: attestingFee, gasLimit: 1000000 }
-            )).to.be.revertedWith('Unirep: attester has already attested to this epoch key')
         })
 
         it('submit a comment with invalid proof should fail', async() => {
@@ -499,8 +389,7 @@ describe('Post', function () {
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            await expect(contractCalledByAttesters[1].leaveComment(
-                attesterSig[1],
+            await expect(unirepSocialContract.leaveComment(
                 postId, 
                 commentId,
                 epk,

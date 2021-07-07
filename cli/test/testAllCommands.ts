@@ -10,6 +10,7 @@ import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 import { genUnirepStateFromContract, UnirepState } from '../../core'
 import { exec } from './utils'
 
+import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { hashOne } from "maci-crypto"
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
@@ -30,13 +31,14 @@ describe('test all CLI subcommands', function() {
     const epochKeyNonce = 0
     const epochKeyNonce2 = 1
     const epochLength = 5
+    let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
     let unirepState: UnirepState
     const dbOption = ``
     // const dbOption = ` -db`
     
     let userIdentity1, userIdentityCommitment1, userIdentity2, userIdentityCommitment2
-    const attesterId = 1
+    const attesterId = 2
     let epk, epkProof
     const text = "postText"
     const text2 = "commentText"
@@ -78,6 +80,12 @@ describe('test all CLI subcommands', function() {
             const unirepSocialAddress = socialRegMatch[1]
 
             const provider = new hardhatEthers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER)
+            unirepContract = new ethers.Contract(
+                unirepAddress,
+                Unirep.abi,
+                provider,
+            )
+
             unirepSocialContract = new ethers.Contract(
                 unirepSocialAddress,
                 UnirepSocial.abi,
@@ -92,6 +100,9 @@ describe('test all CLI subcommands', function() {
 
             expect(unirepState.epochLength).equal(epochLength)
             expect(unirepState.attestingFee).equal(attestingFee)
+
+            const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)
+            expect(unirepSocialAttesterId.toNumber()).equal(1)
         })
     })
 
@@ -185,7 +196,7 @@ describe('test all CLI subcommands', function() {
             console.log(command)
             console.log(output)
 
-            const signUpRegMatch = output.match(/Attester sign up with attester id: 1/)
+            const signUpRegMatch = output.match(/Attester sign up with attester id: 2/)
             expect(signUpRegMatch).not.equal(null)
         })
 
@@ -199,7 +210,7 @@ describe('test all CLI subcommands', function() {
             console.log(command)
             console.log(output)
 
-            const signUpRegMatch = output.match(/Attester sign up with attester id: 2/)
+            const signUpRegMatch = output.match(/Attester sign up with attester id: 3/)
             expect(signUpRegMatch).not.equal(null)
         })
     })
@@ -459,7 +470,7 @@ describe('test all CLI subcommands', function() {
             console.log(command)
             console.log(output)
 
-            const verifyRegMatch = output.match(/Verify reputation proof from attester 1 .+, succeed/)
+            const verifyRegMatch = output.match(/Verify reputation proof from attester 2 .+, succeed/)
             expect(verifyRegMatch).not.equal(null)
         })
     })

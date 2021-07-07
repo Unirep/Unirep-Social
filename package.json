@@ -4,18 +4,17 @@
     "description": "",
     "main": "index.ts",
     "scripts": {
-        "build": "yarn run installZkutil && yarn run buildVerifyEpochKeySnark && yarn run buildUserStateTransitionSnark && yarn run buildProveReputationSnark && yarn run buildProveReputationFromAttesterSnark",
-        "start": "npx hardhat node & npx ts-node database/EventsListeners.ts",
+        "build": "yarn run installZkutil && yarn run buildVerifyEpochKeySnark && yarn run buildUserStateTransitionSnark && yarn run buildProveReputationSnark && yarn run buildProveReputationFromAttesterSnark && npx hardhat compile && npx ts-node scripts/buildPoseidon.ts",
         "installZkutil": "./scripts/installZkutil.sh",
         "buildVerifyEpochKeySnark": "./scripts/buildVerifyEpochKeySnark.sh",
         "buildUserStateTransitionSnark": "./scripts/buildUserStateTransitionSnark.sh",
         "buildProveReputationSnark": "./scripts/buildProveReputationSnark.sh",
         "buildProveReputationFromAttesterSnark": "./scripts/buildProveReputationFromAttesterSnark.sh",
-        "test-cli": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts && ./scripts/testCLI.sh",
-        "test": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts && yarn run contractUintTests && yarn run circuitUintTests && yarn run integrationTest",
+        "test-cli": "./scripts/testCLI.sh",
+        "test": "yarn run contractUintTests && yarn run circuitUintTests && yarn run integrationTest",
         "contractUintTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/contracts -name '*.ts')",
         "circuitUintTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/circuits -name '*.ts')",
-        "integrationTest": "npx ts-node scripts/buildPoseidon.ts && NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/integration -name '*.ts')"
+        "integrationTest": " NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/integration -name '*.ts')"
     },
     "repository": {
         "type": "git",

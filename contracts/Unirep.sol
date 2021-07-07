@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma abicoder v2;
 pragma solidity 0.7.6;
 
@@ -69,9 +70,6 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
     mapping(address => uint256) public attesters;
 
     uint256 public nextAttesterId = 1;
-
-    // Keep track of whether an attester has attested to an epoch key
-    mapping(uint256 => mapping(address => bool)) public attestationsMade;
 
     // Indicate if hash chain of an epoch key is sealed
     mapping(uint256 => bool) public isEpochKeyHashChainSealed;
@@ -414,7 +412,6 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
         require(attesters[attester] > 0, "Unirep: attester has not signed up yet");
         require(attesters[attester] == attestation.attesterId, "Unirep: mismatched attesterId");
         require(isEpochKeyHashChainSealed[epochKey] == false, "Unirep: hash chain of this epoch key has been sealed");
-        require(attestationsMade[epochKey][attester] == false, "Unirep: attester has already attested to this epoch key");
         require(numAttestationsToEpochKey[epochKey] < numAttestationsPerEpochKey, "Unirep: no more attestations to the epoch key is allowed");
         
         // Before attesting to a given epoch key, an attester must
@@ -439,8 +436,6 @@ contract Unirep is DomainObjs, ComputeRoot, UnirepParameters {
             epochKeyHashchain[epochKey]
         );
         numAttestationsToEpochKey[epochKey] += 1;
-
-        attestationsMade[epochKey][attester] = true;
 
         emit Sequencer("AttestationSubmitted");
         emit AttestationSubmitted(

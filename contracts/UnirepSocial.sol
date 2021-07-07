@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma abicoder v2;
 pragma solidity 0.7.6;
 
@@ -74,6 +75,9 @@ contract UnirepSocial {
         // Set the unirep contracts
         unirep = _unirepContract;
 
+        // signup Unirep Social contract as an attester in Unirep contract
+        unirep.attesterSignUp();
+
         postReputation = _postReputation;
         commentReputation = _commentReputation;
         airdroppedReputation = _airdroppedReputation;
@@ -97,16 +101,15 @@ contract UnirepSocial {
     }
 
     function publishPost(
-        bytes calldata signature,
         uint256 postId, 
         uint256 epochKey, 
         string calldata hashedContent, 
         uint256[] calldata _nullifiers, 
-        Unirep.ReputationProofSignals memory _proofSignals,
+        Unirep.ReputationProofSignals calldata _proofSignals,
         uint256[8] calldata _proof) external payable {
 
         // Call Unirep contract to perform reputation spending
-        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, _nullifiers, _proofSignals, _proof, postReputation);
+        unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofSignals, _proof, postReputation);
         
         emit PostSubmitted(
             unirep.currentEpoch(),
@@ -120,17 +123,16 @@ contract UnirepSocial {
     }
 
     function leaveComment(
-        bytes calldata signature,
         uint256 postId, 
         uint256 commentId,
         uint256 epochKey, 
         string calldata hashedContent, 
         uint256[] calldata _nullifiers, 
-        Unirep.ReputationProofSignals memory _proofSignals,
+        Unirep.ReputationProofSignals calldata _proofSignals,
         uint256[8] calldata _proof) external payable {
 
         // Call Unirep contract to perform reputation spending        
-        unirep.spendReputationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, epochKey, _nullifiers, _proofSignals, _proof, commentReputation);
+        unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofSignals, _proof, commentReputation);
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -151,7 +153,7 @@ contract UnirepSocial {
         uint256 fromEpochKey,
         uint256[] memory _nullifiers,
         Unirep.ReputationProofSignals memory _proofSignals,
-        uint256[8] memory _proof ) public payable {
+        uint256[8] memory _proof ) external payable {
         uint256 voteValue = attestation.posRep + attestation.negRep;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(attestation.posRep * attestation.negRep == 0, "Unirep Social: should only choose to upvote or to downvote");
