@@ -347,9 +347,9 @@ const leaveComment = async (args: any) => {
         return
     }
 
-    console.log('Transaction hash:', tx.hash)
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${epk}`)
     console.log(reputationProofPrefix + encodedProof)
+    console.log('Transaction hash:', tx.hash)
 }
 
 export {

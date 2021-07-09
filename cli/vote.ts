@@ -363,9 +363,9 @@ const vote = async (args: any) => {
         return
     }
 
-    console.log('Transaction hash:', tx.hash)
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${fromEpochKey.toString(16)}`)
     console.log(reputationProofPrefix + encodedProof)
+    console.log('Transaction hash:', tx.hash)
 }
 
 export {
