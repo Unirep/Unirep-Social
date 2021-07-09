@@ -158,7 +158,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts userSignup` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -c ${userIdentityCommitment1} ` +
-                ` -d ${userPrivKey} `
+                ` -d ${deployerPrivKey} `
 
             const output = exec(command).stdout.trim()
 
@@ -173,7 +173,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts userSignup` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -c ${userIdentityCommitment2} ` +
-                ` -d ${userPrivKey} `
+                ` -d ${deployerPrivKey} `
 
             const output = exec(command).stdout.trim()
 
@@ -197,20 +197,6 @@ describe('test all CLI subcommands', function() {
             console.log(output)
 
             const signUpRegMatch = output.match(/Attester sign up with attester id: 2/)
-            expect(signUpRegMatch).not.equal(null)
-        })
-
-        it('should sign user up', async () => {
-            const command = `npx ts-node cli/index.ts attesterSignup` +
-                ` -x ${unirepSocialContract.address} ` +
-                ` -d ${userPrivKey} `
-
-            const output = exec(command).stdout.trim()
-
-            console.log(command)
-            console.log(output)
-
-            const signUpRegMatch = output.match(/Attester sign up with attester id: 3/)
             expect(signUpRegMatch).not.equal(null)
         })
     })
@@ -256,7 +242,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts publishPost` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -tx ${text}` +
-                ` -d ${userPrivKey}` +
+                ` -d ${deployerPrivKey}` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce}` + 
                 dbOption
@@ -271,12 +257,12 @@ describe('test all CLI subcommands', function() {
 
             const idRegMatch = output.match(/Post ID: ([a-fA-F0-9]+)/)
             postID = idRegMatch[1]
-            const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
-            expect(postRegMatch).not.equal(null)
-            transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
-            const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)$/)
+            const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)/)
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
+            const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}$/)
+            expect(postRegMatch).not.equal(null)
+            transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
         })
     })
 
@@ -319,7 +305,7 @@ describe('test all CLI subcommands', function() {
                 ` -x ${unirepSocialContract.address} ` +
                 ` -pid ${postID} ` +
                 ` -tx ${text2}` +
-                ` -d ${userPrivKey}` +
+                ` -d ${deployerPrivKey}` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce2}` +
                 ` -mr ${minRepDiff}` +
@@ -355,12 +341,12 @@ describe('test all CLI subcommands', function() {
 
             const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
             epk = epkRegMatch[1]
-            const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
-            expect(txRegMatch).not.equal(null)
-            transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
-            const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)$/)
+            const userRepProofRegMatch = output.match(/(Unirep\.reputationProof\.[a-zA-Z0-9\-\_]+)/)
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
+            const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}$/)
+            expect(txRegMatch).not.equal(null)
+            transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
     })
 
@@ -403,7 +389,7 @@ describe('test all CLI subcommands', function() {
         it('should transition user 1 state', async () => {
             const command = `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -d ${userPrivKey} ` +
+                ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity1} ` +
                 dbOption
 
@@ -419,7 +405,7 @@ describe('test all CLI subcommands', function() {
         it('should transition user 2 state', async () => {
             const command = `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -d ${userPrivKey} ` +
+                ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity2} ` + 
                 dbOption
 
