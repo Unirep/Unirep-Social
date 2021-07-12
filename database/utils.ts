@@ -25,6 +25,7 @@ import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedi
 import { dbUri } from '../config/database'
 import { Reputation } from '../core/UserState'
 import { genKarmaNullifier } from '../core/utils'
+import { DEFAULT_START_BLOCK } from '../cli/defaults'
 
 enum action {
     UpVote = 0,
@@ -836,7 +837,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
 
 const updateDBFromNewGSTLeafInsertedEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -893,7 +894,7 @@ const updateDBFromNewGSTLeafInsertedEvent = async (
 */
 const updateDBFromAttestationEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -940,7 +941,7 @@ const updateDBFromAttestationEvent = async (
 */
 const updateDBFromPostSubmittedEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -984,7 +985,7 @@ const updateDBFromPostSubmittedEvent = async (
 */
 const updateDBFromCommentSubmittedEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -1037,7 +1038,7 @@ const updateDBFromCommentSubmittedEvent = async (
 */
 const updateDBFromReputationNullifierSubmittedEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -1078,7 +1079,7 @@ const updateDBFromReputationNullifierSubmittedEvent = async (
 const updateDBFromEpochEndedEvent = async (
     event: ethers.Event,
     unirepContract: ethers.Contract,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
@@ -1121,7 +1122,7 @@ const updateDBFromEpochEndedEvent = async (
 */
 const updateDBFromUserStateTransitionEvent = async (
     event: ethers.Event,
-    startBlock: number,
+    startBlock: number  = DEFAULT_START_BLOCK,
 ) => {
 
     // The event has been processed
