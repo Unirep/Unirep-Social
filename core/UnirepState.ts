@@ -114,7 +114,7 @@ class UnirepState {
         this.defaultGSTLeaf = hash5([
             BigInt(0),  // zero identityCommitment
             emptyUserStateRoot,  // zero user state root
-            BigInt(DEFAULT_AIRDROPPED_KARMA), // default airdropped karma
+            BigInt(0), // default airdropped karma
             BigInt(0), // default negative karma
             BigInt(0)
         ])

@@ -63,7 +63,7 @@ describe('Integration', function () {
 
         currentEpoch = await unirepContract.currentEpoch()
         emptyUserStateRoot = computeEmptyUserStateRoot(circuitUserStateTreeDepth)
-        blankGSLeaf = hash5([BigInt(0), emptyUserStateRoot, BigInt(DEFAULT_AIRDROPPED_KARMA), BigInt(0), BigInt(0)])
+        blankGSLeaf = hash5([BigInt(0), emptyUserStateRoot, BigInt(0), BigInt(0), BigInt(0)])
 
         unirepState = new UnirepState(
             circuitGlobalStateTreeDepth,

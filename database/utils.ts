@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import mongoose from 'mongoose'
 import { genIdentityCommitment } from 'libsemaphore'
 import { numAttestationsPerEpochKey} from '../config/testLocal'
@@ -111,10 +111,13 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
             epochLength: ethers.BigNumber.from(epochLength).toNumber(),
 	        numEpochKeyNoncePerEpoch: ethers.BigNumber.from(numEpochKeyNoncePerEpoch).toNumber(),
 	        numAttestationsPerEpochKey: numAttestationsPerEpochKey,
-	        defaultGSTLeaf: hashLeftRight(
+	        defaultGSTLeaf: hash5([
                 BigInt(0),  // zero identityCommitment
                 emptyUserStateRoot,  // zero user state root
-            )
+                BigInt(0), // default airdropped karma
+                BigInt(0), // default negative karma
+                BigInt(0)
+            ])
         })
     }
 
@@ -134,15 +137,7 @@ const genGSTreeFromDB = async (epoch: number): Promise<IncrementalQuinTree> => {
     } 
 
     const globalStateTreeDepth = _settings.globalStateTreeDepth
-    const userStateTreeDepth = _settings.userStateTreeDepth
-    const emptyUserStateRoot = computeEmptyUserStateRoot(userStateTreeDepth)
-    const defaultGSTLeaf = hash5([
-        BigInt(0),  // zero identityCommitment
-        emptyUserStateRoot,  // zero user state root
-        BigInt(DEFAULT_AIRDROPPED_KARMA), // default airdropped karma
-        BigInt(0), // default negative karma
-        BigInt(0)
-    ])
+    const defaultGSTLeaf = BigInt(_settings.defaultGSTLeaf)
 
     const GSTree = new IncrementalQuinTree(
         globalStateTreeDepth,
@@ -1107,9 +1102,16 @@ const updateDBFromEpochEndedEvent = async (
         epochTreeLeaves: epochTreeLeaves
     })
 
-    const EpochEndedEventResult = await newEpochTreeLeaves?.save()
+    const treeLeaves: IGSTLeaves | null = new GSTLeaves({
+        epoch: epoch + 1,
+        GSTLeaves: [],
+        currentEpochGSTLeafIndexToInsert: 1
+    })
 
-    if(EpochEndedEventResult) {
+    const EpochEndedEventResult = await newEpochTreeLeaves?.save()
+    const savedTreeLeavesRes = await treeLeaves?.save()
+
+    if(EpochEndedEventResult && savedTreeLeavesRes) {
         console.log('Database: saved epoch tree leaves and update current Epoch')
     }
 }
