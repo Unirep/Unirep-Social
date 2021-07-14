@@ -103,10 +103,10 @@ contract UnirepSocial {
     function publishPost(
         uint256 postId, 
         uint256 epochKey, 
-        string calldata hashedContent, 
-        uint256[] calldata _nullifiers, 
-        Unirep.ReputationProofSignals calldata _proofSignals,
-        uint256[8] calldata _proof) external payable {
+        string memory hashedContent, 
+        uint256[] memory _nullifiers, 
+        Unirep.ReputationProofSignals memory _proofSignals,
+        uint256[8] memory _proof) external payable {
 
         // Call Unirep contract to perform reputation spending
         unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofSignals, _proof, postReputation);
@@ -126,10 +126,10 @@ contract UnirepSocial {
         uint256 postId, 
         uint256 commentId,
         uint256 epochKey, 
-        string calldata hashedContent, 
-        uint256[] calldata _nullifiers, 
-        Unirep.ReputationProofSignals calldata _proofSignals,
-        uint256[8] calldata _proof) external payable {
+        string memory hashedContent, 
+        uint256[] memory _nullifiers, 
+        Unirep.ReputationProofSignals memory _proofSignals,
+        uint256[8] memory _proof) external payable {
 
         // Call Unirep contract to perform reputation spending        
         unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofSignals, _proof, commentReputation);

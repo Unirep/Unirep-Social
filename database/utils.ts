@@ -1,7 +1,6 @@
 import { BigNumber, ethers } from 'ethers'
 import mongoose from 'mongoose'
 import { genIdentityCommitment } from 'libsemaphore'
-import { numAttestationsPerEpochKey} from '../config/testLocal'
 
 import Settings, { ISettings } from './models/settings'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
@@ -100,6 +99,7 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
         const attestingFee = await unirepContract.attestingFee()
         const epochLength = await unirepContract.epochLength()
         const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
+        const numAttestationsPerEpochKey = await unirepContract.numAttestationsPerEpochKey()
     
         const emptyUserStateRoot = computeEmptyUserStateRoot(ethers.BigNumber.from(userStateTreeDepth).toNumber())
         settings = new Settings({
@@ -110,7 +110,7 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
 	        attestingFee: attestingFee,
             epochLength: ethers.BigNumber.from(epochLength).toNumber(),
 	        numEpochKeyNoncePerEpoch: ethers.BigNumber.from(numEpochKeyNoncePerEpoch).toNumber(),
-	        numAttestationsPerEpochKey: numAttestationsPerEpochKey,
+	        numAttestationsPerEpochKey: ethers.BigNumber.from(numAttestationsPerEpochKey).toNumber(),
 	        defaultGSTLeaf: hash5([
                 BigInt(0),  // zero identityCommitment
                 emptyUserStateRoot,  // zero user state root
@@ -234,6 +234,7 @@ const getAttestationNullifiersFromDB = async (epoch: number, id: any): Promise<B
 
     const epochTreeDepth = _settings.epochTreeDepth
     const numEpochKeyNoncePerEpoch = _settings.numEpochKeyNoncePerEpoch
+    const numAttestationsPerEpochKey = _settings.numAttestationsPerEpochKey
 
     const nullifiers: BigInt[] = []
     for (let nonce = 0; nonce < numEpochKeyNoncePerEpoch; nonce++) {

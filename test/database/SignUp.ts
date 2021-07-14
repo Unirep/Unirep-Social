@@ -1,8 +1,8 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
-import mongoose from 'mongoose'
 import chai from "chai"
 import { attestingFee, epochLength, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, circuitNullifierTreeDepth, numAttestationsPerEpochKey, circuitUserStateTreeDepth} from '../../config/testLocal'
+import { UnirepState } from '../../database/UnirepState'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { IncrementalQuinTree } from 'maci-crypto'
 import { deployUnirep, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
@@ -12,9 +12,8 @@ const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
-import { UnirepState } from '../../core'
-import { connectDB, genGSTreeFromDB, initDB, saveSettingsFromContract, updateDBFromEpochEndedEvent, updateDBFromNewGSTLeafInsertedEvent } from '../../database/utils'
-import { dbUri } from '../../config/database'
+import { genGSTreeFromDB, updateDBFromEpochEndedEvent, updateDBFromNewGSTLeafInsertedEvent } from '../../database/utils'
+import { dbTestUri, dbUri } from '../../config/database'
 import GSTLeaves, { IGSTLeaves } from '../../database/models/GSTLeaf'
 import { add0x } from '../../crypto/SMT'
 import UserSignUp, { IUserSignUp } from '../../database/models/userSignUp'
@@ -22,8 +21,6 @@ import Settings, { ISettings } from '../../database/models/settings'
 
 
 describe('User Sign Up', function () {
-    this.timeout(300000)
-
     let unirepContract
     let unirepSocialContract
     let GSTree
@@ -46,16 +43,18 @@ describe('User Sign Up', function () {
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
         GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
 
-        db = await connectDB(dbUri)
-        await initDB(db)
+        unirepState = new UnirepState(dbUri)
+
+        await unirepState.connectDB()
+        await unirepState.initDB()
     })
 
     after(async() => {
-        db.disconnect()
+        unirepState.disconnectDB()
     })
 
-    it('should save settings is database', async() => {
-        await saveSettingsFromContract(unirepContract)
+    it('should save settings is database', async () => {
+        await unirepState.saveSettings(unirepContract)
         const _settings: ISettings | null = await Settings.findOne()
         expect(_settings).not.equal(null)
     })
@@ -116,16 +115,6 @@ describe('User Sign Up', function () {
 
         it('sign up should succeed', async () => {
             currentEpoch = await unirepContract.currentEpoch()
-            unirepState = new UnirepState(
-                circuitGlobalStateTreeDepth,
-                circuitUserStateTreeDepth,
-                circuitEpochTreeDepth,
-                circuitNullifierTreeDepth,
-                attestingFee,
-                epochLength,
-                numEpochKeyNoncePerEpoch,
-                numAttestationsPerEpochKey,
-            )
             for (let i = 0; i < numUserSignUpInEpochOne; i++) {
                 const id = genIdentity()
                 const commitment = genIdentityCommitment(id)
@@ -148,7 +137,7 @@ describe('User Sign Up', function () {
                 )
                 GSTree.insert(hashedStateLeaf)
 
-                unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
+                // unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
 
                 const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
@@ -197,16 +186,9 @@ describe('User Sign Up', function () {
         })
 
         it('Generate global state tree from database should success', async() => {
-            const db = await mongoose.connect(
-                dbUri, 
-                { useNewUrlParser: true, 
-                  useFindAndModify: false, 
-                  useUnifiedTopology: true
-                }
-            )
-            const GSTRootFromDB = (await genGSTreeFromDB(currentEpoch)).root
-            const GSTRoot = unirepState.genGSTree(currentEpoch.toNumber()).root
-            expect(GSTRootFromDB).to.equal(GSTRoot)
+            const GSTRootFromDB = (await unirepState.genGSTree(currentEpoch)).root
+            const GSTRoot = GSTree.root
+            expect(GSTRootFromDB.toString(), 'GST root mismatch').to.equal(GSTRoot.toString())
         })
     })
 
@@ -226,11 +208,14 @@ describe('User Sign Up', function () {
             expect(receipt.status).equal(1)
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch).to.equal(2)
-            unirepState.epochTransition(prevEpoch.toNumber(), [])
+            // unirepState.epochTransition(prevEpoch.toNumber(), [])
 
             const epochEndedFilter = unirepContract.filters.EpochEnded()
             const epochEndedEvents =  await unirepContract.queryFilter(epochEndedFilter)
             await updateDBFromEpochEndedEvent(epochEndedEvents[0], unirepContract)
+            
+            const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
+            GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
         })
 
         it('sign up should succeed', async () => {
@@ -256,7 +241,7 @@ describe('User Sign Up', function () {
                 )
                 GSTree.insert(hashedStateLeaf)
 
-                unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
+                // unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
 
                 const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
@@ -302,6 +287,12 @@ describe('User Sign Up', function () {
 
                 expect(signedUpUsers.length, 'Storing signed up user failed').to.equal(1)
             }
+        })
+
+        it('Generate global state tree from database should success', async() => {
+            const GSTRootFromDB = (await unirepState.genGSTree(currentEpoch)).root
+            const GSTRoot = GSTree.root
+            expect(GSTRootFromDB.toString(), 'GST root mismatch').to.equal(GSTRoot.toString())
         })
     })
 })
