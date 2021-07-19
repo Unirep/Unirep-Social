@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import chai from "chai"
@@ -5,34 +6,44 @@ import { attestingFee, epochLength, circuitEpochTreeDepth, circuitGlobalStateTre
 import { UnirepState } from '../../database/UnirepState'
 import { UserState } from '../../database/UserState'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
-import { IncrementalQuinTree } from 'maci-crypto'
+import { genRandomSalt, hash5, IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
 import { deployUnirep, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { deployUnirepSocial } from '../../core/utils'
 
 const { expect } = chai
 
 import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { dbTestUri } from '../../config/database'
 import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../../database/models/GSTLeaf'
 import { add0x } from '../../crypto/SMT'
 import UserSignUp, { IUserSignUp } from '../../database/models/userSignUp'
 import Settings, { ISettings } from '../../database/models/settings'
+import Post from '../../database/models/post'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
+import { updateDBFromPostSubmittedEvent } from '../../database/utils'
 
 
-describe('User Sign Up', function () {
+describe('Post', function () {
     let unirepContract
     let unirepSocialContract
     let GSTree
     let emptyUserStateRoot
-    let unirepState
+    let unirepState: UnirepState
+    let users: UserState[] = []
     
+    let ids: any[] = []
     let accounts: ethers.Signer[]
     let db
     let numUserSignUps: number = 0
-    const numUserSignUpInEpochOne: number = Math.floor(Math.random() * (maxUsers / 2))
-    const numUserSignUpInEpochTwo: number = Math.floor(Math.random() * (maxUsers / 2))
-    const iface = new ethers.utils.Interface(Unirep.abi)
+    const numUserSignUpInEpochOne: number = 2
+    const numUserSignUpInEpochTwo: number = 2
+    let proof
+    let nullifiers
+    let publicSignals
+    let epochKey
+    let postId = genRandomSalt()
+    let text = 'postTest'
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -109,7 +120,7 @@ describe('User Sign Up', function () {
         expect(BigNumber.from(_settings?.defaultGSTLeaf)).equal(blankGSLeaf)
     })
 
-    describe('User sign-ups epoch 1', () => {
+    describe('Epoch 1', () => {
 
         let currentEpoch
         let GSTreeLeafIndex: number = -1
@@ -117,12 +128,11 @@ describe('User Sign Up', function () {
         it(`sign up ${numUserSignUpInEpochOne} users should succeed`, async () => {
             currentEpoch = await unirepContract.currentEpoch()
             for (let i = 0; i < numUserSignUpInEpochOne; i++) {
-                const id = genIdentity()
-                const commitment = genIdentityCommitment(id)
-                const user = new UserState(id, unirepState)
+                ids.push(genIdentity())
+                const commitment = genIdentityCommitment(ids[i])
+                const user = new UserState(ids[i], unirepState)
                 const tx = await unirepSocialContract.userSignUp(commitment)
                 const receipt = await tx.wait()
-
                 expect(receipt.status).equal(1)
                 numUserSignUps ++
 
@@ -157,6 +167,7 @@ describe('User Sign Up', function () {
             const NewGSTLeafInsertedFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
             const newGSTLeafInsertedEvents =  await unirepContract.queryFilter(NewGSTLeafInsertedFilter)
             expect(newGSTLeafInsertedEvents.length).to.equal(numUserSignUpInEpochOne)
+            const iface = new ethers.utils.Interface(Unirep.abi)
 
             for (let event of newGSTLeafInsertedEvents) {
                 // save user sign up event
@@ -192,108 +203,69 @@ describe('User Sign Up', function () {
             const GSTRoot = GSTree.root
             expect(GSTRootFromDB.toString(), 'GST root mismatch').to.equal(GSTRoot.toString())
         })
-    })
 
-    describe('User sign-ups epoch 2', () => {
-
-        let currentEpoch
-        let GSTreeLeafIndex: number = -1
-
-        it('should transition to epoch 2', async () => {
-            currentEpoch = await unirepContract.currentEpoch()
-            let numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
-            await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-            const tx = await unirepSocialContract.beginEpochTransition(numEpochKey)
-            const receipt = await tx.wait()
-            expect(receipt.status).equal(1)
-            currentEpoch = await unirepContract.currentEpoch()
-            expect(currentEpoch).to.equal(2)
-
-            const epochEndedFilter = unirepContract.filters.EpochEnded()
-            const epochEndedEvents =  await unirepContract.queryFilter(epochEndedFilter)
-            // update Unirep state
-            await unirepState.epochEnded(epochEndedEvents[0], unirepContract)
-            
-            const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
-            GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
-        })
-
-        it(`sign up ${numUserSignUpInEpochTwo} users should succeed`, async () => {
-            for (let i = 0; i < numUserSignUpInEpochTwo; i++) {
-                const id = genIdentity()
-                const commitment = genIdentityCommitment(id)
-                const user = new UserState(id, unirepState)
-                const tx = await unirepSocialContract.userSignUp(commitment)
-                const receipt = await tx.wait()
-
-                expect(receipt.status).equal(1)
-                numUserSignUps ++
-
-                const numUserSignUps_ = await unirepContract.numUserSignUps()
-                expect(numUserSignUps).equal(numUserSignUps_)
-
-                const hashedStateLeaf = await unirepContract.hashStateLeaf(
-                    [
+        it('User login should generate correct user state', async() => {
+            const userId = 0
+            const user = new UserState(ids[userId], unirepState)
+            const userState = await user.login()
+            for(let epoch in userState){
+                if(epoch == currentEpoch){
+                    expect(userState[epoch].transitionedPosRep).to.equal(BigInt(DEFAULT_AIRDROPPED_KARMA))
+                    expect(userState[epoch].transitionedNegRep).to.equal(BigInt(0))
+                    const commitment = genIdentityCommitment(ids[userId])
+                    const GSTLeaf = hash5([
                         commitment,
                         emptyUserStateRoot,
                         BigInt(DEFAULT_AIRDROPPED_KARMA),
+                        BigInt(0),
                         BigInt(0)
-                    ]
-                )
-                GSTree.insert(hashedStateLeaf)
-
-                const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
-                const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
-
-                for (let j = 0; j < newLeafEvents.length; j++) {
-                    if(BigInt(newLeafEvents[j]?.args?._hashedLeaf) == BigInt(hashedStateLeaf)){
-                        const event = newLeafEvents[j]
-                        GSTreeLeafIndex = event?.args?._leafIndex.toNumber()
-                        user.signUp(event)
-                    }
+                    ])
+                    expect(userState[epoch].GSTLeaf).to.equal(add0x(GSTLeaf.toString(16)))
                 }
-                expect(GSTreeLeafIndex).to.equal(i)
             }
         })
 
-        it('Sign up event should be emitted and stored correctly', async () => {
-            const NewGSTLeafInsertedFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
-            const newGSTLeafInsertedEvents =  await unirepContract.queryFilter(NewGSTLeafInsertedFilter)
-            expect(newGSTLeafInsertedEvents.length).to.equal(numUserSignUpInEpochTwo)
-
-            for (let event of newGSTLeafInsertedEvents) {
-                // save user sign up event
-                await unirepState.userSignUp(event)
-
-                const decodedData = iface.decodeEventLog("NewGSTLeafInserted",event.data)
-
-                const _transactionHash = event.transactionHash
-                const _epoch = Number(event?.topics[1])
-                const _hashedLeaf = add0x(decodedData?._hashedLeaf._hex)
-                const _leafIndex = decodedData?._leafIndex
-
-                // check if leaf can be found in database
-                const treeLeaves: IGSTLeaves | null = await GSTLeaves.findOne({
-                    epoch: _epoch
-                })
-                expect(treeLeaves, 'Storing sign up event failed').not.equal(null)
-                expect(treeLeaves?.GSTLeaves[_leafIndex].hashedLeaf).to.equal(_hashedLeaf)
-                expect(treeLeaves?.GSTLeaves[_leafIndex].transactionHash).to.equal(_transactionHash)
-
-                const signedUpUsers: IUserSignUp[] | null = await UserSignUp.find({
-                    transactionHash: _transactionHash,
-                    hashedLeaf: _hashedLeaf,
-                    epoch: _epoch
-                })
-
-                expect(signedUpUsers.length, 'Storing signed up user failed').to.equal(1)
-            }
+        it('User generate reputation proof from database should succeed', async() => {
+            const userId = 0
+            const nonce = 0
+            const minRep = 0
+            const user = new UserState(ids[userId], unirepState)
+            const circuitInputs = await user.genProveReputationCircuitInputs(nonce, DEFAULT_POST_KARMA, minRep)
+            
+            const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
+            proof = results['proof']
+            nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+            publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+            epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+            const isValid = await verifyProveReputationProof(proof, results['publicSignals'])
+            expect(isValid, "proof is not valid").to.be.true
         })
 
-        it('Generate global state tree from database should success', async() => {
-            const GSTRootFromDB = (await unirepState.genGSTree(currentEpoch)).root
-            const GSTRoot = GSTree.root
-            expect(GSTRootFromDB.toString(), 'GST root mismatch').to.equal(GSTRoot.toString())
-        })
+        it('User should publish a post and the event should be stored in database sucessfully', async () => {
+            const tx = await unirepSocialContract.publishPost(
+                postId, 
+                epochKey,
+                text, 
+                nullifiers,
+                publicSignals, 
+                formatProofForVerifierContract(proof),
+                { value: attestingFee, gasLimit: 1000000 }
+            )
+            const receipt = await tx.wait()
+            expect(receipt.status, 'Submit post failed').to.equal(1)
+
+            const postSubmittedFilter = unirepSocialContract.filters.PostSubmitted()
+            const postSubmittedEvents =  await unirepSocialContract.queryFilter(postSubmittedFilter)
+
+            // save post
+            await updateDBFromPostSubmittedEvent(postSubmittedEvents[0])
+
+            // find post
+            const eventPostId = mongoose.Types.ObjectId(postSubmittedEvents[0].topics[2].slice(-24))
+            const findPost = await Post.findById(eventPostId)
+            expect(findPost).not.equal(null)
+            expect(findPost?.content).to.equal(text)
+            expect(findPost?.epochKey).to.equal(epochKey.toString(16))
+        }) 
     })
 })

@@ -1,16 +1,21 @@
 import mongoose from 'mongoose'
 
 import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../database/models/GSTLeaf'
-import EpochTreeLeaves, { IEpochTreeLeaf } from '../database/models/epochTreeLeaf'
+import EpochTreeLeaves, { IEpochTreeLeaf, IEpochTreeLeaves } from '../database/models/epochTreeLeaf'
 import NullifierTreeLeaves, { INullifierTreeLeaves } from '../database/models/nullifierTreeLeaf'
+import ReputationNullifier, { IReputationNullifier } from "../database/models/reputationNullifier";
 import Attestations, { IAttestation } from './models/attestation'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
 import Settings, { ISettings } from './models/settings'
 import { hash5, IncrementalQuinTree } from 'maci-crypto'
 import { ethers } from 'ethers'
 import { computeEmptyUserStateRoot, genNewSMT, SMT_ONE_LEAF, SMT_ZERO_LEAF } from '../core/utils'
-import { epochTreeDepth, globalStateTreeDepth, nullifierTreeDepth, userStateTreeDepth } from '../config/testLocal'
+import { epochTreeDepth, globalStateTreeDepth, nullifierTreeDepth, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch, userStateTreeDepth } from '../config/testLocal'
 import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
+import { DEFAULT_START_BLOCK } from '../cli/defaults'
+import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import UserTransitionedState, { IUserTransitionedState } from './models/userTransitionedState'
+import assert from 'assert'
 
 class UnirepState {
     private uri: string
@@ -19,7 +24,10 @@ class UnirepState {
     public userStateTreeDepth: number
     public epochTreeDepth: number
     public nullifierTreeDepth: number
+    public numEpochKeyNoncePerEpoch: number
+    public numAttestationsPerEpochKey: number
     public defaultGSTLeaf: BigInt
+    public currentEpoch: number
 
     constructor(
        dbUri: string,
@@ -29,12 +37,15 @@ class UnirepState {
         this.userStateTreeDepth = userStateTreeDepth
         this.epochTreeDepth = epochTreeDepth
         this.nullifierTreeDepth = nullifierTreeDepth
+        this.numEpochKeyNoncePerEpoch = numEpochKeyNoncePerEpoch
+        this.numAttestationsPerEpochKey = numAttestationsPerEpochKey
+        this.currentEpoch = 1
         const emptyUserStateRoot = computeEmptyUserStateRoot(ethers.BigNumber.from(userStateTreeDepth).toNumber())
         this.defaultGSTLeaf = hash5([
-            BigInt(0),  // zero identityCommitment
+            BigInt(0),           // zero identityCommitment
             emptyUserStateRoot,  // zero user state root
-            BigInt(0), // default airdropped karma
-            BigInt(0), // default negative karma
+            BigInt(0),           // default airdropped karma
+            BigInt(0),           // default negative karma
             BigInt(0)
         ])
     }
@@ -68,6 +79,7 @@ class UnirepState {
             const epochLength = await unirepContract.epochLength()
             const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
             const numAttestationsPerEpochKey = await unirepContract.numAttestationsPerEpochKey()
+            const currentEpoch = await unirepContract.currentEpoch()
             
             settings = new Settings({
                 globalStateTreeDepth: ethers.BigNumber.from(globalStateTreeDepth).toNumber(),
@@ -85,6 +97,9 @@ class UnirepState {
             this.userStateTreeDepth = settings.userStateTreeDepth
             this.epochTreeDepth = settings.epochTreeDepth
             this.nullifierTreeDepth = settings.nullifierTreeDepth
+            this.numEpochKeyNoncePerEpoch = settings.numEpochKeyNoncePerEpoch
+            this.numAttestationsPerEpochKey = settings.numAttestationsPerEpochKey
+            this.currentEpoch = currentEpoch
             this.defaultGSTLeaf = settings.defaultGSTLeaf
 
             await settings.save()
@@ -108,6 +123,59 @@ class UnirepState {
     private getNullifiers = async (): Promise<string[]> => {
         const treeLeaves = await NullifierTreeLeaves?.find()
         return treeLeaves.map((l) => (l.nullifier))
+    }
+
+    private saveGSTLeaf = async (epoch: number, newLeaf: IGSTLeaf): Promise<void> => {
+        let treeLeaves: IGSTLeaves | null = await GSTLeaves.findOne({epoch: epoch})
+
+        if(!treeLeaves){
+            treeLeaves = new GSTLeaves({
+                epoch: epoch,
+                GSTLeaves: [newLeaf],
+                currentEpochGSTLeafIndexToInsert: 1
+            })
+        } else {
+            const nextIndex = treeLeaves.currentEpochGSTLeafIndexToInsert + 1
+            treeLeaves.get('GSTLeaves').push(newLeaf)
+            treeLeaves.set('currentEpochGSTLeafIndexToInsert', nextIndex)
+        }
+
+        await treeLeaves?.save()
+    }
+
+    private saveNullifiers = async (nullifiers: any[], epoch: number, transactionHash: string) => {
+        for (let nullifier of nullifiers) {
+            if (nullifier > BigInt(0)) {
+                assert(nullifier < BigInt(2 ** this.nullifierTreeDepth), `Nullifier(${nullifier}) larger than max leaf value(2**nullifierTreeDepth)`)
+                const findNullifier = await NullifierTreeLeaves.findOne({nullifier: nullifier})
+                assert(!findNullifier, `Nullifier(${nullifier}) seen before`)
+                const nullifierLeaf = new NullifierTreeLeaves({
+                    epoch: epoch,
+                    nullifier: nullifier,
+                    transactionHash: transactionHash
+                })
+                await nullifierLeaf.save()
+            }
+        }
+    }
+
+    /*
+    * get GST leaf index of given epoch
+    * @param epoch find GST leaf in the epoch
+    * @param hasedLeaf find the hash of GST leaf
+    */
+    public getGSTLeafIndex = async (epoch: number, hashedLeaf: string): Promise<number> => {
+
+        const leaves = await GSTLeaves.findOne({epoch: epoch})
+        if(leaves){
+            for(const leaf of leaves.get('GSTLeaves')){
+                if (leaf.hashedLeaf == hashedLeaf){
+                    return leaves?.GSTLeaves?.indexOf(leaf)
+                }
+            }
+        }
+
+        return -1
     }
 
     public genGSTree = async (epoch: number): Promise<IncrementalQuinTree> => {
@@ -148,7 +216,122 @@ class UnirepState {
             }
             return nullifierTree
         }
-    } 
+    }
+
+    public reputationNullifierExists = async (nullifier: string) => {
+        return ReputationNullifier?.findOne({nullifiers: nullifier})
+    }
+
+    public userSignUp = async (
+        event: ethers.Event,
+        startBlock: number  = DEFAULT_START_BLOCK,
+    ) => {
+        // The event has been processed
+        if(event.blockNumber <= startBlock) return
+
+        const iface = new ethers.utils.Interface(Unirep.abi)
+        const decodedData = iface.decodeEventLog("NewGSTLeafInserted",event.data)
+
+        const _transactionHash = event.transactionHash
+        const _epoch = Number(event?.topics[1])
+        const _hashedLeaf = add0x(decodedData?._hashedLeaf._hex)
+
+        // save the new leaf
+        const newLeaf: IGSTLeaf = {
+            transactionHash: _transactionHash,
+            hashedLeaf: _hashedLeaf
+        }
+
+        await this.saveGSTLeaf(_epoch, newLeaf)
+    }
+
+    public epochEnded = async (
+        event: ethers.Event,
+        unirepContract: ethers.Contract,
+        startBlock: number  = DEFAULT_START_BLOCK,
+    ): Promise<void> => {
+        // The event has been processed
+        if(event.blockNumber <= startBlock) return
+
+        // update Unirep state
+        const epoch = Number(event?.topics[1])
+
+        // Get epoch tree leaves of the ending epoch
+        let [epochKeys_, epochKeyHashchains_] = await unirepContract.getEpochTreeLeaves(epoch)
+        epochKeys_ = epochKeys_.map((epk) => BigInt(epk).toString(16))
+        epochKeyHashchains_ = epochKeyHashchains_.map((hc) => BigInt(hc).toString())
+    
+        const epochTreeLeaves: IEpochTreeLeaf[] = []
+        for (let i = 0; i < epochKeys_.length; i++) {
+            const epochTreeLeaf: IEpochTreeLeaf = {
+                epochKey: epochKeys_[i],
+                hashchainResult: epochKeyHashchains_[i]
+            }
+            epochTreeLeaves.push(epochTreeLeaf)
+        }
+    
+        const newEpochTreeLeaves = new EpochTreeLeaves({
+            epoch: epoch,
+            epochTreeLeaves: epochTreeLeaves
+        })
+
+        const treeLeaves: IGSTLeaves = new GSTLeaves({
+            epoch: epoch + 1,
+            GSTLeaves: [],
+            currentEpochGSTLeafIndexToInsert: 1
+        })
+
+        await newEpochTreeLeaves?.save()
+        await treeLeaves?.save()
+        this.currentEpoch = epoch + 1
+    }
+
+    public userStateTransition = async (
+        event: ethers.Event,
+        startBlock: number  = DEFAULT_START_BLOCK,
+    ) => {
+
+        // The event has been processed
+        if(event.blockNumber <= startBlock) return
+
+        const iface = new ethers.utils.Interface(Unirep.abi)
+        const _toEpoch = Number(event.topics[1])
+        const decodedUserStateTransitionedData = iface.decodeEventLog("UserStateTransitioned",event.data)
+        const _transactionHash = event.transactionHash
+        const _hashedLeaf = add0x(decodedUserStateTransitionedData?.userTransitionedData?.newGlobalStateTreeLeaf._hex)
+
+        // save new user transitioned state
+        const newUserState: IUserTransitionedState = new UserTransitionedState({
+            transactionHash: _transactionHash,
+            toEpoch: _toEpoch,
+            fromEpoch: decodedUserStateTransitionedData?.userTransitionedData?.fromEpoch._hex,
+            fromGlobalStateTree: decodedUserStateTransitionedData?.userTransitionedData?.fromGlobalStateTree._hex,
+            fromEpochTree: decodedUserStateTransitionedData?.userTransitionedData?.fromEpochTree._hex,
+            fromNullifierTreeRoot: decodedUserStateTransitionedData?.userTransitionedData?.fromNullifierTreeRoot._hex,
+            newGlobalStateTreeLeaf: _hashedLeaf,
+            proof: decodedUserStateTransitionedData?.userTransitionedData?.proof,
+            attestationNullifiers: decodedUserStateTransitionedData?.userTransitionedData?.attestationNullifiers,
+            epkNullifiers: decodedUserStateTransitionedData?.userTransitionedData?.epkNullifiers,
+        })
+
+        await newUserState.save()
+
+        // save the new GST leaf
+        const newLeaf: IGSTLeaf = {
+            transactionHash: _transactionHash,
+            hashedLeaf: _hashedLeaf
+        }
+
+        await this.saveGSTLeaf(_toEpoch, newLeaf)
+
+        // save nullifiers
+        const attestationNullifiers = decodedUserStateTransitionedData?.userTransitionedData?.attestationNullifiers.map((n) => BigInt(n))
+        const epkNullifiers = decodedUserStateTransitionedData?.userTransitionedData?.epkNullifiers.map((n) => BigInt(n))
+        // Combine nullifiers and mod them
+        const allNullifiers = attestationNullifiers?.concat(epkNullifiers).map((nullifier) => BigInt(nullifier) % BigInt(2 ** this.nullifierTreeDepth))
+
+        await this.saveNullifiers(allNullifiers, _toEpoch, _transactionHash)
+    }
 }
 
 export {

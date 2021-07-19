@@ -14,7 +14,7 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
 import { UnirepState } from '../../database/UnirepState'
 import { connectDB, genGSTreeFromDB, initDB, saveSettingsFromContract, updateDBFromEpochEndedEvent, updateDBFromNewGSTLeafInsertedEvent } from '../../database/utils'
-import { dbUri } from '../../config/database'
+import { dbTestUri, dbUri } from '../../config/database'
 import GSTLeaves, { IGSTLeaves } from '../../database/models/GSTLeaf'
 import { add0x } from '../../crypto/SMT'
 import UserSignUp, { IUserSignUp } from '../../database/models/userSignUp'
@@ -26,8 +26,9 @@ describe('User Sign Up', function () {
     let unirepState
 
     before(async () => {
-        unirepState = new UnirepState(dbUri)
-        unirepState.connectDB()
+        unirepState = new UnirepState(dbTestUri)
+        await unirepState.connectDB()
+        await unirepState.initDB()
     })
 
     after(async() => {

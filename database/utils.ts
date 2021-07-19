@@ -310,7 +310,6 @@ const getGSTLeafIndex = async (epoch: number, hashedLeaf: string): Promise<numbe
 */
 const genUserStateTreeFromDB = async(
     reputations: IAttestation[]
-    
 ): Promise<SparseMerkleTreeImpl> => {
 
     const settings = await Settings.findOne()
@@ -869,7 +868,6 @@ const updateDBFromNewGSTLeafInsertedEvent = async (
     const savedTreeLeavesRes = await treeLeaves?.save()
 
     // save new user
-
     const newUser: IUserSignUp = new UserSignUp({
         transactionHash: _transactionHash,
         hashedLeaf: _hashedLeaf,
@@ -1103,7 +1101,7 @@ const updateDBFromEpochEndedEvent = async (
         epochTreeLeaves: epochTreeLeaves
     })
 
-    const treeLeaves: IGSTLeaves | null = new GSTLeaves({
+    const treeLeaves: IGSTLeaves = new GSTLeaves({
         epoch: epoch + 1,
         GSTLeaves: [],
         currentEpochGSTLeafIndexToInsert: 1
