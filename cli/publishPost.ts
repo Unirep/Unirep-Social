@@ -244,12 +244,7 @@ const publishPost = async (args: any) => {
     }
 
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-    const nullifiers: BigInt[] = [] 
-    
-    for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-        const variableName = 'main.karma_nullifiers['+i+']'
-        nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
-    }
+    const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
     
     // TODO: Not sure if this validation is necessary
     const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])

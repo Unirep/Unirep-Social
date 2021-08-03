@@ -7,7 +7,7 @@ import { UnirepState } from '../../database/UnirepState'
 import { UserState } from '../../database/UserState'
 import { genIdentity, genIdentityCommitment } from 'libsemaphore'
 import { genRandomSalt, hash5, IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { deployUnirep, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { deployUnirepSocial } from '../../core/utils'
 
 const { expect } = chai
@@ -236,7 +236,7 @@ describe('Post', function () {
             proof = results['proof']
             nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
             publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
-            epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+            epochKey = genEpochKey(ids[userId].identityNullifier, currentEpoch, nonce)
             const isValid = await verifyProveReputationProof(proof, results['publicSignals'])
             expect(isValid, "proof is not valid").to.be.true
         })

@@ -4,14 +4,7 @@ import lineByLine from 'n-readlines'
 import * as path from 'path'
 import { SnarkProof } from 'libsemaphore'
 const circom = require('circom')
-import * as shell from 'shelljs'
-
-import {
-    stringifyBigInts,
-    unstringifyBigInts,
-} from 'maci-crypto'
-
-const zkutilPath = "~/.cargo/bin/zkutil"
+const snarkjs = require("snarkjs")
 
 /*
  * @param circuitPath The subpath to the circuit file (e.g.
@@ -82,221 +75,79 @@ const getSignalByNameViaSym = (
 const genVerifyEpochKeyProofAndPublicSignals = (
     inputs: any,
 ) => {
-    return genProofAndPublicSignals(
-        inputs,
-        '/test/verifyEpochKey_test.circom',
-        'verifyEpochKeyCircuit.r1cs',
-        'verifyEpochKey.wasm',
-        'verifyEpochKey.params',
-        false,
-    )
+    return genProofAndPublicSignals('verifyEpochKey', inputs)
 }
 
 const genVerifyUserStateTransitionProofAndPublicSignals = (
     inputs: any,
 ) => {
-    return genProofAndPublicSignals(
-        inputs,
-        '/test/userStateTransition_test.circom',
-        'userStateTransitionCircuit.r1cs',
-        'userStateTransition.wasm',
-        'userStateTransition.params',
-        false,
-    )
+    return genProofAndPublicSignals('userStateTransition', inputs)
 }
 
 const genVerifyReputationProofAndPublicSignals = (
     inputs: any,
 ) => {
-    return genProofAndPublicSignals(
-        inputs,
-        '/test/proveReputation_test.circom',
-        'proveReputationCircuit.r1cs',
-        'proveReputation.wasm',
-        'proveReputation.params',
-        false,
-    )
+    return genProofAndPublicSignals('proveReputation', inputs)
 }
 
 const genVerifyReputationFromAttesterProofAndPublicSignals = (
     inputs: any,
 ) => {
-    return genProofAndPublicSignals(
-        inputs,
-        '/test/proveReputationFromAttester_test.circom',
-        'proveReputationFromAttesterCircuit.r1cs',
-        'proveReputationFromAttester.wasm',
-        'proveReputationFromAttester.params',
-        false,
-    )
+    return genProofAndPublicSignals('proveReputationFromAttester',inputs)
 }
 
 const genProofAndPublicSignals = async (
+    circuitName: string,
     inputs: any,
-    circuitFilename: string,
-    circuitR1csFilename: string,
-    circuitWasmFilename: string,
-    paramsFilename: string,
-    compileCircuit = true,
 ) => {
-    const date = Date.now()
-    const paramsPath = path.join(__dirname, '../../build/', paramsFilename)
-    const circuitR1csPath = path.join(__dirname, '../../build/', circuitR1csFilename)
-    const circuitWasmPath = path.join(__dirname, '../../build/', circuitWasmFilename)
-    const inputJsonPath = path.join(__dirname, '../../build/' + date + '.input.json')
-    const witnessPath = path.join(__dirname, '../../build/' + date + '.witness.wtns')
-    const witnessJsonPath = path.join(__dirname, '../../build/' + date + '.witness.json')
-    const proofPath = path.join(__dirname, '../../build/' + date + '.proof.json')
-    const publicJsonPath = path.join(__dirname, '../../build/' + date + '.publicSignals.json')
+    const circuitWasmPath = path.join(__dirname, '../../build/', `${circuitName}.wasm`)
+    const zkeyPath = path.join(__dirname, `../../build/${circuitName}.zkey`)
 
-    fs.writeFileSync(inputJsonPath, JSON.stringify(stringifyBigInts(inputs)))
+    const { proof, publicSignals } = await snarkjs.groth16.fullProve(inputs, circuitWasmPath, zkeyPath);
 
-    let circuit
-     if (compileCircuit) {	
-         circuit = await compileAndLoadCircuit(circuitFilename)	
-     }
-
-    const snarkjsCmd = 'node ' + path.join(__dirname, '../../node_modules/snarkjs/build/cli.cjs')
-    const witnessCmd = `${snarkjsCmd} wc ${circuitWasmPath} ${inputJsonPath} ${witnessPath}`
-
-    shell.exec(witnessCmd)
-
-    const witnessJsonCmd = `${snarkjsCmd} wej ${witnessPath} ${witnessJsonPath}`
-    shell.exec(witnessJsonCmd)
-
-    const proveCmd = `${zkutilPath} prove -c ${circuitR1csPath} -p ${paramsPath} -w ${witnessJsonPath} -r ${proofPath} -o ${publicJsonPath}`
-
-    shell.exec(proveCmd)
-
-    const witness = unstringifyBigInts(JSON.parse(fs.readFileSync(witnessJsonPath).toString()))
-    const publicSignals = unstringifyBigInts(JSON.parse(fs.readFileSync(publicJsonPath).toString()))
-    const proof = JSON.parse(fs.readFileSync(proofPath).toString())
-
-    shell.rm('-f', witnessPath)
-    shell.rm('-f', witnessJsonPath)
-    shell.rm('-f', proofPath)
-    shell.rm('-f', publicJsonPath)
-    shell.rm('-f', inputJsonPath)
-
-    return { circuit, proof, publicSignals, witness }
+    return { proof, publicSignals }
 }
 
 const verifyProof = async (
-    paramsFilename: string,
-    proofFilename: string,
-    publicSignalsFilename: string,
+    circuitName: string,
+    proof: any,
+    publicSignals: any,
 ): Promise<boolean> => {
-    const paramsPath = path.join(__dirname, '../../build/', paramsFilename)
-    const proofPath = path.join(__dirname, '../../build/', proofFilename)
-    const publicSignalsPath = path.join(__dirname, '../../build/', publicSignalsFilename)
 
-    const verifyCmd = `${zkutilPath} verify -p ${paramsPath} -r ${proofPath} -i ${publicSignalsPath}`
-    const output = shell.exec(verifyCmd).stdout.trim()
+    const zkeyJsonPath = path.join(__dirname, `../../build/${circuitName}.zkey.json`)
 
-    shell.rm('-f', proofPath)
-    shell.rm('-f', publicSignalsPath)
+    const vKey = JSON.parse(fs.readFileSync(zkeyJsonPath).toString());
+    const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-    return output === 'Proof is correct'
+    return res
 }
 
 const verifyEPKProof = (
     proof: any,
     publicSignals: any,
 ) => {
-    const date = Date.now().toString()
-    const proofFilename = `${date}.verifyEpochKey.proof.json`
-    const publicSignalsFilename = `${date}.verifyEpochKey.publicSignals.json`
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', proofFilename),
-        JSON.stringify(
-            stringifyBigInts(proof)
-        )
-    )
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', publicSignalsFilename),
-        JSON.stringify(
-            stringifyBigInts(publicSignals)
-        )
-    )
-
-    return verifyProof('verifyEpochKey.params', proofFilename, publicSignalsFilename)
+    return verifyProof('verifyEpochKey', proof, publicSignals)
 }
 
 const verifyUserStateTransitionProof = (
     proof: any,
     publicSignals: any,
 ) => {
-    const date = Date.now().toString()
-    const proofFilename = `${date}.userStateTransition.proof.json`
-    const publicSignalsFilename = `${date}.userStateTransition.publicSignals.json`
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', proofFilename),
-        JSON.stringify(
-            stringifyBigInts(proof)
-        )
-    )
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', publicSignalsFilename),
-        JSON.stringify(
-            stringifyBigInts(publicSignals)
-        )
-    )
-
-    return verifyProof('userStateTransition.params', proofFilename, publicSignalsFilename)
+    return verifyProof('userStateTransition', proof, publicSignals)
 }
 
 const verifyProveReputationProof = (
     proof: any,
     publicSignals: any,
 ) => {
-    const date = Date.now().toString()
-    const proofFilename = `${date}.proveReputation.proof.json`
-    const publicSignalsFilename = `${date}.proveReputation.publicSignals.json`
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', proofFilename),
-        JSON.stringify(
-            stringifyBigInts(proof)
-        )
-    )
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', publicSignalsFilename),
-        JSON.stringify(
-            stringifyBigInts(publicSignals)
-        )
-    )
-
-    return verifyProof('proveReputation.params', proofFilename, publicSignalsFilename)
+    return verifyProof('proveReputation', proof, publicSignals)
 }
 
 const verifyProveReputationFromAttesterProof = (
     proof: any,
     publicSignals: any,
 ) => {
-    const date = Date.now().toString()
-    const proofFilename = `${date}.proveReputationFromAttester.proof.json`
-    const publicSignalsFilename = `${date}.proveReputationFromAttester.publicSignals.json`
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', proofFilename),
-        JSON.stringify(
-            stringifyBigInts(proof)
-        )
-    )
-
-    fs.writeFileSync(
-        path.join(__dirname, '../../build/', publicSignalsFilename),
-        JSON.stringify(
-            stringifyBigInts(publicSignals)
-        )
-    )
-
-    return verifyProof('proveReputationFromAttester.params', proofFilename, publicSignalsFilename)
+    return verifyProof('proveReputationFromAttester', proof, publicSignals)
 }
 
 const formatProofForVerifierContract = (
