@@ -242,7 +242,8 @@ const userStateTransition = async (args: any) => {
     }
 
     console.log('Transaction hash:', tx.hash)
-    console.log(`User transitioned from epoch ${fromEpoch} to epoch ${currentEpoch}`)        
+    console.log(`User transitioned from epoch ${fromEpoch} to epoch ${currentEpoch}`)  
+    process.exit(0)      
 }
 
 export {

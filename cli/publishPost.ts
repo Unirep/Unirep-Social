@@ -330,6 +330,7 @@ const publishPost = async (args: any) => {
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${epk}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log('Transaction hash:', tx.hash)
+    process.exit(0)
 }
 
 export {
