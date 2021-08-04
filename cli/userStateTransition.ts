@@ -16,7 +16,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { genUserStateFromContract } from '../core'
-import { formatProofForVerifierContract, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyUserStateTransitionProofAndPublicSignals, verifyUserStateTransitionProof } from '../circuits/utils'
 import { stringifyBigInts } from 'maci-crypto'
 import { identityPrefix } from './prefix'
 import { genUserStateTransitionCircuitInputsFromDB } from '../database/utils'

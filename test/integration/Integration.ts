@@ -10,7 +10,7 @@ const { expect } = chai
 
 import { Attestation, IAttestation, IEpochTreeLeaf, IUserStateLeaf, UnirepState, UserState, genUserStateFromContract } from "../../core"
 import { formatProofForVerifierContract, genVerifyEpochKeyProofAndPublicSignals, genVerifyReputationProofAndPublicSignals, genVerifyReputationFromAttesterProofAndPublicSignals,
-genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyEPKProof, verifyProveReputationProof, verifyUserStateTransitionProof, verifyProveReputationFromAttesterProof } from "../circuits/utils"
+genVerifyUserStateTransitionProofAndPublicSignals, verifyEPKProof, verifyProveReputationProof, verifyUserStateTransitionProof, verifyProveReputationFromAttesterProof } from "../circuits/utils"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { add0x } from '../../crypto/SMT'
 import { deployUnirepSocial } from '../../core/utils'

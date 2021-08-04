@@ -12,7 +12,7 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { Attestation, UnirepState, UserState } from "../../core"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals } from '../circuits/utils'
 
 
 describe('Attesting', function (){

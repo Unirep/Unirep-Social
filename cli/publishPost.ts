@@ -25,7 +25,7 @@ import { identityPrefix, reputationProofPrefix } from './prefix'
 
 import Post, { IPost } from "../database/models/post";
 import { DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 import { genEpochKey } from '../core/utils'
 import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'
 

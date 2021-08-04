@@ -25,7 +25,7 @@ import { reputationProofPrefix, identityPrefix } from './prefix'
 import Comment, { IComment } from "../database/models/comment";
 import Post from "../database/models/post";
 import { DEFAULT_COMMENT_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 import { stringifyBigInts } from 'maci-crypto'
 import { genEpochKey } from '../core/utils'
 import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'

@@ -12,7 +12,7 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, genVerifyUserStateTransitionProofAndPublicSignals, verifyUserStateTransitionProof } from '../circuits/utils'
 
 
 describe('Epoch Transition', function (){

@@ -13,7 +13,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 
 import { genEpochKey } from '../core/utils'
 import { genUserStateFromContract } from '../core'
-import { formatProofForVerifierContract, genVerifyEpochKeyProofAndPublicSignals, verifyEPKProof } from '../test/circuits/utils'
+import { formatProofForVerifierContract, genVerifyEpochKeyProofAndPublicSignals, verifyEPKProof } from '../circuits/utils'
 
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"

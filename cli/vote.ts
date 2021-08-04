@@ -17,7 +17,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 
 import { genEpochKey } from '../core/utils'
 import { genUserStateFromContract } from '../core'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../test/circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 
 import { add0x } from '../crypto/SMT'
 import { Attestation } from '../core'
