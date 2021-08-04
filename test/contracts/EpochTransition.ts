@@ -12,7 +12,7 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, genVerifyUserStateTransitionProofAndPublicSignals, verifyUserStateTransitionProof } from '../circuits/utils'
 
 
 describe('Epoch Transition', function (){
@@ -257,13 +257,13 @@ describe('Epoch Transition', function (){
         const results = await genVerifyUserStateTransitionProofAndPublicSignals(stringifyBigInts(circuitInputs))
         const isValid = await verifyUserStateTransitionProof(results['proof'], results['publicSignals'])
         expect(isValid, 'Verify user transition circuit off-chain failed').to.be.true
-        const newGSTLeaf = getSignalByNameViaSym('userStateTransition', results['witness'], 'main.new_GST_leaf')
+        const newGSTLeaf = results['publicSignals'][0]
         const newState = await userState.genNewUserStateAfterTransition()
         const attestationNullifiers = userState.getAttestationNullifiers(1)
         const epkNullifiers = userState.getEpochKeyNullifiers(1)
         console.log()
         const allNullifiers = attestationNullifiers.concat(epkNullifiers)
-        expect(newGSTLeaf, 'Computed new GST leaf should match').to.equal(newState.newGSTLeaf)
+        expect(newGSTLeaf, 'Computed new GST leaf should match').to.equal(newState.newGSTLeaf.toString())
         userState.transition(newState.newUSTLeaves)
         unirepState.userStateTransition(epoch_, BigInt(newGSTLeaf), allNullifiers)
     })

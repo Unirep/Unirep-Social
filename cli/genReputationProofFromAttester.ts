@@ -199,6 +199,7 @@ const genReputationProofFromAttester = async (args: any) => {
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
     console.log(`Proof of reputation from attester ${attesterId}:`)
     console.log(reputationProofFromAttesterPrefix + encodedProof)
+    process.exit(0)
 }
 
 export {
