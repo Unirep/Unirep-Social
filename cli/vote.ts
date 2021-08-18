@@ -17,7 +17,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 
 import { genEpochKey } from '../core/utils'
 import { genUserStateFromContract } from '../core'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../test/circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 
 import { add0x } from '../crypto/SMT'
 import { Attestation } from '../core'
@@ -294,12 +294,7 @@ const vote = async (args: any) => {
     }
     
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-    const nullifiers: BigInt[] = [] 
-    
-    for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-        const variableName = 'main.karma_nullifiers['+i+']'
-        nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
-    }
+    const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
 
     // TODO: Not sure if this validation is necessary
     const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
@@ -366,6 +361,7 @@ const vote = async (args: any) => {
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${fromEpochKey.toString(16)}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log('Transaction hash:', tx.hash)
+    process.exit(0)
 }
 
 export {

@@ -13,8 +13,12 @@ import { Attestation, UnirepState, UserState } from "../../core"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
+<<<<<<< HEAD
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../../circuits/utils'
 import { getSignalByNameViaSym } from '../circuits/utils'
+=======
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 
 describe('EventSequencing', function (){
@@ -133,7 +137,11 @@ describe('EventSequencing', function (){
         expect(isValid, 'reputation proof is not valid').to.be.true
 
         const proof = formatProofForVerifierContract(results['proof'])
+<<<<<<< HEAD
         const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+=======
+        const epochKey = genEpochKey(userIds[0].identityNullifier, currentEpoch, epochKeyNonce)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
@@ -205,9 +213,15 @@ describe('EventSequencing', function (){
         expect(isValid, 'reputation proof is not valid').to.be.true
 
         const proof = formatProofForVerifierContract(results['proof'])
+<<<<<<< HEAD
         const epochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
         const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+=======
+        const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+        const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+        const epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         
         const tx = await unirepSocialContract.leaveComment(
             postId,
@@ -255,7 +269,11 @@ describe('EventSequencing', function (){
         expect(isValid, 'reputation proof is not valid').to.be.true
 
         const proof = formatProofForVerifierContract(results['proof'])
+<<<<<<< HEAD
         const fromEpochKey = getSignalByNameViaSym('proveReputation', results['witness'], 'main.epoch_key')
+=======
+        const fromEpochKey = genEpochKey(userIds[0].identityNullifier, currentEpoch, epochKeyNonce)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         

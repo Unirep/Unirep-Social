@@ -25,7 +25,7 @@ import { identityPrefix, reputationProofPrefix } from './prefix'
 
 import Post, { IPost } from "../database/models/post";
 import { DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
 import { genEpochKey } from '../core/utils'
 import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'
 
@@ -244,12 +244,7 @@ const publishPost = async (args: any) => {
     }
 
     const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-    const nullifiers: BigInt[] = [] 
-    
-    for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-        const variableName = 'main.karma_nullifiers['+i+']'
-        nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
-    }
+    const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
     
     // TODO: Not sure if this validation is necessary
     const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
@@ -335,6 +330,7 @@ const publishPost = async (args: any) => {
     console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${epk}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log('Transaction hash:', tx.hash)
+    process.exit(0)
 }
 
 export {

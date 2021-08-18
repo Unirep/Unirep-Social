@@ -16,7 +16,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { genUserStateFromContract } from '../core'
-import { formatProofForVerifierContract, genVerifyUserStateTransitionProofAndPublicSignals, getSignalByNameViaSym, verifyUserStateTransitionProof } from '../circuits/utils'
+import { formatProofForVerifierContract, genVerifyUserStateTransitionProofAndPublicSignals, verifyUserStateTransitionProof } from '../circuits/utils'
 import { stringifyBigInts } from 'maci-crypto'
 import { identityPrefix } from './prefix'
 import { genUserStateTransitionCircuitInputsFromDB } from '../database/utils'
@@ -180,9 +180,9 @@ const userStateTransition = async (args: any) => {
 
     }
     const results = await genVerifyUserStateTransitionProofAndPublicSignals(stringifyBigInts(circuitInputs))
-    const newGSTLeaf = getSignalByNameViaSym('userStateTransition', results['witness'], 'main.new_GST_leaf')
+    const newGSTLeaf = results['publicSignals'][0]
     const newState = await userState.genNewUserStateAfterTransition()
-    if (newGSTLeaf != newState.newGSTLeaf) {
+    if (newGSTLeaf != newState.newGSTLeaf.toString()) {
         console.error('Error: Computed new GST leaf should match')
         return
     }
@@ -202,7 +202,7 @@ const userStateTransition = async (args: any) => {
     // Verify nullifiers outputted by circuit are the same as the ones computed off-chain
     const outputAttestationNullifiers: BigInt[] = []
     for (let i = 0; i < attestationNullifiers.length; i++) {
-        const outputNullifier = getSignalByNameViaSym('userStateTransition', results['witness'], 'main.nullifiers[' + i + ']')
+        const outputNullifier = results['publicSignals'][1+i]
         const modedOutputNullifier = BigInt(outputNullifier) % BigInt(2 ** nullifierTreeDepth)
         if (modedOutputNullifier != attestationNullifiers[i]) {
             console.error(`Error: nullifier outputted by circuit(${modedOutputNullifier}) does not match the ${i}-th computed attestation nullifier(${attestationNullifiers[i]})`)
@@ -212,7 +212,7 @@ const userStateTransition = async (args: any) => {
     }
     const outputEPKNullifiers: BigInt[] = []
     for (let i = 0; i < epkNullifiers.length; i++) {
-        const outputNullifier = getSignalByNameViaSym('userStateTransition', results['witness'], 'main.epoch_key_nullifier[' + i + ']')
+        const outputNullifier = results['publicSignals'][13+i]
         const modedOutputNullifier = BigInt(outputNullifier) % BigInt(2 ** nullifierTreeDepth)
         if (modedOutputNullifier != epkNullifiers[i]) {
             console.error(`Error: nullifier outputted by circuit(${modedOutputNullifier}) does not match the ${i}-th computed attestation nullifier(${epkNullifiers[i]})`)
@@ -242,7 +242,8 @@ const userStateTransition = async (args: any) => {
     }
 
     console.log('Transaction hash:', tx.hash)
-    console.log(`User transitioned from epoch ${fromEpoch} to epoch ${currentEpoch}`)        
+    console.log(`User transitioned from epoch ${fromEpoch} to epoch ${currentEpoch}`)  
+    process.exit(0)      
 }
 
 export {

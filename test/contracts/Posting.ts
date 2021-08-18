@@ -9,7 +9,10 @@ import { deployUnirepSocial } from '../../core/utils'
 
 const { expect } = chai
 
+<<<<<<< HEAD
 import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
+=======
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { UnirepState, UserState } from '../../core'
 import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'

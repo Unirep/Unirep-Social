@@ -12,7 +12,11 @@ import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
 import { Attestation, UnirepState, UserState } from "../../core"
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
+<<<<<<< HEAD
 import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym } from '../circuits/utils'
+=======
+import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals } from '../circuits/utils'
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 
 describe('Attesting', function (){
@@ -134,10 +138,14 @@ describe('Attesting', function (){
         const GSTRoot = unirepState.genGSTree(epoch).root
         const nullifierTree = await unirepState.genNullifierTree()
         const nullifierTreeRoot = nullifierTree.getRootHash()
+<<<<<<< HEAD
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
             const variableName = 'main.karma_nullifiers['+i+']'
             nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
         }
+=======
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         publicSignals = [
             GSTRoot,
             nullifierTreeRoot,
@@ -217,10 +225,14 @@ describe('Attesting', function (){
         const GSTRoot = unirepState.genGSTree(epoch).root
         const nullifierTree = await unirepState.genNullifierTree()
         const nullifierTreeRoot = nullifierTree.getRootHash()
+<<<<<<< HEAD
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
             const variableName = 'main.karma_nullifiers['+i+']'
             nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
         }
+=======
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         publicSignals = [
             GSTRoot,
             nullifierTreeRoot,
@@ -264,10 +276,14 @@ describe('Attesting', function (){
         const GSTRoot = unirepState.genGSTree(epoch).root
         const nullifierTree = await unirepState.genNullifierTree()
         const nullifierTreeRoot = nullifierTree.getRootHash()
+<<<<<<< HEAD
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
             const variableName = 'main.karma_nullifiers['+i+']'
             nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
         }
+=======
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         publicSignals = [
             GSTRoot,
             nullifierTreeRoot,
@@ -358,10 +374,14 @@ describe('Attesting', function (){
         const GSTRoot = unirepState.genGSTree(epoch).root
         const nullifierTree = await unirepState.genNullifierTree()
         const nullifierTreeRoot = nullifierTree.getRootHash()
+<<<<<<< HEAD
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
             const variableName = 'main.karma_nullifiers['+i+']'
             nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
         }
+=======
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         publicSignals = [
             GSTRoot,
             nullifierTreeRoot,
@@ -467,10 +487,14 @@ describe('Attesting', function (){
         const GSTRoot = unirepState.genGSTree(epoch).root
         const nullifierTree = await unirepState.genNullifierTree()
         const nullifierTreeRoot = nullifierTree.getRootHash()
+<<<<<<< HEAD
         for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
             const variableName = 'main.karma_nullifiers['+i+']'
             nullifiers.push(getSignalByNameViaSym('proveReputation', results['witness'], variableName))
         }
+=======
+        nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         publicSignals = [
             GSTRoot,
             nullifierTreeRoot,

@@ -4,6 +4,7 @@ import lineByLine from 'n-readlines'
 import * as path from 'path'
 import { SnarkProof } from 'libsemaphore'
 const circom = require('circom')
+<<<<<<< HEAD
 import * as shell from 'shelljs'
 
 import {
@@ -12,6 +13,9 @@ import {
 } from 'maci-crypto'
 
 const zkutilPath = "~/.cargo/bin/zkutil"
+=======
+const snarkjs = require("snarkjs")
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 /*
  * @param circuitPath The subpath to the circuit file (e.g.
@@ -82,6 +86,7 @@ const getSignalByNameViaSym = (
 const genVerifyEpochKeyProofAndPublicSignals = (
     inputs: any,
 ) => {
+<<<<<<< HEAD
     return genProofAndPublicSignals(
         inputs,
         '/test/verifyEpochKey_test.circom',
@@ -90,11 +95,15 @@ const genVerifyEpochKeyProofAndPublicSignals = (
         'verifyEpochKey.params',
         false,
     )
+=======
+    return genProofAndPublicSignals('verifyEpochKey', inputs)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const genVerifyUserStateTransitionProofAndPublicSignals = (
     inputs: any,
 ) => {
+<<<<<<< HEAD
     return genProofAndPublicSignals(
         inputs,
         '/test/userStateTransition_test.circom',
@@ -103,11 +112,15 @@ const genVerifyUserStateTransitionProofAndPublicSignals = (
         'userStateTransition.params',
         false,
     )
+=======
+    return genProofAndPublicSignals('userStateTransition', inputs)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const genVerifyReputationProofAndPublicSignals = (
     inputs: any,
 ) => {
+<<<<<<< HEAD
     return genProofAndPublicSignals(
         inputs,
         '/test/proveReputation_test.circom',
@@ -116,11 +129,15 @@ const genVerifyReputationProofAndPublicSignals = (
         'proveReputation.params',
         false,
     )
+=======
+    return genProofAndPublicSignals('proveReputation', inputs)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const genVerifyReputationFromAttesterProofAndPublicSignals = (
     inputs: any,
 ) => {
+<<<<<<< HEAD
     return genProofAndPublicSignals(
         inputs,
         '/test/proveReputationFromAttester_test.circom',
@@ -197,12 +214,42 @@ const verifyProof = async (
     shell.rm('-f', publicSignalsPath)
 
     return output === 'Proof is correct'
+=======
+    return genProofAndPublicSignals('proveReputationFromAttester',inputs)
+}
+
+const genProofAndPublicSignals = async (
+    circuitName: string,
+    inputs: any,
+) => {
+    const circuitWasmPath = path.join(__dirname, '../../build/', `${circuitName}.wasm`)
+    const zkeyPath = path.join(__dirname, `../../build/${circuitName}.zkey`)
+
+    const { proof, publicSignals } = await snarkjs.groth16.fullProve(inputs, circuitWasmPath, zkeyPath);
+
+    return { proof, publicSignals }
+}
+
+const verifyProof = async (
+    circuitName: string,
+    proof: any,
+    publicSignals: any,
+): Promise<boolean> => {
+
+    const zkeyJsonPath = path.join(__dirname, `../../build/${circuitName}.zkey.json`)
+
+    const vKey = JSON.parse(fs.readFileSync(zkeyJsonPath).toString());
+    const res = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+
+    return res
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const verifyEPKProof = (
     proof: any,
     publicSignals: any,
 ) => {
+<<<<<<< HEAD
     const date = Date.now().toString()
     const proofFilename = `${date}.verifyEpochKey.proof.json`
     const publicSignalsFilename = `${date}.verifyEpochKey.publicSignals.json`
@@ -222,12 +269,16 @@ const verifyEPKProof = (
     )
 
     return verifyProof('verifyEpochKey.params', proofFilename, publicSignalsFilename)
+=======
+    return verifyProof('verifyEpochKey', proof, publicSignals)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const verifyUserStateTransitionProof = (
     proof: any,
     publicSignals: any,
 ) => {
+<<<<<<< HEAD
     const date = Date.now().toString()
     const proofFilename = `${date}.userStateTransition.proof.json`
     const publicSignalsFilename = `${date}.userStateTransition.publicSignals.json`
@@ -247,12 +298,16 @@ const verifyUserStateTransitionProof = (
     )
 
     return verifyProof('userStateTransition.params', proofFilename, publicSignalsFilename)
+=======
+    return verifyProof('userStateTransition', proof, publicSignals)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const verifyProveReputationProof = (
     proof: any,
     publicSignals: any,
 ) => {
+<<<<<<< HEAD
     const date = Date.now().toString()
     const proofFilename = `${date}.proveReputation.proof.json`
     const publicSignalsFilename = `${date}.proveReputation.publicSignals.json`
@@ -272,12 +327,16 @@ const verifyProveReputationProof = (
     )
 
     return verifyProof('proveReputation.params', proofFilename, publicSignalsFilename)
+=======
+    return verifyProof('proveReputation', proof, publicSignals)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const verifyProveReputationFromAttesterProof = (
     proof: any,
     publicSignals: any,
 ) => {
+<<<<<<< HEAD
     const date = Date.now().toString()
     const proofFilename = `${date}.proveReputationFromAttester.proof.json`
     const publicSignalsFilename = `${date}.proveReputationFromAttester.publicSignals.json`
@@ -297,6 +356,9 @@ const verifyProveReputationFromAttesterProof = (
     )
 
     return verifyProof('proveReputationFromAttester.params', proofFilename, publicSignalsFilename)
+=======
+    return verifyProof('proveReputationFromAttester', proof, publicSignals)
+>>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 }
 
 const formatProofForVerifierContract = (
