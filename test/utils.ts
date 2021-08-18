@@ -144,27 +144,27 @@ const genEpochKey = (identityNullifier: SnarkBigInt, epoch: number, nonce: numbe
     ]
     let epochKey = hash5(values)
     // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = BigInt(epochKey) % BigInt(2 ** _epochTreeDepth)
+    const epochKeyModed = BigInt(epochKey.toString()) % BigInt(2 ** _epochTreeDepth)
     return epochKeyModed
 }
 
 const genAttestationNullifier = (identityNullifier: SnarkBigInt, attesterId: BigInt, epoch: number, epochKey: BigInt, _nullifierTreeDepth: number = nullifierTreeDepth): SnarkBigInt => {
     let nullifier = hash5([ATTESTATION_NULLIFIER_DOMAIN, identityNullifier, attesterId, BigInt(epoch), epochKey])
-    const nullifierModed = BigInt(nullifier) % BigInt(2 ** _nullifierTreeDepth)
+    const nullifierModed = BigInt(nullifier.toString()) % BigInt(2 ** _nullifierTreeDepth)
     return nullifierModed
 }
 
 const genEpochKeyNullifier = (identityNullifier: SnarkBigInt, epoch: number, nonce: number, _nullifierTreeDepth: number = nullifierTreeDepth): SnarkBigInt => {
     let nullifier = hash5([EPOCH_KEY_NULLIFIER_DOMAIN, identityNullifier, BigInt(epoch), BigInt(nonce), BigInt(0)])
     // Adjust epoch key size according to epoch tree depth
-    const nullifierModed = BigInt(nullifier) % BigInt(2 ** _nullifierTreeDepth)
+    const nullifierModed = BigInt(nullifier.toString()) % BigInt(2 ** _nullifierTreeDepth)
     return nullifierModed
 }
 
 const genKarmaNullifier = (identityNullifier: SnarkBigInt, epoch: number, nonce: number, _nullifierTreeDepth: number = nullifierTreeDepth): SnarkBigInt => {
     let nullifier = hash5([KARMA_NULLIFIER_DOMAIN, identityNullifier, BigInt(epoch), BigInt(nonce), BigInt(0)])
     // Adjust epoch key size according to epoch tree depth
-    const nullifierModed = BigInt(nullifier) % BigInt(2 ** _nullifierTreeDepth)
+    const nullifierModed = BigInt(nullifier.toString()) % BigInt(2 ** _nullifierTreeDepth)
     return nullifierModed
 }
 

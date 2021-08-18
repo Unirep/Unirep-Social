@@ -13,11 +13,7 @@ const fileExists = (filepath: string): boolean => {
     return inputFileExists
 }
 
-<<<<<<< HEAD
-const zkutilPath = "~/.cargo/bin/zkutil"
-=======
 const snarkjsCliPath = path.join(__dirname, '../node_modules/snarkjs/cli.js')
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 const main = () => {
     const parser = new argparse.ArgumentParser({ 
@@ -56,23 +52,6 @@ const main = () => {
         }
     )
 
-<<<<<<< HEAD
-    parser.add_argument(
-        '-v', '--vk-out',
-        {
-            help: 'The filepath to save the verification key',
-            required: true
-        }
-    )
-
-    parser.add_argument(
-        '-p', '--pk-out',
-        {
-            help: 'The filepath to save the proving key (as a .json file)',
-            required: true
-        }
-    )
-=======
     // parser.add_argument(
     //     '-v', '--vk-out',
     //     {
@@ -88,7 +67,6 @@ const main = () => {
     //         required: true
     //     }
     // )
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
     parser.add_argument(
         '-s', '--sol-out',
@@ -99,56 +77,32 @@ const main = () => {
     )
 
     parser.add_argument(
-<<<<<<< HEAD
-        '-r', '--override',
-        {
-            help: 'Override an existing compiled circuit, proving key, and verifying key if set to true; otherwise (and by default), skip generation if a file already exists',
-            action: 'store_true',
-            required: false,
-            default: false,
-=======
         '-pt', '--ptau',
         {
             help: 'The filepath of existed ptau',
             required: true
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         }
     )
 
     parser.add_argument(
-<<<<<<< HEAD
-        '-vs', '--verifier-name',
-        {
-            help: 'The desired name of the verifier contract',
-=======
+
         '-zk', '--zkey-out',
         {
             help: 'The filepath to save the zkey',
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
             required: true
         }
     )
 
     parser.add_argument(
-<<<<<<< HEAD
-        '-pr', '--params-out',
-        {
-            help: 'The filepath to save the params file',
-=======
         '-vs', '--verifier-name',
         {
             help: 'The desired name of the verifier contract',
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
             required: true
         }
     )
 
     const args = parser.parse_args()
-<<<<<<< HEAD
-    const vkOut = args.vk_out
-=======
     // const vkOut = args.vk_out
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
     const solOut = args.sol_out
     const inputFile = args.input
     const override = args.override
@@ -156,15 +110,10 @@ const main = () => {
     const symOut = args.sym_out
     const wasmOut = args.wasm_out
     const verifierName = args.verifier_name
-<<<<<<< HEAD
-    const paramsOut = args.params_out
-    const pkOut = args.pk_out
-=======
     // const pkOut = args.pk_out
     const ptau = args.ptau
     const zkey = args.zkey_out
     const zkeyJson = zkey + '.json'
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
     // Check if the input circom file exists
     const inputFileExists = fileExists(inputFile)
@@ -190,26 +139,6 @@ const main = () => {
         console.log('Generated', circuitOut, 'and', wasmOut)
     }
 
-<<<<<<< HEAD
-    const paramsFileExists = fileExists(paramsOut)
-    if (!override && paramsFileExists) {
-        console.log('params file exists. Skipping setup.')
-    } else {
-        console.log('Generating params file...')
-        shell.exec(`${zkutilPath} setup -c ${circuitOut} -p ${paramsOut}`)
-    }
-
-    console.log('Exporting verification key...')
-    shell.exec(`${zkutilPath} export-keys -c ${circuitOut} -p ${paramsOut} -r ${pkOut} -v ${vkOut}`)
-    console.log(`Generated ${pkOut} and ${vkOut}`)
-
-    const verifier = genSnarkVerifierSol(
-        verifierName,
-        JSON.parse(fs.readFileSync(vkOut).toString()),
-    )
-
-    fs.writeFileSync(solOut, verifier)
-=======
     const zkeyOutFileExists = fileExists(zkey)
     if (!override && zkeyOutFileExists) {
         console.log(zkey, 'exists. Skipping compilation.')
@@ -228,7 +157,6 @@ const main = () => {
 
     fs.writeFileSync(solOut, verifier)
 
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
     return 0
 }
 

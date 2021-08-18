@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-import { ethers } from 'ethers'
-import mongoose from 'mongoose'
-import { genIdentityCommitment } from 'libsemaphore'
-import { numAttestationsPerEpochKey} from '../config/testLocal'
-=======
 import { BigNumber, ethers } from 'ethers'
 import mongoose from 'mongoose'
 import { genIdentityCommitment } from 'libsemaphore'
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 import Settings, { ISettings } from './models/settings'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
@@ -31,10 +24,7 @@ import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedi
 import { dbUri } from '../config/database'
 import { Reputation } from '../core/UserState'
 import { genKarmaNullifier } from '../core/utils'
-<<<<<<< HEAD
-=======
 import { DEFAULT_START_BLOCK } from '../cli/defaults'
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 
 enum action {
     UpVote = 0,
@@ -109,11 +99,7 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
         const attestingFee = await unirepContract.attestingFee()
         const epochLength = await unirepContract.epochLength()
         const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
-<<<<<<< HEAD
-=======
-        const numAttestationsPerEpochKey = await unirepContract.numAttestationsPerEpochKey()
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
-    
+        const numAttestationsPerEpochKey = await unirepContract.numAttestationsPerEpochKey()    
         const emptyUserStateRoot = computeEmptyUserStateRoot(ethers.BigNumber.from(userStateTreeDepth).toNumber())
         settings = new Settings({
             globalStateTreeDepth: ethers.BigNumber.from(globalStateTreeDepth).toNumber(),
@@ -123,13 +109,6 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
 	        attestingFee: attestingFee,
             epochLength: ethers.BigNumber.from(epochLength).toNumber(),
 	        numEpochKeyNoncePerEpoch: ethers.BigNumber.from(numEpochKeyNoncePerEpoch).toNumber(),
-<<<<<<< HEAD
-	        numAttestationsPerEpochKey: numAttestationsPerEpochKey,
-	        defaultGSTLeaf: hashLeftRight(
-                BigInt(0),  // zero identityCommitment
-                emptyUserStateRoot,  // zero user state root
-            )
-=======
 	        numAttestationsPerEpochKey: ethers.BigNumber.from(numAttestationsPerEpochKey).toNumber(),
 	        defaultGSTLeaf: hash5([
                 BigInt(0),  // zero identityCommitment
@@ -138,7 +117,6 @@ const saveSettingsFromContract = async (unirepContract: ethers.Contract): Promis
                 BigInt(0), // default negative karma
                 BigInt(0)
             ])
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         })
     }
 
@@ -158,20 +136,7 @@ const genGSTreeFromDB = async (epoch: number): Promise<IncrementalQuinTree> => {
     } 
 
     const globalStateTreeDepth = _settings.globalStateTreeDepth
-<<<<<<< HEAD
-    const userStateTreeDepth = _settings.userStateTreeDepth
-    const emptyUserStateRoot = computeEmptyUserStateRoot(userStateTreeDepth)
-    const defaultGSTLeaf = hash5([
-        BigInt(0),  // zero identityCommitment
-        emptyUserStateRoot,  // zero user state root
-        BigInt(DEFAULT_AIRDROPPED_KARMA), // default airdropped karma
-        BigInt(0), // default negative karma
-        BigInt(0)
-    ])
-=======
     const defaultGSTLeaf = BigInt(_settings.defaultGSTLeaf)
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
-
     const GSTree = new IncrementalQuinTree(
         globalStateTreeDepth,
         defaultGSTLeaf,
@@ -267,11 +232,7 @@ const getAttestationNullifiersFromDB = async (epoch: number, id: any): Promise<B
 
     const epochTreeDepth = _settings.epochTreeDepth
     const numEpochKeyNoncePerEpoch = _settings.numEpochKeyNoncePerEpoch
-<<<<<<< HEAD
-=======
     const numAttestationsPerEpochKey = _settings.numAttestationsPerEpochKey
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
-
     const nullifiers: BigInt[] = []
     for (let nonce = 0; nonce < numEpochKeyNoncePerEpoch; nonce++) {
         const epochKey = genEpochKey(id.identityNullifier, epoch, nonce, epochTreeDepth)
@@ -346,10 +307,6 @@ const getGSTLeafIndex = async (epoch: number, hashedLeaf: string): Promise<numbe
 */
 const genUserStateTreeFromDB = async(
     reputations: IAttestation[]
-<<<<<<< HEAD
-    
-=======
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ): Promise<SparseMerkleTreeImpl> => {
 
     const settings = await Settings.findOne()
@@ -872,11 +829,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
 
 const updateDBFromNewGSTLeafInsertedEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -912,10 +865,6 @@ const updateDBFromNewGSTLeafInsertedEvent = async (
     const savedTreeLeavesRes = await treeLeaves?.save()
 
     // save new user
-<<<<<<< HEAD
-
-=======
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
     const newUser: IUserSignUp = new UserSignUp({
         transactionHash: _transactionHash,
         hashedLeaf: _hashedLeaf,
@@ -936,11 +885,7 @@ const updateDBFromNewGSTLeafInsertedEvent = async (
 */
 const updateDBFromAttestationEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -987,11 +932,7 @@ const updateDBFromAttestationEvent = async (
 */
 const updateDBFromPostSubmittedEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -1035,11 +976,7 @@ const updateDBFromPostSubmittedEvent = async (
 */
 const updateDBFromCommentSubmittedEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -1092,11 +1029,7 @@ const updateDBFromCommentSubmittedEvent = async (
 */
 const updateDBFromReputationNullifierSubmittedEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -1137,11 +1070,7 @@ const updateDBFromReputationNullifierSubmittedEvent = async (
 const updateDBFromEpochEndedEvent = async (
     event: ethers.Event,
     unirepContract: ethers.Contract,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
@@ -1169,11 +1098,6 @@ const updateDBFromEpochEndedEvent = async (
         epochTreeLeaves: epochTreeLeaves
     })
 
-<<<<<<< HEAD
-    const EpochEndedEventResult = await newEpochTreeLeaves?.save()
-
-    if(EpochEndedEventResult) {
-=======
     const treeLeaves: IGSTLeaves = new GSTLeaves({
         epoch: epoch + 1,
         GSTLeaves: [],
@@ -1184,7 +1108,6 @@ const updateDBFromEpochEndedEvent = async (
     const savedTreeLeavesRes = await treeLeaves?.save()
 
     if(EpochEndedEventResult && savedTreeLeavesRes) {
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
         console.log('Database: saved epoch tree leaves and update current Epoch')
     }
 }
@@ -1197,11 +1120,7 @@ const updateDBFromEpochEndedEvent = async (
 */
 const updateDBFromUserStateTransitionEvent = async (
     event: ethers.Event,
-<<<<<<< HEAD
-    startBlock: number,
-=======
     startBlock: number  = DEFAULT_START_BLOCK,
->>>>>>> 58e0402c34216380aade2635e0f8ff1a0271867f
 ) => {
 
     // The event has been processed
