@@ -13,9 +13,8 @@ import {
     hashOne,
 } from 'maci-crypto'
 import { genNewSMT } from "../utils"
-import { circuitEpochTreeDepth } from "../../config/testLocal"
 import { SparseMerkleTreeImpl } from "../../crypto/SMT"
-
+const circuitEpochTreeDepth = 8
 describe('Sparse Merkle Tree circuits', function () {
     this.timeout(500000)
 
