@@ -148,7 +148,6 @@ contract UnirepSocial {
     }
 
     function vote(
-        bytes memory signature,
         Unirep.Attestation memory attestation,
         uint256 toEpochKey,
         uint256 fromEpochKey,
@@ -161,7 +160,7 @@ contract UnirepSocial {
 
         // Spend attester's reputation
         // Call Unirep contract to perform reputation spending
-        unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, fromEpochKey, toEpochKey, _nullifiers, _proofSignals, _proof);
+        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, fromEpochKey, toEpochKey, _nullifiers, _proofSignals, _proof);
 
         emit VoteSubmitted(
             unirep.currentEpoch(),

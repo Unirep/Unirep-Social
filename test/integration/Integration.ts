@@ -10,7 +10,7 @@ const { expect } = chai
 
 import { Attestation, IAttestation, IEpochTreeLeaf, IUserStateLeaf, UnirepState, UserState, genUserStateFromContract } from "../../core"
 import { formatProofForVerifierContract, genVerifyEpochKeyProofAndPublicSignals, genVerifyReputationProofAndPublicSignals, genVerifyReputationFromAttesterProofAndPublicSignals,
-genVerifyUserStateTransitionProofAndPublicSignals, verifyEPKProof, verifyProveReputationProof, verifyUserStateTransitionProof, verifyProveReputationFromAttesterProof } from "../circuits/utils"
+genVerifyUserStateTransitionProofAndPublicSignals, verifyEPKProof, verifyProveReputationProof, verifyUserStateTransitionProof, verifyProveReputationFromAttesterProof, executeCircuit } from "../circuits/utils"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { add0x } from '../../crypto/SMT'
 import { deployUnirepSocial } from '../../core/utils'
@@ -488,7 +488,7 @@ describe('Integration', function () {
 
             // Add graffiti pre-image to graffitiPreImageMap
             graffitiPreImageMap[0] = new Object()
-            graffitiPreImageMap[0][attesters[secondAttester].id] = graffitiPreImage
+            graffitiPreImageMap[0][unirepSocialId] = graffitiPreImage
             console.log(`Attester attest to epk ${firstUserEpochKey} with vote value ${voteValue}`)
 
             // generating reputation proof
@@ -511,7 +511,7 @@ describe('Integration', function () {
             const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
 
             const attestationToEpochKey = new Attestation(
-                BigInt(attesters[secondAttester].id),
+                BigInt(unirepSocialId),
                 BigInt(upvoteValue),
                 BigInt(0),
                 hashOne(graffitiPreImage),
@@ -519,7 +519,7 @@ describe('Integration', function () {
             )
 
             const attestationToAttester = new Attestation(
-                BigInt(attesters[secondAttester].id),
+                BigInt(unirepSocialId),
                 BigInt(0),
                 BigInt(upvoteValue),
                 BigInt(0),
@@ -527,7 +527,6 @@ describe('Integration', function () {
             )
 
             const tx = await contractCalledBySecondAttester.vote(
-                attesterSigs[secondAttester],
                 attestationToEpochKey,
                 firstUserEpochKey,
                 fromEpochKey,
@@ -557,7 +556,7 @@ describe('Integration', function () {
                 user.updateAttestation(secondUserEpochKey, attestationToAttester.posRep, attestationToAttester.negRep)
                 user.updateAttestation(firstUserEpochKey, attestationToEpochKey.posRep, attestationToEpochKey.negRep)
             }
-            attestationsFromSecondAttester += 2
+            attestationsFromUnirepSocial += 2
             epochKeys[firstUserEpochKey.toString()] = true
             epochKeys[fromEpochKey.toString()] = true
         })
@@ -867,13 +866,13 @@ describe('Integration', function () {
         })
 
         it('First user prove his reputation', async () => {
-            const attesterId = attesters[secondAttester].id  // Prove reputation received from first attester
+            const attesterId = BigInt(unirepSocialId)  // Prove reputation received from first attester
             const provePosRep = BigInt(1)
             const proveNegRep = BigInt(1)
-            const proveRepDiff = BigInt(1)
+            const proveRepDiff = BigInt(0)
             const proveGraffiti = BigInt(1)
-            const minPosRep = BigInt(1)
-            const maxNegRep = BigInt(10)
+            const minPosRep = BigInt(2)
+            const maxNegRep = BigInt(20)
             const minRepDiff = BigInt(0)
             const graffitiPreImage = graffitiPreImageMap[0][attesterId.toString()]
             console.log(`Proving reputation from attester ${attesterId} with minPosRep ${minPosRep}, maxNegRep ${maxNegRep} and graffitiPreimage ${graffitiPreImage}`)

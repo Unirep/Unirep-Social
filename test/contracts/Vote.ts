@@ -8,7 +8,6 @@ import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting
 
 const { expect } = chai
 
-import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
 import { Attestation, UnirepState, UserState } from '../../core'
 import {  formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
@@ -27,12 +26,8 @@ describe('Vote', function () {
     const commitments = new Array(userNum)
     let users: UserState[] = new Array(userNum)
     let unirepState
-    let attesters = new Array(userNum)
-    let attesterAddresses = new Array(userNum)
-    let attesterSigs = new Array(userNum)
     
     let accounts: ethers.Signer[]
-    let contractCalledByAttesters = new Array(userNum)
 
     let proof
     let publicSignals
@@ -159,23 +154,8 @@ describe('Vote', function () {
         })
 
         it('sign up should succeed', async () => {
-            for (let i = 0; i < userNum; i++) {
-                attesters[i] = accounts[i+1]
-                attesterAddresses[i] = await attesters[i].getAddress()
-                contractCalledByAttesters[i] = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attesters[i])
-                const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddresses[i], unirepContract.address])
-                attesterSigs[i] = await attesters[i].signMessage(ethers.utils.arrayify(message))
-                const tx = await contractCalledByAttesters[i].attesterSignUp(attesterSigs[i])
-                const receipt = await tx.wait()
-
-                expect(receipt.status).equal(1)
-
-                const attesterId = await unirepContract.attesters(attesterAddresses[i])
-                expect(i+2).equal(attesterId)
-                const nextAttesterId_ = await unirepContract.nextAttesterId()
-                // nextAttesterId starts with 1 so now it should be 2
-                expect(i+3).equal(nextAttesterId_)
-            }
+            attesterId = await unirepContract.attesters(unirepSocialContract.address)
+            expect(attesterId.toNumber()).equal(1)
         })
     })
 
@@ -212,7 +192,7 @@ describe('Vote', function () {
     // user 1 and user 2
     describe('Upvote', () => {
         let currentEpoch
-        attesterId = 2
+        attesterId = 1
         attestation = new Attestation(
             BigInt(attesterId),
             BigInt(upvoteValue),
@@ -230,8 +210,7 @@ describe('Vote', function () {
 
             toEpk = genEpochKey(ids[toUser].identityNullifier, currentEpoch, epochKeyNonce)
 
-            const tx = await contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
+            const tx = await unirepSocialContract.vote(
                 attestation, 
                 toEpk,
                 fromEpk, 
@@ -272,8 +251,7 @@ describe('Vote', function () {
             )
             expect(isProofValid, "proof is not valid").to.be.true
 
-            await expect(contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
+            await expect(unirepSocialContract.vote(
                 attestation, 
                 toEpk,
                 fromEpk, 
@@ -318,8 +296,7 @@ describe('Vote', function () {
             )
             expect(isProofValid, "proof is valid").to.be.false
 
-            await expect(contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
+            await expect(unirepSocialContract.vote(
                 attestation, 
                 toEpk,
                 fromEpk, 
@@ -340,8 +317,7 @@ describe('Vote', function () {
                 overwriteGraffiti,
             )
 
-            await expect(contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
+            await expect(unirepSocialContract.vote(
                 zeroAttestation, 
                 toEpk,
                 fromEpk, 
@@ -362,8 +338,7 @@ describe('Vote', function () {
                 overwriteGraffiti,
             )
 
-            await expect(contractCalledByAttesters[fromUser].vote(
-                attesterSigs[fromUser],
+            await expect(unirepSocialContract.vote(
                 invalidAttestation, 
                 toEpk,
                 fromEpk,

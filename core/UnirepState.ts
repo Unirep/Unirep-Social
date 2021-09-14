@@ -306,16 +306,19 @@ class UnirepState {
     ) => {
         assert(epoch == this.currentEpoch, `Epoch(${epoch}) must be the same as current epoch`)
 
-        // Only insert non-zero GST leaf (zero GST leaf means the user has epoch keys left to process)
-        if (GSTLeaf > BigInt(0)) this.GSTLeaves[epoch].push(GSTLeaf)
-
+        // Check if nullifiers have submitted before, if there is duplicated nullifier, not update unirep state
         for (let nullifier of nullifiers) {
             if (nullifier > BigInt(0)) {
                 assert(nullifier < BigInt(2 ** this.nullifierTreeDepth), `Nullifier(${nullifier}) larger than max leaf value(2**nullifierTreeDepth)`)
-                assert(this.nullifiers.indexOf(nullifier) == -1, `Nullifier(${nullifier}) seen before`)
-                this.nullifiers.push(nullifier)
+                if(this.nullifiers.indexOf(nullifier) != -1) return
             }
         }
+        
+        for (let nullifier of nullifiers) {
+            if (nullifier > BigInt(0)) this.nullifiers.push(nullifier)
+        }
+        // Only insert non-zero GST leaf (zero GST leaf means the user has epoch keys left to process)
+        if (GSTLeaf > BigInt(0)) this.GSTLeaves[epoch].push(GSTLeaf)
     }
 }
 

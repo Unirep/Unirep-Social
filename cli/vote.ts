@@ -207,8 +207,7 @@ const vote = async (args: any) => {
     )
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const attestingFee = await unirepContract.attestingFee()
-    const ethAddr = ethers.utils.computeAddress(args.eth_privkey)
-    const attesterId = await unirepContract.attesters(ethAddr)
+    const attesterId = await unirepContract.attesters(unirepSocialAddress)
     if (attesterId.toNumber() == 0) {
         console.error('Error: attester has not registered yet')
         return
@@ -330,10 +329,6 @@ const vote = async (args: any) => {
         overwriteGraffiti,
     )
 
-    // Sign the message
-    const message = ethers.utils.solidityKeccak256(["address", "address"], [wallet.address, unirepAddress])
-    const attesterSig = await wallet.signMessage(ethers.utils.arrayify(message))
-
     // set vote fee
     const voteFee = attestingFee.mul(2)
 
@@ -341,7 +336,6 @@ const vote = async (args: any) => {
     let tx
     try {
         tx = await unirepSocialContract.vote(
-            attesterSig,
             attestationToEpochKey,
             BigInt(add0x(args.epoch_key)),
             fromEpochKey,

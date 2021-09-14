@@ -78,7 +78,7 @@ describe('EventSequencing', function (){
         const tx = await contractCalledByAttester.attesterSignUp(attesterSig)
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        attesterId = await unirepContract.attesters(attesterAddress)
+        attesterId = await unirepContract.attesters(unirepSocialContract.address)
     })
 
     it('should publish a post by first user', async () => {
@@ -258,7 +258,6 @@ describe('EventSequencing', function (){
         const publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
         
         const tx = await contractCalledByAttester.vote(
-            attesterSig,
             attestation,
             epochKey,
             fromEpochKey,
