@@ -1,20 +1,10 @@
 import base64url from 'base64url'
-import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 
-import {
-    validateEthAddress,
-    contractExists,
-} from './utils'
-
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
-
-import { genUnirepStateFromContract } from '../core'
-import { add0x } from '../crypto/SMT'
-
-import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import { reputationProofPrefix } from './prefix'
-import { hash5 } from 'maci-crypto'
+import { genUnirepStateFromContract, maxReputationBudget } from '@unirep/unirep'
+import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
+import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -41,11 +31,11 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
-        '-epk', '--epoch-key',
+        '-s', '--public-signals',
         {
             required: true,
             type: 'str',
-            help: 'The user\'s epoch key (in hex representation)',
+            help: 'The snark public signals of the user\'s epoch key ',
         }
     )
 
@@ -54,24 +44,7 @@ const configureSubparser = (subparsers: any) => {
         {
             required: true,
             type: 'str',
-            help: 'The snark proof of the user\'s epoch key and reputation ',
-        }
-    )
-
-    parser.add_argument(
-        '-th', '--transaction-hash',
-        {
-            required: true,
-            type: 'str',
-            help: 'The transaction hash of where user submit the reputation nullifiers ',
-        }
-    )
-
-    parser.add_argument(
-        '-mr', '--min-rep',
-        {
-            type: 'int',
-            help: 'The minimum reputation score the user has',
+            help: 'The snark proof of the user\'s epoch key ',
         }
     )
 
@@ -96,88 +69,63 @@ const configureSubparser = (subparsers: any) => {
 
 const verifyReputationProof = async (args: any) => {
 
-    // Unirep Social contract
-    if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid contract address')
-        return
-    }
-
-    const unirepSocialAddress = args.contract
-
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
 
-    const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
-
-    if (! await contractExists(provider, unirepSocialAddress)) {
-        console.error('Error: there is no contract deployed at the specified address')
-        return
-    }
-
-    const unirepSocialContract = new ethers.Contract(
-        unirepSocialAddress,
-        UnirepSocial.abi,
-        provider,
-    )
-
+    // Unirep Social contract
+    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    // Unirep contract
+    const unirepContract = await unirepSocialContract.getUnirep()
+    
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
-    const unirepAddress = await unirepSocialContract.unirep()
     const unirepState = await genUnirepStateFromContract(
         provider,
-        unirepAddress,
+        unirepContract.address,
         startBlock,
     )
 
-    // Verify on-chain
-    const currentEpoch = unirepState.currentEpoch
-    const GSTRoot = unirepState.genGSTree(currentEpoch).root
-    const nullifierTree = await unirepState.genNullifierTree()
-    const nullifierTreeRoot = nullifierTree.getRootHash()
-    const epk = BigInt(add0x(args.epoch_key))
-    
-    // get reputation nullifiers from contract
-    const tx = await provider.getTransaction(args.transaction_hash)
-    const decodedData = unirepSocialContract.interface.parseTransaction(tx)
-    const nullifiers = decodedData.args._nullifiers
+    // Parse Inputs
+    const decodedProof = base64url.decode(args.proof.slice(reputationProofPrefix.length))
+    const decodedPublicSignals = base64url.decode(args.public_signals.slice(reputationPublicSignalsPrefix.length))
+    const publicSignals = JSON.parse(decodedPublicSignals)
+    const outputNullifiers = publicSignals.slice(0, maxReputationBudget)
+    const epoch = publicSignals[maxReputationBudget]
+    const epk = publicSignals[maxReputationBudget + 1]
+    const GSTRoot = publicSignals[maxReputationBudget + 2]
+    const attesterId = publicSignals[maxReputationBudget + 3]
+    const repNullifiersAmount = publicSignals[maxReputationBudget + 4]
+    const minRep = publicSignals[maxReputationBudget + 5]
+    const proveGraffiti = publicSignals[maxReputationBudget + 6]
+    const graffitiPreImage = publicSignals[maxReputationBudget + 7]
+    const proof = JSON.parse(decodedProof)
 
-    const proveKarmaNullifiers = BigInt(1)
-    let proveKarmaAmount: number = 0
-    const default_nullifier = hash5([BigInt(0),BigInt(0),BigInt(0),BigInt(0),BigInt(0)])
-    for (let i = 0; i < nullifiers.length; i++) {
-        if (nullifiers[i] != default_nullifier) {
-            proveKarmaAmount ++
-        }
+    // Check if Global state tree root exists
+    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
+    if(!isGSTRootExisted) {
+        console.error('Error: invalid global state tree root')
+        return
     }
 
-    // get minRep
-    const proveMinRep = args.min_rep != null ? BigInt(1) : BigInt(0)
-    const minRep = args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
-
-    const decodedProof = base64url.decode(args.proof.slice(reputationProofPrefix.length))
-    const proof = JSON.parse(decodedProof)
-    
-    const publicInput = [
-        GSTRoot,
-        nullifierTreeRoot,
-        proveKarmaNullifiers,
-        proveKarmaAmount,
-        proveMinRep,
-        minRep
-    ]
-
-    const isProofValid = await unirepSocialContract.verifyReputation(
-        nullifiers,
-        currentEpoch,
+    // Verify the proof on-chain
+    const isProofValid = await unirepContract.verifyReputation(
+        outputNullifiers,
+        epoch,
         epk,
-        publicInput,
-        proof
+        GSTRoot,
+        attesterId,
+        repNullifiersAmount,
+        minRep,
+        proveGraffiti,
+        graffitiPreImage,
+        proof,
     )
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
         return
     }
 
-    console.log(`Verify reputation proof of epoch key ${epk.toString(16)} with ${proveKarmaAmount} reputation spent in ${args.transaction_hash} transaction and minimum reputation ${minRep} succeed`)
+    console.log(`Verify reputation proof of epoch key ${epk.toString(16)} with ${repNullifiersAmount} reputation spent in transaction and minimum reputation ${minRep} succeed`)
 }
 
 export {

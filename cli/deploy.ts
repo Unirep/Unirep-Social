@@ -1,17 +1,16 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
-import { DEFAULT_AIRDROPPED_KARMA } from '../config/socialMedia'
-import { maxUsers } from '../config/testLocal'
-import { deployUnirep, deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
-import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY, DEFAULT_TREE_DEPTHS_CONFIG } from './defaults'
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
+import { maxUsers, maxReputationBudget } from '@unirep/unirep'
+import { deployUnirep, getUnirepContract } from '@unirep/contracts'
+import { deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
+import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_TREE_DEPTHS_CONFIG } from './defaults'
+
 import {
     checkDeployerProviderConnection,
-    contractExists,
     genJsonRpcDeployer,
     promptPwd,
-    validateEthAddress,
     validateEthSk,
 } from './utils'
 
@@ -84,6 +83,33 @@ const configureSubparser = (subparsers: any) => {
         }
     )
 
+    deployParser.add_argument(
+        '-p', '--post_reputation',
+        {
+            action: 'store',
+            type: 'int',
+            help: `The amount of reputation required to publish a post. Default: ${DEFAULT_POST_KARMA}`,
+        }
+    )
+
+    deployParser.add_argument(
+        '-c', '--comment_reputation',
+        {
+            action: 'store',
+            type: 'int',
+            help: `The amount of reputation required to leave a comment. Default: ${DEFAULT_COMMENT_KARMA}`,
+        }
+    )
+
+    deployParser.add_argument(
+        '-a', '--airdrop_reputation',
+        {
+            action: 'store',
+            type: 'int',
+            help: `The amount of airdrop reputation that is given when user signs up and user performs user state transition. Default: ${DEFAULT_AIRDROPPED_KARMA}`,
+        }
+    )
+
 }
 
 const deploy = async (args: any) => {
@@ -107,10 +133,7 @@ const deploy = async (args: any) => {
     // const _numEpochKeyNoncePerEpoch = (args.max_epoch_key_nonce != undefined) ? args.max_epoch_key_nonce : DEFAULT_MAX_EPOCH_KEY_NONCE
     const _numEpochKeyNoncePerEpoch = DEFAULT_MAX_EPOCH_KEY_NONCE
 
-    const _numAttestationsPerEpochKey = DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY
-
-    // Default given karma
-    const _defaultKarma = DEFAULT_AIRDROPPED_KARMA
+    const _maxReputationBudget = maxReputationBudget
 
     // Epoch length
     const _epochLength = (args.epoch_length != undefined) ? args.epoch_length : DEFAULT_EPOCH_LENGTH
@@ -118,13 +141,12 @@ const deploy = async (args: any) => {
     // Attesting fee
     const _attestingFee = (args.attesting_fee != undefined) ? ethers.BigNumber.from(args.attesting_fee) : DEFAULT_ATTESTING_FEE
 
-    const settings = {
-        'maxUsers': maxUsers,
-        'numEpochKeyNoncePerEpoch': _numEpochKeyNoncePerEpoch,
-        'numAttestationsPerEpochKey': _numAttestationsPerEpochKey,
-        'defaultKarma': _defaultKarma,
-        'epochLength': _epochLength,
-        'attestingFee': _attestingFee,
+    const UnirepSettings = {
+        maxUsers: maxUsers,
+        numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
+        maxReputationBudget: _maxReputationBudget,
+        epochLength: _epochLength,
+        attestingFee: _attestingFee
     }
 
     // Tree depths config
@@ -136,6 +158,18 @@ const deploy = async (args: any) => {
     }
 
     const treeDepths = getTreeDepthsForTesting(_treeDepthsConfig)
+
+    const _postReputation = (args.post_reputation != undefined) ? args.post_reputation : DEFAULT_POST_KARMA
+
+    const _commentReputation = (args.comment_reputation != undefined) ? args.comment_reputation : DEFAULT_COMMENT_KARMA
+
+    const _airdropReputation = (args.airdrop != undefined) ? args.airdrop_reputation : DEFAULT_AIRDROPPED_KARMA
+
+    const UnirepSocialSettings = {
+        postReputation: _postReputation,
+        commentReputation: _commentReputation,
+        airdropReputation: _airdropReputation,
+    }
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
@@ -152,27 +186,20 @@ const deploy = async (args: any) => {
         unirepContract = await deployUnirep(
             deployer.signer,
             treeDepths,
-            settings,
+            UnirepSettings,
         )
     } else {
-        // Check if Unirep address is valid
-        if (!validateEthAddress(args.contract)) {
-            console.error('Error: invalid Unirep contract address')
-            return
-        }
-
-        if (! await contractExists(provider, args.contract)) {
-            console.error('Error: there is no contract deployed at the specified address')
-            return
-        }
-
-        unirepContract = new ethers.Contract(args.contract, Unirep.abi)
+        // Unirep contract
+        unirepContract = getUnirepContract(
+            args.contract,
+            provider,
+        )
     }
 
     const unirepSocialContract = await deployUnirepSocial(
         deployer.signer,
         unirepContract.address,
-        settings,
+        UnirepSocialSettings,
     )
 
     console.log('Unirep:', unirepContract.address)

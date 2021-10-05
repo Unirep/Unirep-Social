@@ -1,14 +1,5 @@
-import { ethers as hardhatEthers } from 'hardhat'
-import { ethers } from 'ethers'
-
-import {
-    validateEthAddress,
-    contractExists,
-} from './utils'
-
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-
-import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
+import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -33,37 +24,24 @@ const configureSubparser = (subparsers: any) => {
             help: 'The Unirep Social contract address',
         }
     )
+
+    parser.add_argument(
+        '-ep', '--epoch',
+        {
+            action: 'store',
+            type: 'int',
+            help: 'The post in the certain epoch. Default: list all posts in all of epoch',
+        }
+    )
 }
 
 const listAllPosts = async (args: any) => {
-
-    // Unirep Social contract
-    if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid contract address')
-        return
-    }
-
-    const unirepSocialAddress = args.contract
-
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
 
-    const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
-
-    if (! await contractExists(provider, unirepSocialAddress)) {
-        console.error('Error: there is no contract deployed at the specified address')
-        return
-    }
-    
-    const unirepSocialContract = new ethers.Contract(
-        unirepSocialAddress,
-        UnirepSocial.abi,
-        provider
-    )
-
-    let postEvents
-    const postFilter = unirepSocialContract.filters.PostSubmitted()
-    postEvents = await unirepSocialContract.queryFilter(postFilter)
+    // Unirep Social contract
+    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const postEvents = await unirepSocialContract.getPostEvents(args.epoch)
 
     for (let i = 0; i < postEvents.length; i++) {
         console.log('Post ', postEvents[i].args._postId.toString())

@@ -12,20 +12,20 @@ import {
     configureSubparser as configureSubparserForDeploy,
 } from './deploy'
 
-import {
-    eventListeners,
-    configureSubparser as configureSubparserForEventListeners,
-} from './eventListeners'
+// import {
+//     eventListeners,
+//     configureSubparser as configureSubparserForEventListeners,
+// } from './eventListeners'
 
 import {
-    userSignup,
-    configureSubparser as configureSubparserForUserSignup,
+    userSignUp,
+    configureSubparser as configureSubparserForUserSignUp,
 } from './userSignUp'
 
-import {
-    attesterSignup,
-    configureSubparser as configureSubparserForAttesterSignup,
-} from './attesterSignUp'
+// import {
+//     attesterSignup,
+//     configureSubparser as configureSubparserForAttesterSignup,
+// } from './attesterSignUp'
 
 import {
     genEpochKeyAndProof,
@@ -73,14 +73,9 @@ import {
 } from './userStateTransition'
 
 import {
-    genReputationProofFromAttester,
-    configureSubparser as configureSubparserForGenReputationProofFromAttester,
-} from './genReputationProofFromAttester'
-
-import {
-    verifyReputationProofFromAttester,
-    configureSubparser as configureSubparserForVerifyReputationProofFromAttester,
-} from './verifyReputationProofFromAttester'
+    getAirdrop,
+    configureSubparser as configureSubparserForGetAirdrop,
+} from './getAirdrop'
 
 
 const main = async () => {
@@ -99,14 +94,14 @@ const main = async () => {
     // Subcommand: deploy
     configureSubparserForDeploy(subparsers)
 
-    // Subcommand: eventListners
-    configureSubparserForEventListeners(subparsers)
+    // // Subcommand: eventListners
+    // configureSubparserForEventListeners(subparsers)
 
     // Subcommand: userSignup
-    configureSubparserForUserSignup(subparsers)
+    configureSubparserForUserSignUp(subparsers)
 
-    // Subcommand: attesterSignup
-    configureSubparserForAttesterSignup(subparsers)
+    // // Subcommand: attesterSignup
+    // configureSubparserForAttesterSignup(subparsers)
 
     // Subcommand: genEpochKeyAndProof
     configureSubparserForGenEpochKeyAndProof(subparsers)
@@ -136,10 +131,7 @@ const main = async () => {
     configureSubparserForGenUserStateTransitionProof(subparsers)
 
     // Subcommand: genReputationProof
-    configureSubparserForGenReputationProofFromAttester(subparsers)
-
-    // Subcommand: verifyReputationProof
-    configureSubparserForVerifyReputationProofFromAttester(subparsers)
+    configureSubparserForGetAirdrop(subparsers)
 
     const args = parser.parse_args()
 
@@ -148,12 +140,12 @@ const main = async () => {
         await genUnirepIdentity(args)
     } else if (args.subcommand === 'deploy') {
         await deploy(args)
-    } else if (args.subcommand === 'eventListeners') {
-        await eventListeners(args)
-    } else if (args.subcommand === 'userSignup') {
-        await userSignup(args)
-    } else if (args.subcommand === 'attesterSignup') {
-        await attesterSignup(args)
+    // } else if (args.subcommand === 'eventListeners') {
+    //     await eventListeners(args)
+    } else if (args.subcommand === 'userSignUp') {
+        await userSignUp(args)
+    // } else if (args.subcommand === 'attesterSignup') {
+    //     await attesterSignup(args)
     } else if (args.subcommand === 'genEpochKeyAndProof') {
         await genEpochKeyAndProof(args)
     } else if (args.subcommand === 'verifyEpochKeyProof') {
@@ -172,10 +164,8 @@ const main = async () => {
         await epochTransition(args)
     } else if (args.subcommand === 'userStateTransition') {
         await userStateTransition(args)
-    } else if (args.subcommand === 'genReputationProofFromAttester') {
-        await genReputationProofFromAttester(args)
-    } else if (args.subcommand === 'verifyReputationProofFromAttester') {
-        await verifyReputationProofFromAttester(args)
+    } else if (args.subcommand === 'getAirdrop') {
+        await getAirdrop(args)
     }
 }
 

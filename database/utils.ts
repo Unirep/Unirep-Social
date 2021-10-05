@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from 'ethers'
 import mongoose from 'mongoose'
-import { genIdentityCommitment } from 'libsemaphore'
+import { genIdentityCommitment } from '@unirep/crypto'
 
 import Settings, { ISettings } from './models/settings'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
@@ -17,12 +17,12 @@ import { hash5, hashLeftRight, IncrementalQuinTree, stringifyBigInts } from 'mac
 import { computeEmptyUserStateRoot, defaultUserStateLeaf, genAttestationNullifier, genEpochKey, genEpochKeyNullifier, genNewSMT, SMT_ONE_LEAF, SMT_ZERO_LEAF } from '../test/utils'
 
 import { assert } from 'console'
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import Unirep from "../node_modules/@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
 import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
 import { dbUri } from '../config/database'
-import { Reputation } from '../core/UserState'
+import { Reputation } from '@unirep/unirep'
 import { genKarmaNullifier } from '../core/utils'
 import { DEFAULT_START_BLOCK } from '../cli/defaults'
 

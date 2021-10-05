@@ -4,10 +4,3 @@ node_modules
 #Buidler files
 cache
 artifacts
-build
-
-#Verifier solidity contracts
-EpochKeyValidityVerifier.sol
-ReputationVerifier.sol
-ReputationFromAttesterVerifier.sol
-UserStateTransitionVerifier.sol
