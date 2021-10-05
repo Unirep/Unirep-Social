@@ -1,34 +1,13 @@
 import base64url from 'base64url'
-import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from 'libsemaphore'
-import mongoose from 'mongoose'
-
-import {
-    promptPwd,
-    validateEthSk,
-    validateEthAddress,
-    checkDeployerProviderConnection,
-    contractExists,
-} from './utils'
+import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
+import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
-import { dbUri } from '../config/database';
-
-import { add0x } from '../crypto/SMT'
-import { genUserStateFromContract } from '../core'
-
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
-import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import { reputationProofPrefix, identityPrefix } from './prefix'
-
-import Comment, { IComment } from "../database/models/comment";
-import Post from "../database/models/post";
-import { DEFAULT_COMMENT_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
-import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, verifyProveReputationProof } from '../circuits/utils'
-import { stringifyBigInts } from 'maci-crypto'
-import { genEpochKey } from '../core/utils'
-import { genGSTreeFromDB, genNullifierTreeFromDB, genProveReputationCircuitInputsFromDB } from '../database/utils'
+import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
+import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { DEFAULT_COMMENT_KARMA } from '../config/socialMedia'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -128,61 +107,16 @@ const configureSubparser = (subparsers: any) => {
 
 const leaveComment = async (args: any) => {
 
-    // Unirep Social contract
-    if (!validateEthAddress(args.contract)) {
-        console.error('Error: invalid contract address')
-        return
-    }
-
-    const unirepSocialAddress = args.contract
-
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
 
-    let ethSk
-    // The deployer's Ethereum private key
-    // The user may either enter it as a command-line option or via the
-    // standard input
-    if (args.prompt_for_eth_privkey) {
-        ethSk = await promptPwd('Your Ethereum private key')
-    } else {
-        ethSk = args.eth_privkey
-    }
-
-    if (!validateEthSk(ethSk)) {
-        console.error('Error: invalid Ethereum private key')
-        return
-    }
-
-    if (! (await checkDeployerProviderConnection(ethSk, ethProvider))) {
-        console.error('Error: unable to connect to the Ethereum provider at', ethProvider)
-        return
-    }
-
-    const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
-    const wallet = new ethers.Wallet(ethSk, provider)
-
-    if (! await contractExists(provider, unirepSocialAddress)) {
-        console.error('Error: there is no contract deployed at the specified address')
-        return
-    }
-
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
-    const unirepSocialContract = new ethers.Contract(
-        unirepSocialAddress,
-        UnirepSocial.abi,
-        wallet,
-    )
-
-    const unirepAddress = await unirepSocialContract.unirep()
-
-    const unirepContract = new ethers.Contract(
-        unirepAddress,
-        Unirep.abi,
-        provider,
-    )
+    // Unirep Social contract
+    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    // Unirep contract
+    const unirepContract = await unirepSocialContract.getUnirep()
     
-    const attestingFee = await unirepContract.attestingFee()
+    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
@@ -191,160 +125,83 @@ const leaveComment = async (args: any) => {
         console.error('Error: epoch key nonce must be less than max epoch key nonce')
         return
     }
+
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
     const id = unSerialiseIdentity(decodedIdentity)
     const commitment = genIdentityCommitment(id)
-    const currentEpoch = (await unirepContract.currentEpoch()).toNumber()
-    const treeDepths = await unirepContract.treeDepths()
-    const epochTreeDepth = treeDepths.epochTreeDepth
-    const epk = genEpochKey(id.identityNullifier, currentEpoch, epkNonce, epochTreeDepth).toString(16)
     
     // gen reputation proof 
-    const proveKarmaAmount = DEFAULT_COMMENT_KARMA
+    const attesterId = await unirepSocialContract.attesterId()
+    const proveReputationAmount = DEFAULT_COMMENT_KARMA
     const minRep = args.min_rep != null ? args.min_rep : 0
-    
-    let circuitInputs: any
-    let GSTRoot: any
-    let nullifierTreeRoot: any
+
+    let results
 
     if (args.from_database){
 
         console.log('generating proving circuit from database...')
         
         // Gen epoch key proof and reputation proof from database
-        circuitInputs = await genProveReputationCircuitInputsFromDB(
-           currentEpoch,
-           id,
-           epkNonce,                       // generate epoch key from epoch nonce
-           proveKarmaAmount,               // the amount of output karma nullifiers
-           minRep                          // the amount of minimum reputation the user wants to prove
-        )
+        // circuitInputs = await genProveReputationCircuitInputsFromDB(
+        //    currentEpoch,
+        //    id,
+        //    epkNonce,                       // generate epoch key from epoch nonce
+        //    proveKarmaAmount,               // the amount of output karma nullifiers
+        //    minRep                          // the amount of minimum reputation the user wants to prove
+        // )
 
-        const db = await mongoose.connect(
-            dbUri, 
-            { useNewUrlParser: true, 
-              useFindAndModify: false, 
-              useUnifiedTopology: true
-            }
-        )
-        GSTRoot = (await genGSTreeFromDB(currentEpoch)).root
-        nullifierTreeRoot = (await genNullifierTreeFromDB()).getRootHash()
-        db.disconnect();
+        // const db = await mongoose.connect(
+        //     dbUri, 
+        //     { useNewUrlParser: true, 
+        //       useFindAndModify: false, 
+        //       useUnifiedTopology: true
+        //     }
+        // )
+        // GSTRoot = (await genGSTreeFromDB(currentEpoch)).root
+        // nullifierTreeRoot = (await genNullifierTreeFromDB()).getRootHash()
+        // db.disconnect();
 
     } else {
 
         console.log('generating proving circuit from contract...')
 
-        // Gen epoch key proof and reputation proof from Unirep contract
+        const proveGraffiti = 0
+        const graffitiPreImage = 0
         const userState = await genUserStateFromContract(
             provider,
-            unirepAddress,
+            unirepContract.address,
             startBlock,
             id,
             commitment,
         )
-
-        circuitInputs = await userState.genProveReputationCircuitInputs(
-            epkNonce,                       // generate epoch key from epoch nonce
-            proveKarmaAmount,               // the amount of output karma nullifiers
-            minRep                          // the amount of minimum reputation the user wants to prove
-        )
-
-        GSTRoot = userState.getUnirepStateGSTree(currentEpoch).root
-        nullifierTreeRoot = (await userState.getUnirepStateNullifierTree()).getRootHash()
+        results = await userState.genProveReputationProof(BigInt(attesterId), proveReputationAmount, epkNonce, minRep, proveGraffiti, graffitiPreImage)
     }
 
-    const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-    const nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
-    
-    // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProveReputationProof(results['proof'], results['publicSignals'])
+    const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
     if(!isValid) {
         console.error('Error: reputation proof generated is not valid!')
         return
     }
 
-    const proof = formatProofForVerifierContract(results['proof'])
-    const epochKey = BigInt(add0x(epk))
-    const encodedProof = base64url.encode(JSON.stringify(proof))
-
-    // generate public signals
-    const publicSignals = [
-        GSTRoot,
-        nullifierTreeRoot,
-        BigInt(true),
-        DEFAULT_COMMENT_KARMA,
-        args.min_rep != null ? BigInt(1) : BigInt(0),
-        args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
-    ]
-
     if(args.min_rep != null){
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    const newComment: IComment = new Comment({
-        content: args.text,
-        // TODO: hashedContent
-        epochKey: epk,
-        epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
-        proveMinRep: args.min_rep != null ? true : false,
-        minRep: Number(minRep),
-        status: 0
-    });
+    // Connect a signer
+    await unirepSocialContract.unlock(args.eth_privkey)
+    // Submit tx
+    const txResult = await unirepSocialContract.leaveComment(results, args.post_id, args.text)
 
-    if(args.from_database){
-        const db = await mongoose.connect(
-            dbUri, 
-            { useNewUrlParser: true, 
-              useFindAndModify: false, 
-              useUnifiedTopology: true
-            }
-        )
-        await Post.findByIdAndUpdate(
-            {_id: mongoose.Types.ObjectId(args.post_id) }, 
-            { $push: {comments: newComment }}
-        )
-        db.disconnect();
-    }
-
-    let tx
-    try {
-        tx = await unirepSocialContract.leaveComment(
-            BigInt(add0x(args.post_id)),
-            BigInt(add0x(newComment._id.toString())), 
-            epochKey,
-            args.text,
-            nullifiers,
-            publicSignals, 
-            proof,
-            { value: attestingFee, gasLimit: 1000000 }
-        )
-    } catch(e) {
-        console.error('Error: the transaction failed')
-        if (e.message) {
-            console.error(e.message)
-        }
-
-        if (args.from_database){
-            const db = await mongoose.connect(
-                dbUri, 
-                { useNewUrlParser: true, 
-                  useFindAndModify: false, 
-                  useUnifiedTopology: true
-                }
-            )
-            const res = await Post.deleteOne({ "comments._id": newComment._id })
-            console.log(res)
-            db.disconnect();
-        }
-        
-        return
-    }
-
-    console.log(`Epoch key of epoch ${currentEpoch} and nonce ${epkNonce}: ${epk}`)
+    // TODO: Unirep Social should verify if the reputation proof submitted before
+    
+    const formattedProof = formatProofForVerifierContract(results.proof)
+    const encodedProof = base64url.encode(JSON.stringify(formattedProof))
+    const encodedPublicSignals = base64url.encode(JSON.stringify(results.publicSignals))
+    console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
     console.log(reputationProofPrefix + encodedProof)
-    console.log('Transaction hash:', tx.hash)
+    console.log(reputationPublicSignalsPrefix + encodedPublicSignals)
+    console.log('Transaction hash:', txResult?.tx?.hash)
     process.exit(0)
 }
 

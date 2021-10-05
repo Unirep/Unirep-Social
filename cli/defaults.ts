@@ -1,4 +1,4 @@
-import { attestingFee, epochLength, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '../config/testLocal'
+import { attestingFee, epochLength, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch } from '@unirep/unirep'
 
 const DEFAULT_ETH_PROVIDER = 'http://localhost:8545'
 const DEFAULT_START_BLOCK = 0

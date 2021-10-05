@@ -1,19 +1,17 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
-import chai from "chai"
-import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, nullifierTreeDepth, numAttestationsPerEpochKey, userStateTreeDepth} from '../../config/testLocal'
-import { genIdentity, genIdentityCommitment } from 'libsemaphore'
-import { IncrementalQuinTree } from 'maci-crypto'
-import { deployUnirep, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { expect } from 'chai'
+import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, nullifierTreeDepth, userStateTreeDepth } from '@unirep/unirep'
+import { deployUnirep } from '@unirep/contracts'
+import { genIdentity, genIdentityCommitment, IncrementalQuinTree } from '@unirep/crypto'
 
-const { expect } = chai
-
-import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
+import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
 
-describe('Signup', () => {
+describe('Signup', function () {
+    this.timeout(1000000)
     let unirepContract
     let unirepSocialContract
     let GSTree
@@ -37,12 +35,8 @@ describe('Signup', () => {
         expect(attestingFee).equal(attestingFee_)
         const epochLength_ = await unirepContract.epochLength()
         expect(epochLength).equal(epochLength_)
-        const numAttestationsPerEpochKey_ = await unirepContract.numAttestationsPerEpochKey()
-        expect(numAttestationsPerEpochKey).equal(numAttestationsPerEpochKey_)
         const numEpochKeyNoncePerEpoch_ = await unirepContract.numEpochKeyNoncePerEpoch()
         expect(numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
-        const numAttestationsPerEpoch_ = await unirepContract.numAttestationsPerEpoch()
-        expect(numEpochKeyNoncePerEpoch * numAttestationsPerEpochKey).equal(numAttestationsPerEpoch_)
         const maxUsers_ = await unirepContract.maxUsers()
         expect(maxUsers).equal(maxUsers_)
 
@@ -90,8 +84,6 @@ describe('Signup', () => {
                 [
                     commitment,
                     emptyUserStateRoot,
-                    BigInt(DEFAULT_AIRDROPPED_KARMA),
-                    BigInt(0)
                 ]
             )
             GSTree.insert(hashedStateLeaf)
@@ -112,46 +104,6 @@ describe('Signup', () => {
             }
             await expect(unirepSocialContract.userSignUp(genIdentityCommitment(genIdentity())))
                 .to.be.revertedWith('Unirep: maximum number of signups reached')
-        })
-    })
-
-    describe('Attester sign-ups', () => {
-        let attester
-        let attesterAddress
-        let attester2
-        let attesterSig
-        let contractCalledByAttester
-        let contractCalledByAttester2
-
-        it('sign up should succeed', async () => {
-            attester = accounts[1]
-            attesterAddress = await attester.getAddress()
-            contractCalledByAttester = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attester)
-            const message = ethers.utils.solidityKeccak256(["address", "address"], [attesterAddress, unirepContract.address])
-            attesterSig = await attester.signMessage(ethers.utils.arrayify(message))
-            const tx = await contractCalledByAttester.attesterSignUp(attesterSig)
-            const receipt = await tx.wait()
-
-            expect(receipt.status).equal(1)
-
-            const attesterId = await unirepContract.attesters(attesterAddress)
-            // attesterId 1 is the Unirep Social contract so it starts from 2
-            expect(2).equal(attesterId)
-            const nextAttesterId_ = await unirepContract.nextAttesterId()
-            // nextAttesterId starts with 1 after Unirep Social and attester sign up it should be 2
-            expect(3).equal(nextAttesterId_)
-        })
-
-        it('sign up with invalid signature should fail', async () => {
-            attester2 = accounts[2]
-            contractCalledByAttester2 = await hardhatEthers.getContractAt(UnirepSocial.abi, unirepSocialContract.address, attester2)
-            await expect(contractCalledByAttester2.attesterSignUp(attesterSig))
-                .to.be.revertedWith('Unirep: invalid attester sign up signature')
-        })
-
-        it('double sign up should fail', async () => {
-            await expect(contractCalledByAttester.attesterSignUp(attesterSig))
-                .to.be.revertedWith('Unirep: attester has already signed up')
         })
     })
 })

@@ -1,5 +1,5 @@
 import { dbUri } from '../config/database';
-import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
+import Unirep from "../node_modules/@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'

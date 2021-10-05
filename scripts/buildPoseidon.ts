@@ -4,11 +4,11 @@ const poseidonGenContract = require('circomlib/src/poseidon_gencontract.js')
 
 const pathT3 = path.join(
   __dirname,
-  '../artifacts/contracts/Poseidon.sol/PoseidonT3.json'
+  '../artifacts/@unirep/contracts/contracts/Poseidon.sol/PoseidonT3.json'
 )
 const pathT6 = path.join(
   __dirname,
-  '../artifacts/contracts/Poseidon.sol/PoseidonT6.json'
+  '../artifacts/@unirep/contracts/contracts/Poseidon.sol/PoseidonT6.json'
 )
 
 const buildPoseidonT3 = () => {
