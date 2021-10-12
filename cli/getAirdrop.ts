@@ -1,6 +1,6 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
+import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
@@ -73,9 +73,6 @@ const getAirdrop = async (args: any) => {
     
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
 
-    // Airdrop is only given to epoch key with nonce = 0
-    const epkNonce = 0
-
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
@@ -88,19 +85,20 @@ const getAirdrop = async (args: any) => {
         id,
         commitment,
     )
-    const results = await userState.genVerifyEpochKeyProof(epkNonce)
+    const attesterId = await unirepSocialContract.attesterId()
+    const results = await userState.genUserSignUpProof(BigInt(attesterId))
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof('verifyEpochKey', results.proof, results.publicSignals)
+    const isValid = await verifyProof('proveUserSignUp', results.proof, results.publicSignals)
     if(!isValid) {
-        console.error('Error: epoch key proof generated is not valid!')
+        console.error('Error: user sign up proof generated is not valid!')
         return
     }
 
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
     // submit epoch key to unirep social contract
-    const tx = await unirepSocialContract.airdrop(results.epochKey)
+    const tx = await unirepSocialContract.airdrop(results)
 
     if(tx != undefined){
         console.log(`The user of epoch key ${results.epochKey} will get airdrop in the next epoch`)

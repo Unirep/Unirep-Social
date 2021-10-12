@@ -33,6 +33,15 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
+        '-i', '--proof-index',
+        {
+            required: true,
+            type: 'int',
+            help: 'The proof index of the user\'s epoch key ',
+        }
+    )
+
+    parser.add_argument(
         '-id', '--identity',
         {
             required: true,
@@ -136,7 +145,7 @@ const vote = async (args: any) => {
     const id = unSerialiseIdentity(decodedIdentity)
     const commitment = genIdentityCommitment(id)
 
-    // upvote / downvote user 
+    // upvote / downvote user
     const upvoteValue = args.upvote_value != null ? args.upvote_value : 0
     const downvoteValue = args.downvote_value != null ? args.downvote_value : 0
     const voteValue = upvoteValue + downvoteValue
@@ -206,7 +215,7 @@ const vote = async (args: any) => {
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
     // Submit tx
-    const tx = await unirepSocialContract.vote(results, args.epoch_key, upvoteValue, downvoteValue)
+    const tx = await unirepSocialContract.vote(results, args.epoch_key, args.proof_index, upvoteValue, downvoteValue)
 
     // TODO: Unirep Social should verify if the reputation proof submitted before
 
@@ -216,7 +225,11 @@ const vote = async (args: any) => {
     console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log(reputationPublicSignalsPrefix + encodedPublicSignals)
-    console.log('Transaction hash:', tx?.hash)
+    const proofIndex = await unirepSocialContract.getReputationProofIndex(results)
+    if(tx != undefined){
+        console.log('Transaction hash:', tx?.hash)
+        console.log('Proof index:', proofIndex.toNumber())
+    }
     process.exit(0)
 }
 

@@ -201,7 +201,11 @@ const leaveComment = async (args: any) => {
     console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log(reputationPublicSignalsPrefix + encodedPublicSignals)
-    console.log('Transaction hash:', txResult?.tx?.hash)
+    const proofIndex = await unirepSocialContract.getReputationProofIndex(results)
+    if(txResult.tx != undefined){
+        console.log('Transaction hash:', txResult.tx?.hash)
+        console.log('Proof index:', proofIndex.toNumber())
+    }
     process.exit(0)
 }
 

@@ -103,7 +103,7 @@ describe('Signup', function () {
                 expect(receipt.status).equal(1)
             }
             await expect(unirepSocialContract.userSignUp(genIdentityCommitment(genIdentity())))
-                .to.be.revertedWith('Unirep: maximum number of signups reached')
+                .to.be.revertedWith('Unirep: maximum number of user signups reached')
         })
     })
 })

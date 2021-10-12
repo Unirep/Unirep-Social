@@ -13,13 +13,9 @@ describe('EventSequencing', function (){
     this.timeout(600000)
     
     enum unirepEvents { 
-        UserSignUp,
+        NewGSTLeafInserted,
         AttestationSubmitted,
-        ReputationNullifierSubmitted,
         EpochEnded,
-        StartedTransition,
-        ProcessedAttestations,
-        UserStateTransitioned
     }
 
     let expectedUnirepEventsInOrder: number[] = []
@@ -45,6 +41,7 @@ describe('EventSequencing', function (){
     const epkNullifiers: BigInt[] = []
     const blindedHashChains: BigInt[] = []
     const blindedUserStates: BigInt[] = []
+    const indexes: BigInt[] = []
     for (let i = 0; i < numEpochKeyNoncePerEpoch; i++) {
         epkNullifiers.push(BigInt(255))
         blindedHashChains.push(BigInt(255))
@@ -58,6 +55,7 @@ describe('EventSequencing', function (){
     const postId = genRandomSalt()
     const commentId = genRandomSalt()
     const text = genRandomSalt().toString()
+    let proofIndex
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -75,7 +73,7 @@ describe('EventSequencing', function (){
         const tx = await unirepSocialContract.userSignUp(userCommitment)
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.UserSignUp)
+        expectedUnirepEventsInOrder.push(unirepEvents.NewGSTLeafInserted)
         expectedSignUpEventsLength++
     })
 
@@ -83,6 +81,8 @@ describe('EventSequencing', function (){
         currentEpoch = await unirepContract.currentEpoch()
        
         const publicSignals = [
+            reputationNullifiers,
+            currentEpoch,
             epochKey,
             genRandomSalt(),
             1,
@@ -96,18 +96,16 @@ describe('EventSequencing', function (){
         const tx = await unirepSocialContract.publishPost(
             postId, 
             text, 
-            reputationNullifiers,
             publicSignals,
             { value: attestingFee, gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
         expectedPostEventsLength++
     })
 
-    it('should sign up seconde user', async () => {
+    it('should sign up second user', async () => {
         const userId = genIdentity()
         const userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
@@ -115,15 +113,17 @@ describe('EventSequencing', function (){
         const tx = await unirepSocialContract.userSignUp(userCommitment)
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.UserSignUp)
+        expectedUnirepEventsInOrder.push(unirepEvents.NewGSTLeafInserted)
         expectedSignUpEventsLength++
     })
 
-    it('should leave a comment by seconde user', async () => {
+    it('should leave a comment by second user', async () => {
         let epochKeyNonce = 0
         const epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
 
         const publicSignals = [
+            reputationNullifiers,
+            currentEpoch,
             epochKey,
             genRandomSalt(),
             1,
@@ -137,24 +137,28 @@ describe('EventSequencing', function (){
             postId, 
             commentId,
             text, 
-            reputationNullifiers,
             publicSignals,
             { value: attestingFee, gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit comment failed').to.equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
         expectedCommentEventsLength++
+
+        const proofNullifier = await unirepContract.hashReputationProof(publicSignals)
+        proofIndex = await unirepContract.getProofIndex(proofNullifier)
     })
         
     it('first user should upvote second user', async () => {
         let upvoteValue = 3
         let epochKeyNonce = 1
-        const epochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
+        const fromEpochKey = genEpochKey(userIds[0].identityNullifier, currentEpoch, epochKeyNonce)
+        const toEpochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
 
         const proofsRelated = [
-            epochKey,
+            reputationNullifiers,
+            currentEpoch,
+            fromEpochKey,
             genRandomSalt(),
             1,
             upvoteValue,
@@ -167,24 +171,21 @@ describe('EventSequencing', function (){
         const tx = await unirepSocialContract.vote(
             upvoteValue,
             0,
-            epochKey,
-            reputationNullifiers,
+            toEpochKey,
+            proofIndex,
             proofsRelated,
             { value: attestingFee.mul(2), gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit upvote failed').to.equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ReputationNullifierSubmitted)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
         expectedUnirepEventsInOrder.push(unirepEvents.AttestationSubmitted)
         expectedVoteEventsLength++
     })
 
     it('first epoch ended', async () => {
-        let currentEpoch = unirepContract.currentEpoch()
-        let numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
         await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        const tx = await unirepContract.beginEpochTransition(numEpochKey)
+        const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
@@ -201,7 +202,6 @@ describe('EventSequencing', function (){
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.StartedTransition)
 
         tx = await unirepSocialContract.processAttestations(
             genRandomSalt(),
@@ -211,28 +211,26 @@ describe('EventSequencing', function (){
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ProcessedAttestations)
 
-        tx = await unirepSocialContract.updateUserStateRoot(
+        tx = await unirepSocialContract.updateUserStateRoot([
             genRandomSalt(),
             epkNullifiers,
-            blindedUserStates,
-            blindedHashChains,
             transitionFromEpoch,
+            blindedUserStates,
             genRandomSalt(),
+            blindedHashChains,
             genRandomSalt(),
             proof,
-        )
+        ], indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(unirepEvents.NewGSTLeafInserted)
     })
 
     
     it('second epoch ended', async () => {
-        const numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
         await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        const tx = await unirepContract.beginEpochTransition(numEpochKey)
+        const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
@@ -240,9 +238,8 @@ describe('EventSequencing', function (){
     })
     
     it('Third epoch ended', async () => {
-        const numEpochKey = await unirepContract.getNumEpochKey(currentEpoch)
         await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        const tx = await unirepContract.beginEpochTransition(numEpochKey)
+        const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
@@ -259,7 +256,6 @@ describe('EventSequencing', function (){
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.StartedTransition)
 
         tx = await unirepSocialContract.processAttestations(
             genRandomSalt(),
@@ -269,21 +265,20 @@ describe('EventSequencing', function (){
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ProcessedAttestations)
 
-        tx = await unirepSocialContract.updateUserStateRoot(
+        tx = await unirepSocialContract.updateUserStateRoot([
             genRandomSalt(),
             epkNullifiers,
-            blindedUserStates,
-            blindedHashChains,
             transitionFromEpoch,
+            blindedUserStates,
             genRandomSalt(),
+            blindedHashChains,
             genRandomSalt(),
             proof,
-        )
+        ], indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(unirepEvents.NewGSTLeafInserted)
     })
 
     it('Second user should perform transition', async () => {
@@ -296,7 +291,6 @@ describe('EventSequencing', function (){
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.StartedTransition)
 
         tx = await unirepSocialContract.processAttestations(
             genRandomSalt(),
@@ -306,21 +300,20 @@ describe('EventSequencing', function (){
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.ProcessedAttestations)
 
-        tx = await unirepSocialContract.updateUserStateRoot(
+        tx = await unirepSocialContract.updateUserStateRoot([
             genRandomSalt(),
             epkNullifiers,
-            blindedUserStates,
-            blindedHashChains,
             transitionFromEpoch,
+            blindedUserStates,
             genRandomSalt(),
+            blindedHashChains,
             genRandomSalt(),
             proof,
-        )
+        ], indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(unirepEvents.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(unirepEvents.NewGSTLeafInserted)
     })
 
     it('Unirep events order should match sequencer order', async () => {

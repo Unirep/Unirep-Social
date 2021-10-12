@@ -106,7 +106,6 @@ const userStateTransition = async (args: any) => {
         id,
         commitment,
     )
-    console.log(userState.toJSON(4))
     let results
 
     // let circuitInputs: any

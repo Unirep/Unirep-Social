@@ -143,11 +143,13 @@ const deploy = async (args: any) => {
 
     const UnirepSettings = {
         maxUsers: maxUsers,
+        maxAttesters: maxUsers, // TODO: export maxAttesters from @unirep/unirep
         numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
         maxReputationBudget: _maxReputationBudget,
         epochLength: _epochLength,
         attestingFee: _attestingFee
     }
+    console.log(UnirepSettings)
 
     // Tree depths config
     const _treeDepthsConfig = args.tree_depths_config ? args.tree_depths_config : DEFAULT_TREE_DEPTHS_CONFIG
