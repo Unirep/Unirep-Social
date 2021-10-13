@@ -149,7 +149,6 @@ const deploy = async (args: any) => {
         epochLength: _epochLength,
         attestingFee: _attestingFee
     }
-    console.log(UnirepSettings)
 
     // Tree depths config
     const _treeDepthsConfig = args.tree_depths_config ? args.tree_depths_config : DEFAULT_TREE_DEPTHS_CONFIG

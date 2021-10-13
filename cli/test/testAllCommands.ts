@@ -45,6 +45,7 @@ describe('test all CLI subcommands', function() {
     const posRep = 3, negRep = 8, graffitiPreimage = 0, graffiti = hashOne(BigInt(graffitiPreimage))
     const minPosRep = 0, maxNegRep = 10, minRepDiff = 15
     let userRepProof, repPublicSignals
+    let airdropProof, airdropPublicSignals
     let transactionHash
     let proofIdx
 
@@ -314,12 +315,32 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-    describe('getAirdrop CLI subcommand', () => {
+    describe('genAirdropProof CLI subcommand', () => {
         it('should submit an airdrop query', async () => {
-            const command = `npx ts-node cli/index.ts getAirdrop` +
+            const command = `npx ts-node cli/index.ts genAirdropProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity1}`
+
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
+
+            const airdropProofRegMatch = output.match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/)
+            const publicSignalRegMatch = output.match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/)
+            expect(airdropProofRegMatch).not.equal(null)
+            airdropProof = airdropProofRegMatch[1]
+            expect(publicSignalRegMatch).not.equal(null)
+            airdropPublicSignals = publicSignalRegMatch[1]
+        })
+    })
+
+    describe('giveAirdrop CLI subcommand', () => {
+        it('should submit an airdrop query', async () => {
+            const command = `npx ts-node cli/index.ts giveAirdrop` +
+                ` -x ${unirepSocialContract.address} ` +
+                ` -p ${airdropPublicSignals} ` +
+                ` -pf ${airdropProof} ` +
+                ` -d ${deployerPrivKey} `
 
             console.log(command)
             const output = exec(command).stdout.trim()

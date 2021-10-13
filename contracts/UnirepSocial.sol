@@ -172,6 +172,7 @@ contract UnirepSocial {
         Unirep.SignUpProofRelated memory _signUpProofData
     ) external payable {
         require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
+        require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         
         // Submit airdrop
         unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
@@ -251,5 +252,14 @@ contract UnirepSocial {
         uint256 _graffitiPreImage,
         uint256[8] calldata _proof) external view returns (bool) {
         return unirep.verifyReputation(_repNullifiers, _epoch, _epochKey, _globalStateTree, _attesterId, _proveReputationAmount, _minRep, _proveGraffiti, _graffitiPreImage, _proof);
+    }
+
+    function verifyUserSignUp(
+        uint256 _epoch,
+        uint256 _epochKey,
+        uint256 _globalStateTree,
+        uint256 _attesterId,
+        uint256[8] calldata _proof) external view returns (bool) {
+        return unirep.verifyUserSignUp(_epoch, _epochKey, _globalStateTree, _attesterId, _proof);
     }
 }

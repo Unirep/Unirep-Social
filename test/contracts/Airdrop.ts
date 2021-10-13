@@ -117,6 +117,15 @@ describe('Airdrop', function () {
         const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
         const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
 
+        const isSignUpProofValid = await unirepSocialContract.verifyUserSignUp(
+            proofResults.epoch,
+            proofResults.epochKey,
+            proofResults.globalStateTreeRoot,
+            proofResults.attesterId,
+            formatProofForVerifierContract(proofResults.proof),
+        )
+        expect(isSignUpProofValid, 'Sign up proof is not valid').to.be.true
+
         // submit epoch key
         let tx = await unirepSocialContract.airdrop(signUpProof, {value: attestingFee})
         let receipt = await tx.wait()
