@@ -109,8 +109,6 @@ const giveAirdrop = async (args: any) => {
     // Verify proof
     // Check if attester ID matches Unirep Social
     const _attesterId = await unirepSocialContract.attesterId()
-    console.log(_attesterId.toNumber())
-    console.log(attesterId)
     if(_attesterId.toNumber() != attesterId) {
         console.error('Error: invalid attester ID proof')
         return

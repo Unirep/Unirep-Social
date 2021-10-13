@@ -1,4 +1,4 @@
-# Unirep Social With MongoDB
+# Unirep Social
 
 For more information about Unirep Social, refer to the [documentation](https://vivi432.gitbook.io/unirep-social/)
 
@@ -24,209 +24,218 @@ to run test scripts
 yarn test-cli
 ```
 to test all cli commands.
-## Example flow using cli commands with mongoDB
 
-- Follow the instructions to install mongoDB: [Install MongoDB Community Edition](https://docs.mongodb.com/manual/administration/install-community/)
+## Example flow using cli commands
 
-#### 1. Start a mongoDB server
-It handles data requests, manages data access, and performs background management operations.
-The data will be stored in the `<data path>`.
-```
-mongod --dbpath <data path>
-```
-
-#### 2. Spin up the testing chain
+#### 1. Spin up the testing chain
 ```
 npx hardhat node
 ```
-- NOTE: a list of default accounts will be printed, choose one of them to be deployer's account and one to be attester's.
-- Deployer's private key will be referred to as `deployerPrivateKey` and `attesterPrivateKey` respectively.
+- NOTE: a list of default accounts will be printed, choose one of them to be the deployer's account
+- For example, choose `0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563` as the deployer's private key
 
-#### 3. Deploy Unirep contract
+#### 2. Deploy Unirep contract
 ```
-npx ts-node cli/index.ts deploy -d <deployerPrivateKey>
+npx ts-node cli/index.ts deploy -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563
 ```
+- NOTE: `-d` is the deployer's private key
 - NOTE: If Unirep contract has not been deployed, both Unirep and Unirep Social contract's address will be printed. For example, 
 ```
-Unirep: 0x0165878A594ca255338adfa4d48449f69242Eb8F
-Unirep Social: 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853
+Unirep: 0x8021567131aCE794d2A365B72f800E8B71b2486F
+Unirep Social: 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2
 ```
 - Then we use the Unirep Social contract's address to interact with.
 
-#### 4. Start an event listener (Fixing)
-The listener will be triggered for events on the Unirep contract, and it will store the emitted data in mongoDB.
-```
-// npx ts-node cli/index.ts eventListeners -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853
-```
-
-#### 5. User generates identity
+#### 3. User generates Unirep identity
 ```
 npx ts-node cli/index.ts genUnirepIdentity
 ```
 - base64url encoded identity and identity commitment will be printed, For example,
 ```
-Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd278
-Unirep.identityCommitment.MTI0ZWQ1YTc4NjYzMWVhODViY2YzZDI4NWFhOTA5MzFjMjUwOTEzMzljYzAzODU3YTVlMzY5ZWYxZmI2NTAzNw
+Unirep.identity.WyI5M2QzYjcyZjQxMjI4M2U0OTAzNDhhZDZiN2E4ZWEyMjdjNzM2OWIzMzYxZWZmNGJhOTViNjVkMWVkMTI2NDVjIiwiZmZjNTdjZGIyNzU1NjhiOWIzYTIyODBmMWNlN2JiNmM2NDE3MzM3ZTAyMzZjZGY0YjM5MmY0ZTNlOWUyYjciLCI0M2M1M2IyZWI4N2IyY2Y2ZjdhODA3YjZmM2RiODQ0NmNkMGU3NzlhZmE3MDUyNTI4ODRiYjZlMDQzMjcwMiJd
+Unirep.identityCommitment.YzY1N2VlODVkOWJlNWU3NzQ2MjMwNDZkNzRhYWE1OTY4MzMwYTIyYTEwNmM1YzRhMjQ2MzRmNDZkMjY1N2Vm
 ```
 
-#### 5. User signs up
+#### 4. User signs up
 - Sign up user's semaphore identity with identity commitment with the prefix `Unirep.identityCommitment`.
 ```
 npx ts-node cli/index.ts userSignup \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -c Unirep.identityCommitment.MTI0ZWQ1YTc4NjYzMWVhODViY2YzZDI4NWFhOTA5MzFjMjUwOTEzMzljYzAzODU3YTVlMzY5ZWYxZmI2NTAzNw \
-    -d <deployerPrivateKey>
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \
+    -c Unirep.identityCommitment.YzY1N2VlODVkOWJlNWU3NzQ2MjMwNDZkNzRhYWE1OTY4MzMwYTIyYTEwNmM1YzRhMjQ2MzRmNDZkMjY1N2Vm \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563
 ```
-- MongoDB stores
-    - Settings in the Unirep contract (only triggered once)
-    - current epoch of this event
-    - Hashed leaf in the global state tree
-    - transaction hash of this event
+- NOTE: `-x` is the contract address of Unirep Social, `-c` is the identity commitment
 
-#### 6. Attester signs up (TO BE ADDED)
+#### 5. User generates reputation proof for post
 ```
-// npx ts-node cli/index.ts attesterSignup \
-//    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-//    -d <attesterPrivateKey>
+npx ts-node cli/index.ts genReputationProof \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \  
+    -id Unirep.identity.WyI5M2QzYjcyZjQxMjI4M2U0OTAzNDhhZDZiN2E4ZWEyMjdjNzM2OWIzMzYxZWZmNGJhOTViNjVkMWVkMTI2NDVjIiwiZmZjNTdjZGIyNzU1NjhiOWIzYTIyODBmMWNlN2JiNmM2NDE3MzM3ZTAyMzZjZGY0YjM5MmY0ZTNlOWUyYjciLCI0M2M1M2IyZWI4N2IyY2Y2ZjdhODA3YjZmM2RiODQ0NmNkMGU3NzlhZmE3MDUyNTI4ODRiYjZlMDQzMjcwMiJd \
+    -n 0 \ 
+    -act post 
 ```
-
-#### 7. User generates epoch key and epoch key proof
+- NOTE: `-n` is the nonce of the epoch key the user chooses to display, `-act` is the actions that can be performed in Unirep Social, there are: `post`, `comment`, and `vote`
+- base64url encoded reputation proof and public signals will be printed, For example,
 ```
-npx ts-node cli/index.ts genEpochKeyAndProof \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -id Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd \
-    -n 0
-```
-- NOTE: `-id` is user's identity and `-n`  is epoch key nonce which should be less than the system parameter `maxEpochKeyNonce`
-- NOTE: epoch key and base64url encoded epoch key proof and its public signals will be printed and they should be handed to attester to be verified, for example:
-```
-Epoch key of epoch 1 and nonce 0: 3630514969
-Unirep.epk.proof.WyIxNjk3ODM4NzEwNzEwMzQyMDgyMjg3MzYzOTg3NTQ3NDgzMzI0NTU1ODIxMjc2NDM4MDY2Mzg1NTQ4MDk1MDcwMDQzNjk0MTk4Mjc0NiIsIjIzMDUwNjU3MDAwNDY0OTYzMjg5MjM3MTcwNTA4NDIwMzA5NDU1OTUyOTkyMDQ2ODM0ODc2ODE1OTA5OTY0MjI4MTA2Nzc3NDM2MDkiLCIxNTQ0OTA0NjkwNTU2NzkzMDU4MDk0NTYxMDkyNjU1MTk3ODI4ODQ4NDMwMDE3NTE3NzA1Nzc3MTM0ODgwNzAyODY3OTEzNjM1NDA5OSIsIjE1NDA5MzE5ODY5MDkxMjY5MTQyNzgyNTg0NDkwODI2ODQ5NDMxNTg5MzM4ODg1NjQ0NjUzNjMwMDgzMDI3MDgxNjgyNzAyMzA4MjM5IiwiMTk1NDMwMzkyNjQ5ODA4ODA4MDY2NDM5MDgyNzMxNDE2NDk4NzMyMTYzODU2OTgyMTg0NTU0ODE2MzkwMDU2NDY4MjM3MzgxNDgwNTIiLCI0NTc4NjY3NzA4OTc1MDQwMDkwOTY0MDMzMDI1MTEwNTExMTg1MzQwODMzNDM2NDk3MjM0MzEzOTc2MDIwMDM5MDYwOTk2OTcwNzIyIiwiMTA5MDg2NDc2NjMzMzEwMDc0NTIyNTI2MjYzODUwMjQ0MTk0MDY5MzE0Mzk4NzI1MDg4OTUxMzA1OTQwNjQyNjc0MDA4NDYwNzE3MzAiLCIxMTU5MzQyODczMjQzOTk0MDM4NTgxOTM2MzMxMjg0MTEyMTc0NTg5OTgzMjA3NTUyNjA3ODg2MzM2NDUyODY5MDAyMTY1NjE5MjMyOSJd
-Unirep.epk.publicSignals.WyIxOTg0NzMyNTIzMDk4ODM1OTU5MDczMzY4NjY4NDc1MTc3MzAwOTI4MjUwNzUwNzUxMjEzMzk3NzUwNzI1NjI4MTA4ODExODUzNjg4NCIsIjEiLCIzNjMwNTE0OTY5Il0
-```
-#### 8. Attester verify epoch key proof
-```
-npx ts-node cli/index.ts verifyEpochKeyProof \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -pf Unirep.epkProof.WyIxNjk3ODM4NzEwNzEwMzQyMDgyMjg3MzYzOTg3NTQ3NDgzMzI0NTU1ODIxMjc2NDM4MDY2Mzg1NTQ4MDk1MDcwMDQzNjk0MTk4Mjc0NiIsIjIzMDUwNjU3MDAwNDY0OTYzMjg5MjM3MTcwNTA4NDIwMzA5NDU1OTUyOTkyMDQ2ODM0ODc2ODE1OTA5OTY0MjI4MTA2Nzc3NDM2MDkiLCIxNTQ0OTA0NjkwNTU2NzkzMDU4MDk0NTYxMDkyNjU1MTk3ODI4ODQ4NDMwMDE3NTE3NzA1Nzc3MTM0ODgwNzAyODY3OTEzNjM1NDA5OSIsIjE1NDA5MzE5ODY5MDkxMjY5MTQyNzgyNTg0NDkwODI2ODQ5NDMxNTg5MzM4ODg1NjQ0NjUzNjMwMDgzMDI3MDgxNjgyNzAyMzA4MjM5IiwiMTk1NDMwMzkyNjQ5ODA4ODA4MDY2NDM5MDgyNzMxNDE2NDk4NzMyMTYzODU2OTgyMTg0NTU0ODE2MzkwMDU2NDY4MjM3MzgxNDgwNTIiLCI0NTc4NjY3NzA4OTc1MDQwMDkwOTY0MDMzMDI1MTEwNTExMTg1MzQwODMzNDM2NDk3MjM0MzEzOTc2MDIwMDM5MDYwOTk2OTcwNzIyIiwiMTA5MDg2NDc2NjMzMzEwMDc0NTIyNTI2MjYzODUwMjQ0MTk0MDY5MzE0Mzk4NzI1MDg4OTUxMzA1OTQwNjQyNjc0MDA4NDYwNzE3MzAiLCIxMTU5MzQyODczMjQzOTk0MDM4NTgxOTM2MzMxMjg0MTEyMTc0NTg5OTgzMjA3NTUyNjA3ODg2MzM2NDUyODY5MDAyMTY1NjE5MjMyOSJd \
-    -s Unirep.epk.publicSignals.WyIxOTg0NzMyNTIzMDk4ODM1OTU5MDczMzY4NjY4NDc1MTc3MzAwOTI4MjUwNzUwNzUxMjEzMzk3NzUwNzI1NjI4MTA4ODExODUzNjg4NCIsIjEiLCIzNjMwNTE0OTY5Il0
+Epoch key of epoch 1 and nonce 0: 1920144953
+Unirep.reputation.proof.WyIxMzE1MTA2MDg5Mjk2NTk5NTYxMjU1NTEwMTU0ODU1MTYyMDczNTc1NjA1Mzk3NjM4ODQ1NTQ4MDQ2MDExNjEwMTI3NDUwMjI3NTg0MyIsIjMyMDY4NjQ1MzY5NDM5MDc3MDYwMTYzNTAyMDQ3NDY4Nzk2Njc2MDQ2NzU3MTgxNzgxNjAwNTEwMjMwODEyNDk2ODI0MDY1MTY4MTQiLCIyMTAyOTQxMzA3MjUxNDI0NzUyMjU0MTgxMDQ4MDgxMjM1MDQ5MzgwMzg4MzUzMjA2MzcwMzk0MTI4NTQzNDU5NDU5OTg4MjE1ODc3NiIsIjYxODI0NzI0NzY0NjM5MjgxOTA0Mjg2ODA0NTYwOTczNTg0MzEzMzgzODUzNzY1NDA3MjE0MTgzMzgzNDA1OTY1MTcxNjYyMzU0MTIiLCIxMTMzNzI0NzUzNzQ3OTQ4OTY2NTcwMDU0NzkzMDMxMzA5NjYyMzc5NDY1NjgxMzU2NjY5MDI1ODcwMzQ3MDcyMjczMzc0MjEyOTM4MyIsIjIxNDAzMzAyNDM5MTcxNTU2ODY1Nzk2Mzk1NjQ4ODc0OTAyNDEzNzUzMTcwMTA5MjE2OTM3MjQ0ODk2OTE3NzkxODU1NzcxMDA3NDQ1IiwiMzg1MTMyNzYwOTE5MjMwOTEyMjY5NzA3MjcwMzMzODQxOTI1NjYwMTMwMzI5NTAzMTUzNDQ1OTcxMTY5MTQ0MzU2NjUxODk1NjI5MSIsIjEyNTM0MzQ1NTUyMzUxOTEwNTQ1MTA2ODE0Njg4MTYwNTY5MDI3Mzg1MTAwNjU4MjM3MTE1NTcyMDI1MDM2ODc5ODMzNDI3NzU0MjE0Il0
+Unirep.reputation.publicSignals.WyI3NzA3NDU5NjQwODM1MDM1NzI1NDAyNzA1MDEyMDMxNDc3NTc5ODgxMDI1MTkzMTEzNDg0Nzc0NTAzNzA3NzAyNDcwODExMjQzOTY3IiwiMTQ4Njk1MDA3NDY2MzY3MDEyMzcyNTIxNzc1MzI4Mjg0NzUyNTAzOTgzMTk1NDk3OTEyMTc4ODY3NDI0NTU3MTkzMDE1Njg3MTM5NjEiLCI3MjMxNDY2NzQ1NTE1MjE2MTE1MzcxMTYxODc0OTc2NTY4MzkyOTgwMjIxODU1Mjg4NTQ5Nzc0OTc4NTU0MTA1OTc1NzkwOTg5ODQ5IiwiMTI0OTYyMDc3MzY3ODQzMTg0MTI0NzcxMzk0Njg2NDk4NjY0NjQ2NTczMDA3OTgyOTc1Mzc4ODcwOTc2MjExOTY2OTA4NTQzMDI3NjQiLCI1MzQ2NTEzMDMwNDU2NDYxNjIzOTg0NDU2MjQ2ODE5NjY3MjkyMTYxMjkwOTgyNDc4MjAwMDg3NjU1MjE3NDYxMTk1NTg3Njk0NjQ5IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiNSIsIjAiLCIwIiwiMCJd
 ```
 
-#### 9. User publish a post with an epoch key and proof
-User can indicate to generate his user state from database using a `-db` flag. 
+#### 6. User submits a post with a reputation proof
 ```
 npx ts-node cli/index.ts publishPost \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \
     -tx postText \
-    -id Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd \
-    -n 0 \
-    -d <deployerPrivateKey> \
-    -db
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563 \
+    -p Unirep.reputation.publicSignals.WyI3NzA3NDU5NjQwODM1MDM1NzI1NDAyNzA1MDEyMDMxNDc3NTc5ODgxMDI1MTkzMTEzNDg0Nzc0NTAzNzA3NzAyNDcwODExMjQzOTY3IiwiMTQ4Njk1MDA3NDY2MzY3MDEyMzcyNTIxNzc1MzI4Mjg0NzUyNTAzOTgzMTk1NDk3OTEyMTc4ODY3NDI0NTU3MTkzMDE1Njg3MTM5NjEiLCI3MjMxNDY2NzQ1NTE1MjE2MTE1MzcxMTYxODc0OTc2NTY4MzkyOTgwMjIxODU1Mjg4NTQ5Nzc0OTc4NTU0MTA1OTc1NzkwOTg5ODQ5IiwiMTI0OTYyMDc3MzY3ODQzMTg0MTI0NzcxMzk0Njg2NDk4NjY0NjQ2NTczMDA3OTgyOTc1Mzc4ODcwOTc2MjExOTY2OTA4NTQzMDI3NjQiLCI1MzQ2NTEzMDMwNDU2NDYxNjIzOTg0NDU2MjQ2ODE5NjY3MjkyMTYxMjkwOTgyNDc4MjAwMDg3NjU1MjE3NDYxMTk1NTg3Njk0NjQ5IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiNSIsIjAiLCIwIiwiMCJd \
+    -pf Unirep.reputation.proof.WyIxMzE1MTA2MDg5Mjk2NTk5NTYxMjU1NTEwMTU0ODU1MTYyMDczNTc1NjA1Mzk3NjM4ODQ1NTQ4MDQ2MDExNjEwMTI3NDUwMjI3NTg0MyIsIjMyMDY4NjQ1MzY5NDM5MDc3MDYwMTYzNTAyMDQ3NDY4Nzk2Njc2MDQ2NzU3MTgxNzgxNjAwNTEwMjMwODEyNDk2ODI0MDY1MTY4MTQiLCIyMTAyOTQxMzA3MjUxNDI0NzUyMjU0MTgxMDQ4MDgxMjM1MDQ5MzgwMzg4MzUzMjA2MzcwMzk0MTI4NTQzNDU5NDU5OTg4MjE1ODc3NiIsIjYxODI0NzI0NzY0NjM5MjgxOTA0Mjg2ODA0NTYwOTczNTg0MzEzMzgzODUzNzY1NDA3MjE0MTgzMzgzNDA1OTY1MTcxNjYyMzU0MTIiLCIxMTMzNzI0NzUzNzQ3OTQ4OTY2NTcwMDU0NzkzMDMxMzA5NjYyMzc5NDY1NjgxMzU2NjY5MDI1ODcwMzQ3MDcyMjczMzc0MjEyOTM4MyIsIjIxNDAzMzAyNDM5MTcxNTU2ODY1Nzk2Mzk1NjQ4ODc0OTAyNDEzNzUzMTcwMTA5MjE2OTM3MjQ0ODk2OTE3NzkxODU1NzcxMDA3NDQ1IiwiMzg1MTMyNzYwOTE5MjMwOTEyMjY5NzA3MjcwMzMzODQxOTI1NjYwMTMwMzI5NTAzMTUzNDQ1OTcxMTY5MTQ0MzU2NjUxODk1NjI5MSIsIjEyNTM0MzQ1NTUyMzUxOTEwNTQ1MTA2ODE0Njg4MTYwNTY5MDI3Mzg1MTAwNjU4MjM3MTE1NTcyMDI1MDM2ODc5ODMzNDI3NzU0MjE0Il0
 ```
-- NOTE: epoch key and base64url encoded reputation proof and its public signals will be printed and they should be handed to attester to be verified, for example:
+- NOTE: `-tx` is the post content, `-p` is the public signals of the reputation proof, and `-pf` is the reputation proof
+- The deployer will verify the proof and submit the post with the deployer's private key
+- After the proof is submitted, a proof index will be printed, then other users can upvote or downvote this epoch key with the proof index.
 ```
-Epoch key of epoch 1 and nonce 0: 3630514969
-Unirep.reputation.proof.WyIxMTIzMTY1NDY5Mjk2MjIxNDg3MTkwNTY3NDk2NzQwNjM0MzY0MDIyNTIzNzA3MzM5NDc2MzU1ODU1NzU4Njk0NjkxOTgyODk0MjE5NCIsIjk5ODcwODcxMzc1MjEwOTI0ODk5ODAxMTI2MzQ1ODk5ODMyMjgwNTM2MDA1MTY4NjcyNDMzMzIwMDE5NzMwODYyNDUyODQ3Nzg1MzciLCIxODE0NTQ0NTI0ODQxNDM5MDk4Njk1NzcwNjY1OTMxNTIwNDMzMDcxNTY0MTE5MDIxNzA2NzE5ODYwNjAwMzk1NDc2Mjc3MzU5NTc4MSIsIjE3MzEzODc5OTU3NzAwNTg4OTM1MDg1MjY1NDc1ODY2NjgxNDkzMzE2NTM4MDgzNTk0NzMwNDY5MTgzNTk1NTc2NDQ3MzYyNjA1MzU2IiwiMTY2NTIyNjc0MDQ0MjMzNjQ4Nzc1OTk5MTA2Mzc4NjM3NTk5MjY1Nzk4MTQ1MzA1Njk3MjM5NDQ2MDUzMjc2NTk0MDA0ODU2NDQwMzkiLCI5OTAxNTc0MTUxMzY3NDAzNjExMzcxMTQ0Mzg3NzEwNDU3NTIzOTg1Mjg1NDAyNTI2NTMyMDg5NTY5MzU1NTMwMDU4NDUzMzk2MzYiLCIxNjM3ODQ0OTA5NzU5NzM2OTU3NjUzMzMzMDkxMTIxOTExNzc3ODczNDI5MDg4MDgzOTc0NTczNzk4MzAwODc0NTc0MzAzMjIzNzc1NCIsIjEzODgzMjgxMDUxNzM1Njg2MDA5NTkwNzY1MzI1ODM0MDQ3OTcwNzY4MjUwNzcxMDMyNzQ2NDQ5NDExMjM3MjE3NjQzMTYzMjU4NiJd
-Unirep.reputation.publicSignals.WyIxMjU2Mzc0NzEzODU1Nzg2OTA2NTEyNzU0OTMzMzcyMjY0NDE4NDMzOTI4MjE4OTgwNjcyOTU4Nzk4NjgwMzQ3ODY3MzQ5MTQyNjkzIiwiMzc3NDAzNzM5MTkzNzY2ODc4MzIyNTI1NjMyNzg0ODMxMDE3NzA5NDkxMDI2NTQwMTU5OTY1NTQ4NTk1NTM4ODIyNTIwNjk0MDQ3OSIsIjg4ODkzNzkxODY4ODg1MTMzMjE0OTY5MjQ5MjM2ODgyMTQ2ODc4OTMzMTI1NTU1OTk2OTE3OTE5ODc3MzE3NzI2NDUzOTk5NzI4MjgiLCIzMTQxMTQzNDU0NTc3MjgwODM0NDg3MTQ2MDg3MjcxNDYyODY3NzY1NzEwMzIzNzQ4Njc0NTI5ODk0MTA4NzczNTk0OTk2MTQ0Mzc4IiwiMTI0NTI2MjgzOTMyNTIyNzk5NjA3NjY4MzMwNDMyNDE2MzY1MjQ3MTE1MDMyNjE0Mzk0NTExMjY2Mjk2OTAxNTM4NDk1NzYxMTY3MjAiLCIxMjAwNjcyODE5NzQ3NzcxMzQxODc0NDY1OTY4MTA5NzE1MzMzOTYxMDAzMjkxMjMxMDA5NTk3MDE2OTI1ODE1ODY3Nzk3NTY1NjYwOSIsIjg4ODIyMTA0MjYxMTg0NTk1NjA3ODExNTk2NjIyMjQ1ODA5MDg0NzI5MDcxNzY2Mjc1MDEwNzM3ODMxNTMwMDUzNDEyMjQzMzAyNDUiLCI3NzcyNTIxMjIwNDc2OTQzNzk0NDEzNjQzMDkwODgxNzQ5NDY2Mjk2NzQ5ODExNzE0NTM4MzA2NTk1NjI0MzYxODM3NTY2MzcyMjI0IiwiMTY4MDUyNjg0MjUxODg5MzkwODU2NTk4MDc0ODU1NTYwNjcwNzcwMjU3NTkxMzQxMjYwMjQ5NzI5MjExNDA0Njk2MDA1MzQ1NTczNTEiLCIxNTU4MjY2NDYyMzY0MzY0MDc4Nzg1NzU1MjE2MDE4Nzk4MDUzMTU4MTA0ODk3ODc4NTAyNzYyNjQ2OTYzODkwNjA3NTkyNjkzMzciLCIxIiwiMzYzMDUxNDk2OSIsIjE5ODQ3MzI1MjMwOTg4MzU5NTkwNzMzNjg2Njg0NzUxNzczMDA5MjgyNTA3NTA3NTEyMTMzOTc3NTA3MjU2MjgxMDg4MTE4NTM2ODg0IiwiMSIsIjEwIiwiMCIsIjAiLCIwIl0
+Verify reputation proof of epoch key 1920144953 with 5 reputation spent in transaction and minimum reputation 0 succeed
+Post ID: 6166d2da227d8dbafca27879
+Epoch key of epoch 1: 1920144953
+Transaction hash: 0x724cc01ad7b084da45c8e67bc930958282a07bf3b7c4381e1d7a9cdc5ae63a99
+Proof index: 3
 ```
-- After the post event is emitted, the database is triggered to store the following data:
-    - reputation nullifiers and its corresponding action (`pubslitPost`, `leaveComment` or `vote`)
-    - content of the post
-    - transaction hash of this event
-    - a negative reputation that sends to the author's epoch key as to spend this reputation.
 
-#### 10. Verify reputation proof of certain transaction
+#### 7. Verify reputation proof
 ```
 npx ts-node cli/index.ts verifyReputationProof \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -pf Unirep.reputation.proof.WyIxMTIzMTY1NDY5Mjk2MjIxNDg3MTkwNTY3NDk2NzQwNjM0MzY0MDIyNTIzNzA3MzM5NDc2MzU1ODU1NzU4Njk0NjkxOTgyODk0MjE5NCIsIjk5ODcwODcxMzc1MjEwOTI0ODk5ODAxMTI2MzQ1ODk5ODMyMjgwNTM2MDA1MTY4NjcyNDMzMzIwMDE5NzMwODYyNDUyODQ3Nzg1MzciLCIxODE0NTQ0NTI0ODQxNDM5MDk4Njk1NzcwNjY1OTMxNTIwNDMzMDcxNTY0MTE5MDIxNzA2NzE5ODYwNjAwMzk1NDc2Mjc3MzU5NTc4MSIsIjE3MzEzODc5OTU3NzAwNTg4OTM1MDg1MjY1NDc1ODY2NjgxNDkzMzE2NTM4MDgzNTk0NzMwNDY5MTgzNTk1NTc2NDQ3MzYyNjA1MzU2IiwiMTY2NTIyNjc0MDQ0MjMzNjQ4Nzc1OTk5MTA2Mzc4NjM3NTk5MjY1Nzk4MTQ1MzA1Njk3MjM5NDQ2MDUzMjc2NTk0MDA0ODU2NDQwMzkiLCI5OTAxNTc0MTUxMzY3NDAzNjExMzcxMTQ0Mzg3NzEwNDU3NTIzOTg1Mjg1NDAyNTI2NTMyMDg5NTY5MzU1NTMwMDU4NDUzMzk2MzYiLCIxNjM3ODQ0OTA5NzU5NzM2OTU3NjUzMzMzMDkxMTIxOTExNzc3ODczNDI5MDg4MDgzOTc0NTczNzk4MzAwODc0NTc0MzAzMjIzNzc1NCIsIjEzODgzMjgxMDUxNzM1Njg2MDA5NTkwNzY1MzI1ODM0MDQ3OTcwNzY4MjUwNzcxMDMyNzQ2NDQ5NDExMjM3MjE3NjQzMTYzMjU4NiJd \
-    -s Unirep.reputation.publicSignals.WyIxMjU2Mzc0NzEzODU1Nzg2OTA2NTEyNzU0OTMzMzcyMjY0NDE4NDMzOTI4MjE4OTgwNjcyOTU4Nzk4NjgwMzQ3ODY3MzQ5MTQyNjkzIiwiMzc3NDAzNzM5MTkzNzY2ODc4MzIyNTI1NjMyNzg0ODMxMDE3NzA5NDkxMDI2NTQwMTU5OTY1NTQ4NTk1NTM4ODIyNTIwNjk0MDQ3OSIsIjg4ODkzNzkxODY4ODg1MTMzMjE0OTY5MjQ5MjM2ODgyMTQ2ODc4OTMzMTI1NTU1OTk2OTE3OTE5ODc3MzE3NzI2NDUzOTk5NzI4MjgiLCIzMTQxMTQzNDU0NTc3MjgwODM0NDg3MTQ2MDg3MjcxNDYyODY3NzY1NzEwMzIzNzQ4Njc0NTI5ODk0MTA4NzczNTk0OTk2MTQ0Mzc4IiwiMTI0NTI2MjgzOTMyNTIyNzk5NjA3NjY4MzMwNDMyNDE2MzY1MjQ3MTE1MDMyNjE0Mzk0NTExMjY2Mjk2OTAxNTM4NDk1NzYxMTY3MjAiLCIxMjAwNjcyODE5NzQ3NzcxMzQxODc0NDY1OTY4MTA5NzE1MzMzOTYxMDAzMjkxMjMxMDA5NTk3MDE2OTI1ODE1ODY3Nzk3NTY1NjYwOSIsIjg4ODIyMTA0MjYxMTg0NTk1NjA3ODExNTk2NjIyMjQ1ODA5MDg0NzI5MDcxNzY2Mjc1MDEwNzM3ODMxNTMwMDUzNDEyMjQzMzAyNDUiLCI3NzcyNTIxMjIwNDc2OTQzNzk0NDEzNjQzMDkwODgxNzQ5NDY2Mjk2NzQ5ODExNzE0NTM4MzA2NTk1NjI0MzYxODM3NTY2MzcyMjI0IiwiMTY4MDUyNjg0MjUxODg5MzkwODU2NTk4MDc0ODU1NTYwNjcwNzcwMjU3NTkxMzQxMjYwMjQ5NzI5MjExNDA0Njk2MDA1MzQ1NTczNTEiLCIxNTU4MjY2NDYyMzY0MzY0MDc4Nzg1NzU1MjE2MDE4Nzk4MDUzMTU4MTA0ODk3ODc4NTAyNzYyNjQ2OTYzODkwNjA3NTkyNjkzMzciLCIxIiwiMzYzMDUxNDk2OSIsIjE5ODQ3MzI1MjMwOTg4MzU5NTkwNzMzNjg2Njg0NzUxNzczMDA5MjgyNTA3NTA3NTEyMTMzOTc3NTA3MjU2MjgxMDg4MTE4NTM2ODg0IiwiMSIsIjEwIiwiMCIsIjAiLCIwIl0
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \
+    -pf Unirep.reputation.proof.WyIxMzE1MTA2MDg5Mjk2NTk5NTYxMjU1NTEwMTU0ODU1MTYyMDczNTc1NjA1Mzk3NjM4ODQ1NTQ4MDQ2MDExNjEwMTI3NDUwMjI3NTg0MyIsIjMyMDY4NjQ1MzY5NDM5MDc3MDYwMTYzNTAyMDQ3NDY4Nzk2Njc2MDQ2NzU3MTgxNzgxNjAwNTEwMjMwODEyNDk2ODI0MDY1MTY4MTQiLCIyMTAyOTQxMzA3MjUxNDI0NzUyMjU0MTgxMDQ4MDgxMjM1MDQ5MzgwMzg4MzUzMjA2MzcwMzk0MTI4NTQzNDU5NDU5OTg4MjE1ODc3NiIsIjYxODI0NzI0NzY0NjM5MjgxOTA0Mjg2ODA0NTYwOTczNTg0MzEzMzgzODUzNzY1NDA3MjE0MTgzMzgzNDA1OTY1MTcxNjYyMzU0MTIiLCIxMTMzNzI0NzUzNzQ3OTQ4OTY2NTcwMDU0NzkzMDMxMzA5NjYyMzc5NDY1NjgxMzU2NjY5MDI1ODcwMzQ3MDcyMjczMzc0MjEyOTM4MyIsIjIxNDAzMzAyNDM5MTcxNTU2ODY1Nzk2Mzk1NjQ4ODc0OTAyNDEzNzUzMTcwMTA5MjE2OTM3MjQ0ODk2OTE3NzkxODU1NzcxMDA3NDQ1IiwiMzg1MTMyNzYwOTE5MjMwOTEyMjY5NzA3MjcwMzMzODQxOTI1NjYwMTMwMzI5NTAzMTUzNDQ1OTcxMTY5MTQ0MzU2NjUxODk1NjI5MSIsIjEyNTM0MzQ1NTUyMzUxOTEwNTQ1MTA2ODE0Njg4MTYwNTY5MDI3Mzg1MTAwNjU4MjM3MTE1NTcyMDI1MDM2ODc5ODMzNDI3NzU0MjE0Il0 \
+    -p Unirep.reputation.publicSignals.WyI3NzA3NDU5NjQwODM1MDM1NzI1NDAyNzA1MDEyMDMxNDc3NTc5ODgxMDI1MTkzMTEzNDg0Nzc0NTAzNzA3NzAyNDcwODExMjQzOTY3IiwiMTQ4Njk1MDA3NDY2MzY3MDEyMzcyNTIxNzc1MzI4Mjg0NzUyNTAzOTgzMTk1NDk3OTEyMTc4ODY3NDI0NTU3MTkzMDE1Njg3MTM5NjEiLCI3MjMxNDY2NzQ1NTE1MjE2MTE1MzcxMTYxODc0OTc2NTY4MzkyOTgwMjIxODU1Mjg4NTQ5Nzc0OTc4NTU0MTA1OTc1NzkwOTg5ODQ5IiwiMTI0OTYyMDc3MzY3ODQzMTg0MTI0NzcxMzk0Njg2NDk4NjY0NjQ2NTczMDA3OTgyOTc1Mzc4ODcwOTc2MjExOTY2OTA4NTQzMDI3NjQiLCI1MzQ2NTEzMDMwNDU2NDYxNjIzOTg0NDU2MjQ2ODE5NjY3MjkyMTYxMjkwOTgyNDc4MjAwMDg3NjU1MjE3NDYxMTk1NTg3Njk0NjQ5IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiNSIsIjAiLCIwIiwiMCJd
 ```
 - The verification result will be printed, for example:
 ```
-Verify reputation proof of epoch key 3630514969 with 10 reputation spent in transaction and minimum reputation 0 succeed
+Verify reputation proof of epoch key 1920144953 with 5 reputation spent in transaction and minimum reputation 0 succeed
 ```
-#### 11. Second user upvotes to epoch key
-**11.1. Sign up the second user to perform upvote**
+
+#### 8. User generates reputation proof for comment
+```
+npx ts-node cli/index.ts genReputationProof \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -id Unirep.identity.WyI5M2QzYjcyZjQxMjI4M2U0OTAzNDhhZDZiN2E4ZWEyMjdjNzM2OWIzMzYxZWZmNGJhOTViNjVkMWVkMTI2NDVjIiwiZmZjNTdjZGIyNzU1NjhiOWIzYTIyODBmMWNlN2JiNmM2NDE3MzM3ZTAyMzZjZGY0YjM5MmY0ZTNlOWUyYjciLCI0M2M1M2IyZWI4N2IyY2Y2ZjdhODA3YjZmM2RiODQ0NmNkMGU3NzlhZmE3MDUyNTI4ODRiYjZlMDQzMjcwMiJd \
+    -n 0 \
+    -act comment \
+    -mr 15
+```
+- NOTE: `-mr` is the minimum reputation that the user wants to show in the proof
+- base64url encoded reputation proof and public signals will be printed, For example,
+```
+Prove minimum reputation: 15
+Epoch key of epoch 1 and nonce 0: 1920144953
+Unirep.reputation.proof.WyI5NjIwNjQ2ODY1NTM1MTk3NjEzNzA2OTc5NDc1NjEwMzA3Njg3OTYzMzM3MjcwMTg5NDk0NjQwNDE3NDIzOTAxNzEzODg4MjM3MDU2IiwiMjAxMzQ2NDQzNjc3ODIyMDYxNzkwMzYxMTc4MTY1Njc5MDE2NDY3MDMxMzEzMzg1MDEzNDA5Mjg3OTU4NzQxNTE0MjM4OTU3NTk4ODgiLCIxMzg1Nzg2MDg3OTgyMjM0Nzk5NTU3MDg0NjQ3ODc0MDQ2OTczNTE0MzYzNjk0MjM0NjQwNDY5MTEyNzEyODc3OTI3MjE1MjUyNzMyOSIsIjc4ODQzNTcwOTM0ODMwNTQzODU0MzQzMTYzNzkwMTkwNDE5ODEwMTU0MDU4NDI2MTk1MDI2NTY0OTUxMjEwMDA0MTUzNTkwOTY4NTgiLCIyMzMxMzAxNTc4OTc4NTc3NTgxNzk5NzA2OTU0NTAzODk3MzE4MjY4MjMxOTA4MzkyMzgyNzMxMDE4NzQxNjMyMjY5MzQxODE0NDciLCI1NzYyNTI4Nzg4NzMyMDM4ODA2MTczMjY5MzgzMjgyNDM0ODM0MTU5NDIxNzg4NDg2MDgyNjA4ODY4Mjk5MTUzNzUxNDk4OTQ4MzI3IiwiMTUyOTE3NzY3ODY3NDc0MDc3MjA1NTMzMTI3ODY1MTQxNjY3NzY0NTY4ODM3NDI4NjEwODk5MDQ3NzE5NDAxODg4NzgxNzYyNDg2MTYiLCIxNDczMjI2OTMxNDgxMTQ3OTQxOTgyMzE2NTY5MzcxMTM3MDU0OTA5NTI4NTI0OTU5NzA0ODcyNTg1MDk1ODcwOTYwNzYwMjk5MTM5MiJd
+Unirep.reputation.publicSignals.WyI3NzU0OTg3Njc0ODAwOTgyMDIzMjA2MDE3NDM1MjYxNjQ3MzcyOTE2NDI4MDYwNTk4NTQxMjA5ODg1Nzc2OTc4OTc1MDk3NTU0MjAxIiwiMjEwNzcxMzAzMjIzNTk2MDEzMTE2MTY2MTQzNDQ1NjMwODc1MDQxMjg1ODE0MjE2ODg2MzY4NjkyNzUxNjMzMzc2NjA5NDAzODIyMzIiLCIxNzg4NzEwNDE0MTcwOTI4NDcyNzYwNzUwMzkwNDcyODAzODg3MzMzMjc1NTYxODUxNDQ2MTkyMzkxODA4OTczNTk4MDk4NzQ5Mzc5OCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiMyIsIjE1IiwiMCIsIjAiXQ
+```
+
+#### 9. User submits a comment with a reputation proof
+```
+npx ts-node cli/index.ts leaveComment \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -pid 6166d2da227d8dbafca27879  \
+    -tx commentText \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563 \
+    -p Unirep.reputation.publicSignals.WyI3NzU0OTg3Njc0ODAwOTgyMDIzMjA2MDE3NDM1MjYxNjQ3MzcyOTE2NDI4MDYwNTk4NTQxMjA5ODg1Nzc2OTc4OTc1MDk3NTU0MjAxIiwiMjEwNzcxMzAzMjIzNTk2MDEzMTE2MTY2MTQzNDQ1NjMwODc1MDQxMjg1ODE0MjE2ODg2MzY4NjkyNzUxNjMzMzc2NjA5NDAzODIyMzIiLCIxNzg4NzEwNDE0MTcwOTI4NDcyNzYwNzUwMzkwNDcyODAzODg3MzMzMjc1NTYxODUxNDQ2MTkyMzkxODA4OTczNTk4MDk4NzQ5Mzc5OCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiMyIsIjE1IiwiMCIsIjAiXQ \
+    -pf Unirep.reputation.proof.WyI5NjIwNjQ2ODY1NTM1MTk3NjEzNzA2OTc5NDc1NjEwMzA3Njg3OTYzMzM3MjcwMTg5NDk0NjQwNDE3NDIzOTAxNzEzODg4MjM3MDU2IiwiMjAxMzQ2NDQzNjc3ODIyMDYxNzkwMzYxMTc4MTY1Njc5MDE2NDY3MDMxMzEzMzg1MDEzNDA5Mjg3OTU4NzQxNTE0MjM4OTU3NTk4ODgiLCIxMzg1Nzg2MDg3OTgyMjM0Nzk5NTU3MDg0NjQ3ODc0MDQ2OTczNTE0MzYzNjk0MjM0NjQwNDY5MTEyNzEyODc3OTI3MjE1MjUyNzMyOSIsIjc4ODQzNTcwOTM0ODMwNTQzODU0MzQzMTYzNzkwMTkwNDE5ODEwMTU0MDU4NDI2MTk1MDI2NTY0OTUxMjEwMDA0MTUzNTkwOTY4NTgiLCIyMzMxMzAxNTc4OTc4NTc3NTgxNzk5NzA2OTU0NTAzODk3MzE4MjY4MjMxOTA4MzkyMzgyNzMxMDE4NzQxNjMyMjY5MzQxODE0NDciLCI1NzYyNTI4Nzg4NzMyMDM4ODA2MTczMjY5MzgzMjgyNDM0ODM0MTU5NDIxNzg4NDg2MDgyNjA4ODY4Mjk5MTUzNzUxNDk4OTQ4MzI3IiwiMTUyOTE3NzY3ODY3NDc0MDc3MjA1NTMzMTI3ODY1MTQxNjY3NzY0NTY4ODM3NDI4NjEwODk5MDQ3NzE5NDAxODg4NzgxNzYyNDg2MTYiLCIxNDczMjI2OTMxNDgxMTQ3OTQxOTgyMzE2NTY5MzcxMTM3MDU0OTA5NTI4NTI0OTU5NzA0ODcyNTg1MDk1ODcwOTYwNzYwMjk5MTM5MiJd
+```
+- NOTE: the post id should be provided in `-pid`
+- After the proof is submitted, a proof index will be printed, then other users can upvote or downvote this epoch key with the proof index.
+```
+Verify reputation proof of epoch key 1920144953 with 3 reputation spent in transaction and minimum reputation 15 succeed
+Epoch key of epoch 1: 1920144953
+Transaction hash: 0x5efb0daa31ce60fb5d690786d227c74ebfb6e33a0768f6b13d27e3c82d28932e
+Proof index: 4
+```
+- The reputation proof can also be verified by the `verifyReputationProof` command
+
+#### 10. Second user upvotes to epoch key
+**10.1. Sign up the second user to perform upvote**
 ```
 npx ts-node cli/index.ts genUnirepIdentity
 npx ts-node cli/index.ts userSignup \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -c Unirep.identityCommitment.YTk0NjJjMWE5ZWY3NjM3MWVkOTFjNDA0YTYxYWJlMjVjMjJiMjVmMTM1MzU3NjFjNjE5OGE2YTA4MGUxMDBm \
-    -d <deployerPrivateKey>
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \
+    -c Unirep.identityCommitment.MjE2N2M0N2RiODEwZjRkMTBkZmUyMDc5OTBmYjdlZGI4M2ZjN2UxNzk3NmI2YjI0MzNmNjU5Y2QyYTAwYzc4Yg \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563
 ```
-**11.2. Upvote the first user**
-User can indicate to generate his user state from database using a `-db` flag. 
+**10.2. Second user generates a reputation proof to vote**
+```
+npx ts-node cli/index.ts genReputationProof \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2 \ 
+    -id Unirep.identity.WyI4MTE5MzQ5MTFkNzczOTM2ODAyY2RlNjY0YWRjNGJhMWM3Zjk0MmMyMzZmYjRkNTRkYTE3MmFkNTdjYTYyMjE1IiwiZDIxYTU1NWJlMGQwOWFiMjJmOWU0ZGRkMGU3ZDllNzhkYzJmNGMzMWEzNjE5NjAwMGE4ZDU4YzE0NTBkMjgiLCIyN2JlY2I1YWE4YTI4NjM2ZjA0YTE4MDI1ZWE2MWUzZDI5N2YzNWNhYzQ2OGJhZTM5ZTUxYWQ0YmIyZDg5YiJd \
+    -n 0 \ 
+    -act vote \  
+    -v 3
+```
+- NOTE: If user chooses the action `vote`, a vote value `-v` should be given
+- base64url encoded reputation proof and public signals will be printed, For example,
+```
+Epoch key of epoch 1 and nonce 0: 1628983718
+Unirep.reputation.proof.WyI0NjU3NTczNTAxNDM1MjE1NjY1NDI5NzMzNDA0MjEwMTY4NDExMDc4NDg2MzE2NzcwMzkzMzQyMTQ4NzUwNTAzOTUxOTA0OTc3OTg0IiwiMTc4MTM5OTE2NjAzNzg3MzI5MjA4Njc5MzIyODUxMTA3ODkzNjYxMzU2MDgwNDEwMzY0ODEyNTc3MzkyNjkxNDI0NDYwMzYwODIiLCIxMzU2ODM1MTQ3Njg5ODcxNDEzNTc5MTk2OTQ0MDYwMzE4MjU0MDQ3NDExNzYxOTEzOTEyNjA0Njk2MDUwNDA1NDI5ODA0OTY1MTk5NSIsIjIwMTQ5ODQxMDAzNTg3OTExNTA2OTIwMTY5NDYxMDQ5MDIxMTAxNzMwNjU1OTgyODI4MzcwODk4ODYwODExMzE4OTI5NzQ0OTE2NTQ3IiwiMzIzNjUyNjU4NzA4NTM5ODUxMzg1NjQ5MzAwNjIxNzU3ODIzNzY4MDAxOTk1NTUzNTU2Mjk4ODMwOTY5Mzc3MjAzMTcwOTQ0MTYwMiIsIjEyOTk3NjM5NTA0MTM5MTEzNDYwMzczNzM4ODY5NTc0NDA3MjA4MjgzNzIyMDY0MDIyNjYzODQxNTg5NzAzMTk4MTgxNjYwNzU4MDQ4IiwiNDE3OTQ2MzA2MjE1NTY2ODcyNzMzMTI1MjE0NjE0MDIyNDA1NzA4NzcyODEzNTQzNjU3NjczODU4MjUwMDU1NjAzOTc2NTY0MjQ4MCIsIjM1NjAxNzc1NTM3OTIzNjMyMDgyNTYyMjIyNzQ2NDk1NTE0MjQzMzUwNjkyODQ4OTgyNTAyNTczMjg0MzM5NDA0MzkzNzY0NTM4NDUiXQ
+Unirep.reputation.publicSignals.WyI1Mzg1ODk3OTc1OTMyOTYxMjY3ODg3MDM1MDY5OTQxMzY4NzQzOTk0NjA1NDA3OTcwMDE3MDA1MjY2NTE2MjY2NzY5ODM2NjAyMDcxIiwiODc1ODQ2NTg5ODAzNzY4MDUyNjE1NTgyNjkzMjQwMTgwMjQ5ODk1ODkyNjk5MDE3NDU2NTU2NjI0NjE4MDA4Nzc0NzUzMjQwNTAwMSIsIjEzOTg4NzA3MjQ5MzQ4NjY1NjA5MzA3MzY3ODg0NTU3Mjg1NDQ5OTY3MTM4NTc0MjExNDcyMzM2MjU5MjcwNjIwNTU5MjQxMjk3NjY0IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjEiLCIxNjI4OTgzNzE4IiwiNjQzMzgwMjQwMjQ5NDA0MDg3Nzk1MzE1OTM3NjUxNjczNDY5NzIyMjU4MzI3MjI3NzU0NDM5MTY5NzI3MTkxNzYwNDU2MjIxNzgzNCIsIjEiLCIzIiwiMCIsIjAiLCIwIl0
+```
+**10.3 Second user submit upvote to the first user with the reputation proof**
 ```
 npx ts-node cli/index.ts vote \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -epk 3630514969 \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -d 0x405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace  \
+    -epk 1920144953  \
+    -i 3  \
     -uv 3 \
-    -id Unirep.identity.WyIxNzk1MTYyYWM2ZDVkZGQ4NWEyMzA0MDdkMjNiOTk3NDU0YmYwNzY2Zjg5ZThkNTQxNWE3ZTIyNTIyN2IxODRiIiwiZDgyNjA0ODY5Njk4NTU3MGMwYzNmNDlhM2RiZDg4MWJjOWJhYjc4Yzg2ZmM0N2UyOTMwNWVjMDEyMDNkZSIsImRkNmZiNDRkMTY3YjFmOTZiYzViZDUyYjdjNGRjOTNiYjhmNDA0Y2Q5YzBjMjA5ODU0ZWMyZWJlOGE0OTMyIl0 \
-    -n 0 \
-    -d <deployerPrivateKey> \
-    -db
+    -p Unirep.reputation.publicSignals.WyI1Mzg1ODk3OTc1OTMyOTYxMjY3ODg3MDM1MDY5OTQxMzY4NzQzOTk0NjA1NDA3OTcwMDE3MDA1MjY2NTE2MjY2NzY5ODM2NjAyMDcxIiwiODc1ODQ2NTg5ODAzNzY4MDUyNjE1NTgyNjkzMjQwMTgwMjQ5ODk1ODkyNjk5MDE3NDU2NTU2NjI0NjE4MDA4Nzc0NzUzMjQwNTAwMSIsIjEzOTg4NzA3MjQ5MzQ4NjY1NjA5MzA3MzY3ODg0NTU3Mjg1NDQ5OTY3MTM4NTc0MjExNDcyMzM2MjU5MjcwNjIwNTU5MjQxMjk3NjY0IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjEiLCIxNjI4OTgzNzE4IiwiNjQzMzgwMjQwMjQ5NDA0MDg3Nzk1MzE1OTM3NjUxNjczNDY5NzIyMjU4MzI3MjI3NzU0NDM5MTY5NzI3MTkxNzYwNDU2MjIxNzgzNCIsIjEiLCIzIiwiMCIsIjAiLCIwIl0 \
+    -pf Unirep.reputation.proof.WyI0NjU3NTczNTAxNDM1MjE1NjY1NDI5NzMzNDA0MjEwMTY4NDExMDc4NDg2MzE2NzcwMzkzMzQyMTQ4NzUwNTAzOTUxOTA0OTc3OTg0IiwiMTc4MTM5OTE2NjAzNzg3MzI5MjA4Njc5MzIyODUxMTA3ODkzNjYxMzU2MDgwNDEwMzY0ODEyNTc3MzkyNjkxNDI0NDYwMzYwODIiLCIxMzU2ODM1MTQ3Njg5ODcxNDEzNTc5MTk2OTQ0MDYwMzE4MjU0MDQ3NDExNzYxOTEzOTEyNjA0Njk2MDUwNDA1NDI5ODA0OTY1MTk5NSIsIjIwMTQ5ODQxMDAzNTg3OTExNTA2OTIwMTY5NDYxMDQ5MDIxMTAxNzMwNjU1OTgyODI4MzcwODk4ODYwODExMzE4OTI5NzQ0OTE2NTQ3IiwiMzIzNjUyNjU4NzA4NTM5ODUxMzg1NjQ5MzAwNjIxNzU3ODIzNzY4MDAxOTk1NTUzNTU2Mjk4ODMwOTY5Mzc3MjAzMTcwOTQ0MTYwMiIsIjEyOTk3NjM5NTA0MTM5MTEzNDYwMzczNzM4ODY5NTc0NDA3MjA4MjgzNzIyMDY0MDIyNjYzODQxNTg5NzAzMTk4MTgxNjYwNzU4MDQ4IiwiNDE3OTQ2MzA2MjE1NTY2ODcyNzMzMTI1MjE0NjE0MDIyNDA1NzA4NzcyODEzNTQzNjU3NjczODU4MjUwMDU1NjAzOTc2NTY0MjQ4MCIsIjM1NjAxNzc1NTM3OTIzNjMyMDgyNTYyMjIyNzQ2NDk1NTE0MjQzMzUwNjkyODQ4OTgyNTAyNTczMjg0MzM5NDA0MzkzNzY0NTM4NDUiXQ
 ```
-- NOTE: the second user's epoch key and base64url encoded reputation proof and its public signals will be printed and they should be handed to attester to be verified, for example:
+- NOTE: `-epk` is the first user's epoch key and `-i` is the proof index of the epoch key. User should choose either upvote with the flag `-uv` and downvote with the flag `-dv` and should provide the vote value.
+- Then the upvote result will be printed
 ```
-Epoch key of epoch 1 and nonce 0: 3277067051
-Unirep.reputation.proof.WyIxNjI0OTU4NjA5MjczNjIxNjgzMzkwMjgyMTAwNzgzMjA1ODAzNDgzMjA0ODU0NjI0ODI1NzAyNjMxNTkxMDUwODYzODIxMzgyMjQwNyIsIjc1MTE5NDI1NjkzODI2OTM3MTMxMTY1MzE3OTU1NTA3NjU4NDM1OTMzODM5NTg3MjA3OTU0MjkyODQ1NzI5MjgyMzcwMzI4MzExMzciLCIxNzY1MjI1NjY5NDAyNTg0NDg1NTkwNDc1MTk2Mjg1NzYwMTg2MzY3Mzk5Mjg1NjExMzg0MDI1MjM4OTY0OTE1MzEzNzE3NjE3NjEzNCIsIjk1OTUzOTUwNTc4ODM0NDMzMTkxNzQyNjQ3Mjc1MDMzNTQ2NDUxODI3ODk2MzY0MzY0MzI2NzI2NDU4MzA0MzAwOTY5NjEzNTUyMzgiLCIxMzIxNDkzMTI3MTYxNTQwODQzNzY0MDY1MzgzNDI3MzM3NTM4MjA2ODI0MzQ0MzU4OTMyMTE4MzI5MTIwMDA3OTIzOTQ0Njk2MDYzNCIsIjIwNzc0NzU5NzkxOTg2NjA0MTcwNjY2NDk3ODYxNjY0NzQ0NjI3ODMxMjg5OTAzMDYxMjAyMTU1MTAwNzM2MjkyOTk3NjgzNjIyMDc3IiwiNTkyNTA3NDI4NTQ1NzUwNTU2MTg5MDkxNDQ3Njk4NjgzNjQ5MzAyNzQxMDIyMjc0NDM4OTA2OTQ3MTk0MDg3NTI4MTExNDQzNDIzNyIsIjQxNDY0NjUzNjIwMjM3OTUyNTM2MzY5MzE0NTUyNzk2MzE5MTk2MjI4ODMxMTAxNTA0NzM3Nzc1MTQ1NzgyMDM3MTk3MTQzMjY1NTUiXQ
-Unirep.reputation.publicSignals.WyIxMTQ3NjM5NzI3NTA0MzA0NTYwODk3MjQ3MTU2NjM1ODkzOTYwNzAyNjkxOTk1ODkyODUxODY2OTQ5NTE3NzA1MzIzNzg2NzkyMDU3IiwiMTQwMzYzNzYyNTI1NDU4NDMzNzk5NzY5MjUzMDQwOTgwOTE3ODI2NTYwMTQzNzQ3MzQ3ODkyNTkyODMwMDk4NDQ4OTIwNDcyMTM1MDEiLCI4ODEzNTk5OTcxNDkzNTA2MjcwNDE0MjY0MjY2MDkyNTU0MjQwNDA4MDI5OTExNjI2NjAzMDA3NjcwMzY3MzU3MjI4Njg4NjU0NTQ3IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjEiLCIzMjc3MDY3MDUxIiwiMTk4NDczMjUyMzA5ODgzNTk1OTA3MzM2ODY2ODQ3NTE3NzMwMDkyODI1MDc1MDc1MTIxMzM5Nzc1MDcyNTYyODEwODgxMTg1MzY4ODQiLCIxIiwiMyIsIjAiLCIwIiwiMCJd
+Verify reputation proof of epoch key 1628983718 with 3 reputation spent in transaction and minimum reputation 0 succeed
+Attesting to epoch key 1920144953 with pos rep 3, neg rep 0
+Epoch key of epoch 1: 1628983718
+Transaction hash: 0x2834a414346e6958660a8b28dba38f239393cfae79b21734299a5d7ddb628482
+Proof index: 6
 ```
-- NOTE: The proof can also be verified with `verifyReputationProof` function
-- After the vote event is emitted, the database is triggered to store the following data:
-    - reputation nullifiers and its corresponding action (`pubslitPost`, `leaveComment` or `vote`)
-    - transaction hash of this event
-    - a positive reputation that sends to the receiver's epoch key. (negative reputation if it is a downvote)
-    - a negative reputation that sends to the author's epoch key as to spend this reputation.
 
-#### 12. Epoch transition
+#### 11. User can generate the airdrop proof
+```
+npx ts-node cli/index.ts genAirdropProof \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -id Unirep.identity.WyI5M2QzYjcyZjQxMjI4M2U0OTAzNDhhZDZiN2E4ZWEyMjdjNzM2OWIzMzYxZWZmNGJhOTViNjVkMWVkMTI2NDVjIiwiZmZjNTdjZGIyNzU1NjhiOWIzYTIyODBmMWNlN2JiNmM2NDE3MzM3ZTAyMzZjZGY0YjM5MmY0ZTNlOWUyYjciLCI0M2M1M2IyZWI4N2IyY2Y2ZjdhODA3YjZmM2RiODQ0NmNkMGU3NzlhZmE3MDUyNTI4ODRiYjZlMDQzMjcwMiJd
+```
+- If the user signs up through Unirep Social, the user will get a sign up flag in Unirep Social
+- Then the user can generate a `UserSignUpProof` to prove the membership of Unirep Social. The proof also generates the epoch key to get airdrop.
+- base64url encoded sign up proof and public signals will be printed, For example,
+```
+Epoch key of epoch 1: 1920144953
+Unirep.signUp.proof.WyI2NjM1MDYyNDY5MTQyNDU0MDk3MDk4ODM2NTY3MDYwOTc5MTU4ODA4OTI4NTE2ODEzNjY5OTI2MDI0ODM5MDQ0NzEyNTQzMjgyNzQ4IiwiMTMzNzQ4NzAzMDIyNTQxOTg0NjQyMjQ4MDMyMTkyNDI3Njk1NDI0NjcwODcyOTg5MTcxNjQzMDgyODU0NDI4NDU0NDYzMzc4OTkwMjMiLCI0NDQzMzE3NDQwNzEyNzc1MzgwMTkzOTI0Njk0ODgzMzE3Mzc5MTg0NDAxNTYyNDIxMzkwOTExOTI5MzI4NzU3MzExMzY0NDY2MTczIiwiMTk0NTIyMDI1NzY5ODkyNzY1NjU4MzMxNTg0MTE4Nzc3NjQ2NzQwNzE0NjQzMTkxOTQ1MTk2MjU2NjQxMTUwODE1ODI0NjA5NzI0MCIsIjIxNzQ5NTIwMDY0MTk5NzcxMTQ1ODI0NDQ0NjQ3MDQ2MjEwNDE3NDQyMzE3ODU3Njg1NjEwODQ5MjIxMTY4MTE2MjMxMTc2NDM1MzMiLCI5NTY2OTgwMzI0NTczMzg2NzI1NTI2MDAxNzA0NDAxNjg5NTQ5OTY1MDAzOTY2OTE4MzkzMTU1NDM1NjIyODM3NjUyMjM3MDA2NDExIiwiNTg3NjU4NzQxMjUyOTc1NzgxOTU2MTI5NTgwODY5MTU0NTg1NzAzMTgzNzg0MTQ4NTQyMDY4MTY4OTgyODQzODg2NDcxMDc2MTQ4IiwiMjE3OTMzMDY5OTM3MjMxNDk4MTk0ODE1NzE4MDg3OTY0MTI2NTQ2NDQwNjIwNzUyOTk0NzMxNjg1MzAyNjYxNTg1NTI3NzQzNjE0ODEiXQ
+Unirep.signUp.publicSignals.WyIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIl0
+```
+
+#### 12. The Unirep Social can airdrop the user with a `signUpProof`
+```
+npx ts-node cli/index.ts giveAirdrop \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563 \
+    -p Unirep.signUp.publicSignals.WyIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIl0  \
+    -pf Unirep.signUp.proof.WyI2NjM1MDYyNDY5MTQyNDU0MDk3MDk4ODM2NTY3MDYwOTc5MTU4ODA4OTI4NTE2ODEzNjY5OTI2MDI0ODM5MDQ0NzEyNTQzMjgyNzQ4IiwiMTMzNzQ4NzAzMDIyNTQxOTg0NjQyMjQ4MDMyMTkyNDI3Njk1NDI0NjcwODcyOTg5MTcxNjQzMDgyODU0NDI4NDU0NDYzMzc4OTkwMjMiLCI0NDQzMzE3NDQwNzEyNzc1MzgwMTkzOTI0Njk0ODgzMzE3Mzc5MTg0NDAxNTYyNDIxMzkwOTExOTI5MzI4NzU3MzExMzY0NDY2MTczIiwiMTk0NTIyMDI1NzY5ODkyNzY1NjU4MzMxNTg0MTE4Nzc3NjQ2NzQwNzE0NjQzMTkxOTQ1MTk2MjU2NjQxMTUwODE1ODI0NjA5NzI0MCIsIjIxNzQ5NTIwMDY0MTk5NzcxMTQ1ODI0NDQ0NjQ3MDQ2MjEwNDE3NDQyMzE3ODU3Njg1NjEwODQ5MjIxMTY4MTE2MjMxMTc2NDM1MzMiLCI5NTY2OTgwMzI0NTczMzg2NzI1NTI2MDAxNzA0NDAxNjg5NTQ5OTY1MDAzOTY2OTE4MzkzMTU1NDM1NjIyODM3NjUyMjM3MDA2NDExIiwiNTg3NjU4NzQxMjUyOTc1NzgxOTU2MTI5NTgwODY5MTU0NTg1NzAzMTgzNzg0MTQ4NTQyMDY4MTY4OTgyODQzODg2NDcxMDc2MTQ4IiwiMjE3OTMzMDY5OTM3MjMxNDk4MTk0ODE1NzE4MDg3OTY0MTI2NTQ2NDQwNjIwNzUyOTk0NzMxNjg1MzAyNjYxNTg1NTI3NzQzNjE0ODEiXQ 
+```
+
+#### 13. Epoch transition
 ```
 npx ts-node cli/index.ts epochTransition \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -d <deployerPrivateKey> \
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563  \
     -t
 ```
+- NOTE: `-t` indicates it's testing environment so it will fast forward to the end of epoch
 
-#### 13. User state transition
-User can indicate to generate his user state from database using a `-db` flag. 
+#### 14. User state transition
 ```
 npx ts-node cli/index.ts userStateTransition \
-    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-    -id Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd \
-    -d <deployerPrivateKey> \
-    -db
+    -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
+    -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563  \
+    -id Unirep.identity.WyI5M2QzYjcyZjQxMjI4M2U0OTAzNDhhZDZiN2E4ZWEyMjdjNzM2OWIzMzYxZWZmNGJhOTViNjVkMWVkMTI2NDVjIiwiZmZjNTdjZGIyNzU1NjhiOWIzYTIyODBmMWNlN2JiNmM2NDE3MzM3ZTAyMzZjZGY0YjM5MmY0ZTNlOWUyYjciLCI0M2M1M2IyZWI4N2IyY2Y2ZjdhODA3YjZmM2RiODQ0NmNkMGU3NzlhZmE3MDUyNTI4ODRiYjZlMDQzMjcwMiJd
 ```
-- After the user state transition event is emitted, the database is triggered to store the following data:
-    - A new global state tree leaf that is generated by circuit
-    - current epoch of this event
-    - transaction hash of this event
-
-#### 14. User generate reputation proof from certain attester (Fixing)
-User can indicate to generate his user state from database using a `-db` flag.
-```
-// npx ts-node cli/index.ts genReputationProofFromAttester \
-//    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-//    -id Unirep.identity.WyJlOGQ2NGU5OThhM2VmNjAxZThjZTNkNDQwOWQyZjc3MjEwOGJkMGI1NTgwODAzYjY2MDk0YTllZWExMzYxZjA2IiwiODZiYjk5ZGQ4MzA2ZGVkZDgxYTE4MzBiNmVjYmRlZjk5ZmVjYTU3M2RiNjIxMjk5NGMyMmJlMWEwMWZmMTEiLCIzMGE3M2MxMjE4ODQwNjE0MWQwYmI4NWRjZDY5ZjdhMjEzMWM1NWRkNDQzYWNmMGVhZTEwNjI2NzBjNDhmYSJd \
-//    -a 2 \
-//    -mp 2 \
-//    -mn 1 \
-//    -gp 0 \
-//    -db
-```
-- NOTE: proof will be printed and it should be handed to the receiver of this proof, for example,
-```
-Proof of reputation from attester 2:
-Unirep.reputationProofFromAttester.WyI3NDU0MzE2NzU3MDY1MDU3NzYwMjkxMDM4ODY2MDI3MzgzOTU1OTY3MzcxNzk5Mzg4Njc0NDc1ODY3NDE5MTQ2Njk5OTUzMjQxNjYiLCI5OTEzMzU1Nzk3NTAwOTMzMzI2MjE5ODUwOTI1NjU2MTQwOTEwNjc3ODUxODc4NTA5MDE1NDI4NzUzNDc1ODAwNTg2MjczNDMyNTg3IiwiMTQ1OTU2MDMyOTIyODU0NDYwNzM1NTEzMjI2NzAyMTc4NDIzOTU4Njg3Mzc0MDQ1NTg0MTY0Nzg3Mzg4ODMwMTU5MDA5NjA4ODIzOSIsIjczNTExMjAwMDYxOTYxNTI4NjQyMTI4NjYxNzEzMDMzMzQ4MDcxMjQzMzM4MjcxNDUyNTI1MjQzNjk4MzgxMTYxMTY1ODc3NTM4NjYiLCIxMTI0NTM1ODEwODY0MzE1MjY4MTI5NjA5MzUyNDY2MzQ3MTQ1MzAwMzAwMzIxOTk3NjQ3NzQ1MzMxNjk4NDc2NjUzMTUyMTM0MDMzMiIsIjU1NDA1NDA4OTc3NjMwMjIxODcwMDM4NTIyMzQ4ODMxMTEyMzY4MzAwNTA1MDU3OTc1NTA1OTcxOTQzODUzOTk2NjQ1MTU1OTY2MzEiLCIxMTk0MjUwMzcxNzI4NjE0MTMzNDk1NjMzNzg0MTEzNzAwNDQwNTkwNzY3ODI4NTQ0Nzc5MjgxNjcxODMxOTU3NzA1MjUyMDUyNzUiLCIzNjk1MTI2NzM5ODk2MTQwNzY2ODgwMjUxNTA2MTkxNTYwNDU5OTU4Njg0MTExODY1Nzg2MzAxODc3MDEwODM2NzQ2NjA4NTYyNTU1Il0
-```
-
-#### 15. Verify the reputation proof (Fixing)
-```
-// npx ts-node cli/index.ts verifyReputationProofFromAttester \
-//    -x 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 \
-//    -a 2 \
-//    -mp 2 \
-//    -mn 1 \
-//    -gp 0 \
-//    -pf Unirep.reputationProofFromAttester.WyI3NDU0MzE2NzU3MDY1MDU3NzYwMjkxMDM4ODY2MDI3MzgzOTU1OTY3MzcxNzk5Mzg4Njc0NDc1ODY3NDE5MTQ2Njk5OTUzMjQxNjYiLCI5OTEzMzU1Nzk3NTAwOTMzMzI2MjE5ODUwOTI1NjU2MTQwOTEwNjc3ODUxODc4NTA5MDE1NDI4NzUzNDc1ODAwNTg2MjczNDMyNTg3IiwiMTQ1OTU2MDMyOTIyODU0NDYwNzM1NTEzMjI2NzAyMTc4NDIzOTU4Njg3Mzc0MDQ1NTg0MTY0Nzg3Mzg4ODMwMTU5MDA5NjA4ODIzOSIsIjczNTExMjAwMDYxOTYxNTI4NjQyMTI4NjYxNzEzMDMzMzQ4MDcxMjQzMzM4MjcxNDUyNTI1MjQzNjk4MzgxMTYxMTY1ODc3NTM4NjYiLCIxMTI0NTM1ODEwODY0MzE1MjY4MTI5NjA5MzUyNDY2MzQ3MTQ1MzAwMzAwMzIxOTk3NjQ3NzQ1MzMxNjk4NDc2NjUzMTUyMTM0MDMzMiIsIjU1NDA1NDA4OTc3NjMwMjIxODcwMDM4NTIyMzQ4ODMxMTEyMzY4MzAwNTA1MDU3OTc1NTA1OTcxOTQzODUzOTk2NjQ1MTU1OTY2MzEiLCIxMTk0MjUwMzcxNzI4NjE0MTMzNDk1NjMzNzg0MTEzNzAwNDQwNTkwNzY3ODI4NTQ0Nzc5MjgxNjcxODMxOTU3NzA1MjUyMDUyNzUiLCIzNjk1MTI2NzM5ODk2MTQwNzY2ODgwMjUxNTA2MTkxNTYwNDU5OTU4Njg0MTExODY1Nzg2MzAxODc3MDEwODM2NzQ2NjA4NTYyNTU1Il0
-```
+- After finish user state transition, the user can collect all of the reputation from the previous epoch

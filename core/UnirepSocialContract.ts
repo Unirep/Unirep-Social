@@ -172,10 +172,6 @@ export class UnirepSocialContract {
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
-        console.log(BigInt(add0x(newpost._id.toString())), 
-        postContent, 
-        proofsRelated,)
-
         let tx
         try {
             tx = await this.contract.publishPost(
@@ -477,7 +473,6 @@ export class UnirepSocialContract {
         }
         const attestingFee = await this.attestingFee()
         const userSignUpProof = publicSignals.concat([proof])
-        console.log(userSignUpProof)
 
         let tx
         try {
