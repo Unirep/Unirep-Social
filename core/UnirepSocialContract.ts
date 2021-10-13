@@ -114,7 +114,32 @@ export class UnirepSocialContract {
         return tx
     }
 
-    public publishPost = async (results: any, postContent: string): Promise<any> => {
+    private parseRepuationProof = (publicSignals: any, proof: any) => {
+        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
+        const epoch = publicSignals[maxReputationBudget]
+        const epochKey = publicSignals[maxReputationBudget + 1]
+        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
+        const attesterId = publicSignals[maxReputationBudget + 3]
+        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
+        const minRep = publicSignals[maxReputationBudget + 5]
+        const proveGraffiti = publicSignals[maxReputationBudget + 6]
+        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
+
+        return [
+            reputationNullifiers, 
+            epoch,
+            epochKey,
+            globalStatetreeRoot,
+            attesterId,
+            proveReputationAmount,
+            minRep,
+            proveGraffiti,
+            graffitiPreImage,
+            proof
+        ]
+    }
+
+    public publishPost = async (publicSignals: any, proof: any, postContent: string): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -123,30 +148,33 @@ export class UnirepSocialContract {
             return
         }
 
+        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
+        const epoch = publicSignals[maxReputationBudget]
+        const epochKey = publicSignals[maxReputationBudget + 1]
+        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
+        const attesterId = publicSignals[maxReputationBudget + 3]
+        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
+        const minRep = publicSignals[maxReputationBudget + 5]
+        const proveGraffiti = publicSignals[maxReputationBudget + 6]
+        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
+
         const newpost: IPost = new Post({
             content: postContent,
             // TODO: hashedContent
-            epochKey: results.epochKey,
-            epkProof: formatProofForVerifierContract(results.proof).map((n)=>add0x(BigInt(n).toString(16))),
-            proveMinRep: results.minRep != null ? true : false,
-            minRep: Number(results.minRep),
+            epochKey: epochKey,
+            epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
+            proveMinRep: minRep != null ? true : false,
+            minRep: Number(minRep),
             comments: [],
             status: 0
         });
 
-        const proofsRelated = [
-            results.reputationNullifiers,
-            results.epoch,
-            results.epochKey,
-            results.globalStatetreeRoot,
-            results.attesterId,
-            results.proveReputationAmount,
-            results.minRep,
-            results.proveGraffiti,
-            results.graffitiPreImage,
-            formatProofForVerifierContract(results.proof)
-        ]
+        const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
+
+        console.log(BigInt(add0x(newpost._id.toString())), 
+        postContent, 
+        proofsRelated,)
 
         let tx
         try {
@@ -167,7 +195,7 @@ export class UnirepSocialContract {
         return { tx: tx,  postId: newpost._id.toString() }
     }
 
-    public leaveComment = async (results: any, postId: string, commentContent: string): Promise<any> => {
+    public leaveComment = async (publicSignals: any, proof: any, postId: string, commentContent: string): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -176,27 +204,26 @@ export class UnirepSocialContract {
             return
         }
 
-        const proofsRelated = [
-            results.reputationNullifiers,
-            results.epoch,
-            results.epochKey,
-            results.globalStatetreeRoot,
-            results.attesterId,
-            results.proveReputationAmount,
-            results.minRep,
-            results.proveGraffiti,
-            results.graffitiPreImage,
-            formatProofForVerifierContract(results.proof)
-        ]
+        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
+        const epoch = publicSignals[maxReputationBudget]
+        const epochKey = publicSignals[maxReputationBudget + 1]
+        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
+        const attesterId = publicSignals[maxReputationBudget + 3]
+        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
+        const minRep = publicSignals[maxReputationBudget + 5]
+        const proveGraffiti = publicSignals[maxReputationBudget + 6]
+        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
+
+        const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
         const newComment: IComment = new Comment({
             content: commentContent,
             // TODO: hashedContent
-            epochKey: results.epochKey,
-            epkProof: formatProofForVerifierContract(results.proof).map((n)=>add0x(BigInt(n).toString(16))),
-            proveMinRep: results.minRep != null ? true : false,
-            minRep: Number(results.minRep),
+            epochKey: epochKey,
+            epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
+            proveMinRep: minRep != null ? true : false,
+            minRep: Number(minRep),
             status: 0
         });
 
@@ -232,7 +259,7 @@ export class UnirepSocialContract {
         return { tx: tx,  commentId: newComment._id.toString() }
     }
 
-    public vote = async (results: any, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number): Promise<any> => {
+    public vote = async (publicSignals: any, proof: any, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number): Promise<any> => {
 
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
@@ -241,18 +268,7 @@ export class UnirepSocialContract {
             console.log("Error: should connect a signer")
             return
         }
-        const proofsRelated = [
-            results.reputationNullifiers,
-            results.epoch,
-            results.epochKey,
-            results.globalStatetreeRoot,
-            results.attesterId,
-            results.proveReputationAmount,
-            results.minRep,
-            results.proveGraffiti,
-            results.graffitiPreImage,
-            formatProofForVerifierContract(results.proof)
-        ]
+        const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
         let tx
@@ -275,22 +291,11 @@ export class UnirepSocialContract {
         return tx
     }
 
-    public getReputationProofIndex = async (results: any) => {
+    public getReputationProofIndex = async (publicSignals: any, proof: any) => {
         if(this.unirep == undefined){
             await this.getUnirep()
         }
-        const proofsRelated = [
-            results.reputationNullifiers,
-            results.epoch,
-            results.epochKey,
-            results.globalStatetreeRoot,
-            results.attesterId,
-            results.proveReputationAmount,
-            results.minRep,
-            results.proveGraffiti,
-            results.graffitiPreImage,
-            formatProofForVerifierContract(results.proof)
-        ]
+        const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const proofNullifier = await this.unirep?.hashReputationProof(proofsRelated)
         return this.unirep?.getProofIndex(proofNullifier)
     }
@@ -498,10 +503,13 @@ export class UnirepSocialContract {
     }
 
     public verifyEpochKeyValidity = async (publicSignals: any, proof: any): Promise<boolean> => {
+        if(this.unirep == undefined){
+            await this.getUnirep()
+        }
         const globalStateTree = publicSignals[0]
         const epoch = publicSignals[1]
         const epochKey = publicSignals[2]
-        const isValid = await this.contract.verifyEpochKeyValidity(
+        const isValid = await this.unirep?.verifyEpochKeyValidity(
             globalStateTree,
             epoch,
             epochKey,
@@ -511,6 +519,9 @@ export class UnirepSocialContract {
     }
 
     public verifyReputation = async (publicSignals: any, proof: any): Promise<boolean> => {
+        if(this.unirep == undefined){
+            await this.getUnirep()
+        }
         const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
         const epoch = publicSignals[maxReputationBudget]
         const epochKey = publicSignals[maxReputationBudget + 1]
@@ -520,7 +531,8 @@ export class UnirepSocialContract {
         const minRep = publicSignals[maxReputationBudget + 5]
         const proveGraffiti = publicSignals[maxReputationBudget + 6]
         const graffitiPreImage = publicSignals[maxReputationBudget + 7]
-        const isValid = await this.contract.verifyReputation(
+
+        const isValid = await this.unirep?.verifyReputation(
             reputationNullifiers,
             epoch,
             epochKey,
@@ -536,11 +548,14 @@ export class UnirepSocialContract {
     }
 
     public verifyUserSignUp = async (publicSignals: any, proof: any): Promise<boolean> => {
+        if(this.unirep == undefined){
+            await this.getUnirep()
+        }
         const epoch = publicSignals[0]
         const epochKey = publicSignals[1]
         const globalStateTreeRoot = publicSignals[2]
         const attesterId = publicSignals[3]
-        const isValid = await this.contract.verifyUserSignUp(
+        const isValid = await this.unirep?.verifyUserSignUp(
             epoch,
             epochKey,
             globalStateTreeRoot,

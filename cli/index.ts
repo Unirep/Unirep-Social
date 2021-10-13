@@ -38,6 +38,12 @@ import {
 } from './verifyEpochKeyProof'
 
 import {
+    genReputationProof,
+    configureSubparser as configureSubparserForGenReputationProof,
+} from './genReputationProof'
+
+
+import {
     verifyReputationProof,
     configureSubparser as configureSubparserForVerifyReputationProof,
 } from './verifyReputationProof'
@@ -114,6 +120,9 @@ const main = async () => {
     // Subcommand: verifyEpochKeyProof
     configureSubparserForVerifyEpochKeyProof(subparsers)
 
+    // Subcommand: genReputationProof
+    configureSubparserForGenReputationProof(subparsers)
+
     // Subcommand: verifyReputationProof
     configureSubparserForVerifyReputationProof(subparsers)
 
@@ -158,6 +167,8 @@ const main = async () => {
         await genEpochKeyAndProof(args)
     } else if (args.subcommand === 'verifyEpochKeyProof') {
         await verifyEpochKeyProof(args)
+    } else if (args.subcommand === 'genReputationProof') {
+        await genReputationProof(args)
     } else if (args.subcommand === 'verifyReputationProof') {
         await verifyReputationProof(args)
     } else if (args.subcommand === 'publishPost') {

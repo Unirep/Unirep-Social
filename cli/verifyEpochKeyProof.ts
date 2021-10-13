@@ -97,10 +97,8 @@ const verifyEpochKeyProof = async (args: any) => {
     }
     
     // Verify the proof on-chain
-    const isProofValid = await unirepContract.verifyEpochKeyValidity(
-        GSTRoot,
-        inputEpoch,
-        epk,
+    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(
+        publicSignals,
         proof,
     )
     if (!isProofValid) {
