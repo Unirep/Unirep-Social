@@ -1,14 +1,16 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genUnirepStateFromContract, UnirepContract } from '@unirep/unirep'
+import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
+import { verifyProof } from '@unirep/circuits'
+import { genUnirepStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
-import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
+import { identityPrefix, signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
-        'verifyEpochKeyProof',
+        'giveAirdrop',
         { add_help: true },
     )
 
@@ -47,7 +49,7 @@ const configureSubparser = (subparsers: any) => {
             help: 'The block the Unirep contract is deployed. Default: 0',
         }
     )
-
+    
     parser.add_argument(
         '-x', '--contract',
         {
@@ -56,10 +58,28 @@ const configureSubparser = (subparsers: any) => {
             help: 'The Unirep Social contract address',
         }
     )
+
+    const privkeyGroup = parser.add_mutually_exclusive_group({ required: true })
+
+    privkeyGroup.add_argument(
+        '-dp', '--prompt-for-eth-privkey',
+        {
+            action: 'store_true',
+            help: 'Whether to prompt for the user\'s Ethereum private key and ignore -d / --eth-privkey',
+        }
+    )
+
+    privkeyGroup.add_argument(
+        '-d', '--eth-privkey',
+        {
+            action: 'store',
+            type: 'str',
+            help: 'The deployer\'s Ethereum private key',
+        }
+    )
 }
 
-const verifyEpochKeyProof = async (args: any) => {
-
+const giveAirdrop = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
     const provider = new ethers.providers.JsonRpcProvider(ethProvider)
@@ -68,47 +88,62 @@ const verifyEpochKeyProof = async (args: any) => {
     const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
-    
+
     const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const unirepState = await genUnirepStateFromContract(
         provider,
         unirepContract.address,
         startBlock,
     )
-    
-    const decodedProof = base64url.decode(args.proof.slice(epkProofPrefix.length))
-    const decodedPublicSignals = base64url.decode(args.public_signals.slice(epkPublicSignalsPrefix.length))
-    const proof = JSON.parse(decodedProof)
+
+    // Parse Inputs
+    const decodedProof = base64url.decode(args.proof.slice(signUpProofPrefix.length))
+    const decodedPublicSignals = base64url.decode(args.public_signals.slice(signUpPublicSignalsPrefix.length))
     const publicSignals = JSON.parse(decodedPublicSignals)
-    const currentEpoch = unirepState.currentEpoch
-    const epk = publicSignals[2]
-    const inputEpoch = publicSignals[1]
-    const GSTRoot = publicSignals[0]
-    console.log(`Verifying epoch key ${epk} with GSTRoot ${GSTRoot} in epoch ${inputEpoch}`)
-    if(inputEpoch != currentEpoch) {
-        console.log(`Warning: the epoch key is expired. Epoch key is in epoch ${inputEpoch}, but the current epoch is ${currentEpoch}`)
+    const epoch = publicSignals[0]
+    const epk = publicSignals[1]
+    const GSTRoot = publicSignals[2]
+    const attesterId = publicSignals[3]
+    const proof = JSON.parse(decodedProof)
+
+    // Verify proof
+    // Check if attester ID matches Unirep Social
+    const _attesterId = await unirepSocialContract.attesterId()
+    if(_attesterId.toNumber() != attesterId) {
+        console.error('Error: invalid attester ID proof')
+        return
     }
 
     // Check if Global state tree root exists
-    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, inputEpoch)
+    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
     if(!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
     }
-    
+
     // Verify the proof on-chain
-    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(
+    const isProofValid = await unirepSocialContract.verifyUserSignUp(
         publicSignals,
         proof,
     )
     if (!isProofValid) {
-        console.error('Error: invalid epoch key proof')
+        console.error('Error: invalid user sign up proof')
         return
     }
-    console.log(`Verify epoch key proof with epoch key ${epk} succeed`)
+
+    // Connect a signer
+    await unirepSocialContract.unlock(args.eth_privkey)
+    // submit epoch key to unirep social contract
+    const tx = await unirepSocialContract.airdrop(publicSignals, proof)
+
+    if(tx != undefined){
+        console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
+        console.log('Transaction hash:', tx?.hash)
+    }
+    process.exit(0)
 }
 
 export {
-    verifyEpochKeyProof,
+    giveAirdrop,
     configureSubparser,
 }

@@ -31,7 +31,7 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
-        '-s', '--public-signals',
+        '-p', '--public-signals',
         {
             required: true,
             type: 'str',
@@ -108,16 +108,8 @@ const verifyReputationProof = async (args: any) => {
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepContract.verifyReputation(
-        outputNullifiers,
-        epoch,
-        epk,
-        GSTRoot,
-        attesterId,
-        repNullifiersAmount,
-        minRep,
-        proveGraffiti,
-        graffitiPreImage,
+    const isProofValid = await unirepSocialContract.verifyReputation(
+        publicSignals,
         proof,
     )
     if (!isProofValid) {

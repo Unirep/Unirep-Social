@@ -24,7 +24,7 @@ describe('Vote', function () {
     let unirepState
     
     let accounts: ethers.Signer[]
-    let results
+    let reputationProofData
     const text = genRandomSalt().toString()
     let attesterId
     const upvoteValue = 3
@@ -83,7 +83,7 @@ describe('Vote', function () {
     describe('User sign-ups', () => {
 
         it('sign up should succeed', async () => {
-            let GSTreeLeafIndex: number = -1
+            let GSTreeLeafIndex: number = 0
             const currentEpoch = await unirepContract.currentEpoch()
             unirepState = new UnirepState(
                 circuitGlobalStateTreeDepth,
@@ -124,18 +124,20 @@ describe('Vote', function () {
                 const latestTransitionedToEpoch = currentEpoch.toNumber()
                 const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
-                let _attesterId, _airdrppedAmount
-
-                for (let j = 0; j < newLeafEvents.length; j++) {
-                    if(BigInt(newLeafEvents[j]?.args?._hashedLeaf) == hashedStateLeaf){
-                        GSTreeLeafIndex = newLeafEvents[j]?.args?._leafIndex.toNumber()
-                        _attesterId = newLeafEvents[j]?.args?._attesterId.toNumber()
-                        _airdrppedAmount = newLeafEvents[j]?.args?._airdropAmount.toNumber()
-                    }
-                }
-                expect(GSTreeLeafIndex).to.equal(i)
-            
-                users[i].signUp(latestTransitionedToEpoch, GSTreeLeafIndex, _attesterId, _airdrppedAmount)
+                
+                expect(newLeafEvents.length).equal(i+1)
+                const proofIndex = newLeafEvents[i].args?._proofIndex
+                const signUpFilter = unirepContract.filters.UserSignUp(proofIndex)
+                const signUpEvents = await unirepContract.queryFilter(signUpFilter)
+                expect(signUpEvents.length).equal(1)
+                const commitment = BigInt(signUpEvents[0]?.args?._identityCommitment)
+                // const newLeaf = BigInt(newLeafEvents[0].args?._hashedLeaf)
+                if(commitments[i] == commitment) {
+                    const _attesterId = signUpEvents[0]?.args?._attesterId.toNumber()
+                    const _airdrppedAmount = signUpEvents[0]?.args?._airdropAmount.toNumber()
+                    users[i].signUp(latestTransitionedToEpoch, GSTreeLeafIndex, _attesterId, _airdrppedAmount)
+                    GSTreeLeafIndex ++
+                }                
             }
         })
     })
@@ -146,7 +148,7 @@ describe('Vote', function () {
             const proveGraffiti = 0
             const minPosRep = 0, graffitiPreImage = 0
             const epkNonce = 0
-            results = await users[0].genProveReputationProof(BigInt(attesterId), upvoteValue, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const results = await users[0].genProveReputationProof(BigInt(attesterId), upvoteValue, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -162,14 +164,10 @@ describe('Vote', function () {
                 results.graffitiPreImage,
                 formatProofForVerifierContract(results.proof)
             )
-            expect(isProofValid, "proof is not valid").to.be.true
-        })
-    })
 
-    describe('Upvote', () => {
-        const toEpochKey = genRandomSalt()
-        it('submit upvote should succeed', async() => {
-            const proofsRelated = [
+            reputationProofData = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -179,20 +177,41 @@ describe('Vote', function () {
                 results.graffitiPreImage,
                 formatProofForVerifierContract(results.proof)
             ]
+            expect(isProofValid, "proof is not valid").to.be.true
+        })
+    })
 
+    describe('Upvote', () => {
+        let toEpochKey = genRandomSalt()
+        const currentEpoch = 1
+        let epochKeyProofIndex
+        it('submit epoch key proof should succeed', async() => {
+            const proof: BigInt[] = []
+            for (let i = 0; i < 8; i++) {
+                proof.push(BigInt(0))
+            }
+            let epochKeyProof = [genRandomSalt(), currentEpoch, toEpochKey, proof]
+            const tx = await unirepContract.submitEpochKeyProof(epochKeyProof)
+            const receipt = await tx.wait()
+            expect(receipt.status).equal(1)
+            const proofNullifier = await unirepContract.hashEpochKeyProof(epochKeyProof)
+            epochKeyProofIndex = await unirepContract.getProofIndex(proofNullifier)
+        })
+
+        it('submit upvote should succeed', async() => {
             const tx = await unirepSocialContract.vote(
                 upvoteValue,
                 0,
                 toEpochKey,
-                results.reputationNullifiers,
-                proofsRelated,
+                epochKeyProofIndex,
+                reputationProofData,
                 { value: attestingFee.mul(2), gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
 
             for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
-                const nullifier = BigInt(results.reputationNullifiers[i])
+                const nullifier = BigInt(reputationProofData[0][i])
                 unirepState.addReputationNullifiers(nullifier)
             }
         })
@@ -202,11 +221,13 @@ describe('Vote', function () {
             const minPosRep = 0, graffitiPreImage = 0
             const epkNonce = 0
             const falseRepAmout = upvoteValue + 1
-            results = await users[0].genProveReputationProof(BigInt(attesterId), falseRepAmout, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const results = await users[0].genProveReputationProof(BigInt(attesterId), falseRepAmout, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
-            const proofsRelated = [
+            reputationProofData = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -221,52 +242,30 @@ describe('Vote', function () {
                 upvoteValue,
                 0,
                 toEpochKey,
-                results.reputationNullifiers,
-                proofsRelated,
+                epochKeyProofIndex,
+                reputationProofData,
                 { value: attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit different nullifiers amount from the vote value')
         })
 
         it('submit upvote with both upvote and downvote value should fail', async() => {
-            const proofsRelated = [
-                results.epochKey,
-                results.globalStatetreeRoot,
-                results.attesterId,
-                results.proveReputationAmount,
-                results.minRep,
-                results.proveGraffiti,
-                results.graffitiPreImage,
-                formatProofForVerifierContract(results.proof)
-            ]
-
             await expect(unirepSocialContract.vote(
                 upvoteValue,
                 downvoteValue,
                 toEpochKey,
-                results.reputationNullifiers,
-                proofsRelated,
+                epochKeyProofIndex,
+                reputationProofData,
                 { value: attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should only choose to upvote or to downvote')
         })
 
         it('submit vote with 0 value should fail', async() => {
-            const proofsRelated = [
-                results.epochKey,
-                results.globalStatetreeRoot,
-                results.attesterId,
-                results.proveReputationAmount,
-                results.minRep,
-                results.proveGraffiti,
-                results.graffitiPreImage,
-                formatProofForVerifierContract(results.proof)
-            ]
-
             await expect(unirepSocialContract.vote(
                 0,
                 0,
                 toEpochKey,
-                results.reputationNullifiers,
-                proofsRelated,
+                epochKeyProofIndex,
+                reputationProofData,
                 { value: attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should submit a positive vote value')
         })
@@ -274,23 +273,14 @@ describe('Vote', function () {
 
         it('submit upvote proof with wrong attester id should fail', async() => {
             const falseAttesterId = attesterId + 1
-            const proofsRelated = [
-                results.epochKey,
-                results.globalStatetreeRoot,
-                falseAttesterId,
-                results.proveReputationAmount,
-                results.minRep,
-                results.proveGraffiti,
-                results.graffitiPreImage,
-                formatProofForVerifierContract(results.proof)
-            ]
+            reputationProofData[4] = falseAttesterId
 
             await expect(unirepSocialContract.vote(
-                results.proveReputationAmount,
+                reputationProofData[5],
                 0,
                 toEpochKey,
-                results.reputationNullifiers,
-                proofsRelated,
+                epochKeyProofIndex,
+                reputationProofData,
                 { value: attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit a proof with different attester ID from Unirep Social')
         })

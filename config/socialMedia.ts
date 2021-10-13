@@ -1,10 +1,12 @@
-const DEFAULT_AIRDROPPED_KARMA = 20
+import { maxReputationBudget } from '@unirep/contracts'
 
-const DEFAULT_POST_KARMA = 10
+const DEFAULT_AIRDROPPED_KARMA = 30
 
-const DEFAULT_COMMENT_KARMA = 5
+const DEFAULT_POST_KARMA = 5
 
-const MAX_KARMA_BUDGET = 10
+const DEFAULT_COMMENT_KARMA = 3
+
+const MAX_KARMA_BUDGET = maxReputationBudget
 
 export {
     DEFAULT_AIRDROPPED_KARMA,

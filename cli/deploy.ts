@@ -2,7 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
-import { maxUsers, maxReputationBudget } from '@unirep/unirep'
+import { maxUsers, maxAttesters, maxReputationBudget } from '@unirep/unirep'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import { deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
 import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_TREE_DEPTHS_CONFIG } from './defaults'
@@ -143,6 +143,7 @@ const deploy = async (args: any) => {
 
     const UnirepSettings = {
         maxUsers: maxUsers,
+        maxAttesters: maxAttesters,
         numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
         maxReputationBudget: _maxReputationBudget,
         epochLength: _epochLength,

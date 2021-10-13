@@ -24,6 +24,10 @@ contract UnirepSocial {
     // The amount of karma airdropped to user when user signs up and executes user state transition
     uint256 immutable public airdroppedReputation;
 
+    // A mapping between user’s epoch key and if they request airdrop in the current epoch;
+    // One epoch key is allowed to get airdrop once an epoch
+    mapping(uint256 => bool) public isEpochKeyGotAirdrop;
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -35,7 +39,6 @@ contract UnirepSocial {
         uint256 indexed _postId,
         uint256 indexed _epochKey,
         string _hahsedContent,
-        uint256[] nullifiers,
         Unirep.ReputationProofRelated proofRelated
     );
 
@@ -45,7 +48,6 @@ contract UnirepSocial {
         uint256 indexed _epochKey,
         uint256 _commentId,
         string _hahsedContent,
-        uint256[] nullifiers,
         Unirep.ReputationProofRelated proofRelated
     );
 
@@ -55,7 +57,6 @@ contract UnirepSocial {
         uint256 indexed _toEpochKey,
         uint256 upvoteValue,
         uint256 downvoteValue,
-        uint256[] nullifiers,
         Unirep.ReputationProofRelated proofRelated
     );
 
@@ -94,30 +95,19 @@ contract UnirepSocial {
     function publishPost(
         uint256 postId, 
         string memory hashedContent, 
-        uint256[] memory _nullifiers, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
-
-        // Call Unirep contract to perform reputation spending
-        // unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofRelated, _proof, postReputation);
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.negRep = postReputation;
-
         require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
+        require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
-        unirep.submitReputationNullifiers(_nullifiers, unirep.currentEpoch(), _proofRelated.epochKey, _proofRelated.globalStateTree, _proofRelated.attesterId, _proofRelated.proveReputationAmount, _proofRelated.minRep, _proofRelated.proveGraffiti, _proofRelated.graffitiPreImage, _proofRelated.proof);
-
-        // Send negative attestataion
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, _proofRelated.epochKey);
+        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
             postId,
             _proofRelated.epochKey,
             hashedContent,
-            _nullifiers,
             _proofRelated
         );
     }
@@ -126,25 +116,13 @@ contract UnirepSocial {
         uint256 postId, 
         uint256 commentId, 
         string memory hashedContent, 
-        uint256[] memory _nullifiers, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
-
-        // Call Unirep contract to perform reputation spending        
-        // unirep.spendReputation{value: unirep.attestingFee()}(epochKey, _nullifiers, _proofRelated, _proof, commentReputation);
-        // send negative reputation to the sender
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.negRep = commentReputation;
-
         require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
+        require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
-         // Spend reputation
-        unirep.submitReputationNullifiers(_nullifiers, unirep.currentEpoch(), _proofRelated.epochKey, _proofRelated.globalStateTree, _proofRelated.attesterId, _proofRelated.proveReputationAmount, _proofRelated.minRep, _proofRelated.proveGraffiti, _proofRelated.graffitiPreImage, _proofRelated.proof);
-
-        // Send negative attestataion
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, _proofRelated.epochKey);
-
+        // Spend reputation
+        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -152,7 +130,6 @@ contract UnirepSocial {
             _proofRelated.epochKey,
             commentId,
             hashedContent,
-            _nullifiers,
             _proofRelated
         );
     }
@@ -161,7 +138,7 @@ contract UnirepSocial {
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 toEpochKey,
-        uint256[] memory _nullifiers,
+        uint256 toEpochKeyProofIndex,
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
         uint256 voteValue = upvoteValue + downvoteValue;
@@ -169,25 +146,17 @@ contract UnirepSocial {
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
         require(_proofRelated.proveReputationAmount == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-
-        // Spend attester's reputation
-        // Call Unirep contract to perform reputation spending
-        // unirep.submitAttestationViaRelayer{value: unirep.attestingFee()}(msg.sender, signature, attestation, fromEpochKey, toEpochKey, _nullifiers, _proofRelated, _proof);
-
-        // Spend reputation
-        unirep.submitReputationNullifiers(_nullifiers, unirep.currentEpoch(), _proofRelated.epochKey, _proofRelated.globalStateTree, _proofRelated.attesterId, _proofRelated.proveReputationAmount, _proofRelated.minRep, _proofRelated.proveGraffiti, _proofRelated.graffitiPreImage, _proofRelated.proof);
+        require(toEpochKey != _proofRelated.epochKey, "Unirep Social: epoch key sender and receiver cannot be the same");
 
         // Submit attestation to receiver's epoch key
         Unirep.Attestation memory attestation;
         attestation.attesterId = attesterId;
         attestation.posRep = upvoteValue;
         attestation.negRep = downvoteValue;
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, toEpochKey);
+        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, toEpochKey, toEpochKeyProofIndex);
 
-        // send negative reputation to the sender
-        attestation.posRep = 0;
-        attestation.negRep = voteValue;
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, _proofRelated.epochKey);
+        // Spend reputation
+        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
@@ -195,19 +164,21 @@ contract UnirepSocial {
             toEpochKey, 
             upvoteValue,
             downvoteValue, 
-            _nullifiers,
             _proofRelated
         );
     }
 
     function airdrop(
-        uint256 epochKey
+        Unirep.SignUpProofRelated memory _signUpProofData
     ) external payable {
-        // TODO: submit a user sign up proof
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.posRep = airdroppedReputation;
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, epochKey);
+        require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
+        require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        
+        // Submit airdrop
+        unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
+
+        // Set the epoch key has been airdropped
+        isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
     }
 
     function startUserStateTransition(
@@ -228,16 +199,8 @@ contract UnirepSocial {
         unirep.processAttestations(_outputBlindedUserState, _outputBlindedHashChain, _inputBlindedUserState, _proof);
     }
 
-    function updateUserStateRoot(
-        uint256 _newGlobalStateTreeLeaf,
-        uint256[] memory _epkNullifiers,
-        uint256[] memory _blindedUserStates,
-        uint256[] memory _blindedHashChains,
-        uint256 _transitionFromEpoch,
-        uint256 _fromGlobalStateTree,
-        uint256 _fromEpochTree,
-        uint256[8] memory _proof) external {
-        unirep.updateUserStateRoot(_newGlobalStateTreeLeaf, _epkNullifiers, _blindedUserStates, _blindedHashChains, _transitionFromEpoch, _fromGlobalStateTree, _fromEpochTree, _proof);
+    function updateUserStateRoot(Unirep.UserTransitionedRelated memory userTransitionedData, uint256[] memory proofIndexes) external {
+        unirep.updateUserStateRoot(userTransitionedData, proofIndexes);
     }
 
 
@@ -291,11 +254,12 @@ contract UnirepSocial {
         return unirep.verifyReputation(_repNullifiers, _epoch, _epochKey, _globalStateTree, _attesterId, _proveReputationAmount, _minRep, _proveGraffiti, _graffitiPreImage, _proof);
     }
 
-    function hashedBlankStateLeaf() public view returns (uint256) {
-        return unirep.hashedBlankStateLeaf();
-    }
-
-    function getEpochTreeLeaves(uint256 epoch) external view returns (uint256[] memory epochKeyList, uint256[] memory epochKeyHashChainList) {
-        return unirep.getEpochTreeLeaves(epoch);
+    function verifyUserSignUp(
+        uint256 _epoch,
+        uint256 _epochKey,
+        uint256 _globalStateTree,
+        uint256 _attesterId,
+        uint256[8] calldata _proof) external view returns (bool) {
+        return unirep.verifyUserSignUp(_epoch, _epochKey, _globalStateTree, _attesterId, _proof);
     }
 }

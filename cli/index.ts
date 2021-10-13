@@ -38,6 +38,12 @@ import {
 } from './verifyEpochKeyProof'
 
 import {
+    genReputationProof,
+    configureSubparser as configureSubparserForGenReputationProof,
+} from './genReputationProof'
+
+
+import {
     verifyReputationProof,
     configureSubparser as configureSubparserForVerifyReputationProof,
 } from './verifyReputationProof'
@@ -73,14 +79,19 @@ import {
 } from './userStateTransition'
 
 import {
-    getAirdrop,
-    configureSubparser as configureSubparserForGetAirdrop,
-} from './getAirdrop'
+    genAirdropProof,
+    configureSubparser as configureSubparserForGenAirdropProof,
+} from './genAirdropProof'
+
+import {
+    giveAirdrop,
+    configureSubparser as configureSubparserForGiveAirdrop,
+} from './giveAirdrop'
 
 
 const main = async () => {
     const parser = new argparse.ArgumentParser({ 
-        description: 'Unirep',
+        description: 'Unirep Social',
     })
 
     const subparsers = parser.add_subparsers({
@@ -109,6 +120,9 @@ const main = async () => {
     // Subcommand: verifyEpochKeyProof
     configureSubparserForVerifyEpochKeyProof(subparsers)
 
+    // Subcommand: genReputationProof
+    configureSubparserForGenReputationProof(subparsers)
+
     // Subcommand: verifyReputationProof
     configureSubparserForVerifyReputationProof(subparsers)
 
@@ -130,8 +144,11 @@ const main = async () => {
     // Subcommand: userStateTransition
     configureSubparserForGenUserStateTransitionProof(subparsers)
 
-    // Subcommand: genReputationProof
-    configureSubparserForGetAirdrop(subparsers)
+    // Subcommand: genAirdropProof
+    configureSubparserForGenAirdropProof(subparsers)
+
+    // Subcommand: giveAirdrop
+    configureSubparserForGiveAirdrop(subparsers)
 
     const args = parser.parse_args()
 
@@ -150,6 +167,8 @@ const main = async () => {
         await genEpochKeyAndProof(args)
     } else if (args.subcommand === 'verifyEpochKeyProof') {
         await verifyEpochKeyProof(args)
+    } else if (args.subcommand === 'genReputationProof') {
+        await genReputationProof(args)
     } else if (args.subcommand === 'verifyReputationProof') {
         await verifyReputationProof(args)
     } else if (args.subcommand === 'publishPost') {
@@ -164,8 +183,10 @@ const main = async () => {
         await epochTransition(args)
     } else if (args.subcommand === 'userStateTransition') {
         await userStateTransition(args)
-    } else if (args.subcommand === 'getAirdrop') {
-        await getAirdrop(args)
+    } else if (args.subcommand === 'genAirdropProof') {
+        await genAirdropProof(args)
+    } else if (args.subcommand === 'giveAirdrop') {
+        await giveAirdrop(args)
     }
 }
 

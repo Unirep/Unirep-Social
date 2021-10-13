@@ -83,7 +83,7 @@ describe('Post', function () {
     describe('User sign-ups', () => {
 
         it('sign up should succeed', async () => {
-            let GSTreeLeafIndex: number = -1
+            let GSTreeLeafIndex: number = 0
             const currentEpoch = await unirepContract.currentEpoch()
             unirepState = new UnirepState(
                 circuitGlobalStateTreeDepth,
@@ -124,18 +124,20 @@ describe('Post', function () {
                 const latestTransitionedToEpoch = currentEpoch.toNumber()
                 const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
-                let _attesterId, _airdrppedAmount
-
-                for (let j = 0; j < newLeafEvents.length; j++) {
-                    if(BigInt(newLeafEvents[j]?.args?._hashedLeaf) == hashedStateLeaf){
-                        GSTreeLeafIndex = newLeafEvents[j]?.args?._leafIndex.toNumber()
-                        _attesterId = newLeafEvents[j]?.args?._attesterId.toNumber()
-                        _airdrppedAmount = newLeafEvents[j]?.args?._airdropAmount.toNumber()
-                    }
-                }
-                expect(GSTreeLeafIndex).to.equal(i)
-            
-                users[i].signUp(latestTransitionedToEpoch, GSTreeLeafIndex, _attesterId, _airdrppedAmount)
+                
+                expect(newLeafEvents.length).equal(i+1)
+                const proofIndex = newLeafEvents[i].args?._proofIndex
+                const signUpFilter = unirepContract.filters.UserSignUp(proofIndex)
+                const signUpEvents = await unirepContract.queryFilter(signUpFilter)
+                expect(signUpEvents.length).equal(1)
+                const commitment = BigInt(signUpEvents[0]?.args?._identityCommitment)
+                // const newLeaf = BigInt(newLeafEvents[0].args?._hashedLeaf)
+                if(commitments[i] == commitment) {
+                    const _attesterId = signUpEvents[0]?.args?._attesterId.toNumber()
+                    const _airdrppedAmount = signUpEvents[0]?.args?._airdropAmount.toNumber()
+                    users[i].signUp(latestTransitionedToEpoch, GSTreeLeafIndex, _attesterId, _airdrppedAmount)
+                    GSTreeLeafIndex ++
+                }                
             }
         })
     })
@@ -169,6 +171,8 @@ describe('Post', function () {
     describe('Publishing a post', () => {
         it('submit post should succeed', async() => {
             const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -182,7 +186,6 @@ describe('Post', function () {
             const tx = await unirepSocialContract.publishPost(
                 postId, 
                 text, 
-                results.reputationNullifiers,
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
             )
@@ -205,6 +208,8 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -213,12 +218,11 @@ describe('Post', function () {
                 results.proveGraffiti,
                 results.graffitiPreImage,
                 formatProofForVerifierContract(results.proof)
-            ]
+            ] 
 
             await expect(unirepSocialContract.publishPost(
                 postId, 
-                text, 
-                results.reputationNullifiers,
+                text,
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit different nullifiers amount from the required amount for post')
@@ -251,6 +255,8 @@ describe('Post', function () {
 
         it('submit comment should succeed', async() => {
             const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -265,7 +271,6 @@ describe('Post', function () {
                 postId, 
                 commentId,
                 text, 
-                results.reputationNullifiers,
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
             )
@@ -288,6 +293,8 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
                 results.epochKey,
                 results.globalStatetreeRoot,
                 results.attesterId,
@@ -302,7 +309,6 @@ describe('Post', function () {
                 postId, 
                 commentId,
                 text, 
-                results.reputationNullifiers,
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit different nullifiers amount from the required amount for comment')

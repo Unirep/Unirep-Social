@@ -45,7 +45,9 @@ describe('test all CLI subcommands', function() {
     const posRep = 3, negRep = 8, graffitiPreimage = 0, graffiti = hashOne(BigInt(graffitiPreimage))
     const minPosRep = 0, maxNegRep = 10, minRepDiff = 15
     let userRepProof, repPublicSignals
+    let airdropProof, airdropPublicSignals
     let transactionHash
+    let proofIdx
 
     before(async() => {
         deployerPrivKey = ethers.utils.solidityKeccak256(['uint'], [0])
@@ -65,9 +67,9 @@ describe('test all CLI subcommands', function() {
     describe('deploy CLI subcommand', () => {
         it('should deploy a Unirep contract', async () => {
             const command = `npx ts-node cli/index.ts deploy` +
-                ` -d ${deployerPrivKey} ` + 
-                ` -l ${epochLength} ` +
-                ` -f ${attestingFee.toString()} `
+                ` -d ${deployerPrivKey} `
+                // ` -l ${epochLength} ` +
+                // ` -f ${attestingFee.toString()} `
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -93,8 +95,8 @@ describe('test all CLI subcommands', function() {
                 startBlock,
             )
 
-            expect(unirepState.epochLength).equal(epochLength)
-            expect(unirepState.attestingFee).equal(attestingFee)
+            // expect(unirepState.epochLength).equal(epochLength)
+            // expect(unirepState.attestingFee).equal(attestingFee)
 
             const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)
             expect(unirepSocialAttesterId.toNumber()).equal(1)
@@ -176,21 +178,6 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-    // describe('attesterSignup CLI subcommand', () => {
-    //     it('should sign attester up', async () => {
-    //         const command = `npx ts-node cli/index.ts attesterSignup` +
-    //             ` -x ${unirepSocialContract.address} ` +
-    //             ` -d ${attesterPrivKey} `
-
-            // console.log(command)
-            // const output = exec(command).stdout.trim()
-            // console.log(output)
-
-    //         const signUpRegMatch = output.match(/Attester sign up with attester id: 2/)
-    //         expect(signUpRegMatch).not.equal(null)
-    //     })
-    // })
-
     describe('genEpochKeyAndProof CLI subcommand', () => {
         it('should generate epoch key proof', async () => {
             const command = `npx ts-node cli/index.ts genEpochKeyAndProof` +
@@ -216,7 +203,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts verifyEpochKeyProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -pf ${epkProof} ` +
-                ` -s ${epkPublicSignals}`
+                ` -p ${epkPublicSignals}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -228,14 +215,13 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-    describe('publishPost CLI subcommand', () => {
-        it('should publish a post', async () => {
-            const command = `npx ts-node cli/index.ts publishPost` +
+    describe('genReputation CLI subcommand', () => {
+        it('should generate a reputation proof for a post', async () => {
+            const command = `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -tx ${text}` +
-                ` -d ${deployerPrivKey}` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce}` + 
+                ` -act post ` +
                 dbOption
 
             console.log(command)
@@ -245,17 +231,38 @@ describe('test all CLI subcommands', function() {
             const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
             epk = epkRegMatch[1]
 
-            const idRegMatch = output.match(/Post ID: ([a-fA-F0-9]+)/)
-            postID = idRegMatch[1]
             const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
             const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
             repPublicSignals = publicSignalRegMatch[1]
-            const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}$/)
+        })
+    })
+
+
+    describe('publishPost CLI subcommand', () => {
+        it('should publish a post', async () => {
+            const command = `npx ts-node cli/index.ts publishPost` +
+                ` -x ${unirepSocialContract.address} ` +
+                ` -tx ${text}` +
+                ` -d ${deployerPrivKey}` +
+                ` -p ${repPublicSignals}` +
+                ` -pf ${userRepProof}` +
+                dbOption
+
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
+
+            const idRegMatch = output.match(/Post ID: ([a-fA-F0-9]+)/)
+            postID = idRegMatch[1]
+            const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(postRegMatch).not.equal(null)
             transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
+
+            const proofIndexRegMatch = output.match(/Proof index: ([0-9]+)/)
+            proofIdx = proofIndexRegMatch[1]
         })
     })
 
@@ -264,7 +271,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -pf ${userRepProof} ` + 
-                ` -s ${repPublicSignals}`
+                ` -p ${repPublicSignals}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -289,6 +296,32 @@ describe('test all CLI subcommands', function() {
         })
     })
 
+    describe('genReputation CLI subcommand', () => {
+        it('should generate a reputation proof for a comment', async () => {
+            const command = `npx ts-node cli/index.ts genReputationProof` +
+                ` -x ${unirepSocialContract.address} ` +
+                ` -id ${userIdentity1}` +
+                ` -n ${epochKeyNonce}` + 
+                ` -act comment ` +
+                ` -mr ${minRepDiff}` +
+                dbOption
+
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
+
+            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            epk = epkRegMatch[1]
+
+            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
+            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+            expect(userRepProofRegMatch).not.equal(null)
+            userRepProof = userRepProofRegMatch[1]
+            expect(publicSignalRegMatch).not.equal(null)
+            repPublicSignals = publicSignalRegMatch[1]
+        })
+    })
+
     describe('leaveComment CLI subcommand', () => {
         it('should leave a comment', async () => {
             const command = `npx ts-node cli/index.ts leaveComment` +
@@ -296,9 +329,8 @@ describe('test all CLI subcommands', function() {
                 ` -pid ${postID} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
-                ` -id ${userIdentity1}` +
-                ` -n ${epochKeyNonce2}` +
-                ` -mr ${minRepDiff}` +
+                ` -p ${repPublicSignals}` +
+                ` -pf ${userRepProof}` +
                 dbOption
 
             console.log(command)
@@ -310,12 +342,32 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-    describe('getAirdrop CLI subcommand', () => {
+    describe('genAirdropProof CLI subcommand', () => {
         it('should submit an airdrop query', async () => {
-            const command = `npx ts-node cli/index.ts getAirdrop` +
+            const command = `npx ts-node cli/index.ts genAirdropProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -d ${deployerPrivKey} ` +
-                ` -id ${userIdentity1}` 
+                ` -id ${userIdentity1}`
+
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
+
+            const airdropProofRegMatch = output.match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/)
+            const publicSignalRegMatch = output.match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/)
+            expect(airdropProofRegMatch).not.equal(null)
+            airdropProof = airdropProofRegMatch[1]
+            expect(publicSignalRegMatch).not.equal(null)
+            airdropPublicSignals = publicSignalRegMatch[1]
+        })
+    })
+
+    describe('giveAirdrop CLI subcommand', () => {
+        it('should submit an airdrop query', async () => {
+            const command = `npx ts-node cli/index.ts giveAirdrop` +
+                ` -x ${unirepSocialContract.address} ` +
+                ` -p ${airdropPublicSignals} ` +
+                ` -pf ${airdropProof} ` +
+                ` -d ${deployerPrivKey} `
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -323,6 +375,32 @@ describe('test all CLI subcommands', function() {
 
             const commentRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(commentRegMatch).not.equal(null)
+        })
+    })
+
+    describe('genReputation CLI subcommand', () => {
+        it('should generate a reputation proof for a vote', async () => {
+            const command = `npx ts-node cli/index.ts genReputationProof` +
+                ` -x ${unirepSocialContract.address} ` +
+                ` -id ${userIdentity2}` +
+                ` -n ${epochKeyNonce}` + 
+                ` -act vote ` +
+                ` -v ${posRep}` +
+                dbOption
+
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
+
+            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            expect(epkRegMatch).not.equal(null)
+
+            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
+            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+            expect(userRepProofRegMatch).not.equal(null)
+            userRepProof = userRepProofRegMatch[1]
+            expect(publicSignalRegMatch).not.equal(null)
+            repPublicSignals = publicSignalRegMatch[1]
         })
     })
 
@@ -333,8 +411,9 @@ describe('test all CLI subcommands', function() {
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${attesterPrivKey} ` +
                 ` -epk ${epk} ` +
-                ` -id ${userIdentity2}` +
-                ` -n ${epochKeyNonce}` +
+                ` -i ${proofIdx} ` +
+                ` -p ${repPublicSignals}` +
+                ` -pf ${userRepProof}` +
                 ` -uv ${posRep} ` +
                 dbOption
 
@@ -342,15 +421,7 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
-            epk = epkRegMatch[1]
-            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
-            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
-            expect(userRepProofRegMatch).not.equal(null)
-            userRepProof = userRepProofRegMatch[1]
-            expect(publicSignalRegMatch).not.equal(null)
-            repPublicSignals = publicSignalRegMatch[1]
-            const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}$/)
+            const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(txRegMatch).not.equal(null)
             transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
@@ -361,7 +432,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -pf ${userRepProof} ` + 
-                ` -s ${repPublicSignals}`
+                ` -p ${repPublicSignals}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -419,46 +490,4 @@ describe('test all CLI subcommands', function() {
             expect(userTransitionRegMatch).not.equal(null)
         })
     })
-
-    // describe('genReputationProofFromAttester CLI subcommand', () => {
-    //     it('should generate user reputation proof from a certain attester id', async () => {
-    //         const command = `npx ts-node cli/index.ts genReputationProofFromAttester` +
-    //             ` -x ${unirepSocialContract.address} ` +
-    //             ` -id ${userIdentity1} ` +
-    //             ` -a ${attesterId} ` +
-    //             // ` -mp ${minPosRep} ` +
-    //             ` -mn ${maxNegRep} ` +
-    //             // ` -md ${minRepDiff}` +
-    //             ` -gp ${graffitiPreimage} ` +
-    //             dbOption
-
-    //         const output = exec(command).stdout.trim()
-
-    //         console.log(command)
-    //         console.log(output)
-
-    //         const userRepProofRegMatch = output.match(/(Unirep.reputationProofFromAttester.[a-zA-Z0-9\-\_]+)$/)
-    //         userRepProof = userRepProofRegMatch[1]
-    //     })
-    // })
-
-    // describe('verifyReputationProofFromAttester CLI subcommand', () => {
-    //     it('should verify user reputation proof from a certain attester id', async () => {
-    //         const command = `npx ts-node cli/index.ts verifyReputationProofFromAttester` +
-    //             ` -x ${unirepSocialContract.address} ` +
-    //             ` -a ${attesterId} ` +
-    //             // ` -mp ${minPosRep} ` +
-    //             ` -mn ${maxNegRep} ` +
-    //             // ` -md ${minRepDiff}` +
-    //             ` -gp ${graffitiPreimage} ` +
-    //             ` -pf ${userRepProof} `
-    //         const output = exec(command).stdout.trim()
-
-    //         console.log(command)
-    //         console.log(output)
-
-    //         const verifyRegMatch = output.match(/Verify reputation proof from attester 2 .+, succeed/)
-    //         expect(verifyRegMatch).not.equal(null)
-    //     })
-    // })
 })
