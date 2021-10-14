@@ -6,7 +6,7 @@ import { deployUnirep } from '@unirep/contracts'
 import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget } from '@unirep/unirep'
 
 import { genEpochKey, getTreeDepthsForTesting } from '../utils'
-import { DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
 describe('EventSequencing', function (){
@@ -86,7 +86,7 @@ describe('EventSequencing', function (){
             epochKey,
             genRandomSalt(),
             1,
-            DEFAULT_POST_KARMA,
+            defaultPostReputation,
             0,
             0,
             0,
@@ -127,7 +127,7 @@ describe('EventSequencing', function (){
             epochKey,
             genRandomSalt(),
             1,
-            DEFAULT_COMMENT_KARMA,
+            defaultCommentReputation,
             0,
             0,
             0,

@@ -1,14 +1,15 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
+import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { DEFAULT_COMMENT_KARMA } from '../config/socialMedia'
+import { defaultCommentReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
+import Comment, { IComment } from '../database/models/comment';
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -120,8 +121,8 @@ const leaveComment = async (args: any) => {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    if(repNullifiersAmount != DEFAULT_COMMENT_KARMA) {
-        console.error(`Error: wrong comment amount, expect ${DEFAULT_COMMENT_KARMA}`)
+    if(repNullifiersAmount != defaultCommentReputation) {
+        console.error(`Error: wrong comment amount, expect ${defaultCommentReputation}`)
         return
     }
 
@@ -130,8 +131,21 @@ const leaveComment = async (args: any) => {
 
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
+
+    // construct a comment
+    const newComment: IComment = new Comment({
+        content: args.text,
+        // TODO: hashedContent
+        epochKey: epochKey,
+        epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
+        proveMinRep: minRep != null ? true : false,
+        minRep: Number(minRep),
+        status: 0
+    });
+    const commentId = newComment._id.toString()
+
     // Submit tx
-    const txResult = await unirepSocialContract.leaveComment(publicSignals, proof, args.post_id, args.text)
+    const txResult = await unirepSocialContract.leaveComment(publicSignals, proof, args.post_id, commentId, args.text)
 
     // TODO: Unirep Social should verify if the reputation proof submitted before
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)

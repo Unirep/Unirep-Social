@@ -67,9 +67,9 @@ describe('test all CLI subcommands', function() {
     describe('deploy CLI subcommand', () => {
         it('should deploy a Unirep contract', async () => {
             const command = `npx ts-node cli/index.ts deploy` +
-                ` -d ${deployerPrivKey} `
-                // ` -l ${epochLength} ` +
-                // ` -f ${attestingFee.toString()} `
+                ` -d ${deployerPrivKey} ` +
+                ` -l ${epochLength} ` +
+                ` -f ${attestingFee.toString()} `
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -95,8 +95,8 @@ describe('test all CLI subcommands', function() {
                 startBlock,
             )
 
-            // expect(unirepState.epochLength).equal(epochLength)
-            // expect(unirepState.attestingFee).equal(attestingFee)
+            expect(unirepState.epochLength).equal(epochLength)
+            expect(unirepState.attestingFee).equal(attestingFee)
 
             const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)
             expect(unirepSocialAttesterId.toNumber()).equal(1)

@@ -8,7 +8,7 @@ import { attestingFee, circuitUserStateTreeDepth, epochLength, maxReputationBudg
 
 import { genNewSMT } from '../utils'
 import { deployUnirepSocial } from '../../core/utils'
-import { DEFAULT_AIRDROPPED_KARMA } from '../../config/socialMedia'
+import { defaultAirdroppedReputation } from '../../config/socialMedia'
 
 describe('Airdrop', function () {
     this.timeout(100000)
@@ -67,7 +67,7 @@ describe('Airdrop', function () {
         attesterId = await unirepContract.attesters(unirepSocialContract.address)
         expect(attesterId).not.equal(0)
         const airdropAmount = await unirepContract.airdropAmount(unirepSocialContract.address)
-        expect(airdropAmount).equal(DEFAULT_AIRDROPPED_KARMA)
+        expect(airdropAmount).equal(defaultAirdroppedReputation)
     })
 
     it('user signs up through unirep social should get airdrop pos rep', async() => {
@@ -85,7 +85,7 @@ describe('Airdrop', function () {
 
         // expected airdropped user state
         const defaultLeafHash = hash5([])
-        const leafValue = hash5([BigInt(DEFAULT_AIRDROPPED_KARMA), BigInt(0), BigInt(0), BigInt(1)])
+        const leafValue = hash5([BigInt(defaultAirdroppedReputation), BigInt(0), BigInt(0), BigInt(1)])
         const tree = await genNewSMT(circuitUserStateTreeDepth, defaultLeafHash)
         await tree.update(BigInt(attesterId), leafValue)
         const SMTRoot = await tree.getRootHash()
@@ -104,7 +104,7 @@ describe('Airdrop', function () {
         )
         const latestTransitionedToEpoch = currentEpoch.toNumber()
         const GSTreeLeafIndex = 0
-        userState.signUp(latestTransitionedToEpoch, GSTreeLeafIndex, attesterId, DEFAULT_AIRDROPPED_KARMA)
+        userState.signUp(latestTransitionedToEpoch, GSTreeLeafIndex, attesterId, defaultAirdroppedReputation)
         const proveGraffiti = 0
         const minPosRep = 19, graffitiPreImage = 0
         const results = await userState.genProveReputationProof(BigInt(attesterId), repNullifiersAmount, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
@@ -132,7 +132,7 @@ describe('Airdrop', function () {
         expect(receipt.status).equal(1)
         const attestationToEpochKey = new Attestation(
             BigInt(attesterId),
-            BigInt(DEFAULT_AIRDROPPED_KARMA),
+            BigInt(defaultAirdroppedReputation),
             BigInt(0),
             BigInt(0),
             false,

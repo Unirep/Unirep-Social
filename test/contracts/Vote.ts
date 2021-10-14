@@ -7,7 +7,7 @@ import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
 
 import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
 
@@ -57,18 +57,18 @@ describe('Vote', function () {
         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
         const postReputation_ = await unirepSocialContract.postReputation()
-        expect(postReputation_).equal(DEFAULT_POST_KARMA)
+        expect(postReputation_).equal(defaultPostReputation)
         const commentReputation_ = await unirepSocialContract.commentReputation()
-        expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+        expect(commentReputation_).equal(defaultCommentReputation)
         const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
-        expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+        expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
         const unirepAddress_ = await unirepSocialContract.unirep()
         expect(unirepAddress_).equal(unirepContract.address)
 
         attesterId = await unirepContract.attesters(unirepSocialContract.address)
         expect(attesterId).not.equal(0)
         const airdropAmount = await unirepContract.airdropAmount(unirepSocialContract.address)
-        expect(airdropAmount).equal(DEFAULT_AIRDROPPED_KARMA)
+        expect(airdropAmount).equal(defaultAirdroppedReputation)
     })
 
     it('should have the correct default value', async () => {
@@ -106,7 +106,7 @@ describe('Vote', function () {
 
                 // expected airdropped user state
                 const defaultLeafHash = hash5([])
-                const leafValue = hash5([BigInt(DEFAULT_AIRDROPPED_KARMA), BigInt(0), BigInt(0), BigInt(1)])
+                const leafValue = hash5([BigInt(defaultAirdroppedReputation), BigInt(0), BigInt(0), BigInt(1)])
                 const tree = await genNewSMT(circuitUserStateTreeDepth, defaultLeafHash)
                 await tree.update(BigInt(attesterId), leafValue)
                 const SMTRoot = await tree.getRootHash()
@@ -210,7 +210,7 @@ describe('Vote', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
 
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            for (let i = 0; i < maxReputationBudget; i++) {
                 const nullifier = BigInt(reputationProofData[0][i])
                 unirepState.addReputationNullifiers(nullifier)
             }

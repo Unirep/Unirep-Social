@@ -2,9 +2,10 @@
     "name": "unirep-social",
     "version": "0.0.2",
     "description": "",
-    "main": "index.ts",
+    "main": "build/core/index.js",
     "scripts": {
-        "build": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts",
+        "build": "tsc",
+        "compile": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn run contractUnitTests && yarn run circuitUnitTests && yarn run databaseTests && yarn run integrationTest",
         "contractUnitTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/contracts -name '*.ts')",

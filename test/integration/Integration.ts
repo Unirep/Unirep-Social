@@ -7,7 +7,7 @@ import { deployUnirep } from '@unirep/contracts'
 import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IUserStateLeaf, computeEmptyUserStateRoot, IAttestation, genUserStateFromContract, genUnirepStateFromContract } from '@unirep/unirep'
 
 import { genEpochKey, getTreeDepthsForTesting } from '../utils'
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 describe('Integration', function () {
     this.timeout(500000)
@@ -346,10 +346,10 @@ describe('Integration', function () {
         })
 
         it('first user publish a post and generate epoch key', async () => {
-            const repNullifiersAmount = DEFAULT_POST_KARMA
+            const repNullifiersAmount = defaultPostReputation
             const epkNonce = 0
             const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
-            const minRep = BigInt(DEFAULT_AIRDROPPED_KARMA)
+            const minRep = BigInt(defaultAirdroppedReputation)
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
             users[firstUser] = await genUserStateFromContract(
@@ -401,7 +401,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            for (let i = 0; i < maxReputationBudget; i++) {
                 unirepState.addReputationNullifiers(results.reputationNullifiers[i])
             }
 
@@ -428,7 +428,7 @@ describe('Integration', function () {
 
             // first user's epoch key
             const firstUserEpochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
-            const minRep = BigInt(DEFAULT_AIRDROPPED_KARMA)
+            const minRep = BigInt(defaultAirdroppedReputation)
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
 
@@ -463,7 +463,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
 
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            for (let i = 0; i < maxReputationBudget; i++) {
                 unirepState.addReputationNullifiers(results.reputationNullifiers[i])
             }
 
@@ -485,10 +485,10 @@ describe('Integration', function () {
         })
 
         it('first user leave a comment and generate epoch key', async () => {
-            const repNullifiersAmount = DEFAULT_COMMENT_KARMA
+            const repNullifiersAmount = defaultCommentReputation
             const epkNonce = 1
             const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
-            const minRep = BigInt(DEFAULT_AIRDROPPED_KARMA)
+            const minRep = BigInt(defaultAirdroppedReputation)
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
             const results = await users[firstUser].genProveReputationProof(BigInt(unirepSocialId), repNullifiersAmount, epkNonce, minRep, proveGraffiti, graffitiPreImage)
@@ -534,7 +534,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
-            for (let i = 0; i < MAX_KARMA_BUDGET; i++) {
+            for (let i = 0; i < maxReputationBudget; i++) {
                 unirepState.addReputationNullifiers(results.reputationNullifiers[i])
             }
 

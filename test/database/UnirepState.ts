@@ -11,7 +11,7 @@
 // const { expect } = chai
 
 // import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-// import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+// import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 // import { UnirepState } from '../../database/UnirepState'
 // import { connectDB, genGSTreeFromDB, initDB, saveSettingsFromContract, updateDBFromEpochEndedEvent, updateDBFromNewGSTLeafInsertedEvent } from '../../database/utils'
 // import { dbTestUri, dbUri } from '../../config/database'

@@ -12,7 +12,7 @@
 // const { expect } = chai
 
 // import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-// import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+// import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 // import { dbTestUri } from '../../config/database'
 // import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../../database/models/GSTLeaf'
 // import { add0x } from '../../crypto/SMT'
@@ -87,11 +87,11 @@
 //         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
 //         const postReputation_ = await unirepSocialContract.postReputation()
-//         expect(postReputation_).equal(DEFAULT_POST_KARMA)
+//         expect(postReputation_).equal(defaultPostReputation)
 //         const commentReputation_ = await unirepSocialContract.commentReputation()
-//         expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+//         expect(commentReputation_).equal(defaultCommentReputation)
 //         const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
-//         expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+//         expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
 //         const unirepAddress_ = await unirepSocialContract.unirep()
 //         expect(unirepAddress_).equal(unirepContract.address)
 //     })
@@ -133,7 +133,7 @@
 //                     [
 //                         commitment,
 //                         emptyUserStateRoot,
-//                         BigInt(DEFAULT_AIRDROPPED_KARMA),
+//                         BigInt(defaultAirdroppedReputation),
 //                         BigInt(0)
 //                     ]
 //                 )
@@ -236,7 +236,7 @@
 //                     [
 //                         commitment,
 //                         emptyUserStateRoot,
-//                         BigInt(DEFAULT_AIRDROPPED_KARMA),
+//                         BigInt(defaultAirdroppedReputation),
 //                         BigInt(0)
 //                     ]
 //                 )

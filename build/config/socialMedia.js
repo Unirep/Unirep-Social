@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.maxReputationBudget = exports.defaultCommentReputation = exports.defaultPostReputation = exports.defaultAirdroppedReputation = void 0;
+const contracts_1 = require("@unirep/contracts");
+Object.defineProperty(exports, "maxReputationBudget", { enumerable: true, get: function () { return contracts_1.maxReputationBudget; } });
+const defaultAirdroppedReputation = 30;
+exports.defaultAirdroppedReputation = defaultAirdroppedReputation;
+const defaultPostReputation = 5;
+exports.defaultPostReputation = defaultPostReputation;
+const defaultCommentReputation = 3;
+exports.defaultCommentReputation = defaultCommentReputation;

@@ -7,7 +7,7 @@ import { genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
+import { defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -127,9 +127,9 @@ const genReputationProof = async (args: any) => {
     // gen reputation proof 
     let proveReputationAmount
     if(args.action == 'post') {
-        proveReputationAmount = DEFAULT_POST_KARMA
+        proveReputationAmount = defaultPostReputation
     } else if (args.action == 'comment') {
-        proveReputationAmount = DEFAULT_COMMENT_KARMA
+        proveReputationAmount = defaultCommentReputation
     } else if (args.action == 'vote') {
         if(args.vote_value == undefined) {
             console.error('Error: should provide a vote value')

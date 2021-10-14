@@ -2,7 +2,7 @@ import assert from 'assert'
 import { UnirepState } from './UnirepState'
 import UserSignUp, { IUserSignUp } from './models/userSignUp'
 import Attestations, { IAttestation } from './models/attestation'
-import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
+import { defaultAirdroppedReputation, maxReputationBudget } from '../config/socialMedia'
 import { genIdentityCommitment } from 'libsemaphore';
 import { hash5, stringifyBigInts } from 'maci-crypto';
 import { computeEmptyUserStateRoot, defaultUserStateLeaf, genEpochKey, genEpochKeyNullifier, genKarmaNullifier, genNewSMT } from '../core/utils';
@@ -36,7 +36,7 @@ class UserState {
         const userDefaultGSTLeaf = hash5([
             genIdentityCommitment(this.id),
             emptyUserStateRoot,
-            BigInt(DEFAULT_AIRDROPPED_KARMA),
+            BigInt(defaultAirdroppedReputation),
             BigInt(0),
             BigInt(0)
         ]).toString(16)
@@ -58,7 +58,7 @@ class UserState {
         // start user state
         let transitionedFromEpoch = userHasSignedUp?.epoch ? userHasSignedUp?.epoch : 0
         let startEpoch = transitionedFromEpoch
-        let transitionedPosRep = DEFAULT_AIRDROPPED_KARMA
+        let transitionedPosRep = defaultAirdroppedReputation
         let transitionedNegRep = 0
         let userStates: {[key: number]: IUserTransitionState} = {}
         let GSTLeaf = userHasSignedUp?.hashedLeaf
@@ -102,7 +102,7 @@ class UserState {
                 transitionedPosRep += Number(attestation.posRep)
                 transitionedNegRep += Number(attestation.negRep)
             }
-            transitionedPosRep += DEFAULT_AIRDROPPED_KARMA
+            transitionedPosRep += defaultAirdroppedReputation
             GSTLeaf = add0x(hash5([
                 idCommitment,
                 userStateTree.getRootHash(),
@@ -126,7 +126,7 @@ class UserState {
         })
         await newUser.save()
         this.hasSignedUp = true
-        this.transitionedPosRep = BigInt(DEFAULT_AIRDROPPED_KARMA)
+        this.transitionedPosRep = BigInt(defaultAirdroppedReputation)
     }
 
     public login = async () => {
@@ -224,7 +224,7 @@ class UserState {
             nonceList.push( BigInt(nonceStarter + i) )
             selectors.push(BigInt(1));
         }
-        for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
+        for (let i = proveKarmaAmount ; i < maxReputationBudget; i++) {
             nonceList.push(BigInt(0))
             selectors.push(BigInt(0))
         }

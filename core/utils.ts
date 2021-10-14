@@ -7,7 +7,7 @@ import { ethers } from 'ethers'
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochTreeDepth, globalStateTreeDepth, userStateTreeDepth } from '@unirep/unirep'
 import { hash5, hashLeftRight, IncrementalQuinTree, SnarkBigInt } from 'maci-crypto'
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
 
 const defaultUserStateLeaf = hash5([BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)])
 const SMT_ZERO_LEAF = hashLeftRight(BigInt(0), BigInt(0))
@@ -47,9 +47,9 @@ const deployUnirepSocial = async (
 
     console.log('Deploying Unirep Social')
 
-    const _defaultAirdroppedRep = DEFAULT_AIRDROPPED_KARMA
-    const _postReputation = DEFAULT_POST_KARMA
-    const _commentReputation = DEFAULT_COMMENT_KARMA
+    const _defaultAirdroppedRep = defaultAirdroppedReputation
+    const _postReputation = defaultPostReputation
+    const _commentReputation = defaultCommentReputation
 
     const f = await hardhatEthers.getContractFactory(
         "UnirepSocial",
@@ -87,7 +87,7 @@ const genEpochKey = (identityNullifier: SnarkBigInt, epoch: number, nonce: numbe
     ]
     let epochKey = hash5(values)
     // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = BigInt(epochKey) % BigInt(2 ** _epochTreeDepth)
+    const epochKeyModed = BigInt(epochKey.toString()) % BigInt(2 ** _epochTreeDepth)
     return epochKeyModed
 }
 

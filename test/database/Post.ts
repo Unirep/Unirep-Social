@@ -13,7 +13,7 @@
 // const { expect } = chai
 
 // import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-// import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA, MAX_KARMA_BUDGET } from '../../config/socialMedia'
+// import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../../config/socialMedia'
 // import { dbTestUri } from '../../config/database'
 // import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../../database/models/GSTLeaf'
 // import { add0x } from '../../crypto/SMT'
@@ -98,11 +98,11 @@
 //         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
 //         const postReputation_ = await unirepSocialContract.postReputation()
-//         expect(postReputation_).equal(DEFAULT_POST_KARMA)
+//         expect(postReputation_).equal(defaultPostReputation)
 //         const commentReputation_ = await unirepSocialContract.commentReputation()
-//         expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+//         expect(commentReputation_).equal(defaultCommentReputation)
 //         const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
-//         expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+//         expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
 //         const unirepAddress_ = await unirepSocialContract.unirep()
 //         expect(unirepAddress_).equal(unirepContract.address)
 //     })
@@ -143,7 +143,7 @@
 //                     [
 //                         commitment,
 //                         emptyUserStateRoot,
-//                         BigInt(DEFAULT_AIRDROPPED_KARMA),
+//                         BigInt(defaultAirdroppedReputation),
 //                         BigInt(0)
 //                     ]
 //                 )
@@ -210,13 +210,13 @@
 //             const userState = await user.login()
 //             for(let epoch in userState){
 //                 if(epoch == currentEpoch){
-//                     expect(userState[epoch].transitionedPosRep).to.equal(BigInt(DEFAULT_AIRDROPPED_KARMA))
+//                     expect(userState[epoch].transitionedPosRep).to.equal(BigInt(defaultAirdroppedReputation))
 //                     expect(userState[epoch].transitionedNegRep).to.equal(BigInt(0))
 //                     const commitment = genIdentityCommitment(ids[userId])
 //                     const GSTLeaf = hash5([
 //                         commitment,
 //                         emptyUserStateRoot,
-//                         BigInt(DEFAULT_AIRDROPPED_KARMA),
+//                         BigInt(defaultAirdroppedReputation),
 //                         BigInt(0),
 //                         BigInt(0)
 //                     ])
@@ -230,12 +230,12 @@
 //             const nonce = 0
 //             const minRep = 0
 //             const user = new UserState(ids[userId], unirepState)
-//             const circuitInputs = await user.genProveReputationCircuitInputs(nonce, DEFAULT_POST_KARMA, minRep)
+//             const circuitInputs = await user.genProveReputationCircuitInputs(nonce, defaultPostReputation, minRep)
             
 //             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
 //             proof = results['proof']
-//             nullifiers = results['publicSignals'].slice(0, MAX_KARMA_BUDGET)
-//             publicSignals = results['publicSignals'].slice(MAX_KARMA_BUDGET+2)
+//             nullifiers = results['publicSignals'].slice(0, maxReputationBudget)
+//             publicSignals = results['publicSignals'].slice(maxReputationBudget+2)
 //             epochKey = genEpochKey(ids[userId].identityNullifier, currentEpoch, nonce)
 //             const isValid = await verifyProveReputationProof(proof, results['publicSignals'])
 //             expect(isValid, "proof is not valid").to.be.true

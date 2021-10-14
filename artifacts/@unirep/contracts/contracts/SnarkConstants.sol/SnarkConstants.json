@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "SnarkConstants",
+  "sourceName": "@unirep/contracts/contracts/SnarkConstants.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212201a16537251ce924cbad309f33a67de0f2c444f516c42ffce0dfb695c6fca9e8264736f6c63430008000033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212201a16537251ce924cbad309f33a67de0f2c444f516c42ffce0dfb695c6fca9e8264736f6c63430008000033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

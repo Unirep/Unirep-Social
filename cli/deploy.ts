@@ -1,7 +1,7 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../config/socialMedia'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
 import { maxUsers, maxAttesters, maxReputationBudget } from '@unirep/unirep'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import { deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
@@ -88,7 +88,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'int',
-            help: `The amount of reputation required to publish a post. Default: ${DEFAULT_POST_KARMA}`,
+            help: `The amount of reputation required to publish a post. Default: ${defaultPostReputation}`,
         }
     )
 
@@ -97,7 +97,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'int',
-            help: `The amount of reputation required to leave a comment. Default: ${DEFAULT_COMMENT_KARMA}`,
+            help: `The amount of reputation required to leave a comment. Default: ${defaultCommentReputation}`,
         }
     )
 
@@ -106,7 +106,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'int',
-            help: `The amount of airdrop reputation that is given when user signs up and user performs user state transition. Default: ${DEFAULT_AIRDROPPED_KARMA}`,
+            help: `The amount of airdrop reputation that is given when user signs up and user performs user state transition. Default: ${defaultAirdroppedReputation}`,
         }
     )
 
@@ -149,6 +149,7 @@ const deploy = async (args: any) => {
         epochLength: _epochLength,
         attestingFee: _attestingFee
     }
+    console.log(UnirepSettings)
 
     // Tree depths config
     const _treeDepthsConfig = args.tree_depths_config ? args.tree_depths_config : DEFAULT_TREE_DEPTHS_CONFIG
@@ -160,11 +161,11 @@ const deploy = async (args: any) => {
 
     const treeDepths = getTreeDepthsForTesting(_treeDepthsConfig)
 
-    const _postReputation = (args.post_reputation != undefined) ? args.post_reputation : DEFAULT_POST_KARMA
+    const _postReputation = (args.post_reputation != undefined) ? args.post_reputation : defaultPostReputation
 
-    const _commentReputation = (args.comment_reputation != undefined) ? args.comment_reputation : DEFAULT_COMMENT_KARMA
+    const _commentReputation = (args.comment_reputation != undefined) ? args.comment_reputation : defaultCommentReputation
 
-    const _airdropReputation = (args.airdrop != undefined) ? args.airdrop_reputation : DEFAULT_AIRDROPPED_KARMA
+    const _airdropReputation = (args.airdrop != undefined) ? args.airdrop_reputation : defaultAirdroppedReputation
 
     const UnirepSocialSettings = {
         postReputation: _postReputation,

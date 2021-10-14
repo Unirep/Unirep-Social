@@ -20,7 +20,7 @@ import { assert } from 'console'
 import Unirep from "../node_modules/@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
-import { DEFAULT_AIRDROPPED_KARMA, MAX_KARMA_BUDGET } from '../config/socialMedia'
+import { defaultAirdroppedReputation, maxReputationBudget } from '../config/socialMedia'
 import { dbUri } from '../config/database'
 import { Reputation } from '@unirep/unirep'
 import { genKarmaNullifier } from '../core/utils'
@@ -267,7 +267,7 @@ const findUserSignedUpEpochFromDB = async (id: any): Promise<IUserSignUp | null>
     const userDefaultGSTLeaf = hash5([
         genIdentityCommitment(id),
         emptyUserStateRoot,
-        BigInt(DEFAULT_AIRDROPPED_KARMA),
+        BigInt(defaultAirdroppedReputation),
         BigInt(0),
         BigInt(0)
     ]).toString(16)
@@ -398,7 +398,7 @@ const genCurrentUserStateFromDB = async (
     // start user state
     let transitionedFromEpoch = userHasSignedUp?.epoch ? userHasSignedUp?.epoch : 0
     let startEpoch = transitionedFromEpoch
-    let transitionedPosRep = DEFAULT_AIRDROPPED_KARMA
+    let transitionedPosRep = defaultAirdroppedReputation
     let transitionedNegRep = 0
     let userStates: {[key: number]: IUserTransitionState} = {}
     let GSTLeaf = userHasSignedUp?.hashedLeaf
@@ -442,7 +442,7 @@ const genCurrentUserStateFromDB = async (
             transitionedPosRep += Number(attestation.posRep)
             transitionedNegRep += Number(attestation.negRep)
         }
-        transitionedPosRep += DEFAULT_AIRDROPPED_KARMA
+        transitionedPosRep += defaultAirdroppedReputation
         GSTLeaf = add0x(hash5([
             idCommitment,
             userStateTree.getRootHash(),
@@ -518,7 +518,7 @@ const genProveReputationCircuitInputsFromDB = async (
         nonceList.push( BigInt(nonceStarter + i) )
         selectors.push(BigInt(1));
     }
-    for (let i = proveKarmaAmount ; i < MAX_KARMA_BUDGET; i++) {
+    for (let i = proveKarmaAmount ; i < maxReputationBudget; i++) {
         nonceList.push(BigInt(0))
         selectors.push(BigInt(0))
     }
@@ -706,7 +706,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
     const attesterIds: BigInt[] = []
     const oldPosReps: BigInt[] = [], oldNegReps: BigInt[] = [], oldGraffities: BigInt[] = []
     const posReps: BigInt[] = [], negReps: BigInt[] = [], graffities: BigInt[] = [], overwriteGraffitis: any[] = []
-    let newPosRep = Number(userState[fromEpoch].transitionedPosRep) + DEFAULT_AIRDROPPED_KARMA
+    let newPosRep = Number(userState[fromEpoch].transitionedPosRep) + defaultAirdroppedReputation
     let newNegRep = Number(userState[fromEpoch].transitionedNegRep)
 
     for (let nonce = 0; nonce < numEpochKeyNoncePerEpoch; nonce++) {
@@ -813,7 +813,7 @@ const genUserStateTransitionCircuitInputsFromDB = async (
         overwrite_graffitis: overwriteGraffitis,
         positive_karma: BigInt(newPosRep),
         negative_karma: BigInt(newNegRep),
-        airdropped_karma: DEFAULT_AIRDROPPED_KARMA,
+        airdropped_karma: defaultAirdroppedReputation,
         epk_path_elements: epochKeyPathElements,
         hash_chain_results: hashChainResults,
         epoch_tree_root: epochTreeRoot

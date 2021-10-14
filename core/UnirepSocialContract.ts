@@ -7,8 +7,6 @@ import { maxReputationBudget } from '@unirep/unirep'
 import { DEFAULT_ETH_PROVIDER, } from '../cli/defaults';
 import { checkDeployerProviderConnection, promptPwd, validateEthAddress, validateEthSk } from '../cli/utils';
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import Post, { IPost } from "../database/models/post";
-import Comment, { IComment } from '../database/models/comment';
 
 /**
  * An API module of Unirep Social contracts.
@@ -139,7 +137,7 @@ export class UnirepSocialContract {
         ]
     }
 
-    public publishPost = async (publicSignals: any, proof: any, postContent: string): Promise<any> => {
+    public publishPost = async (postId: string, publicSignals: any, proof: any, postContent: string): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -158,24 +156,13 @@ export class UnirepSocialContract {
         const proveGraffiti = publicSignals[maxReputationBudget + 6]
         const graffitiPreImage = publicSignals[maxReputationBudget + 7]
 
-        const newpost: IPost = new Post({
-            content: postContent,
-            // TODO: hashedContent
-            epochKey: epochKey,
-            epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
-            proveMinRep: minRep != null ? true : false,
-            minRep: Number(minRep),
-            comments: [],
-            status: 0
-        });
-
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
         let tx
         try {
             tx = await this.contract.publishPost(
-                BigInt(add0x(newpost._id.toString())), 
+                BigInt(add0x(postId)), 
                 postContent, 
                 proofsRelated,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -188,10 +175,10 @@ export class UnirepSocialContract {
             }
             return tx
         }
-        return { tx: tx,  postId: newpost._id.toString() }
+        return { tx: tx,  postId: postId }
     }
 
-    public leaveComment = async (publicSignals: any, proof: any, postId: string, commentContent: string): Promise<any> => {
+    public leaveComment = async (publicSignals: any, proof: any, postId: string, commentId: string, commentContent: string): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -213,21 +200,11 @@ export class UnirepSocialContract {
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
-        const newComment: IComment = new Comment({
-            content: commentContent,
-            // TODO: hashedContent
-            epochKey: epochKey,
-            epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
-            proveMinRep: minRep != null ? true : false,
-            minRep: Number(minRep),
-            status: 0
-        });
-
         let tx
         try {
             tx = await this.contract.leaveComment(
                 BigInt(add0x(postId)), 
-                BigInt(add0x(newComment._id.toString())), 
+                BigInt(add0x(commentId)), 
                 commentContent, 
                 proofsRelated,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -237,22 +214,9 @@ export class UnirepSocialContract {
             if (e) {
                 console.error(e)
             }
-    
-            // if (args.from_database){
-            //     const db = await mongoose.connect(
-            //         dbUri, 
-            //         { useNewUrlParser: true, 
-            //           useFindAndModify: false, 
-            //           useUnifiedTopology: true
-            //         }
-            //     )
-            //     const res = await Post.deleteOne({ "comments._id": newComment._id })
-            //     console.log(res)
-            //     db.disconnect();
-            // }
             return tx
         }
-        return { tx: tx,  commentId: newComment._id.toString() }
+        return { tx: tx,  commentId: commentId }
     }
 
     public vote = async (publicSignals: any, proof: any, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number): Promise<any> => {

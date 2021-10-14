@@ -6,7 +6,7 @@ import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, IncrementalQuinTree } from '@unirep/crypto'
 
 import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
-import { DEFAULT_AIRDROPPED_KARMA, DEFAULT_COMMENT_KARMA, DEFAULT_POST_KARMA } from '../../config/socialMedia'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
 
@@ -47,11 +47,11 @@ describe('Signup', function () {
         expect(userStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
         const postReputation_ = await unirepSocialContract.postReputation()
-        expect(postReputation_).equal(DEFAULT_POST_KARMA)
+        expect(postReputation_).equal(defaultPostReputation)
         const commentReputation_ = await unirepSocialContract.commentReputation()
-        expect(commentReputation_).equal(DEFAULT_COMMENT_KARMA)
+        expect(commentReputation_).equal(defaultCommentReputation)
         const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
-        expect(airdroppedReputation_).equal(DEFAULT_AIRDROPPED_KARMA)
+        expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
         const unirepAddress_ = await unirepSocialContract.unirep()
         expect(unirepAddress_).equal(unirepContract.address)
         const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)

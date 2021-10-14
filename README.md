@@ -11,9 +11,9 @@ yarn install
 then run
 
 ```
-yarn build
+yarn compile
 ``` 
-to build Unirep Social contracts
+to compile Unirep Social contracts if contracts change
 
 ## Testing
 ```

@@ -1,11 +1,13 @@
 import base64url from 'base64url'
+import { add0x } from '@unirep/crypto'
 import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { DEFAULT_POST_KARMA } from '../config/socialMedia'
+import { defaultPostReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
+import Post, { IPost } from "../database/models/post";
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -107,8 +109,8 @@ const publishPost = async (args: any) => {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    if(repNullifiersAmount != DEFAULT_POST_KARMA) {
-        console.error(`Error: wrong post amount, expect ${DEFAULT_POST_KARMA}`)
+    if(repNullifiersAmount != defaultPostReputation) {
+        console.error(`Error: wrong post amount, expect ${defaultPostReputation}`)
         return
     }
 
@@ -117,10 +119,24 @@ const publishPost = async (args: any) => {
 
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
-    // Submit tx
-    const txResult = await unirepSocialContract.publishPost(publicSignals, proof, args.text)
 
-    console.log('Post ID:', txResult.postId)
+    // construct a post
+    const newpost: IPost = new Post({
+        content: args.text,
+        // TODO: hashedContent
+        epochKey: epochKey,
+        epkProof: proof.map((n)=>add0x(BigInt(n).toString(16))),
+        proveMinRep: minRep != null ? true : false,
+        minRep: Number(minRep),
+        comments: [],
+        status: 0
+    });
+    const postId = newpost._id.toString()
+
+    // Submit tx
+    const txResult = await unirepSocialContract.publishPost(postId, publicSignals, proof, args.text)
+
+    console.log('Post ID:', postId)
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
     const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
     if(txResult.tx != undefined){
