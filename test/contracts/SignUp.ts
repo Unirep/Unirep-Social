@@ -1,7 +1,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, nullifierTreeDepth, userStateTreeDepth } from '@unirep/unirep'
+import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, userStateTreeDepth } from '@unirep/unirep'
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, IncrementalQuinTree } from '@unirep/crypto'
 
@@ -43,7 +43,6 @@ describe('Signup', function () {
         const treeDepths_ = await unirepContract.treeDepths()
         expect(epochTreeDepth).equal(treeDepths_.epochTreeDepth)
         expect(globalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
-        expect(nullifierTreeDepth).equal(treeDepths_.nullifierTreeDepth)
         expect(userStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
         const postReputation_ = await unirepSocialContract.postReputation()

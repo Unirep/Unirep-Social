@@ -135,7 +135,7 @@ describe('Airdrop', function () {
             BigInt(defaultAirdroppedReputation),
             BigInt(0),
             BigInt(0),
-            false,
+            BigInt(false),
         )
         unirepState.addAttestation(proofResults.epochKey, attestationToEpochKey)
 
