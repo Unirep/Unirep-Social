@@ -4,19 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.genEpochKey = exports.deployUnirepSocial = exports.getTreeDepthsForTesting = exports.computeEmptyUserStateRoot = exports.SMT_ZERO_LEAF = exports.SMT_ONE_LEAF = exports.defaultUserStateLeaf = void 0;
-// The reason for the ts-ignore below is that if we are executing the code via `ts-node` instead of `hardhat`,
-// it can not read the hardhat config and error ts-2305 will be reported.
-// @ts-ignore
-const hardhat_1 = require("hardhat");
+const ethers_1 = require("ethers");
 const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"));
 const unirep_1 = require("@unirep/unirep");
 const maci_crypto_1 = require("maci-crypto");
 const socialMedia_1 = require("../config/socialMedia");
-const defaultUserStateLeaf = (0, maci_crypto_1.hash5)([BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]);
+const defaultUserStateLeaf = maci_crypto_1.hash5([BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]);
 exports.defaultUserStateLeaf = defaultUserStateLeaf;
-const SMT_ZERO_LEAF = (0, maci_crypto_1.hashLeftRight)(BigInt(0), BigInt(0));
+const SMT_ZERO_LEAF = maci_crypto_1.hashLeftRight(BigInt(0), BigInt(0));
 exports.SMT_ZERO_LEAF = SMT_ZERO_LEAF;
-const SMT_ONE_LEAF = (0, maci_crypto_1.hashLeftRight)(BigInt(1), BigInt(0));
+const SMT_ONE_LEAF = maci_crypto_1.hashLeftRight(BigInt(1), BigInt(0));
 exports.SMT_ONE_LEAF = SMT_ONE_LEAF;
 const computeEmptyUserStateRoot = (treeDepth) => {
     const t = new maci_crypto_1.IncrementalQuinTree(treeDepth, defaultUserStateLeaf, 2);
@@ -48,9 +45,7 @@ const deployUnirepSocial = async (deployer, UnirepAddr, _settings) => {
     const _defaultAirdroppedRep = socialMedia_1.defaultAirdroppedReputation;
     const _postReputation = socialMedia_1.defaultPostReputation;
     const _commentReputation = socialMedia_1.defaultCommentReputation;
-    const f = await hardhat_1.ethers.getContractFactory("UnirepSocial", {
-        signer: deployer,
-    });
+    const f = new ethers_1.ethers.ContractFactory(UnirepSocial_json_1.default.abi, UnirepSocial_json_1.default.bytecode, deployer);
     const c = await (f.deploy(UnirepAddr, _postReputation, _commentReputation, _defaultAirdroppedRep, {
         gasLimit: 9000000,
     }));
@@ -71,7 +66,7 @@ const genEpochKey = (identityNullifier, epoch, nonce, _epochTreeDepth = unirep_1
         BigInt(0),
         BigInt(0),
     ];
-    let epochKey = (0, maci_crypto_1.hash5)(values);
+    let epochKey = maci_crypto_1.hash5(values);
     // Adjust epoch key size according to epoch tree depth
     const epochKeyModed = BigInt(epochKey.toString()) % BigInt(2 ** _epochTreeDepth);
     return epochKeyModed;

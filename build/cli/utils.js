@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEthSk = exports.validateEthAddress = exports.genJsonRpcDeployer = exports.promptPwd = exports.contractExists = exports.checkDeployerProviderConnection = void 0;
 const prompt_async_1 = __importDefault(require("prompt-async"));
-const hardhat_1 = require("hardhat");
 const ethers_1 = require("ethers");
 prompt_async_1.default.colors = false;
 prompt_async_1.default.message = '';
@@ -16,7 +15,7 @@ class JSONRPCDeployer {
         this.options = options;
     }
     async deploy(abi, bytecode, ...args) {
-        const factory = await hardhat_1.ethers.getContractFactory(abi, bytecode, this.signer);
+        const factory = new ethers_1.ethers.ContractFactory(abi, bytecode, this.signer);
         return await factory.deploy(...args);
     }
 }

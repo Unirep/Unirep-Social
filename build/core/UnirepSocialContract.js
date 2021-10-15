@@ -27,13 +27,13 @@ class UnirepSocialContract {
                 ethSk = eth_privkey;
             }
             else {
-                ethSk = await (0, utils_1.promptPwd)('Your Ethereum private key');
+                ethSk = await utils_1.promptPwd('Your Ethereum private key');
             }
-            if (!(0, utils_1.validateEthSk)(ethSk)) {
+            if (!utils_1.validateEthSk(ethSk)) {
                 console.error('Error: invalid Ethereum private key');
                 return '';
             }
-            if (!(await (0, utils_1.checkDeployerProviderConnection)(ethSk, this.url))) {
+            if (!(await utils_1.checkDeployerProviderConnection(ethSk, this.url))) {
                 console.error('Error: unable to connect to the Ethereum provider at', this.url);
                 return '';
             }
@@ -42,7 +42,7 @@ class UnirepSocialContract {
         };
         this.getUnirep = async () => {
             const unirepAddress = await this.contract.unirep();
-            this.unirep = (0, contracts_1.getUnirepContract)(unirepAddress, this.provider);
+            this.unirep = contracts_1.getUnirepContract(unirepAddress, this.provider);
             return this.unirep;
         };
         this.currentEpoch = async () => {
@@ -131,7 +131,7 @@ class UnirepSocialContract {
             const attestingFee = await this.attestingFee();
             let tx;
             try {
-                tx = await this.contract.publishPost(BigInt((0, crypto_1.add0x)(postId)), postContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
+                tx = await this.contract.publishPost(BigInt(crypto_1.add0x(postId)), postContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
             }
             catch (e) {
                 console.error('Error: the transaction failed');
@@ -163,7 +163,7 @@ class UnirepSocialContract {
             const attestingFee = await this.attestingFee();
             let tx;
             try {
-                tx = await this.contract.leaveComment(BigInt((0, crypto_1.add0x)(postId)), BigInt((0, crypto_1.add0x)(commentId)), commentContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
+                tx = await this.contract.leaveComment(BigInt(crypto_1.add0x(postId)), BigInt(crypto_1.add0x(commentId)), commentContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
             }
             catch (e) {
                 console.error('Error: the transaction failed');
@@ -251,7 +251,7 @@ class UnirepSocialContract {
             }
             let tx;
             try {
-                tx = await this.contract.startUserStateTransition(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, (0, circuits_1.formatProofForVerifierContract)(startTransitionProof.proof));
+                tx = await this.contract.startUserStateTransition(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof));
             }
             catch (e) {
                 console.error('Error: the transaction failed');
@@ -267,7 +267,7 @@ class UnirepSocialContract {
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashStartTransitionProof(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, (0, circuits_1.formatProofForVerifierContract)(startTransitionProof.proof)));
+            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashStartTransitionProof(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof)));
             return (_b = this.unirep) === null || _b === void 0 ? void 0 : _b.getProofIndex(proofNullifier);
         };
         this.submitProcessAttestationsProof = async (processAttestaitonProof) => {
@@ -280,7 +280,7 @@ class UnirepSocialContract {
             }
             let tx;
             try {
-                tx = await this.contract.processAttestations(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, (0, circuits_1.formatProofForVerifierContract)(processAttestaitonProof.proof));
+                tx = await this.contract.processAttestations(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof));
             }
             catch (e) {
                 console.error('Error: the transaction failed');
@@ -296,7 +296,7 @@ class UnirepSocialContract {
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashProcessAttestationsProof(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, (0, circuits_1.formatProofForVerifierContract)(processAttestaitonProof.proof)));
+            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashProcessAttestationsProof(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof)));
             return (_b = this.unirep) === null || _b === void 0 ? void 0 : _b.getProofIndex(proofNullifier);
         };
         this.submitUserStateTransitionProof = async (finalTransitionProof, proofIndexes) => {
@@ -317,7 +317,7 @@ class UnirepSocialContract {
                     finalTransitionProof.fromGSTRoot,
                     finalTransitionProof.blindedHashChains,
                     finalTransitionProof.fromEpochTree,
-                    (0, circuits_1.formatProofForVerifierContract)(finalTransitionProof.proof),
+                    circuits_1.formatProofForVerifierContract(finalTransitionProof.proof),
                 ], proofIndexes);
             }
             catch (e) {
@@ -416,7 +416,7 @@ class UnirepSocialContract {
         };
         this.url = providerUrl ? providerUrl : defaults_1.DEFAULT_ETH_PROVIDER;
         this.provider = new ethers_1.ethers.providers.JsonRpcProvider(this.url);
-        if (!(0, utils_1.validateEthAddress)(unirepSocialAddress)) {
+        if (!utils_1.validateEthAddress(unirepSocialAddress)) {
             console.error('Error: invalid Unirep contract address');
         }
         this.contract = new ethers_1.ethers.Contract(unirepSocialAddress, UnirepSocial_json_1.default.abi, this.provider);

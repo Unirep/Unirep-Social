@@ -1,7 +1,6 @@
 import { dbUri } from '../config/database';
 import Unirep from "../node_modules/@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json"
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import {
   validateEthAddress,
@@ -75,7 +74,7 @@ const eventListeners = async (args: any) => {
     return
   }
 
-  const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
+  const provider = new ethers.providers.JsonRpcProvider(ethProvider)
   const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
   const currentBlock = await provider.getBlockNumber()
   const unirepSocialContract = new ethers.Contract(

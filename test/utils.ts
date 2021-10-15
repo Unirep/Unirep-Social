@@ -1,7 +1,3 @@
-// The reason for the ts-ignore below is that if we are executing the code via `ts-node` instead of `hardhat`,
-// it can not read the hardhat config and error ts-2305 will be reported.
-// @ts-ignore
-import { ethers as hardhatEthers, waffle } from 'hardhat'
 import { ethers } from 'ethers'
 import Keyv from "keyv"
 import { SparseMerkleTreeImpl, add0x, SnarkBigInt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'

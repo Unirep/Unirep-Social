@@ -1,5 +1,4 @@
 // @ts-ignore
-import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
 import { maxUsers, maxAttesters, maxReputationBudget } from '@unirep/unirep'
@@ -175,7 +174,7 @@ const deploy = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new hardhatEthers.providers.JsonRpcProvider(ethProvider)
+    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
 
     if (! (await checkDeployerProviderConnection(deployerPrivkey, ethProvider))) {
         console.error('Error: unable to connect to the Ethereum provider at', ethProvider)
