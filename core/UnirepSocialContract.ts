@@ -139,16 +139,6 @@ export class UnirepSocialContract {
             return
         }
 
-        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
-        const epoch = publicSignals[maxReputationBudget]
-        const epochKey = publicSignals[maxReputationBudget + 1]
-        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
-        const attesterId = publicSignals[maxReputationBudget + 3]
-        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
-        const minRep = publicSignals[maxReputationBudget + 5]
-        const proveGraffiti = publicSignals[maxReputationBudget + 6]
-        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
-
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
@@ -168,7 +158,7 @@ export class UnirepSocialContract {
             }
             return tx
         }
-        return { tx: tx,  postId: postId }
+        return tx
     }
 
     public leaveComment = async (publicSignals: any, proof: any, postId: string, commentId: string, commentContent: string): Promise<any> => {
@@ -179,16 +169,6 @@ export class UnirepSocialContract {
             console.log("Error: should connect a signer")
             return
         }
-
-        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
-        const epoch = publicSignals[maxReputationBudget]
-        const epochKey = publicSignals[maxReputationBudget + 1]
-        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
-        const attesterId = publicSignals[maxReputationBudget + 3]
-        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
-        const minRep = publicSignals[maxReputationBudget + 5]
-        const proveGraffiti = publicSignals[maxReputationBudget + 6]
-        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
 
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
@@ -209,7 +189,7 @@ export class UnirepSocialContract {
             }
             return tx
         }
-        return { tx: tx,  commentId: commentId }
+        return tx
     }
 
     public vote = async (publicSignals: any, proof: any, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number): Promise<any> => {

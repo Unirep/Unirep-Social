@@ -1,16 +1,17 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
-import { IComment } from './comment';
+import { IVote } from './vote';
 
 export interface IPost extends Document {
     transactionHash: string
     content: string
     hashedContent: string
+    epoch: number
     epochKey: string
     epkProof: [ string ]
-    proveMinRep: boolean
     minRep: number
-    comments: [ IComment ]
+    comments: [ string ]
+    votes: [ IVote ]
     status: number // 0: pending, 1: on-chain, 2: disabled
   }
   
@@ -18,12 +19,15 @@ export interface IPost extends Document {
     transactionHash: { type: String },
     content: { type: String },
     hashedContent: {type: String },
+    epoch: { type: Number, required: true },
     epochKey: { type: String, required: true },
     epkProof:  { type: [], required: true},
-    proveMinRep: { type: Boolean },
     minRep: { type: Number },
     comments: { type: [ ]},
+    votes: { type: [ ] },
     status: { type: Number, required: true },
-  }, { collection: 'Posts' });
+  }, { 
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  });
   
   export default mongoose.model<IPost>('Post', PostSchema);

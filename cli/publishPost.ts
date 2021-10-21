@@ -125,13 +125,13 @@ const publishPost = async (args: any) => {
     const postId = newpost._id.toString()
 
     // Submit tx
-    const txResult = await unirepSocialContract.publishPost(postId, publicSignals, proof, args.text)
+    const tx = await unirepSocialContract.publishPost(postId, publicSignals, proof, args.text)
 
     console.log('Post ID:', postId)
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
     const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
-    if(txResult.tx != undefined){
-        console.log('Transaction hash:', txResult.tx?.hash)
+    if(tx != undefined){
+        console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())
     }
     process.exit(0)

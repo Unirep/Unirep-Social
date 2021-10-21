@@ -136,13 +136,13 @@ const leaveComment = async (args: any) => {
     const commentId = newComment._id.toString()
 
     // Submit tx
-    const txResult = await unirepSocialContract.leaveComment(publicSignals, proof, args.post_id, commentId, args.text)
+    const tx = await unirepSocialContract.leaveComment(publicSignals, proof, args.post_id, commentId, args.text)
 
     // TODO: Unirep Social should verify if the reputation proof submitted before
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
     const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
-    if(txResult.tx != undefined){
-        console.log('Transaction hash:', txResult.tx?.hash)
+    if(tx != undefined){
+        console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())
     }
     process.exit(0)

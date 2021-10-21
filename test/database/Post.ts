@@ -1,271 +1,268 @@
-// import mongoose from 'mongoose'
-// import { ethers as hardhatEthers } from 'hardhat'
-// import { BigNumber, ethers } from 'ethers'
-// import chai from "chai"
-// import { attestingFee, epochLength, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, circuitNullifierTreeDepth, numAttestationsPerEpochKey, circuitUserStateTreeDepth} from '../../config/testLocal'
-// import { UnirepState } from '../../database/UnirepState'
-// import { UserState } from '../../database/UserState'
-// import { genIdentity, genIdentityCommitment } from 'libsemaphore'
-// import { genRandomSalt, hash5, IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
-// import { deployUnirep, genEpochKey, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
-// import { deployUnirepSocial } from '../../core/utils'
+import { ethers as hardhatEthers } from 'hardhat'
+import { BigNumber, ethers } from 'ethers'
+import { expect } from 'chai'
+import mongoose from 'mongoose'
+import { verifyProof, formatProofForVerifierContract } from "@unirep/circuits"
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genUserStateFromContract } from '@unirep/unirep'
+import { deployUnirep } from '@unirep/contracts'
+import { add0x, genIdentity, genIdentityCommitment, genRandomSalt, IncrementalQuinTree } from '@unirep/crypto'
 
-// const { expect } = chai
-
-// import Unirep from "../../artifacts/contracts/Unirep.sol/Unirep.json"
-// import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../../config/socialMedia'
-// import { dbTestUri } from '../../config/database'
-// import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../../database/models/GSTLeaf'
-// import { add0x } from '../../crypto/SMT'
-// import UserSignUp, { IUserSignUp } from '../../database/models/userSignUp'
-// import Settings, { ISettings } from '../../database/models/settings'
-// import Post from '../../database/models/post'
-// import { formatProofForVerifierContract, genVerifyReputationProofAndPublicSignals, getSignalByNameViaSym, verifyProveReputationProof } from '../circuits/utils'
-// import { updateDBFromPostSubmittedEvent } from '../../database/utils'
+import { dbUri } from '../../config/database';
+import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
+import { deployUnirepSocial } from '../../core/utils'
+import Post, { IPost } from "../../database/models/post";
+import Comment, { IComment } from '../../database/models/comment';
+import { updateDBFromPostSubmittedEvent, updateDBFromCommentSubmittedEvent } from '../../database/utils'
 
 
-// describe('Post', function () {
-//     let unirepContract
-//     let unirepSocialContract
-//     let GSTree
-//     let emptyUserStateRoot
-//     let unirepState: UnirepState
-//     let users: UserState[] = []
-    
-//     let ids: any[] = []
-//     let accounts: ethers.Signer[]
-//     let db
-//     let numUserSignUps: number = 0
-//     const numUserSignUpInEpochOne: number = 2
-//     const numUserSignUpInEpochTwo: number = 2
-//     let proof
-//     let nullifiers
-//     let publicSignals
-//     let epochKey
-//     let postId = genRandomSalt()
-//     let text = 'postTest'
+describe('Post', function () {
+    this.timeout(300000)
 
-//     before(async () => {
-//         accounts = await hardhatEthers.getSigners()
+    let db
+    let unirepContract
+    let unirepSocialContract
+    let GSTree
+    let emptyUserStateRoot
+    let id
+    let commitment
 
-//         const _treeDepths = getTreeDepthsForTesting('circuit')
-//         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
-//         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
+    let accounts: ethers.Signer[]
+    let results
+    let postId
+    let commentId
+    const text = genRandomSalt().toString()
+    const commentText = genRandomSalt().toString()
+    let attesterId
 
-//         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
-//         GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
+    before(async () => {
+        accounts = await hardhatEthers.getSigners()
 
-//         unirepState = new UnirepState(dbTestUri)
+        const _treeDepths = getTreeDepthsForTesting('circuit')
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
 
-//         await unirepState.connectDB()
-//         await unirepState.initDB()
-//     })
+        const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
+        GSTree = new IncrementalQuinTree(circuitGlobalStateTreeDepth, blankGSLeaf, 2)
 
-//     after(async() => {
-//         unirepState.disconnectDB()
-//     })
+        db = await mongoose.connect(
+            dbUri, 
+            { useNewUrlParser: true, 
+              useFindAndModify: false, 
+              useUnifiedTopology: true
+            }
+        )
+    })
 
-//     it('should save settings is database', async () => {
-//         await unirepState.saveSettings(unirepContract)
-//         const _settings: ISettings | null = await Settings.findOne()
-//         expect(_settings).not.equal(null)
-//     })
+    it('should have the correct config value', async () => {
+        const attestingFee_ = await unirepContract.attestingFee()
+        expect(attestingFee).equal(attestingFee_)
+        const epochLength_ = await unirepContract.epochLength()
+        expect(epochLength).equal(epochLength_)
+        const numEpochKeyNoncePerEpoch_ = await unirepContract.numEpochKeyNoncePerEpoch()
+        expect(numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
+        const maxUsers_ = await unirepContract.maxUsers()
+        expect(maxUsers).equal(maxUsers_)
 
-//     it('should have the correct config value', async () => {
-//         const _settings: ISettings | null = await Settings.findOne()
-//         const attestingFee_ = await unirepContract.attestingFee()
-//         expect(attestingFee).equal(attestingFee_)
-//         expect(_settings?.attestingFee).equal(attestingFee_)
-//         const epochLength_ = await unirepContract.epochLength()
-//         expect(epochLength).equal(epochLength_)
-//         expect(_settings?.epochLength).equal(epochLength_)
-//         const numAttestationsPerEpochKey_ = await unirepContract.numAttestationsPerEpochKey()
-//         expect(numAttestationsPerEpochKey).equal(numAttestationsPerEpochKey_)
-//         expect(_settings?.numAttestationsPerEpochKey).equal(numAttestationsPerEpochKey_)
-//         const numEpochKeyNoncePerEpoch_ = await unirepContract.numEpochKeyNoncePerEpoch()
-//         expect(numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
-//         expect(_settings?.numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
-//         const numAttestationsPerEpoch_ = await unirepContract.numAttestationsPerEpoch()
-//         expect(numEpochKeyNoncePerEpoch * numAttestationsPerEpochKey).equal(numAttestationsPerEpoch_)
-//         expect(_settings?.numAttestationsPerEpochKey).equal(numAttestationsPerEpochKey)
-//         const maxUsers_ = await unirepContract.maxUsers()
-//         expect(maxUsers).equal(maxUsers_)
+        const treeDepths_ = await unirepContract.treeDepths()
+        expect(circuitEpochTreeDepth).equal(treeDepths_.epochTreeDepth)
+        expect(circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
+        expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
-//         const treeDepths_ = await unirepContract.treeDepths()
-//         expect(circuitEpochTreeDepth).equal(treeDepths_.epochTreeDepth)
-//         expect(circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
-//         expect(circuitNullifierTreeDepth).equal(treeDepths_.nullifierTreeDepth)
-//         expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
+        const postReputation_ = await unirepSocialContract.postReputation()
+        expect(postReputation_).equal(defaultPostReputation)
+        const commentReputation_ = await unirepSocialContract.commentReputation()
+        expect(commentReputation_).equal(defaultCommentReputation)
+        const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
+        expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
+        const unirepAddress_ = await unirepSocialContract.unirep()
+        expect(unirepAddress_).equal(unirepContract.address)
 
-//         const postReputation_ = await unirepSocialContract.postReputation()
-//         expect(postReputation_).equal(defaultPostReputation)
-//         const commentReputation_ = await unirepSocialContract.commentReputation()
-//         expect(commentReputation_).equal(defaultCommentReputation)
-//         const airdroppedReputation_ = await unirepSocialContract.airdroppedReputation()
-//         expect(airdroppedReputation_).equal(defaultAirdroppedReputation)
-//         const unirepAddress_ = await unirepSocialContract.unirep()
-//         expect(unirepAddress_).equal(unirepContract.address)
-//     })
+        attesterId = await unirepContract.attesters(unirepSocialContract.address)
+        expect(attesterId).not.equal(0)
+        const airdropAmount = await unirepContract.airdropAmount(unirepSocialContract.address)
+        expect(airdropAmount).equal(defaultAirdroppedReputation)
+    })
 
-//     it('should have the correct default value', async () => {
-//         const emptyUSTree = await genNewUserStateTree()
-//         emptyUserStateRoot = await unirepContract.emptyUserStateRoot()
-//         expect(BigNumber.from(emptyUSTree.getRootHash())).equal(emptyUserStateRoot)
+    it('should have the correct default value', async () => {
+        const emptyUSTree = await genNewUserStateTree('circuit')
+        emptyUserStateRoot = await unirepContract.emptyUserStateRoot()
+        expect(BigNumber.from(emptyUSTree.getRootHash())).equal(emptyUserStateRoot)
 
-//         const emptyGlobalStateTreeRoot = await unirepContract.emptyGlobalStateTreeRoot()
-//         expect(BigNumber.from(GSTree.root)).equal(emptyGlobalStateTreeRoot)
+        const emptyGlobalStateTreeRoot = await unirepContract.emptyGlobalStateTreeRoot()
+        expect(BigNumber.from(GSTree.root)).equal(emptyGlobalStateTreeRoot)
+    })
 
-//         const _settings: ISettings | null = await Settings.findOne()
-//         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
-//         expect(BigNumber.from(_settings?.defaultGSTLeaf)).equal(blankGSLeaf)
-//     })
+    describe('User sign-ups', () => {
 
-//     describe('Epoch 1', () => {
-
-//         let currentEpoch
-//         let GSTreeLeafIndex: number = -1
-
-//         it(`sign up ${numUserSignUpInEpochOne} users should succeed`, async () => {
-//             currentEpoch = await unirepContract.currentEpoch()
-//             for (let i = 0; i < numUserSignUpInEpochOne; i++) {
-//                 ids.push(genIdentity())
-//                 const commitment = genIdentityCommitment(ids[i])
-//                 const user = new UserState(ids[i], unirepState)
-//                 const tx = await unirepSocialContract.userSignUp(commitment)
-//                 const receipt = await tx.wait()
-//                 expect(receipt.status).equal(1)
-//                 numUserSignUps ++
-
-//                 const numUserSignUps_ = await unirepContract.numUserSignUps()
-//                 expect(numUserSignUps).equal(numUserSignUps_)
-
-//                 const hashedStateLeaf = await unirepContract.hashStateLeaf(
-//                     [
-//                         commitment,
-//                         emptyUserStateRoot,
-//                         BigInt(defaultAirdroppedReputation),
-//                         BigInt(0)
-//                     ]
-//                 )
-//                 GSTree.insert(hashedStateLeaf)
-
-//                 const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
-//                 const newLeafEvents = await unirepContract.queryFilter(newLeafFilter)
-
-//                 for (let j = 0; j < newLeafEvents.length; j++) {
-//                     if(BigInt(newLeafEvents[j]?.args?._hashedLeaf) == BigInt(hashedStateLeaf)){
-//                         const event = newLeafEvents[j]
-//                         GSTreeLeafIndex = event?.args?._leafIndex.toNumber()
-//                         user.signUp(event)
-//                     }
-//                 }
-//                 expect(GSTreeLeafIndex).to.equal(i)
-//             }
-//         })
-
-//         it('Sign up event should be emitted and stored correctly', async () => {
-//             const NewGSTLeafInsertedFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
-//             const newGSTLeafInsertedEvents =  await unirepContract.queryFilter(NewGSTLeafInsertedFilter)
-//             expect(newGSTLeafInsertedEvents.length).to.equal(numUserSignUpInEpochOne)
-//             const iface = new ethers.utils.Interface(Unirep.abi)
-
-//             for (let event of newGSTLeafInsertedEvents) {
-//                 // save user sign up event
-//                 await unirepState.userSignUp(event)
-
-//                 const decodedData = iface.decodeEventLog("NewGSTLeafInserted",event.data)
-
-//                 const _transactionHash = event.transactionHash
-//                 const _epoch = Number(event?.topics[1])
-//                 const _hashedLeaf = add0x(decodedData?._hashedLeaf._hex)
-//                 const _leafIndex = decodedData?._leafIndex
-
-//                 // check if leaf can be found in database
-//                 const treeLeaves: IGSTLeaves | null = await GSTLeaves.findOne({
-//                     epoch: _epoch
-//                 })
-//                 expect(treeLeaves, 'Storing sign up event failed').not.equal(null)
-//                 expect(treeLeaves?.GSTLeaves[_leafIndex].hashedLeaf).to.equal(_hashedLeaf)
-//                 expect(treeLeaves?.GSTLeaves[_leafIndex].transactionHash).to.equal(_transactionHash)
-
-//                 const signedUpUsers: IUserSignUp[] | null = await UserSignUp.find({
-//                     transactionHash: _transactionHash,
-//                     hashedLeaf: _hashedLeaf,
-//                     epoch: _epoch
-//                 })
-
-//                 expect(signedUpUsers.length, 'Storing signed up user failed').to.equal(1)
-//             }
-//         })
-
-//         it('Generate global state tree from database should success', async() => {
-//             const GSTRootFromDB = (await unirepState.genGSTree(currentEpoch)).root
-//             const GSTRoot = GSTree.root
-//             expect(GSTRootFromDB.toString(), 'GST root mismatch').to.equal(GSTRoot.toString())
-//         })
-
-//         it('User login should generate correct user state', async() => {
-//             const userId = 0
-//             const user = new UserState(ids[userId], unirepState)
-//             const userState = await user.login()
-//             for(let epoch in userState){
-//                 if(epoch == currentEpoch){
-//                     expect(userState[epoch].transitionedPosRep).to.equal(BigInt(defaultAirdroppedReputation))
-//                     expect(userState[epoch].transitionedNegRep).to.equal(BigInt(0))
-//                     const commitment = genIdentityCommitment(ids[userId])
-//                     const GSTLeaf = hash5([
-//                         commitment,
-//                         emptyUserStateRoot,
-//                         BigInt(defaultAirdroppedReputation),
-//                         BigInt(0),
-//                         BigInt(0)
-//                     ])
-//                     expect(userState[epoch].GSTLeaf).to.equal(add0x(GSTLeaf.toString(16)))
-//                 }
-//             }
-//         })
-
-//         it('User generate reputation proof from database should succeed', async() => {
-//             const userId = 0
-//             const nonce = 0
-//             const minRep = 0
-//             const user = new UserState(ids[userId], unirepState)
-//             const circuitInputs = await user.genProveReputationCircuitInputs(nonce, defaultPostReputation, minRep)
+        it('sign up should succeed', async () => {
+            id = genIdentity()
+            commitment = genIdentityCommitment(id) 
             
-//             const results = await genVerifyReputationProofAndPublicSignals(stringifyBigInts(circuitInputs))
-//             proof = results['proof']
-//             nullifiers = results['publicSignals'].slice(0, maxReputationBudget)
-//             publicSignals = results['publicSignals'].slice(maxReputationBudget+2)
-//             epochKey = genEpochKey(ids[userId].identityNullifier, currentEpoch, nonce)
-//             const isValid = await verifyProveReputationProof(proof, results['publicSignals'])
-//             expect(isValid, "proof is not valid").to.be.true
-//         })
+            const tx = await unirepSocialContract.userSignUp(commitment)
+            const receipt = await tx.wait()
+            expect(receipt.status).equal(1)
+        })
+    })
 
-//         it('User should publish a post and the event should be stored in database sucessfully', async () => {
-//             const tx = await unirepSocialContract.publishPost(
-//                 postId, 
-//                 epochKey,
-//                 text, 
-//                 nullifiers,
-//                 publicSignals, 
-//                 formatProofForVerifierContract(proof),
-//                 { value: attestingFee, gasLimit: 1000000 }
-//             )
-//             const receipt = await tx.wait()
-//             expect(receipt.status, 'Submit post failed').to.equal(1)
+    describe('Generate reputation proof for verification', () => {
 
-//             const postSubmittedFilter = unirepSocialContract.filters.PostSubmitted()
-//             const postSubmittedEvents =  await unirepSocialContract.queryFilter(postSubmittedFilter)
+        it('reputation proof should be verified valid off-chain and on-chain', async() => {
+            const userState = await genUserStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+                id,
+                commitment,
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            results = await userState.genProveReputationProof(BigInt(attesterId), defaultPostReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
-//             // save post
-//             await updateDBFromPostSubmittedEvent(postSubmittedEvents[0])
+            const isProofValid = await unirepContract.verifyReputation(
+                results.reputationNullifiers,
+                results.epoch,
+                results.epochKey,
+                results.globalStatetreeRoot,
+                results.attesterId,
+                results.proveReputationAmount,
+                results.minRep,
+                results.proveGraffiti,
+                results.graffitiPreImage,
+                formatProofForVerifierContract(results.proof)
+            )
+            expect(isProofValid, "proof is not valid").to.be.true
+        })
+    })
 
-//             // find post
-//             const eventPostId = mongoose.Types.ObjectId(postSubmittedEvents[0].topics[2].slice(-24))
-//             const findPost = await Post.findById(eventPostId)
-//             expect(findPost).not.equal(null)
-//             expect(findPost?.content).to.equal(text)
-//             expect(findPost?.epochKey).to.equal(epochKey.toString(16))
-//         }) 
-//     })
-// })
+    describe('Publishing a post', () => {
+        it('submit post should succeed', async() => {
+            const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
+                results.epochKey,
+                results.globalStatetreeRoot,
+                results.attesterId,
+                results.proveReputationAmount,
+                results.minRep,
+                results.proveGraffiti,
+                results.graffitiPreImage,
+                formatProofForVerifierContract(results.proof)
+            ]
+
+            const newPost: IPost = new Post({
+                content: text,
+                // TODO: hashedContent
+                epochKey: results.epochKey,
+                epoch: results.epoch,
+                epkProof: formatProofForVerifierContract(results.proof).map((n)=>add0x(BigInt(n).toString(16))),
+                minRep: Number(results.minRep),
+                comments: [],
+                status: 0
+            });
+            postId = add0x(newPost._id.toString())
+
+            const tx = await unirepSocialContract.publishPost(
+                postId, 
+                text, 
+                publicSignals,
+                { value: attestingFee, gasLimit: 1000000 }
+            )
+            const receipt = await tx.wait()
+            expect(receipt.status, 'Submit post failed').to.equal(1)
+
+            await newPost.save()
+        })
+
+        it('should find the post event from the contract and save the transaction hash', async() => {
+            const postFilter = unirepSocialContract.filters.PostSubmitted()
+            const postEvents =  await unirepSocialContract.queryFilter(postFilter)
+            expect(postEvents.length).equal(1)
+
+            await updateDBFromPostSubmittedEvent(postEvents[0])
+        })
+    })
+
+    describe('Leave a comment', () => {
+        it('reputation proof should be verified valid off-chain and on-chain', async() => {
+            const userState = await genUserStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+                id,
+                commitment,
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = BigInt(8), graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            results = await userState.genProveReputationProof(BigInt(attesterId), defaultCommentReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+            const isProofValid = await unirepContract.verifyReputation(
+                results.reputationNullifiers,
+                results.epoch,
+                results.epochKey,
+                results.globalStatetreeRoot,
+                results.attesterId,
+                results.proveReputationAmount,
+                results.minRep,
+                results.proveGraffiti,
+                results.graffitiPreImage,
+                formatProofForVerifierContract(results.proof)
+            )
+            expect(isProofValid, "proof is not valid").to.be.true
+        })
+
+        it('submit comment should succeed', async() => {
+            const publicSignals = [
+                results.reputationNullifiers,
+                results.epoch,
+                results.epochKey,
+                results.globalStatetreeRoot,
+                results.attesterId,
+                results.proveReputationAmount,
+                results.minRep,
+                results.proveGraffiti,
+                results.graffitiPreImage,
+                formatProofForVerifierContract(results.proof)
+            ]
+
+            const newComment: IComment = new Comment({
+                postId: postId.toString(),
+                content: commentText,
+                epoch: results.epoch,
+                // TODO: hashedContent
+                epochKey: results.epochKey,
+                epkProof: formatProofForVerifierContract(results.proof).map((n)=>add0x(BigInt(n).toString(16))),
+                minRep: Number(results.minRep),
+                status: 0
+            });
+            commentId = add0x(newComment._id.toString())
+
+            const tx = await unirepSocialContract.leaveComment(
+                postId, 
+                commentId,
+                commentText, 
+                publicSignals,
+                { value: attestingFee, gasLimit: 1000000 }
+            )
+            const receipt = await tx.wait()
+            expect(receipt.status, 'Submit comment failed').to.equal(1)
+
+            const res = await newComment.save()
+            expect(res).not.equal(null)
+        })
+
+        it('should find the comment event from the contract and save the transaction hash', async() => {
+            const commentFilter = unirepSocialContract.filters.CommentSubmitted()
+            const commentEvents =  await unirepSocialContract.queryFilter(commentFilter)
+            expect(commentEvents.length).equal(1)
+
+            await updateDBFromCommentSubmittedEvent(commentEvents[0])
+        })
+    })
+})
