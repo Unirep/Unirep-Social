@@ -255,24 +255,24 @@ const getAttestationsFromDB = async (epochKey: string): Promise<IAttestation[] >
 * finding user's signed up leaf event in db
 * @param id user's identity
 */
-const findUserSignedUpEpochFromDB = async (id: any): Promise<IUserSignUp | null> => {
+// const findUserSignedUpEpochFromDB = async (id: any): Promise<IUserSignUp | null> => {
 
-    const _settings = await Settings.findOne()
-    if (!_settings) {
-        throw new Error('Error: should save settings first')
-    } 
+//     const _settings = await Settings.findOne()
+//     if (!_settings) {
+//         throw new Error('Error: should save settings first')
+//     } 
 
-    const emptyUserStateRoot = computeEmptyUserStateRoot(_settings.userStateTreeDepth)
-    const userDefaultGSTLeaf = hash5([
-        genIdentityCommitment(id),
-        emptyUserStateRoot,
-        BigInt(defaultAirdroppedReputation),
-        BigInt(0),
-        BigInt(0)
-    ]).toString(16)
-    const result = await UserSignUp.findOne({hashedLeaf: add0x(userDefaultGSTLeaf)})
-    return result
-}
+//     const emptyUserStateRoot = computeEmptyUserStateRoot(_settings.userStateTreeDepth)
+//     const userDefaultGSTLeaf = hash5([
+//         genIdentityCommitment(id),
+//         emptyUserStateRoot,
+//         BigInt(defaultAirdroppedReputation),
+//         BigInt(0),
+//         BigInt(0)
+//     ]).toString(16)
+//     const result = await UserSignUp.findOne({hashedLeaf: add0x(userDefaultGSTLeaf)})
+//     return result
+// }
 
 const nullifierExist = async (nullifier: string): Promise<boolean> => {
     const leaf = await NullifierTreeLeaves.findOne({nullifier: nullifier})
@@ -304,70 +304,70 @@ const getGSTLeafIndex = async (epoch: number, hashedLeaf: string): Promise<numbe
 * generate user state tree from given reputations
 * @param reputations reputations received by user in current epoch
 */
-const genUserStateTreeFromDB = async(
-    reputations: IAttestation[]
-): Promise<SparseMerkleTreeImpl> => {
+// const genUserStateTreeFromDB = async(
+//     reputations: IAttestation[]
+// ): Promise<SparseMerkleTreeImpl> => {
 
-    const settings = await Settings.findOne()
-    if (!settings) {
-        throw new Error('Error: should save settings first')
-    } 
+//     const settings = await Settings.findOne()
+//     if (!settings) {
+//         throw new Error('Error: should save settings first')
+//     } 
 
-    let reputationRecords = {}
-    const USTree = await genNewSMT(settings.userStateTreeDepth, defaultUserStateLeaf)
+//     let reputationRecords = {}
+//     const USTree = await genNewSMT(settings.userStateTreeDepth, defaultUserStateLeaf)
 
-    for (const reputation of reputations) {
-        if (reputationRecords[reputation.attesterId] === undefined) {
-            reputationRecords[reputation.attesterId] = new Reputation(
-                BigInt(reputation.posRep),
-                BigInt(reputation.negRep),
-                BigInt(reputation.graffiti)
-            )
-        } else {
-            // Update attestation record
-            reputationRecords[reputation.attesterId].update(
-                BigInt(reputation.posRep),
-                BigInt(reputation.negRep),
-                BigInt(reputation.graffiti),
-                reputation.overwriteGraffiti
-            )
-        }
-    }
+//     for (const reputation of reputations) {
+//         if (reputationRecords[reputation.attesterId] === undefined) {
+//             reputationRecords[reputation.attesterId] = new Reputation(
+//                 BigInt(reputation.posRep),
+//                 BigInt(reputation.negRep),
+//                 BigInt(reputation.graffiti)
+//             )
+//         } else {
+//             // Update attestation record
+//             reputationRecords[reputation.attesterId].update(
+//                 BigInt(reputation.posRep),
+//                 BigInt(reputation.negRep),
+//                 BigInt(reputation.graffiti),
+//                 reputation.overwriteGraffiti
+//             )
+//         }
+//     }
 
-    for (let attesterId in reputationRecords) {
-        const hashedReputation = hash5([
-            BigInt(reputationRecords[attesterId].posRep),
-            BigInt(reputationRecords[attesterId].negRep),
-            BigInt(reputationRecords[attesterId].graffiti),
-            BigInt(0),
-            BigInt(0)
-        ])
-        await USTree.update(BigInt(attesterId), hashedReputation)
-    }
+//     for (let attesterId in reputationRecords) {
+//         const hashedReputation = hash5([
+//             BigInt(reputationRecords[attesterId].posRep),
+//             BigInt(reputationRecords[attesterId].negRep),
+//             BigInt(reputationRecords[attesterId].graffiti),
+//             BigInt(0),
+//             BigInt(0)
+//         ])
+//         await USTree.update(BigInt(attesterId), hashedReputation)
+//     }
 
-    return USTree
-}
+//     return USTree
+// }
 
-const getRepByAttester = async (
-    reputations: IAttestation[],
-    attesterId: string,
-) => {
-    const leaf = reputations.find((leaf) => BigInt(leaf.attesterId) == BigInt(attesterId))
-    if(leaf !== undefined) return leaf
-    else {
-        const defaultAttestation: IAttestation = {
-            transactionHash: "0",
-            epoch: 0,
-            attester: "0",
-            attesterId: "0",
-            posRep: "0",
-            negRep: "0",
-            graffiti: "0",
-            overwriteGraffiti: false
-        }
-        return defaultAttestation
-    }
-}
+// const getRepByAttester = async (
+//     reputations: IAttestation[],
+//     attesterId: string,
+// ) => {
+//     const leaf = reputations.find((leaf) => BigInt(leaf.attesterId) == BigInt(attesterId))
+//     if(leaf !== undefined) return leaf
+//     else {
+//         const defaultAttestation: IAttestation = {
+//             transactionHash: "0",
+//             epoch: 0,
+//             attester: "0",
+//             attesterId: "0",
+//             posRep: "0",
+//             negRep: "0",
+//             graffiti: "0",
+//             overwriteGraffiti: false
+//         }
+//         return defaultAttestation
+//     }
+// }
 
 
 /*
@@ -375,85 +375,85 @@ const getRepByAttester = async (
 * @param currentEpoch current epoch
 * @param userIdentity user's semaphore identity
 */
-const genCurrentUserStateFromDB = async ( 
-    currentEpoch: number,
-    id: any,
- ) => {
-    const settings = await Settings.findOne()
-    if (!settings) {
-        throw new Error('Error: should save settings first')
-    } 
+// const genCurrentUserStateFromDB = async ( 
+//     currentEpoch: number,
+//     id: any,
+//  ) => {
+//     const settings = await Settings.findOne()
+//     if (!settings) {
+//         throw new Error('Error: should save settings first')
+//     } 
 
-    const idCommitment = genIdentityCommitment(id)
-    const epochTreeDepth = settings.epochTreeDepth
-    const numEpochKeyNoncePerEpoch = settings.numEpochKeyNoncePerEpoch
+//     const idCommitment = genIdentityCommitment(id)
+//     const epochTreeDepth = settings.epochTreeDepth
+//     const numEpochKeyNoncePerEpoch = settings.numEpochKeyNoncePerEpoch
 
-    const userHasSignedUp = await findUserSignedUpEpochFromDB(id)
-    assert(userHasSignedUp, "User has not signed up yet")
-    if(!userHasSignedUp){
-        return
-    }
+//     const userHasSignedUp = await findUserSignedUpEpochFromDB(id)
+//     assert(userHasSignedUp, "User has not signed up yet")
+//     if(!userHasSignedUp){
+//         return
+//     }
 
-    // start user state
-    let transitionedFromEpoch = userHasSignedUp?.epoch ? userHasSignedUp?.epoch : 0
-    let startEpoch = transitionedFromEpoch
-    let transitionedPosRep = defaultAirdroppedReputation
-    let transitionedNegRep = 0
-    let userStates: {[key: number]: IUserTransitionState} = {}
-    let GSTLeaf = userHasSignedUp?.hashedLeaf
-    let userStateTree: SparseMerkleTreeImpl = await genUserStateTreeFromDB([])
-    let attestations: IAttestation[] = []
-    let transitionedGSTLeaf = await getGSTLeafIndex(startEpoch, GSTLeaf)
+//     // start user state
+//     let transitionedFromEpoch = userHasSignedUp?.epoch ? userHasSignedUp?.epoch : 0
+//     let startEpoch = transitionedFromEpoch
+//     let transitionedPosRep = defaultAirdroppedReputation
+//     let transitionedNegRep = 0
+//     let userStates: {[key: number]: IUserTransitionState} = {}
+//     let GSTLeaf = userHasSignedUp?.hashedLeaf
+//     let userStateTree: SparseMerkleTreeImpl = await genUserStateTreeFromDB([])
+//     let attestations: IAttestation[] = []
+//     let transitionedGSTLeaf = await getGSTLeafIndex(startEpoch, GSTLeaf)
    
-    // find all reputation received by the user
-    for (let e = startEpoch; e <= currentEpoch; e++) {
+//     // find all reputation received by the user
+//     for (let e = startEpoch; e <= currentEpoch; e++) {
 
-        // find if user has transitioned 
-        if (e !== startEpoch) {
-            transitionedGSTLeaf = await getGSTLeafIndex(e, GSTLeaf)
-        }
+//         // find if user has transitioned 
+//         if (e !== startEpoch) {
+//             transitionedGSTLeaf = await getGSTLeafIndex(e, GSTLeaf)
+//         }
         
-        // user transitioned state
-        const newState: IUserTransitionState = {
-            transitionedGSTLeafIndex: transitionedGSTLeaf,
-            fromEpoch: transitionedFromEpoch,
-            toEpoch: e,
-            userStateTree: userStateTree,
-            attestations: attestations,
-            transitionedPosRep: BigInt(transitionedPosRep),
-            transitionedNegRep: BigInt(transitionedNegRep),
-            GSTLeaf: GSTLeaf
-        }
-        userStates[e] = newState
+//         // user transitioned state
+//         const newState: IUserTransitionState = {
+//             transitionedGSTLeafIndex: transitionedGSTLeaf,
+//             fromEpoch: transitionedFromEpoch,
+//             toEpoch: e,
+//             userStateTree: userStateTree,
+//             attestations: attestations,
+//             transitionedPosRep: BigInt(transitionedPosRep),
+//             transitionedNegRep: BigInt(transitionedNegRep),
+//             GSTLeaf: GSTLeaf
+//         }
+//         userStates[e] = newState
 
-        // get all attestations from epoch key generated in the given epoch e
-        attestations = []
-        for (let nonce = 0; nonce < numEpochKeyNoncePerEpoch; nonce++) {
-            const epochKey = genEpochKey(id.identityNullifier, e, nonce, epochTreeDepth)
-            const attestationToEpk = await Attestations.findOne({epochKey: epochKey.toString(16)})
-            attestationToEpk?.attestations?.map((a) => {attestations.push(a)})
-        }
-        userStateTree = await genUserStateTreeFromDB(attestations)
+//         // get all attestations from epoch key generated in the given epoch e
+//         attestations = []
+//         for (let nonce = 0; nonce < numEpochKeyNoncePerEpoch; nonce++) {
+//             const epochKey = genEpochKey(id.identityNullifier, e, nonce, epochTreeDepth)
+//             const attestationToEpk = await Attestations.findOne({epochKey: epochKey.toString(16)})
+//             attestationToEpk?.attestations?.map((a) => {attestations.push(a)})
+//         }
+//         userStateTree = await genUserStateTreeFromDB(attestations)
 
-        // compute user state transition result
-        transitionedFromEpoch = e
-        for (const attestation of attestations) {
-            transitionedPosRep += Number(attestation.posRep)
-            transitionedNegRep += Number(attestation.negRep)
-        }
-        transitionedPosRep += defaultAirdroppedReputation
-        GSTLeaf = add0x(hash5([
-            idCommitment,
-            userStateTree.getRootHash(),
-            BigInt(transitionedPosRep),
-            BigInt(transitionedNegRep),
-            BigInt(0)
-        ]).toString(16))
-    }
+//         // compute user state transition result
+//         transitionedFromEpoch = e
+//         for (const attestation of attestations) {
+//             transitionedPosRep += Number(attestation.posRep)
+//             transitionedNegRep += Number(attestation.negRep)
+//         }
+//         transitionedPosRep += defaultAirdroppedReputation
+//         GSTLeaf = add0x(hash5([
+//             idCommitment,
+//             userStateTree.getRootHash(),
+//             BigInt(transitionedPosRep),
+//             BigInt(transitionedNegRep),
+//             BigInt(0)
+//         ]).toString(16))
+//     }
 
-    return userStates
+//     return userStates
    
-}
+// }
 
 // const genProveReputationCircuitInputsFromDB = async (
 //     epoch: number,
@@ -1228,7 +1228,7 @@ export {
     disconnectDB,
     saveSettingsFromContract,
     genGSTreeFromDB,
-    genNullifierTreeFromDB,
+    // genNullifierTreeFromDB,
     // genProveReputationCircuitInputsFromDB,
     // genProveReputationFromAttesterCircuitInputsFromDB,
     // genUserStateTransitionCircuitInputsFromDB,
