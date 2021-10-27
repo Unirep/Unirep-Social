@@ -6,7 +6,7 @@ import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepSt
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
 
-import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { findValidNonce, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
@@ -149,7 +149,9 @@ describe('Post', function () {
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            results = await users[0].genProveReputationProof(BigInt(attesterId), defaultPostReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[0].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[0], defaultPostReputation, epoch, BigInt(attesterId))
+            results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -204,7 +206,9 @@ describe('Post', function () {
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const falseRepAmout = 3
-            results = await users[0].genProveReputationProof(BigInt(attesterId), falseRepAmout, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[0].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[0], falseRepAmout, epoch, BigInt(attesterId))
+            results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -235,7 +239,9 @@ describe('Post', function () {
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(20), graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            results = await users[1].genProveReputationProof(BigInt(attesterId), defaultCommentReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[1].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[1], defaultCommentReputation, epoch, BigInt(attesterId))
+            results = await users[1].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -289,7 +295,9 @@ describe('Post', function () {
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const falseRepAmout = 1
-            results = await users[1].genProveReputationProof(BigInt(attesterId), falseRepAmout, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[1].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[1], falseRepAmout, epoch, BigInt(attesterId))
+            results = await users[1].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 

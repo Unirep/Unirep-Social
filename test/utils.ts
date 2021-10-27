@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import Keyv from "keyv"
 import { SparseMerkleTreeImpl, add0x, SnarkBigInt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
-import { circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochTreeDepth, globalStateTreeDepth, userStateTreeDepth} from '@unirep/unirep'
+import { circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochTreeDepth, genReputationNullifier, globalStateTreeDepth, maxReputationBudget, UserState, userStateTreeDepth} from '@unirep/unirep'
 import { EPOCH_KEY_NULLIFIER_DOMAIN, REPUTATION_NULLIFIER_DOMAIN } from '../config/nullifierDomainSeparator'
 
 const getTreeDepthsForTesting = (deployEnv: string = "circuit") => {
@@ -98,6 +98,21 @@ const genNewUserStateTree = async (deployEnv: string = "contract"): Promise<Spar
     return genNewSMT(_userStateTreeDepth, defaultUserStateLeaf)
 }
 
+const findValidNonce = (userState: UserState, repNullifiersAmount: number, epoch: number, attesterId: BigInt): BigInt[] => {
+    const nonceList: BigInt[] = []
+    let nonce = 0
+    while(nonceList.length < repNullifiersAmount) {
+        if(!userState.nullifierExist(genReputationNullifier(userState.id.identityNullifier, epoch, nonce, attesterId))){
+            nonceList.push(BigInt(nonce))
+        }
+        nonce ++
+    }
+    for (let i = repNullifiersAmount; i < maxReputationBudget; i++) {
+        nonceList.push(BigInt(-1))
+    }
+    return nonceList
+}
+
 export {
     SMT_ONE_LEAF,
     SMT_ZERO_LEAF,
@@ -112,4 +127,5 @@ export {
     genNewUserStateTree,
     genNewSMT,
     toCompleteHexString,
+    findValidNonce,
 }

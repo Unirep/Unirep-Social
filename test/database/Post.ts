@@ -8,7 +8,7 @@ import { deployUnirep } from '@unirep/contracts'
 import { add0x, genIdentity, genIdentityCommitment, genRandomSalt, IncrementalQuinTree } from '@unirep/crypto'
 
 import { dbUri } from '../../config/database';
-import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { findValidNonce, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 import Post, { IPost } from "../../database/models/post";
@@ -118,7 +118,9 @@ describe('Post', function () {
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            results = await userState.genProveReputationProof(BigInt(attesterId), defaultPostReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = userState.getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(userState, defaultPostReputation, epoch, BigInt(attesterId))
+            results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -198,7 +200,9 @@ describe('Post', function () {
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(8), graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            results = await userState.genProveReputationProof(BigInt(attesterId), defaultCommentReputation, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = userState.getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(userState, defaultCommentReputation, epoch, BigInt(attesterId))
+            results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 

@@ -107,7 +107,7 @@ describe('Airdrop', function () {
         userState.signUp(latestTransitionedToEpoch, GSTreeLeafIndex, attesterId, defaultAirdroppedReputation)
         const proveGraffiti = 0
         const minPosRep = 19, graffitiPreImage = 0
-        const results = await userState.genProveReputationProof(BigInt(attesterId), repNullifiersAmount, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+        const results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
         const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
         expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
     })
@@ -363,7 +363,7 @@ describe('Airdrop', function () {
         // generate reputation proof should success
         const proveGraffiti = 0
         const minPosRep = 30, graffitiPreImage = 0
-        results = await userState.genProveReputationProof(BigInt(attesterId), repNullifiersAmount, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+        results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
         isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
         expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
     })
@@ -403,7 +403,7 @@ describe('Airdrop', function () {
         userState.signUp(latestTransitionedToEpoch, GSTreeLeafIndex, attesterId, airdropAmount)
         const proveGraffiti = 0
         const minPosRep = 19, graffitiPreImage = 0
-        const results = await userState.genProveReputationProof(BigInt(attesterId), repNullifiersAmount, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+        const results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
         const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
         expect(isValid, 'Verify reputation proof off-chain failed').to.be.false
     })
