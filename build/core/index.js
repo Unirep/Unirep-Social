@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signUpPublicSignalsPrefix = exports.signUpProofPrefix = exports.reputationPublicSignalsPrefix = exports.reputationProofPrefix = exports.epkPublicSignalsPrefix = exports.epkProofPrefix = exports.identityCommitmentPrefix = exports.identityPrefix = exports.DEFAULT_TREE_DEPTHS_CONFIG = exports.DEFAULT_ATTESTING_FEE = exports.DEFAULT_EPOCH_LENGTH = exports.DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY = exports.DEFAULT_MAX_EPOCH_KEY_NONCE = exports.DEFAULT_START_BLOCK = exports.DEFAULT_ETH_PROVIDER = exports.maxReputationBudget = exports.defaultCommentReputation = exports.defaultPostReputation = exports.defaultAirdroppedReputation = exports.deployUnirepSocial = exports.UnirepSocialContract = void 0;
+exports.signUpPublicSignalsPrefix = exports.signUpProofPrefix = exports.reputationPublicSignalsPrefix = exports.reputationProofPrefix = exports.epkPublicSignalsPrefix = exports.epkProofPrefix = exports.identityCommitmentPrefix = exports.identityPrefix = exports.DEFAULT_TREE_DEPTHS_CONFIG = exports.DEFAULT_ATTESTING_FEE = exports.DEFAULT_EPOCH_LENGTH = exports.DEFAULT_MAX_EPOCH_KEY_NONCE = exports.DEFAULT_START_BLOCK = exports.DEFAULT_ETH_PROVIDER = exports.maxReputationBudget = exports.defaultCommentReputation = exports.defaultPostReputation = exports.defaultAirdroppedReputation = exports.deployUnirepSocial = exports.UnirepSocialContract = void 0;
 const UnirepSocialContract_1 = require("./UnirepSocialContract");
 Object.defineProperty(exports, "UnirepSocialContract", { enumerable: true, get: function () { return UnirepSocialContract_1.UnirepSocialContract; } });
 const utils_1 = require("./utils");
@@ -14,7 +14,6 @@ const defaults_1 = require("../cli/defaults");
 Object.defineProperty(exports, "DEFAULT_ETH_PROVIDER", { enumerable: true, get: function () { return defaults_1.DEFAULT_ETH_PROVIDER; } });
 Object.defineProperty(exports, "DEFAULT_START_BLOCK", { enumerable: true, get: function () { return defaults_1.DEFAULT_START_BLOCK; } });
 Object.defineProperty(exports, "DEFAULT_MAX_EPOCH_KEY_NONCE", { enumerable: true, get: function () { return defaults_1.DEFAULT_MAX_EPOCH_KEY_NONCE; } });
-Object.defineProperty(exports, "DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY", { enumerable: true, get: function () { return defaults_1.DEFAULT_NUM_ATTESTATIONS_PER_EPOCH_KEY; } });
 Object.defineProperty(exports, "DEFAULT_EPOCH_LENGTH", { enumerable: true, get: function () { return defaults_1.DEFAULT_EPOCH_LENGTH; } });
 Object.defineProperty(exports, "DEFAULT_ATTESTING_FEE", { enumerable: true, get: function () { return defaults_1.DEFAULT_ATTESTING_FEE; } });
 Object.defineProperty(exports, "DEFAULT_TREE_DEPTHS_CONFIG", { enumerable: true, get: function () { return defaults_1.DEFAULT_TREE_DEPTHS_CONFIG; } });

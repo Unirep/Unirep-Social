@@ -9,7 +9,6 @@ import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFA
 import {
     checkDeployerProviderConnection,
     genJsonRpcDeployer,
-    promptPwd,
     validateEthSk,
 } from './utils'
 
@@ -19,17 +18,7 @@ const configureSubparser = (subparsers: any) => {
         { add_help: true },
     )
 
-    const deployerPrivkeyGroup = deployParser.add_mutually_exclusive_group({ required: true })
-
-    deployerPrivkeyGroup.add_argument(
-        '-dp', '--prompt-for-deployer-privkey',
-        {
-            action: 'store_true',
-            help: 'Whether to prompt for the deployer\'s Ethereum private key and ignore -d / --deployer-privkey',
-        }
-    )
-
-    deployerPrivkeyGroup.add_argument(
+    deployParser.add_argument(
         '-d', '--deployer-privkey',
         {
             action: 'store',
@@ -114,14 +103,7 @@ const configureSubparser = (subparsers: any) => {
 const deploy = async (args: any) => {
 
     // The deployer's Ethereum private key
-    // They may either enter it as a command-line option or via the
-    // standard input
-    let deployerPrivkey
-    if (args.prompt_for_deployer_privkey) {
-        deployerPrivkey = await promptPwd('Deployer\'s Ethereum private key')
-    } else {
-        deployerPrivkey = args.deployer_privkey
-    }
+    const deployerPrivkey = args.deployer_privkey
 
     if (!validateEthSk(deployerPrivkey)) {
         console.error('Error: invalid Ethereum private key')
@@ -148,7 +130,6 @@ const deploy = async (args: any) => {
         epochLength: _epochLength,
         attestingFee: _attestingFee
     }
-    console.log(UnirepSettings)
 
     // Tree depths config
     const _treeDepthsConfig = args.tree_depths_config ? args.tree_depths_config : DEFAULT_TREE_DEPTHS_CONFIG

@@ -5,7 +5,7 @@ import { formatProofForVerifierContract } from '@unirep/circuits'
 import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, } from '../cli/defaults';
-import { checkDeployerProviderConnection, promptPwd, validateEthAddress, validateEthSk } from '../cli/utils';
+import { checkDeployerProviderConnection, validateEthAddress, validateEthSk } from '../cli/utils';
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 
 /**
@@ -36,17 +36,10 @@ export class UnirepSocialContract {
         )
     }
 
-    public unlock = async (eth_privkey?: string): Promise<string> => {
-        let ethSk
+    public unlock = async (eth_privkey: string): Promise<string> => {
         // The deployer's Ethereum private key
-        // The user may either enter it as a command-line option or via the
-        // standard input
-        if (eth_privkey) {
-            ethSk = eth_privkey
-        } else {
-            ethSk = await promptPwd('Your Ethereum private key')
-        }
-
+        const ethSk = eth_privkey
+        
         if (!validateEthSk(ethSk)) {
             console.error('Error: invalid Ethereum private key')
             return ''
@@ -146,16 +139,6 @@ export class UnirepSocialContract {
             return
         }
 
-        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
-        const epoch = publicSignals[maxReputationBudget]
-        const epochKey = publicSignals[maxReputationBudget + 1]
-        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
-        const attesterId = publicSignals[maxReputationBudget + 3]
-        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
-        const minRep = publicSignals[maxReputationBudget + 5]
-        const proveGraffiti = publicSignals[maxReputationBudget + 6]
-        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
-
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
 
@@ -175,7 +158,7 @@ export class UnirepSocialContract {
             }
             return tx
         }
-        return { tx: tx,  postId: postId }
+        return tx
     }
 
     public leaveComment = async (publicSignals: any, proof: any, postId: string, commentId: string, commentContent: string): Promise<any> => {
@@ -186,16 +169,6 @@ export class UnirepSocialContract {
             console.log("Error: should connect a signer")
             return
         }
-
-        const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
-        const epoch = publicSignals[maxReputationBudget]
-        const epochKey = publicSignals[maxReputationBudget + 1]
-        const globalStatetreeRoot = publicSignals[maxReputationBudget + 2]
-        const attesterId = publicSignals[maxReputationBudget + 3]
-        const proveReputationAmount = publicSignals[maxReputationBudget + 4]
-        const minRep = publicSignals[maxReputationBudget + 5]
-        const proveGraffiti = publicSignals[maxReputationBudget + 6]
-        const graffitiPreImage = publicSignals[maxReputationBudget + 7]
 
         const proofsRelated = this.parseRepuationProof(publicSignals, proof)
         const attestingFee = await this.attestingFee()
@@ -216,7 +189,7 @@ export class UnirepSocialContract {
             }
             return tx
         }
-        return { tx: tx,  commentId: commentId }
+        return tx
     }
 
     public vote = async (publicSignals: any, proof: any, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number): Promise<any> => {

@@ -1,4 +1,4 @@
-import { maxReputationBudget } from '@unirep/contracts';
+import { maxReputationBudget } from '@unirep/unirep';
 declare const defaultAirdroppedReputation = 30;
 declare const defaultPostReputation = 5;
 declare const defaultCommentReputation = 3;

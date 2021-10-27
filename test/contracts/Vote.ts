@@ -6,7 +6,7 @@ import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepSt
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
 
-import { genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { findValidNonce, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 
@@ -92,6 +92,7 @@ describe('Vote', function () {
                 attestingFee,
                 epochLength,
                 numEpochKeyNoncePerEpoch,
+                maxReputationBudget,
             )
             for (let i = 0; i < 2; i++) {
                 ids[i] = genIdentity()
@@ -145,10 +146,12 @@ describe('Vote', function () {
     describe('Generate reputation proof for verification', () => {
 
         it('reputation proof should be verified valid off-chain and on-chain', async() => {
-            const proveGraffiti = 0
-            const minPosRep = 0, graffitiPreImage = 0
+            const proveGraffiti = BigInt(0)
+            const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            const results = await users[0].genProveReputationProof(BigInt(attesterId), upvoteValue, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[0].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[0], upvoteValue, epoch, BigInt(attesterId))
+            const results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -217,11 +220,13 @@ describe('Vote', function () {
         })
 
         it('submit upvote with different amount of nullifiers should fail', async() => {
-            const proveGraffiti = 0
-            const minPosRep = 0, graffitiPreImage = 0
+            const proveGraffiti = BigInt(0)
+            const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const falseRepAmout = upvoteValue + 1
-            const results = await users[0].genProveReputationProof(BigInt(attesterId), falseRepAmout, epkNonce, minPosRep, proveGraffiti, graffitiPreImage)
+            const epoch = users[0].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[0], falseRepAmout, epoch, BigInt(attesterId))
+            const results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 

@@ -2,7 +2,7 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
-import { genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
+import { genReputationNullifier, genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
 import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
@@ -184,7 +184,36 @@ const genReputationProof = async (args: any) => {
             id,
             commitment,
         )
-        results = await userState.genProveReputationProof(BigInt(attesterId), proveReputationAmount, epkNonce, minRep, proveGraffiti, graffitiPreImage)
+        const nonceList: BigInt[] = []
+        const rep = userState.getRepByAttester(attesterId)
+        const epoch = userState.getUnirepStateCurrentEpoch()
+        let nonceStarter: number = -1
+        if(proveReputationAmount > 0) {
+        // find valid nonce starter
+        for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
+            const reputationNullifier = genReputationNullifier(id.identityNullifier, epoch, n, attesterId)
+            if(!userState.nullifierExist(reputationNullifier)) {
+                nonceStarter = n
+                break
+            }
+        }
+        if(nonceStarter == -1) {
+            console.error('Error: All nullifiers are spent')
+            process.exit(0)
+        }
+        if((nonceStarter + proveReputationAmount) > Number(rep.posRep) - Number(rep.negRep)){
+            console.error('Error: Not enough reputation to spend')
+            process.exit(0)
+        }
+        for (let i = 0; i < proveReputationAmount; i++) {
+            nonceList.push( BigInt(nonceStarter + i) )
+        }
+    }
+    
+    for (let i = proveReputationAmount ; i < maxReputationBudget ; i++) {
+        nonceList.push(BigInt(-1))
+    }
+        results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minRep, proveGraffiti, graffitiPreImage, nonceList)
     }
     
     // TODO: Not sure if this validation is necessary

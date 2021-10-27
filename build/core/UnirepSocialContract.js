@@ -19,16 +19,8 @@ const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/Unir
 class UnirepSocialContract {
     constructor(unirepSocialAddress, providerUrl) {
         this.unlock = async (eth_privkey) => {
-            let ethSk;
             // The deployer's Ethereum private key
-            // The user may either enter it as a command-line option or via the
-            // standard input
-            if (eth_privkey) {
-                ethSk = eth_privkey;
-            }
-            else {
-                ethSk = await utils_1.promptPwd('Your Ethereum private key');
-            }
+            const ethSk = eth_privkey;
             if (!utils_1.validateEthSk(ethSk)) {
                 console.error('Error: invalid Ethereum private key');
                 return '';
@@ -118,15 +110,6 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
-            const epoch = publicSignals[unirep_1.maxReputationBudget];
-            const epochKey = publicSignals[unirep_1.maxReputationBudget + 1];
-            const globalStatetreeRoot = publicSignals[unirep_1.maxReputationBudget + 2];
-            const attesterId = publicSignals[unirep_1.maxReputationBudget + 3];
-            const proveReputationAmount = publicSignals[unirep_1.maxReputationBudget + 4];
-            const minRep = publicSignals[unirep_1.maxReputationBudget + 5];
-            const proveGraffiti = publicSignals[unirep_1.maxReputationBudget + 6];
-            const graffitiPreImage = publicSignals[unirep_1.maxReputationBudget + 7];
             const proofsRelated = this.parseRepuationProof(publicSignals, proof);
             const attestingFee = await this.attestingFee();
             let tx;
@@ -140,7 +123,7 @@ class UnirepSocialContract {
                 }
                 return tx;
             }
-            return { tx: tx, postId: postId };
+            return tx;
         };
         this.leaveComment = async (publicSignals, proof, postId, commentId, commentContent) => {
             if (this.signer != undefined) {
@@ -150,15 +133,6 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
-            const epoch = publicSignals[unirep_1.maxReputationBudget];
-            const epochKey = publicSignals[unirep_1.maxReputationBudget + 1];
-            const globalStatetreeRoot = publicSignals[unirep_1.maxReputationBudget + 2];
-            const attesterId = publicSignals[unirep_1.maxReputationBudget + 3];
-            const proveReputationAmount = publicSignals[unirep_1.maxReputationBudget + 4];
-            const minRep = publicSignals[unirep_1.maxReputationBudget + 5];
-            const proveGraffiti = publicSignals[unirep_1.maxReputationBudget + 6];
-            const graffitiPreImage = publicSignals[unirep_1.maxReputationBudget + 7];
             const proofsRelated = this.parseRepuationProof(publicSignals, proof);
             const attestingFee = await this.attestingFee();
             let tx;
@@ -172,7 +146,7 @@ class UnirepSocialContract {
                 }
                 return tx;
             }
-            return { tx: tx, commentId: commentId };
+            return tx;
         };
         this.vote = async (publicSignals, proof, toEpochKey, epochKeyProofIndex, upvoteValue, downvoteValue) => {
             if (this.signer != undefined) {
