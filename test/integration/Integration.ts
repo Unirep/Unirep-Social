@@ -638,7 +638,7 @@ describe('Integration', function () {
             let tx = await unirepContract.beginEpochTransition()
             let receipt = await tx.wait()
             expect(receipt.status, 'Epoch transition failed').to.equal(1)
-            console.log(`Gas cost of epoch transition): ${receipt.gasUsed.toString()}`)
+            console.log(`Gas cost of epoch transition: ${receipt.gasUsed.toString()}`)
 
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch, 'Current epoch should be 3').to.equal(3)
