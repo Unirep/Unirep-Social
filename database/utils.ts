@@ -161,25 +161,25 @@ const genGSTreeFromDB = async (epoch: number): Promise<IncrementalQuinTree> => {
 * Computes the epoch tree of given epoch
 * @param epoch current epoch
 */
-const genEpochTreeFromDB = async (epoch: number): Promise<SparseMerkleTreeImpl> => {
+// const genEpochTreeFromDB = async (epoch: number): Promise<SparseMerkleTreeImpl> => {
     
-    const _settings = await Settings.findOne()
-    const treeLeaves = await EpochTreeLeaves?.findOne({epoch: epoch})
-    if (!_settings) {
-        throw new Error('Error: should save settings first')
-    }
+//     const _settings = await Settings.findOne()
+//     const treeLeaves = await EpochTreeLeaves?.findOne({epoch: epoch})
+//     if (!_settings) {
+//         throw new Error('Error: should save settings first')
+//     }
 
-    const epochTreeDepth = _settings.epochTreeDepth
+//     const epochTreeDepth = _settings.epochTreeDepth
     
-    const epochTree = await genNewSMT(epochTreeDepth, SMT_ONE_LEAF)
-    const leaves = treeLeaves?.epochTreeLeaves? treeLeaves?.epochTreeLeaves : []
-    for (const leaf of leaves) {
-        const decEpochKey = BigInt(BigInt(add0x(leaf.epochKey)).toString())
-        await epochTree.update(decEpochKey, BigInt(leaf.hashchainResult))
-    }
+//     const epochTree = await genNewSMT(epochTreeDepth, SMT_ONE_LEAF)
+//     const leaves = treeLeaves?.epochTreeLeaves? treeLeaves?.epochTreeLeaves : []
+//     for (const leaf of leaves) {
+//         const decEpochKey = BigInt(BigInt(add0x(leaf.epochKey)).toString())
+//         await epochTree.update(decEpochKey, BigInt(leaf.hashchainResult))
+//     }
 
-    return epochTree
-}
+//     return epochTree
+// }
 
 // /*
 // * Computes the nullifier tree of given epoch
@@ -826,6 +826,23 @@ const getGSTLeaves = async (epoch: number): Promise<IGSTLeaf[]> => {
     return leaves? leaves.GSTLeaves : []
 }
 
+const getEpochTreeLeaves = async (epoch: number): Promise<IEpochTreeLeaf[]> => {
+    const leaves = await EpochTreeLeaves.findOne({epoch: epoch})
+    return leaves? leaves.epochTreeLeaves : []
+}
+
+const GSTRootExists = async (epoch: number, GSTRoot: string | BigInt): Promise<boolean> => {
+    const root = await GSTRoots.findOne({epoch: epoch, GSTRoot: GSTRoot.toString()})
+    if(root) return true
+    return false
+}
+
+const epochTreeRootExists = async (epoch: number, epochTreeRoot: string | BigInt): Promise<boolean> => {
+    const root = await EpochTreeLeaves.findOne({epoch: epoch, epochTreeRoot: epochTreeRoot.toString()})
+    if(root) return true
+    return false
+}
+
 const updateGSTLeaves = async (
     unirepAddress: string,
     provider: ethers.providers.Provider,
@@ -872,6 +889,20 @@ const updateGSTLeaves = async (
         GSTLeaves: leaves,
     })
     await treeLeaves.save()
+}
+
+const updateEpochTreeLeaves = async (
+    epoch: number,
+    epochTreeLeaves: IEpochTreeLeaf[],
+    epochTreeRoot: string,
+) => {
+    const newEpochTreeLeaves = new EpochTreeLeaves({
+        epoch: epoch,
+        epochTreeLeaves: epochTreeLeaves,
+        epochTreeRoot: epochTreeRoot,
+    })
+
+    await newEpochTreeLeaves.save()
 }
 
 /*
@@ -1275,7 +1306,11 @@ export {
     // genProveReputationFromAttesterCircuitInputsFromDB,
     // genUserStateTransitionCircuitInputsFromDB,
     getGSTLeaves,
+    getEpochTreeLeaves,
+    GSTRootExists,
+    epochTreeRootExists,
     updateGSTLeaves,
+    updateEpochTreeLeaves,
     updateDBFromNewGSTLeafInsertedEvent,
     updateDBFromAttestationEvent,
     updateDBFromPostSubmittedEvent,

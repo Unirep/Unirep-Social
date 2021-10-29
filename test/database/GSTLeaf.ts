@@ -1,19 +1,18 @@
 import { ethers as hardhatEthers } from 'hardhat'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { expect } from 'chai'
 import mongoose from 'mongoose'
-import { verifyProof, formatProofForVerifierContract } from "@unirep/circuits"
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genUserStateFromContract, genUnirepStateFromContract } from '@unirep/unirep'
+import { formatProofForVerifierContract } from "@unirep/circuits"
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genUserStateFromContract, genUnirepStateFromContract } from '@unirep/unirep'
 import { deployUnirep } from '@unirep/contracts'
-import { add0x, genIdentity, genIdentityCommitment, genRandomSalt, Identity, IncrementalQuinTree } from '@unirep/crypto'
+import { genIdentity, genIdentityCommitment, Identity, IncrementalQuinTree } from '@unirep/crypto'
 
 import { dbUri } from '../../config/database';
-import { findValidNonce, genNewUserStateTree, getTreeDepthsForTesting } from '../utils'
+import { getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
-import Post, { IPost } from "../../database/models/post";
-import Comment, { IComment } from '../../database/models/comment';
-import { updateDBFromPostSubmittedEvent, updateDBFromCommentSubmittedEvent, updateGSTLeaves, getGSTLeaves } from '../../database/utils'
+import { IEpochTreeLeaf } from '../../database/models/epochTreeLeaf'
+import { updateGSTLeaves, updateEpochTreeLeaves, getGSTLeaves, GSTRootExists, getEpochTreeLeaves, epochTreeRootExists } from '../../database/utils'
 
 
 describe('GSTLeaf', function () {
@@ -23,18 +22,14 @@ describe('GSTLeaf', function () {
     let unirepContract
     let unirepSocialContract
     let GSTree
-    let emptyUserStateRoot
     let ids: Identity[] = []
     let commitments: BigInt[] = []
 
     let accounts: ethers.Signer[]
     let GSTLeaves
     let GSTRoots
-    let results
-    let postId
-    let commentId
-    const text = genRandomSalt().toString()
-    const commentText = genRandomSalt().toString()
+    let epochTreeLeaves: IEpochTreeLeaf[] = []
+    let epochTreeRoot
     let attesterId
 
     before(async () => {
@@ -102,6 +97,23 @@ describe('GSTLeaf', function () {
             }
         })
 
+        it('user get airdrop', async () => {
+            const i = 0
+            const userState = await genUserStateFromContract(
+                hardhatEthers.provider,
+                    unirepContract.address,
+                    0,
+                    ids[i],
+                    commitments[i]
+            )
+            const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
+            const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+
+            let tx = await unirepSocialContract.airdrop(signUpProof, {value: attestingFee})
+            let receipt = await tx.wait()
+            expect(receipt.status).equal(1)
+        })
+
         it('Unirep state before epoch transition', async () => {
             const unirepState = await genUnirepStateFromContract(
                 hardhatEthers.provider,
@@ -143,11 +155,55 @@ describe('GSTLeaf', function () {
             console.log('------------------------------------------------------')
         })
 
+        it('should store epoch tree leaves and root', async () => {
+            const unirepState = await genUnirepStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+            )
+            console.log('----------------------Unirep State----------------------')
+            console.log(unirepState.toJSON(4))
+            console.log('------------------------------------------------------')
+
+            // store GST leaves and roots
+            const unirepJSON = JSON.parse(unirepState.toJSON(4))
+            const epoch = unirepJSON.currentEpoch - 1
+            const _epochTreeLeaves = unirepJSON.latestEpochTreeLeaves
+            epochTreeRoot = unirepJSON.latestEpochTreeRoot
+
+            for (let i = 0; i < _epochTreeLeaves.length; i++) {
+                const parseEpochTreeLeaves = _epochTreeLeaves[i].split(': ')
+                const leaf = {
+                    epochKey: parseEpochTreeLeaves[0],
+                    hashchainResult: parseEpochTreeLeaves[1]
+                }
+                epochTreeLeaves.push(leaf)
+            }
+
+            await updateEpochTreeLeaves(epoch, epochTreeLeaves, epochTreeRoot)
+        })
+
         it('query GST leaves and GST roots should success', async () => {
-            const leaves = await getGSTLeaves(1)
+            const epoch = 1
+            const leaves = await getGSTLeaves(epoch)
             for (let i = 0; i < leaves.length; i++) {
                 expect(leaves[i].hashedLeaf).equal(GSTLeaves[i])
             }
+            for (let i = 0; i < GSTRoots.length; i++) {
+                const rootExists = await GSTRootExists(epoch, GSTRoots[i])
+                expect(rootExists).equal(true)
+            }
+        })
+
+        it('query epoch tree leaves and epoch tree roots should success', async () => {
+            const epoch = 1
+            const leaves = await getEpochTreeLeaves(epoch)
+            for (let i = 0; i < leaves.length; i++) {
+                expect(leaves[i].hashchainResult).equal(epochTreeLeaves[i].hashchainResult)
+                expect(leaves[i].epochKey).equal(epochTreeLeaves[i].epochKey)
+            }
+            const root = await epochTreeRootExists(epoch, epochTreeRoot)
+            expect(root).equal(true)
         })
 
         it('user state transition', async () => {
@@ -235,10 +291,98 @@ describe('GSTLeaf', function () {
                 expect(receipt.status, 'Submit user state transition proof failed').to.equal(1)
             }
         })
+
+        it('Unirep state before epoch transition', async () => {
+            const unirepState = await genUnirepStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+            )
+            console.log('----------------------Unirep State----------------------')
+            console.log(unirepState.toJSON(4))
+            console.log('------------------------------------------------------')
+
+            // store GST leaves and roots
+            const unirepJSON = JSON.parse(unirepState.toJSON(4))
+            const epoch = unirepJSON.currentEpoch
+            GSTLeaves = unirepJSON.latestEpochGSTLeaves
+            GSTRoots = unirepJSON.globalStateTreeRoots
+            await updateGSTLeaves(unirepContract.address, hardhatEthers.provider, epoch, GSTLeaves, GSTRoots)
+        })
+
+        it('epoch transition', async () => {
+            let currentEpoch = await unirepContract.currentEpoch()
+            const prevEpoch = currentEpoch
+            // Fast-forward epochLength of seconds
+            await hardhatEthers.provider.send("evm_increaseTime", [epochLength])
+            // Begin epoch transition
+            let tx = await unirepContract.beginEpochTransition()
+            let receipt = await tx.wait()
+            expect(receipt.status, 'Epoch transition failed').to.equal(1)
+
+            currentEpoch = await unirepContract.currentEpoch()
+            expect(currentEpoch, `Current epoch should be ${prevEpoch.toNumber()+1}`).to.equal(prevEpoch.toNumber() + 1)
+
+            const unirepState = await genUnirepStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+            )
+            console.log('----------------------Unirep State----------------------')
+            console.log(unirepState.toJSON(4))
+            console.log('------------------------------------------------------')
+        })
+
+        it('should store epoch tree leaves and root', async () => {
+            const unirepState = await genUnirepStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+            )
+            console.log('----------------------Unirep State----------------------')
+            console.log(unirepState.toJSON(4))
+            console.log('------------------------------------------------------')
+
+            // store GST leaves and roots
+            const unirepJSON = JSON.parse(unirepState.toJSON(4))
+            const epoch = unirepJSON.currentEpoch - 1
+            const _epochTreeLeaves = unirepJSON.latestEpochTreeLeaves
+            epochTreeRoot = unirepJSON.latestEpochTreeRoot
+            
+            epochTreeLeaves = []
+            for (let i = 0; i < _epochTreeLeaves.length; i++) {
+                const parseEpochTreeLeaves = _epochTreeLeaves[i].split(': ')
+                const leaf = {
+                    epochKey: parseEpochTreeLeaves[0],
+                    hashchainResult: parseEpochTreeLeaves[1]
+                }
+                epochTreeLeaves.push(leaf)
+            }
+
+            await updateEpochTreeLeaves(epoch, epochTreeLeaves, epochTreeRoot)
+        })
+
+        it('query GST leaves and GST roots should success', async () => {
+            const epoch = 2
+            const leaves = await getGSTLeaves(epoch)
+            for (let i = 0; i < leaves.length; i++) {
+                expect(leaves[i].hashedLeaf).equal(GSTLeaves[i])
+            }
+            for (let i = 0; i < GSTRoots.length; i++) {
+                const rootExists = await GSTRootExists(epoch, GSTRoots[i])
+                expect(rootExists).equal(true)
+            }
+        })
+
+        it('query epoch tree leaves and epoch tree roots should success', async () => {
+            const epoch = 2
+            const leaves = await getEpochTreeLeaves(epoch)
+            for (let i = 0; i < leaves.length; i++) {
+                expect(leaves[i].hashchainResult).equal(epochTreeLeaves[i].hashchainResult)
+                expect(leaves[i].epochKey).equal(epochTreeLeaves[i].epochKey)
+            }
+            const root = await epochTreeRootExists(epoch, epochTreeRoot)
+            expect(root).equal(true)
+        })
     })
-
-    describe('Generate reputation proof for verification', () => {
-
-    })
-
 })
