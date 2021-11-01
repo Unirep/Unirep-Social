@@ -12,7 +12,7 @@ import { getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
 import { deployUnirepSocial } from '../../core/utils'
 import { IEpochTreeLeaf } from '../../database/models/epochTreeLeaf'
-import { updateGSTLeaves, updateEpochTreeLeaves, getGSTLeaves, GSTRootExists, getEpochTreeLeaves, epochTreeRootExists } from '../../database/utils'
+import { updateGSTLeaves, updateEpochTreeLeaves, getGSTLeaves, GSTRootExists, getEpochTreeLeaves, epochTreeRootExists, saveNullifier, nullifierExists } from '../../database/utils'
 
 
 describe('GSTLeaf', function () {
@@ -30,6 +30,7 @@ describe('GSTLeaf', function () {
     let GSTRoots
     let epochTreeLeaves: IEpochTreeLeaf[] = []
     let epochTreeRoot
+    let nullifiers
     let attesterId
 
     before(async () => {
@@ -98,20 +99,34 @@ describe('GSTLeaf', function () {
         })
 
         it('user get airdrop', async () => {
-            const i = 0
-            const userState = await genUserStateFromContract(
-                hardhatEthers.provider,
+            for (let i = 0; i < 3; i++) {
+                const userState = await genUserStateFromContract(
+                    hardhatEthers.provider,
                     unirepContract.address,
                     0,
                     ids[i],
                     commitments[i]
-            )
-            const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
-            const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+                )
+                const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
+                const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
 
-            let tx = await unirepSocialContract.airdrop(signUpProof, {value: attestingFee})
-            let receipt = await tx.wait()
-            expect(receipt.status).equal(1)
+                // Check if Global state tree root exists
+                // global state tree roots in the current epoch 
+                // (e.g. verify GSTroots in epoch 1, and current epoch = 1)
+                // should check the unirep state
+                // otherwise, GSTRoots are stored in database
+                const unirepStateJson = JSON.parse(userState.toJSON())
+                const currentEpochGSTRoots = unirepStateJson.unirepState.globalStateTreeRoots
+                let found = 0
+                for (let j = 0; j < currentEpochGSTRoots.length; j++) {
+                    if(currentEpochGSTRoots[j] == proofResults.globalStateTreeRoot) found = 1
+                }
+                expect(found).equal(1)
+
+                let tx = await unirepSocialContract.airdrop(signUpProof, {value: attestingFee})
+                let receipt = await tx.wait()
+                expect(receipt.status).equal(1)
+            }
         })
 
         it('Unirep state before epoch transition', async () => {
@@ -202,8 +217,8 @@ describe('GSTLeaf', function () {
                 expect(leaves[i].hashchainResult).equal(epochTreeLeaves[i].hashchainResult)
                 expect(leaves[i].epochKey).equal(epochTreeLeaves[i].epochKey)
             }
-            const root = await epochTreeRootExists(epoch, epochTreeRoot)
-            expect(root).equal(true)
+            const rootExists = await epochTreeRootExists(epoch, epochTreeRoot)
+            expect(rootExists).equal(true)
         })
 
         it('user state transition', async () => {
@@ -273,6 +288,12 @@ describe('GSTLeaf', function () {
                 const epochTreeRoot = results.finalTransitionProof.fromEpochTree
                 const finalProof = formatProofForVerifierContract(results.finalTransitionProof.proof)
 
+                // verify GST root and epoch tree root from DB
+                const _epochTreeRootExists = await epochTreeRootExists(fromEpoch, epochTreeRoot)
+                expect(_epochTreeRootExists).equal(true)
+                const _GSTRootExists = await GSTRootExists(fromEpoch, fromGSTreeRoot)
+                expect(_GSTRootExists).equal(true)
+
                 const transitionProof = [
                     newGSTLeaf,
                     outputEpkNullifiers,
@@ -289,6 +310,58 @@ describe('GSTLeaf', function () {
                 )
                 receipt = await tx.wait()
                 expect(receipt.status, 'Submit user state transition proof failed').to.equal(1)
+            }
+        })
+
+        it('save epoch key nullifiers', async () => {
+            const unirepState = await genUnirepStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                0,
+            )
+            const epoch = JSON.parse(unirepState.toJSON()).currentEpoch
+            nullifiers = Object.keys(JSON.parse(unirepState.toJSON()).nullifiers)
+            for (let l of nullifiers) {
+                await saveNullifier(epoch, l)
+            }
+        })
+
+        it('query nullifier should succeed', async () => {
+            for(let l of nullifiers) {
+                const foundNullifier = await nullifierExists(l)
+                expect(foundNullifier).equal(true)
+            }
+        })
+
+        it('user get airdrop', async () => {
+            for (let i = 0; i < 3; i++) {
+                const userState = await genUserStateFromContract(
+                    hardhatEthers.provider,
+                    unirepContract.address,
+                    0,
+                    ids[i],
+                    commitments[i]
+                )
+                const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
+                const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+
+                let tx = await unirepSocialContract.airdrop(signUpProof, {value: attestingFee})
+                let receipt = await tx.wait()
+                expect(receipt.status).equal(1)
+            }
+        })
+
+        it('sign up should succeed', async () => {
+            for (let i = 0; i < 3; i++) {
+                const id = genIdentity()
+                const commitment = genIdentityCommitment(id) 
+            
+                const tx = await unirepSocialContract.userSignUp(commitment)
+                const receipt = await tx.wait()
+                expect(receipt.status).equal(1)
+
+                ids.push(id)
+                commitments.push(commitment)
             }
         })
 

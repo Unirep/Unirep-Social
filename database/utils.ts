@@ -12,7 +12,7 @@ import Comment, { IComment } from "../database/models/comment";
 // import UserTransitionedState, { IUserTransitionedState } from "../database/models/userTransitionedState";
 import GSTLeaves, { IGSTLeaf, IGSTLeaves } from '../database/models/GSTLeaf'
 import EpochTreeLeaves, { IEpochTreeLeaf } from '../database/models/epochTreeLeaf'
-import Nullifiers from '../database/models/nullifiers'
+import Nullifier, { INullifier } from '../database/models/nullifiers'
 
 import { hash5, hashLeftRight, IncrementalQuinTree, stringifyBigInts } from 'maci-crypto'
 import { computeEmptyUserStateRoot, defaultUserStateLeaf, genEpochKey, genEpochKeyNullifier, genNewSMT, SMT_ONE_LEAF, SMT_ZERO_LEAF } from '../test/utils'
@@ -276,10 +276,15 @@ const getAttestationsFromDB = async (epochKey: string): Promise<IAttestation[] >
 //     return result
 // }
 
-const nullifierExist = async (nullifier: string): Promise<boolean> => {
-    const leaf = await Nullifiers.findOne({nullifier: nullifier})
-    if (leaf) return true
-    else return false
+const nullifierExists = async (nullifier: string, epoch?: number): Promise<boolean> => {
+    const n = await Nullifier.findOne({
+        $or: [
+            {epoch: epoch, nullifier: nullifier},
+            {nullifier: nullifier},
+        ]
+    })
+    if (n != undefined) return true
+    return false
 }
 
 
@@ -833,13 +838,13 @@ const getEpochTreeLeaves = async (epoch: number): Promise<IEpochTreeLeaf[]> => {
 
 const GSTRootExists = async (epoch: number, GSTRoot: string | BigInt): Promise<boolean> => {
     const root = await GSTRoots.findOne({epoch: epoch, GSTRoot: GSTRoot.toString()})
-    if(root) return true
+    if(root != undefined) return true
     return false
 }
 
 const epochTreeRootExists = async (epoch: number, epochTreeRoot: string | BigInt): Promise<boolean> => {
     const root = await EpochTreeLeaves.findOne({epoch: epoch, epochTreeRoot: epochTreeRoot.toString()})
-    if(root) return true
+    if(root != undefined) return true
     return false
 }
 
@@ -903,6 +908,14 @@ const updateEpochTreeLeaves = async (
     })
 
     await newEpochTreeLeaves.save()
+}
+
+const saveNullifier = async (_epoch: number, _nullifier: string) => {
+    const nullifier: INullifier = new Nullifier({
+        epoch: _epoch,
+        nullifier: _nullifier
+    })
+    await nullifier.save()
 }
 
 /*
@@ -1305,12 +1318,14 @@ export {
     // genProveReputationCircuitInputsFromDB,
     // genProveReputationFromAttesterCircuitInputsFromDB,
     // genUserStateTransitionCircuitInputsFromDB,
+    nullifierExists,
     getGSTLeaves,
     getEpochTreeLeaves,
     GSTRootExists,
     epochTreeRootExists,
     updateGSTLeaves,
     updateEpochTreeLeaves,
+    saveNullifier,
     updateDBFromNewGSTLeafInsertedEvent,
     updateDBFromAttestationEvent,
     updateDBFromPostSubmittedEvent,

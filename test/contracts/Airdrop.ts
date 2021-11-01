@@ -26,6 +26,7 @@ describe('Airdrop', function () {
     const repNullifiersAmount = 0
     const epkNonce = 0
     const proofIndexes: BigInt[] = []
+    let duplicatedProof
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -113,9 +114,9 @@ describe('Airdrop', function () {
     })
 
     it('user can get airdrop positive reputation through calling airdrop function in Unirep Social', async() => {
-        const nonce = 0
         const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
         const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+        duplicatedProof = signUpProof
 
         const isSignUpProofValid = await unirepSocialContract.verifyUserSignUp(
             proofResults.epoch,
@@ -135,16 +136,31 @@ describe('Airdrop', function () {
             BigInt(defaultAirdroppedReputation),
             BigInt(0),
             BigInt(0),
-            BigInt(false),
+            BigInt(true),
         )
         unirepState.addAttestation(proofResults.epochKey, attestationToEpochKey)
+    })
 
+    it('submit a duplicated airdrop proof should fail', async () => {
+        await expect(unirepSocialContract.airdrop(duplicatedProof, {value: attestingFee}))
+            .to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
+    })
+
+    it('submit an epoch key twice should fail (different proof)', async () => {
+        const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
+        const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+        expect(signUpProof[4][0]).not.equal(duplicatedProof[4][0])
+        await expect(unirepSocialContract.airdrop(signUpProof, {value: attestingFee}))
+            .to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
+    })
+
+    it('user can receive airdrop after user state transition', async () => {
         // epoch transition
         let currentEpoch = await unirepContract.currentEpoch()
         const prevEpoch = currentEpoch
         await hardhatEthers.provider.send("evm_increaseTime", [epochLength])  // Fast-forward epochLength of seconds
-        tx = await unirepContract.beginEpochTransition()
-        receipt = await tx.wait()
+        let tx = await unirepContract.beginEpochTransition()
+        let receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
 
