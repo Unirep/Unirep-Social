@@ -4,7 +4,7 @@ import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { identityPrefix, signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -51,8 +51,6 @@ const genAirdropProof = async (args: any) => {
     const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
-    
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
 
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
@@ -62,7 +60,6 @@ const genAirdropProof = async (args: any) => {
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
-        startBlock,
         id,
         commitment,
     )
@@ -82,7 +79,6 @@ const genAirdropProof = async (args: any) => {
     console.log(`Epoch key of epoch ${results.epoch}: ${results.epochKey}`)
     console.log(signUpProofPrefix + encodedProof)
     console.log(signUpPublicSignalsPrefix + encodedPublicSignals)
-    process.exit(0)
 }
 
 export {

@@ -4,7 +4,7 @@ import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypt
 import { verifyProof } from '@unirep/circuits'
 import { genUnirepStateFromContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { identityPrefix, signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -80,11 +80,9 @@ const giveAirdrop = async (args: any) => {
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
 
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const unirepState = await genUnirepStateFromContract(
         provider,
         unirepContract.address,
-        startBlock,
     )
 
     // Parse Inputs

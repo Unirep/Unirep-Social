@@ -24,7 +24,7 @@ import { add0x, SparseMerkleTreeImpl } from '@unirep/crypto'
 import { defaultAirdroppedReputation, maxReputationBudget } from '../config/socialMedia'
 import { dbUri } from '../config/database'
 import { Reputation } from '@unirep/unirep'
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from '../cli/defaults'
+import { DEFAULT_ETH_PROVIDER, } from '../cli/defaults'
 import GSTRoots, { IGSTRoot } from './models/GSTRoots'
 
 enum action {

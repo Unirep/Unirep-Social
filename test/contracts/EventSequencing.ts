@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { expect } from 'chai'
 import { genRandomSalt, genIdentity, genIdentityCommitment } from '@unirep/crypto'
 import { deployUnirep } from '@unirep/contracts'
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget } from '@unirep/unirep'
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, maxUsers, maxAttesters } from '@unirep/unirep'
 
 import { genEpochKey, getTreeDepthsForTesting } from '../utils'
 import { defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
@@ -61,7 +61,15 @@ describe('EventSequencing', function (){
         accounts = await hardhatEthers.getSigners()
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
     })
 

@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { genRandomSalt, genIdentity, genIdentityCommitment, IncrementalQuinTree, hashLeftRight, } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts'
-import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IUserStateLeaf, computeEmptyUserStateRoot, IAttestation, genUserStateFromContract, genUnirepStateFromContract } from '@unirep/unirep'
+import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IUserStateLeaf, computeEmptyUserStateRoot, IAttestation, genUserStateFromContract, genUnirepStateFromContract, ISettings, maxUsers, maxAttesters } from '@unirep/unirep'
 
 import { findValidNonce, genEpochKey, getTreeDepthsForTesting } from '../utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../../config/socialMedia'
@@ -50,7 +50,15 @@ describe('Integration', function () {
         accounts = await hardhatEthers.getSigners()
 
         _treeDepths = getTreeDepthsForTesting("circuit")
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
         unirepSocialId = (await unirepContract.attesters(unirepSocialContract.address)).toNumber()
 
@@ -58,15 +66,17 @@ describe('Integration', function () {
         emptyUserStateRoot = computeEmptyUserStateRoot(circuitUserStateTreeDepth)
         blankGSLeaf = hashLeftRight(BigInt(0), emptyUserStateRoot)
 
-        unirepState = new UnirepState(
-            circuitGlobalStateTreeDepth,
-            circuitUserStateTreeDepth,
-            circuitEpochTreeDepth,
-            attestingFee,
-            epochLength,
-            numEpochKeyNoncePerEpoch,
-            maxReputationBudget,
-        )
+        const setting: ISettings = {
+            globalStateTreeDepth: _treeDepths.globalStateTreeDepth,
+            userStateTreeDepth: _treeDepths.userStateTreeDepth,
+            epochTreeDepth: _treeDepths.epochTreeDepth,
+            attestingFee: attestingFee,
+            epochLength: epochLength,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            defaultGSTLeaf: blankGSLeaf
+        }
+        unirepState = new UnirepState(setting)
     })
 
     describe('First epoch', () => {
@@ -95,7 +105,6 @@ describe('Integration', function () {
             users[firstUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[firstUser],
                 userCommitments[firstUser],
             )
@@ -111,7 +120,6 @@ describe('Integration', function () {
             unirepState = await genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
             )
             
             const newLeafFilter = unirepContract.filters.NewGSTLeafInserted(currentEpoch)
@@ -152,7 +160,6 @@ describe('Integration', function () {
             unirepState = await genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
             )
             console.log('----------------------Unirep State----------------------')
             console.log(unirepState.toJSON(4))
@@ -177,7 +184,6 @@ describe('Integration', function () {
             users[firstUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[firstUser],
                 userCommitments[firstUser],
             )
@@ -277,7 +283,6 @@ describe('Integration', function () {
             const userStateFromContract = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 users[firstUser].id,
                 users[firstUser].commitment,
             )
@@ -314,7 +319,6 @@ describe('Integration', function () {
             users[secondUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[secondUser],
                 userCommitments[secondUser],
             )
@@ -355,7 +359,6 @@ describe('Integration', function () {
             users[firstUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[firstUser],
                 userCommitments[firstUser],
             )
@@ -578,7 +581,6 @@ describe('Integration', function () {
             unirepState = await genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
             )
 
             // First filter by epoch
@@ -646,7 +648,6 @@ describe('Integration', function () {
             unirepState = await genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
             )
             console.log('----------------------Unirep State----------------------')
             console.log(unirepState.toJSON(4))
@@ -671,7 +672,6 @@ describe('Integration', function () {
             users[firstUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[firstUser],
                 userCommitments[firstUser],
             )
@@ -784,7 +784,6 @@ describe('Integration', function () {
             const userStateFromContract = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 users[firstUser].id,
                 users[firstUser].commitment,
             )
@@ -805,7 +804,6 @@ describe('Integration', function () {
             users[firstUser] = await genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
-                0,
                 userIds[firstUser],
                 userCommitments[firstUser],
             )

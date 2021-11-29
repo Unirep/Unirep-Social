@@ -4,7 +4,7 @@ import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix, identityPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -70,8 +70,6 @@ const genEpochKeyAndProof = async (args: any) => {
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
     
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
-
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
     const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
@@ -88,7 +86,6 @@ const genEpochKeyAndProof = async (args: any) => {
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
-        startBlock,
         id,
         commitment,
     )

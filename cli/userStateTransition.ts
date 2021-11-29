@@ -4,7 +4,7 @@ import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
 import { verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { identityPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -83,8 +83,6 @@ const userStateTransition = async (args: any) => {
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
     
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
-
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
@@ -93,10 +91,10 @@ const userStateTransition = async (args: any) => {
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
-        startBlock,
         id,
         commitment,
     )
+    console.log(userState.toJSON(4))
     let results
 
     // let circuitInputs: any
@@ -112,13 +110,12 @@ const userStateTransition = async (args: any) => {
 
         console.log('generating proving circuit from contract...')
 
-        const userState = await genUserStateFromContract(
-            provider,
-            unirepContract.address,
-            startBlock,
-            id,
-            commitment,
-        )
+        // const userState = await genUserStateFromContract(
+        //     provider,
+        //     unirepContract.address,
+        //     id,
+        //     commitment,
+        // )
         results = await userState.genUserStateTransitionProofs()
 
     }

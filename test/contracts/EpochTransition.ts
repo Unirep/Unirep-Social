@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { genRandomSalt, hashLeftRight, genIdentity, genIdentityCommitment } from '@unirep/crypto'
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
-import { attestingFee, epochLength, maxReputationBudget, numEpochKeyNoncePerEpoch, computeEmptyUserStateRoot, genEpochKey, getTreeDepthsForTesting, Attestation, IEpochTreeLeaf, UnirepState, UserState } from '@unirep/unirep'
+import { epochLength, maxReputationBudget, numEpochKeyNoncePerEpoch, computeEmptyUserStateRoot, genEpochKey, getTreeDepthsForTesting, Attestation, IEpochTreeLeaf, UnirepState, UserState, maxUsers, maxAttesters, ISettings } from '@unirep/unirep'
 import { deployUnirepSocial } from '../../core/utils'
 
 describe('Epoch Transition', function () {
@@ -28,22 +28,37 @@ describe('Epoch Transition', function () {
     const signedUpInLeaf = 1
     let epochKeyProofIndex
     const proofIndexes: BigInt[] = []
+    const attestingFee = ethers.utils.parseEther("0.1") // to avoid VM Exception: 'Address: insufficient balance'
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
         const _treeDepths = getTreeDepthsForTesting("circuit")
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
-        unirepState = new UnirepState(
-            _treeDepths.globalStateTreeDepth,
-            _treeDepths.userStateTreeDepth,
-            _treeDepths.epochTreeDepth,
-            attestingFee,
-            epochLength,
-            numEpochKeyNoncePerEpoch,
-            maxReputationBudget,
-        )
+        
+        const emptyUserStateRoot = computeEmptyUserStateRoot(_treeDepths.userStateTreeDepth)
+        const blankGSLeaf = hashLeftRight(BigInt(0), emptyUserStateRoot)
+
+        const setting: ISettings = {
+            globalStateTreeDepth: _treeDepths.globalStateTreeDepth,
+            userStateTreeDepth: _treeDepths.userStateTreeDepth,
+            epochTreeDepth: _treeDepths.epochTreeDepth,
+            attestingFee: attestingFee,
+            epochLength: epochLength,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            defaultGSTLeaf: blankGSLeaf
+        }
+        unirepState = new UnirepState(setting)
 
         console.log('User sign up')
         userId = genIdentity()
@@ -53,7 +68,6 @@ describe('Epoch Transition', function () {
         expect(receipt.status).equal(1)
         
         const currentEpoch = await unirepContract.currentEpoch()
-        const emptyUserStateRoot = computeEmptyUserStateRoot(_treeDepths.userStateTreeDepth)
         const hashedStateLeaf = await unirepContract.hashStateLeaf([userCommitment, emptyUserStateRoot])
 
         unirepState.signUp(currentEpoch.toNumber(), BigInt(hashedStateLeaf))
@@ -432,6 +446,7 @@ describe('Epoch Transition', function () {
         expect(receipt.status, 'Submit user state transition proof failed').to.equal(1)
         console.log("Gas cost of submit a user state transition proof:", receipt.gasUsed.toString())
 
+        userState.saveAttestations()
         const newState = await userState.genNewUserStateAfterTransition()
         const epkNullifiers = userState.getEpochKeyNullifiers(1)
         const epoch_ = await unirepContract.currentEpoch()

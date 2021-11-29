@@ -8,7 +8,6 @@ import {
 } from "../config/socialMedia"
 import { 
     DEFAULT_ETH_PROVIDER,
-    DEFAULT_START_BLOCK,
     DEFAULT_MAX_EPOCH_KEY_NONCE,
     DEFAULT_EPOCH_LENGTH,
     DEFAULT_ATTESTING_FEE,
@@ -33,7 +32,6 @@ export {
     defaultCommentReputation, 
     maxReputationBudget,
     DEFAULT_ETH_PROVIDER,
-    DEFAULT_START_BLOCK,
     DEFAULT_MAX_EPOCH_KEY_NONCE,
     DEFAULT_EPOCH_LENGTH,
     DEFAULT_ATTESTING_FEE,

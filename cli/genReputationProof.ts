@@ -4,7 +4,7 @@ import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypt
 import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genReputationNullifier, genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
@@ -110,8 +110,6 @@ const genReputationProof = async (args: any) => {
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
     
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
-
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
     const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
@@ -180,7 +178,6 @@ const genReputationProof = async (args: any) => {
         const userState = await genUserStateFromContract(
             provider,
             unirepContract.address,
-            startBlock,
             id,
             commitment,
         )

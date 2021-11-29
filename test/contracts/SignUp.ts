@@ -1,7 +1,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, maxUsers, userStateTreeDepth } from '@unirep/unirep'
+import { attestingFee, epochLength, epochTreeDepth, globalStateTreeDepth, numEpochKeyNoncePerEpoch, userStateTreeDepth, maxReputationBudget } from '@unirep/unirep'
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, IncrementalQuinTree } from '@unirep/crypto'
 
@@ -18,12 +18,22 @@ describe('Signup', function () {
     let emptyUserStateRoot
     
     let accounts: ethers.Signer[]
+    const maxUsers = 3
+    const maxAttesters = 3
     
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
         const _treeDepths = getTreeDepthsForTesting("contract")
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
 
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()

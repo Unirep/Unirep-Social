@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { genRandomSalt, hash5, hashLeftRight, genIdentity, genIdentityCommitment } from '@unirep/crypto'
 import { verifyProof, formatProofForVerifierContract } from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts'
-import { attestingFee, circuitUserStateTreeDepth, epochLength, maxReputationBudget, numEpochKeyNoncePerEpoch, UnirepState, UserState, getTreeDepthsForTesting, IEpochTreeLeaf, Attestation } from '@unirep/unirep'
+import { attestingFee, circuitUserStateTreeDepth, epochLength, maxReputationBudget, numEpochKeyNoncePerEpoch, UnirepState, UserState, getTreeDepthsForTesting, IEpochTreeLeaf, Attestation, maxUsers, maxAttesters, computeEmptyUserStateRoot, ISettings } from '@unirep/unirep'
 
 import { genNewSMT } from '../utils'
 import { deployUnirepSocial } from '../../core/utils'
@@ -31,17 +31,31 @@ describe('Airdrop', function () {
     before(async () => {
         accounts = await hardhatEthers.getSigners()
         const _treeDepths = getTreeDepthsForTesting('circuit')
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
-        unirepState = new UnirepState(
-            _treeDepths.globalStateTreeDepth,
-            _treeDepths.userStateTreeDepth,
-            _treeDepths.epochTreeDepth,
-            attestingFee,
-            epochLength,
-            numEpochKeyNoncePerEpoch,
-            maxReputationBudget,
-        )
+        
+        const emptyUserStateRoot = computeEmptyUserStateRoot(_treeDepths.userStateTreeDepth)
+        const blankGSLeaf = hashLeftRight(BigInt(0), emptyUserStateRoot)
+
+        const setting: ISettings = {
+            globalStateTreeDepth: _treeDepths.globalStateTreeDepth,
+            userStateTreeDepth: _treeDepths.userStateTreeDepth,
+            epochTreeDepth: _treeDepths.epochTreeDepth,
+            attestingFee: attestingFee,
+            epochLength: epochLength,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            defaultGSTLeaf: blankGSLeaf
+        }
+        unirepState = new UnirepState(setting)
     })
 
     it('compute SMT root should succeed', async () => {
@@ -368,7 +382,8 @@ describe('Airdrop', function () {
         expect(receipt.status, 'Submit user state transition proof failed').to.equal(1)
         console.log("Gas cost of submit a user state transition proof:", receipt.gasUsed.toString())
         numLeaf ++
-
+        
+        userState.saveAttestations()
         const newState = await userState.genNewUserStateAfterTransition()
         const epkNullifiers = userState.getEpochKeyNullifiers(1)
         const epoch_ = await unirepContract.currentEpoch()

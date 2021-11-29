@@ -12,7 +12,7 @@ import { ethers } from 'ethers'
 import { computeEmptyUserStateRoot, genNewSMT, SMT_ONE_LEAF, SMT_ZERO_LEAF } from '../core/utils'
 import { epochTreeDepth, globalStateTreeDepth, nullifierTreeDepth, numAttestationsPerEpochKey, numEpochKeyNoncePerEpoch, userStateTreeDepth } from '../config/testLocal'
 import { add0x, SparseMerkleTreeImpl } from '../crypto/SMT'
-import { DEFAULT_START_BLOCK } from '../cli/defaults'
+// import { DEFAULT_START_BLOCK } from '../cli/defaults'
 import Unirep from "../artifacts/contracts/Unirep.sol/Unirep.json"
 import UserTransitionedState, { IUserTransitionedState } from './models/userTransitionedState'
 import assert from 'assert'
@@ -224,7 +224,7 @@ class UnirepState {
 
     public userSignUp = async (
         event: ethers.Event,
-        startBlock: number  = DEFAULT_START_BLOCK,
+        // startBlock: number  = DEFAULT_START_BLOCK,
     ) => {
         // The event has been processed
         if(event.blockNumber <= startBlock) return
@@ -248,7 +248,7 @@ class UnirepState {
     public epochEnded = async (
         event: ethers.Event,
         unirepContract: ethers.Contract,
-        startBlock: number  = DEFAULT_START_BLOCK,
+        // startBlock: number  = DEFAULT_START_BLOCK,
     ): Promise<void> => {
         // The event has been processed
         if(event.blockNumber <= startBlock) return
@@ -288,7 +288,7 @@ class UnirepState {
 
     public userStateTransition = async (
         event: ethers.Event,
-        startBlock: number  = DEFAULT_START_BLOCK,
+        // startBlock: number  = DEFAULT_START_BLOCK,
     ) => {
 
         // The event has been processed

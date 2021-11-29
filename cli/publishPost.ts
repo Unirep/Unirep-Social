@@ -129,6 +129,7 @@ const publishPost = async (args: any) => {
 
     console.log('Post ID:', postId)
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
+    await tx.wait()
     const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
     if(tx != undefined){
         console.log('Transaction hash:', tx?.hash)

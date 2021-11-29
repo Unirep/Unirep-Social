@@ -2,7 +2,7 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { genUnirepStateFromContract, UnirepContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -69,11 +69,9 @@ const verifyEpochKeyProof = async (args: any) => {
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
     
-    const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
     const unirepState = await genUnirepStateFromContract(
         provider,
         unirepContract.address,
-        startBlock,
     )
     
     const decodedProof = base64url.decode(args.proof.slice(epkProofPrefix.length))

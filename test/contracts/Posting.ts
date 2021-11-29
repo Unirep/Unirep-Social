@@ -2,7 +2,7 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
 import { verifyProof, formatProofForVerifierContract } from "@unirep/circuits"
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepState, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genNewSMT } from '@unirep/unirep'
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepState, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genNewSMT, maxAttesters, ISettings } from '@unirep/unirep'
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
 
@@ -34,7 +34,15 @@ describe('Post', function () {
         accounts = await hardhatEthers.getSigners()
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths)
+        const _settings = {
+            maxUsers: maxUsers,
+            maxAttesters: maxAttesters,
+            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxReputationBudget: maxReputationBudget,
+            epochLength: epochLength,
+            attestingFee: attestingFee
+        }
+        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
 
         const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
@@ -85,15 +93,21 @@ describe('Post', function () {
         it('sign up should succeed', async () => {
             let GSTreeLeafIndex: number = 0
             const currentEpoch = await unirepContract.currentEpoch()
-            unirepState = new UnirepState(
-                circuitGlobalStateTreeDepth,
-                circuitUserStateTreeDepth,
-                circuitEpochTreeDepth,
-                attestingFee,
-                epochLength,
-                numEpochKeyNoncePerEpoch,
-                maxReputationBudget,
-            )
+
+            const treeDepths_ = await unirepContract.treeDepths()
+            const blankGSLeaf = await unirepContract.hashedBlankStateLeaf()
+            const setting: ISettings = {
+                globalStateTreeDepth: treeDepths_.globalStateTreeDepth,
+                userStateTreeDepth: treeDepths_.userStateTreeDepth,
+                epochTreeDepth: treeDepths_.epochTreeDepth,
+                attestingFee: attestingFee,
+                epochLength: epochLength,
+                numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+                maxReputationBudget: maxReputationBudget,
+                defaultGSTLeaf: blankGSLeaf
+            }
+            unirepState = new UnirepState(setting)
+            
             for (let i = 0; i < 2; i++) {
                 ids[i] = genIdentity()
                 commitments[i] = genIdentityCommitment(ids[i])

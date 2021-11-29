@@ -385,18 +385,20 @@ export class UnirepSocialContract {
         const proofIndexes: BigInt[] = []
         let tx = await this.submitStartTransitionProof(results.startTransitionProof)
         txList.push(tx)
+        await tx.wait()
         const proofIndex = await this.getStartTransitionProofIndex(results.startTransitionProof)
         proofIndexes.push(BigInt(proofIndex))
 
         for (let i = 0; i < results.processAttestationProofs.length; i++) {
             tx = await this.submitProcessAttestationsProof(results.processAttestationProofs[i])
             txList.push(tx)
+            await tx.wait()
             const proofIndex = await this.getProcessAttestationsProofIndex(results.processAttestationProofs[i])
             proofIndexes.push(BigInt(proofIndex))
         }
-
         tx = await this.submitUserStateTransitionProof(results.finalTransitionProof, proofIndexes)
         txList.push(tx)
+        await tx.wait()
         return txList
     }
 

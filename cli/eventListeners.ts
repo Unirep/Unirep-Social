@@ -6,7 +6,7 @@ import {
   validateEthAddress,
 } from './utils'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_START_BLOCK } from './defaults'
+import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { saveSettingsFromContract,
   updateDBFromNewGSTLeafInsertedEvent,
   updateDBFromAttestationEvent,
@@ -75,7 +75,7 @@ const eventListeners = async (args: any) => {
   }
 
   const provider = new ethers.providers.JsonRpcProvider(ethProvider)
-  const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
+  // const startBlock = (args.start_block) ? args.start_block : DEFAULT_START_BLOCK
   const currentBlock = await provider.getBlockNumber()
   const unirepSocialContract = new ethers.Contract(
     unirepSocialAddress,
