@@ -459,4 +459,10 @@ describe('Airdrop', function () {
         const hashedLeaf = hashLeftRight(userCommitment, SMTRoot)
         expect(newGSTLeaf).equal(hashedLeaf)
     })
+
+    it('query airdrop event', async () => {
+        const airdropFilter = unirepSocialContract.filters.AirdropSubmitted()
+        const airdropEvents = await unirepSocialContract.queryFilter(airdropFilter)
+        expect(airdropEvents).not.equal(0)
+    })
 })

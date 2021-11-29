@@ -34,6 +34,12 @@ contract UnirepSocial {
         uint256 indexed _identityCommitment
     );
 
+    event AirdropSubmitted(
+        uint256 indexed _epoch,
+        uint256 indexed _epochKey,
+        Unirep.SignUpProofRelated proofRelated
+    );
+
     event PostSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _postId,
@@ -179,6 +185,12 @@ contract UnirepSocial {
 
         // Set the epoch key has been airdropped
         isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
+
+        emit AirdropSubmitted(
+            unirep.currentEpoch(),
+            _signUpProofData.epochKey, 
+            _signUpProofData
+        );
     }
 
     function startUserStateTransition(
