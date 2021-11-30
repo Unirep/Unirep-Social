@@ -28,6 +28,14 @@ contract UnirepSocial {
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
 
+    // A mapping between post ID and if the post ID is submitted before
+    // The post ID should be unique
+    mapping(uint256 => bool) public isPostIDSubmitted; 
+
+    // A mapping between comment ID and if the comment ID is submitted before
+    // The comment ID should be unique
+    mapping(uint256 => bool) public isCommentIDSubmitted; 
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -103,11 +111,15 @@ contract UnirepSocial {
         string memory hashedContent, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
+        require(isPostIDSubmitted[postId] == false, "Unirep Social: duplicated post ID");
         require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
         unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+
+        // Save the post ID
+        isPostIDSubmitted[postId] = true;
 
         emit PostSubmitted(
             unirep.currentEpoch(),
@@ -124,11 +136,16 @@ contract UnirepSocial {
         string memory hashedContent, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
+        require(isPostIDSubmitted[postId] == true, "Unirep Social: should leave comment to a submiited post");
+        require(isCommentIDSubmitted[commentId] == false, "Unirep Social: duplicated comment ID");
         require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
         unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+
+        // Save comment ID
+        isCommentIDSubmitted[commentId] = true;
     
         emit CommentSubmitted(
             unirep.currentEpoch(),

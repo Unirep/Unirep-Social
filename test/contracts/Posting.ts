@@ -216,6 +216,7 @@ describe('Post', function () {
         })
 
         it('submit post with different amount of nullifiers should fail', async() => {
+            const postId2 = genRandomSalt()
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
@@ -240,7 +241,7 @@ describe('Post', function () {
             ] 
 
             await expect(unirepSocialContract.publishPost(
-                postId, 
+                postId2, 
                 text,
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -305,6 +306,7 @@ describe('Post', function () {
         })
 
         it('submit comment with different amount of nullifiers should fail', async() => {
+            const commentId2 = genRandomSalt()
             const proveGraffiti = BigInt(0)
             const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
             const epkNonce = 0
@@ -330,7 +332,7 @@ describe('Post', function () {
 
             await expect(unirepSocialContract.leaveComment(
                 postId, 
-                commentId,
+                commentId2,
                 text, 
                 publicSignals,
                 { value: attestingFee, gasLimit: 1000000 }
