@@ -15,6 +15,26 @@ yarn compile
 ``` 
 to compile Unirep Social contracts if contracts change
 
+## Goerli Testnet
+
+- The address of Unirep Social smart contract on goerli testnet
+    ```
+    0x650b9a5713894a8b57544652107340d1be83351f
+    ```
+    See [Etherscan](https://goerli.etherscan.io/address/0x650b9a5713894a8b57544652107340d1be83351f)
+- The address of Unirep smart contract on goerli testnet
+    ```
+    0x05984c0A17495Ee88Ffea04440DDF9A548bE4Ac3
+    ```
+    See [Etherscan](https://goerli.etherscan.io/address/0x05984c0A17495Ee88Ffea04440DDF9A548bE4Ac3)
+    
+- Apply for an account from [Alchemy](https://www.alchemy.com/) or [Infura](https://infura.io/), change the `DEFAULT_ETH_PROVIDER` to the given provider url
+    For example
+    ```
+    const DEFAULT_ETH_PROVIDER = https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}
+    ```
+- Get ether on the goerli testnet from [Goerli Faucet](https://faucet.goerli.mudit.blog/)
+
 ## Testing
 ```
 yarn test

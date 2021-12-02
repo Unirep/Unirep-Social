@@ -67,6 +67,7 @@ const userSignUp = async (args: any) => {
 
     // Submit the user sign up transaction
     const tx = await unirepSocialContract.userSignUp(commitment)
+    await tx.wait()
     const epoch = await unirepSocialContract.currentEpoch()
 
     console.log('Transaction hash:', tx?.hash)
