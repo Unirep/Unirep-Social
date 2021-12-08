@@ -94,7 +94,7 @@ contract UnirepSocial {
     }
 
     /*
-     * Call Unirep contract to perform user signing up
+     * Call Unirep contract to perform user signing up if user hasn't signed up in Unirep
      * @param _identityCommitment Commitment of the user's identity which is a semaphore identity.
      */
     function userSignUp(uint256 _identityCommitment) external {
@@ -106,9 +106,37 @@ contract UnirepSocial {
         );
     }
 
+    /*
+     * Give a user sign up flag if user has already signed up in Unirep but not Unirep Social
+     * @param _signUpProofData A sign up proof indicates that the user has not signed up in Unirep Social
+     */
+    function userSignUpWithProof(Unirep.SignUpProofRelated memory _signUpProofData) external payable {
+        require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
+        require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
+        
+        // Submit airdrop
+        unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
+
+        // Set the epoch key has been airdropped
+        isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
+
+        emit AirdropSubmitted(
+            unirep.currentEpoch(),
+            _signUpProofData.epochKey, 
+            _signUpProofData
+        );
+    }
+
+    /*
+     * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
+     * @param postId An ID to the post, it should be unique in Unirep Social
+     * @param content The text content of the post
+     * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
+     */
     function publishPost(
         uint256 postId, 
-        string memory hashedContent, 
+        string memory content, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
         require(isPostIDSubmitted[postId] == false, "Unirep Social: duplicated post ID");
@@ -125,15 +153,22 @@ contract UnirepSocial {
             unirep.currentEpoch(),
             postId,
             _proofRelated.epochKey,
-            hashedContent,
+            content,
             _proofRelated
         );
     }
 
+    /*
+     * Leave a comment on chain with a reputation proof to prove that the user has enough karma to spend
+     * @param postId An ID to the post, it should be existed in Unirep Social
+     * @param commentId An ID to the comment, it should be unique in Unirep Social
+     * @param content The text content of the post
+     * @param _proofRelated The reputation proof that the user proves that he has enough karma to comment
+     */
     function leaveComment(
         uint256 postId, 
         uint256 commentId, 
-        string memory hashedContent, 
+        string memory content, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
         require(isPostIDSubmitted[postId] == true, "Unirep Social: should leave comment to a submiited post");
@@ -152,11 +187,19 @@ contract UnirepSocial {
             postId,
             _proofRelated.epochKey,
             commentId,
-            hashedContent,
+            content,
             _proofRelated
         );
     }
 
+    /*
+     * Vote an epoch key with a reputation proof to prove that the user has enough karma to spend
+     * @param upvoteValue How much the user wants to upvote the epoch key receiver
+     * @param downvoteValue How much the user wants to downvote the epoch key receiver
+     * @param toEpochKey The vote receiver
+     * @param toEPochKeyProofIndex the proof index of the epoch key on unirep
+     * @param _proofRelated The reputation proof that the user proves that he has enough karma to vote
+     */
     function vote(
         uint256 upvoteValue,
         uint256 downvoteValue,
@@ -191,11 +234,16 @@ contract UnirepSocial {
         );
     }
 
+    /*
+     * Give a user airdrop if user has already signed up in Unirep Social
+     * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
+     */
     function airdrop(
         Unirep.SignUpProofRelated memory _signUpProofData
     ) external payable {
         require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
         require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(_signUpProofData.userHasSignedUp == 1, "Unirep Social: user should have signed up in Unirep Social before");
         
         // Submit airdrop
         unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
@@ -210,6 +258,13 @@ contract UnirepSocial {
         );
     }
 
+    /*
+     * Call Unirep contract to perform start user state transition
+     * @param _blindedUserState Blind user state tree before user state transition
+     * @param _blindedHashChain Blind hash chain before user state transition
+     * @param _GSTRoot User proves that he has already signed up in the global state tree
+     * @param _proof The snark proof
+     */
     function startUserStateTransition(
         uint256 _blindedUserState,
         uint256 _blindedHashChain,
@@ -219,6 +274,13 @@ contract UnirepSocial {
         unirep.startUserStateTransition(_blindedUserState, _blindedHashChain, _GSTRoot, _proof);
     }
 
+    /*
+     * Call Unirep contract to perform user state transition
+     * @param _outputBlindedUserState Blind intermediate user state tree before user state transition
+     * @param _outputBlindedHashChain Blind intermediate hash chain before user state transition
+     * @param _inputBlindedUserState Input a submitted blinded user state before process the proof
+     * @param _proof The snark proof
+     */
     function processAttestations(
         uint256 _outputBlindedUserState,
         uint256 _outputBlindedHashChain,
@@ -228,6 +290,11 @@ contract UnirepSocial {
         unirep.processAttestations(_outputBlindedUserState, _outputBlindedHashChain, _inputBlindedUserState, _proof);
     }
 
+    /*
+     * Call Unirep contract to perform user state transition
+     * @param userTransitionedData The public signals and proof of the user state transition
+     * @param proofIndexes The proof indexes of start user state transition and process attestations
+     */
     function updateUserStateRoot(Unirep.UserTransitionedRelated memory userTransitionedData, uint256[] memory proofIndexes) external {
         unirep.updateUserStateRoot(userTransitionedData, proofIndexes);
     }
@@ -288,7 +355,8 @@ contract UnirepSocial {
         uint256 _epochKey,
         uint256 _globalStateTree,
         uint256 _attesterId,
+        uint256 _userHasSignedUp,
         uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyUserSignUp(_epoch, _epochKey, _globalStateTree, _attesterId, _proof);
+        return unirep.verifyUserSignUp(_epoch, _epochKey, _globalStateTree, _attesterId, _userHasSignedUp, _proof);
     }
 }

@@ -2,7 +2,7 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { expect } from 'chai'
 import { genRandomSalt, hashLeftRight, genIdentity, genIdentityCommitment } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import { epochLength, maxReputationBudget, numEpochKeyNoncePerEpoch, computeEmptyUserStateRoot, genEpochKey, getTreeDepthsForTesting, Attestation, IEpochTreeLeaf, UnirepState, UserState, maxUsers, maxAttesters, ISettings } from '@unirep/unirep'
 import { deployUnirepSocial } from '../../core/utils'
@@ -74,7 +74,6 @@ describe('Epoch Transition', function () {
         userState = new UserState(
             unirepState,
             userId,
-            userCommitment,
             false,
         )
         const latestTransitionedToEpoch = currentEpoch.toNumber()
@@ -97,7 +96,7 @@ describe('Epoch Transition', function () {
         let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
         let results = await userState.genVerifyEpochKeyProof(nonce)
         let epochKeyProof = results['publicSignals'].concat([formatProofForVerifierContract(results['proof'])])
-        let isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        let isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid, 'Verify epoch key proof off-chain failed').to.be.true
 
         // Submit epoch key proof
@@ -326,7 +325,7 @@ describe('Epoch Transition', function () {
         
     it('start user state transition should succeed', async() => {
         results = await userState.genUserStateTransitionProofs()
-        const isValid = await verifyProof('startTransition', results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
+        const isValid = await verifyProof(CircuitName.startTransition, results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
         expect(isValid, 'Verify start transition circuit off-chain failed').to.be.true
 
         const blindedUserState = results.startTransitionProof.blindedUserState
@@ -365,7 +364,7 @@ describe('Epoch Transition', function () {
 
     it('submit process attestations proofs should succeed', async() => {
         for (let i = 0; i < results.processAttestationProofs.length; i++) {
-            const isValid = await verifyProof('processAttestations', results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
+            const isValid = await verifyProof(CircuitName.processAttestations, results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
             expect(isValid, 'Verify process attestations circuit off-chain failed').to.be.true
 
             const outputBlindedUserState = results.processAttestationProofs[i].outputBlindedUserState
@@ -403,7 +402,7 @@ describe('Epoch Transition', function () {
     })
 
     it('submit user state transition proofs should succeed', async() => {
-        const isValid = await verifyProof('userStateTransition', results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
+        const isValid = await verifyProof(CircuitName.userStateTransition, results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
         expect(isValid, 'Verify user state transition circuit off-chain failed').to.be.true
 
         const newGSTLeaf = results.finalTransitionProof.newGlobalStateTreeLeaf

@@ -57,6 +57,7 @@ const deployUnirepSocial = async (
             gasLimit: 9000000,
         }
     ))
+    await c.deployTransaction.wait()
 
     // Print out deployment info
     console.log("-----------------------------------------------------------------")

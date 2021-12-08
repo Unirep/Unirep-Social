@@ -79,6 +79,29 @@ class UnirepSocialContract {
             }
             return tx;
         };
+        this.userSignUpWithProof = async (publicSignals, proof) => {
+            if (this.signer != undefined) {
+                this.contract = this.contract.connect(this.signer);
+            }
+            else {
+                console.log("Error: should connect a signer");
+                return;
+            }
+            const attestingFee = await this.attestingFee();
+            const userSignUpProof = publicSignals.concat([proof]);
+            let tx;
+            try {
+                tx = await this.contract.userSignUpWithProof(userSignUpProof, { value: attestingFee, gasLimit: 1000000 });
+            }
+            catch (e) {
+                console.error('Error: the transaction failed');
+                if (e) {
+                    console.error(e);
+                }
+                return tx;
+            }
+            return tx;
+        };
         this.parseRepuationProof = (publicSignals, proof) => {
             const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
             const epoch = publicSignals[unirep_1.maxReputationBudget];
@@ -388,7 +411,8 @@ class UnirepSocialContract {
             const epochKey = publicSignals[1];
             const globalStateTreeRoot = publicSignals[2];
             const attesterId = publicSignals[3];
-            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyUserSignUp(epoch, epochKey, globalStateTreeRoot, attesterId, proof));
+            const userHasSignedUp = publicSignals[4];
+            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyUserSignUp(epoch, epochKey, globalStateTreeRoot, attesterId, userHasSignedUp, proof));
             return isValid;
         };
         this.url = providerUrl ? providerUrl : defaults_1.DEFAULT_ETH_PROVIDER;

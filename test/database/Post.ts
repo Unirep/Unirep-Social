@@ -121,7 +121,7 @@
 //             const epoch = userState.getUnirepStateCurrentEpoch()
 //             const nonceList: BigInt[] = findValidNonce(userState, defaultPostReputation, epoch, BigInt(attesterId))
 //             results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-//             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+//             const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
 //             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
 //             const isProofValid = await unirepContract.verifyReputation(
@@ -203,7 +203,7 @@
 //             const epoch = userState.getUnirepStateCurrentEpoch()
 //             const nonceList: BigInt[] = findValidNonce(userState, defaultCommentReputation, epoch, BigInt(attesterId))
 //             results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-//             const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+//             const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
 //             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
 //             const isProofValid = await unirepContract.verifyReputation(

@@ -105,6 +105,35 @@ export class UnirepSocialContract {
         return tx
     }
 
+    public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
+        if(this.signer != undefined){
+            this.contract = this.contract.connect(this.signer)
+        }
+        else{
+            console.log("Error: should connect a signer")
+            return
+        }
+
+        const attestingFee = await this.attestingFee()
+        const userSignUpProof = publicSignals.concat([proof])
+
+        let tx
+        try {
+            tx = await this.contract.userSignUpWithProof(
+                userSignUpProof,
+                { value: attestingFee, gasLimit: 1000000 }
+            )
+    
+        } catch(e) {
+            console.error('Error: the transaction failed')
+            if (e) {
+                console.error(e)
+            }
+            return tx
+        }
+        return tx
+    }
+
     private parseRepuationProof = (publicSignals: any, proof: any) => {
         const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)
         const epoch = publicSignals[maxReputationBudget]
@@ -489,11 +518,13 @@ export class UnirepSocialContract {
         const epochKey = publicSignals[1]
         const globalStateTreeRoot = publicSignals[2]
         const attesterId = publicSignals[3]
+        const userHasSignedUp = publicSignals[4]
         const isValid = await this.unirep?.verifyUserSignUp(
             epoch,
             epochKey,
             globalStateTreeRoot,
             attesterId,
+            userHasSignedUp,
             proof,
         )
         return isValid

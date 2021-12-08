@@ -1,11 +1,9 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
-import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { add0x } from '@unirep/crypto'
 import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
+import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { defaultCommentReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
@@ -140,8 +138,9 @@ const leaveComment = async (args: any) => {
 
     // TODO: Unirep Social should verify if the reputation proof submitted before
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
-    const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
     if(tx != undefined){
+        await tx.wait()
+        const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
         console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())
     }

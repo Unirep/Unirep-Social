@@ -49,6 +49,7 @@ const deployUnirepSocial = async (deployer, UnirepAddr, _settings) => {
     const c = await (f.deploy(UnirepAddr, _postReputation, _commentReputation, _defaultAirdroppedRep, {
         gasLimit: 9000000,
     }));
+    await c.deployTransaction.wait();
     // Print out deployment info
     console.log("-----------------------------------------------------------------");
     console.log("Bytecode size of Unirep Social:", Math.floor(UnirepSocial_json_1.default.bytecode.length / 2), "bytes");

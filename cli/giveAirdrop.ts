@@ -1,11 +1,9 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { verifyProof } from '@unirep/circuits'
 import { genUnirepStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { identityPrefix, signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
+import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
 const configureSubparser = (subparsers: any) => {
@@ -93,6 +91,7 @@ const giveAirdrop = async (args: any) => {
     const epk = publicSignals[1]
     const GSTRoot = publicSignals[2]
     const attesterId = publicSignals[3]
+    const userHasSignedUp = publicSignals[4]
     const proof = JSON.parse(decodedProof)
 
     // Verify proof
@@ -122,8 +121,15 @@ const giveAirdrop = async (args: any) => {
 
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
-    // submit epoch key to unirep social contract
-    const tx = await unirepSocialContract.airdrop(publicSignals, proof)
+
+    let tx
+    if(Number(userHasSignedUp)) {
+        // if user has signed before, call the airdrop function
+        tx = await unirepSocialContract.airdrop(publicSignals, proof)
+    } else {
+        // else, sign up the user 
+        tx = await unirepSocialContract.userSignUpWithProof(publicSignals, proof)
+    }
 
     if(tx != undefined){
         console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)

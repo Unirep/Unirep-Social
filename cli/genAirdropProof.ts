@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { unSerialiseIdentity } from '@unirep/crypto'
+import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -56,18 +56,16 @@ const genAirdropProof = async (args: any) => {
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
     const id = unSerialiseIdentity(decodedIdentity)
-    const commitment = genIdentityCommitment(id)
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
         id,
-        commitment,
     )
     const attesterId = await unirepSocialContract.attesterId()
     const results = await userState.genUserSignUpProof(BigInt(attesterId))
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof('proveUserSignUp', results.proof, results.publicSignals)
+    const isValid = await verifyProof(CircuitName.proveUserSignUp, results.proof, results.publicSignals)
     if(!isValid) {
         console.error('Error: user sign up proof generated is not valid!')
         return

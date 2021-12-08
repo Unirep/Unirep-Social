@@ -1,11 +1,8 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
+import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { verifyReputationProof } from './verifyReputationProof'
 
@@ -144,9 +141,10 @@ const vote = async (args: any) => {
     // Submit tx
     const tx = await unirepSocialContract.vote(publicSignals, proof, args.epoch_key, args.proof_index, upvoteValue, downvoteValue)
 
-    console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
-    const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
     if(tx != undefined){
+        console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
+        await tx.wait()
+        const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
         console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())
     }

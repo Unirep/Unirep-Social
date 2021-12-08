@@ -2,7 +2,7 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
 import { genRandomSalt, genIdentity, genIdentityCommitment, IncrementalQuinTree, hashLeftRight, } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts'
 import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IUserStateLeaf, computeEmptyUserStateRoot, IAttestation, genUserStateFromContract, genUnirepStateFromContract, ISettings, maxUsers, maxAttesters } from '@unirep/unirep'
 
@@ -106,7 +106,6 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser],
-                userCommitments[firstUser],
             )
             
             expect(users[firstUser].latestTransitionedEpoch).equal(latestTransitionedToEpoch)
@@ -185,10 +184,9 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser],
-                userCommitments[firstUser],
             )
             const results = await users[firstUser].genUserStateTransitionProofs()
-            let isValid = await verifyProof('startTransition', results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
+            let isValid = await verifyProof(CircuitName.startTransition, results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
             expect(isValid, 'Verify start transition circuit off-chain failed').to.be.true
 
             const blindedUserState = results.startTransitionProof.blindedUserState
@@ -214,7 +212,7 @@ describe('Integration', function () {
             proofIndexes.push(BigInt(proofIndex))
 
             for (let i = 0; i < results.processAttestationProofs.length; i++) {
-                isValid = await verifyProof('processAttestations', results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
+                isValid = await verifyProof(CircuitName.processAttestations, results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
                 expect(isValid, 'Verify process attestations circuit off-chain failed').to.be.true
 
                 const outputBlindedUserState = results.processAttestationProofs[i].outputBlindedUserState
@@ -240,7 +238,7 @@ describe('Integration', function () {
                 proofIndexes.push(BigInt(proofIndex))
             }
 
-            isValid = await verifyProof('userStateTransition', results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
+            isValid = await verifyProof(CircuitName.userStateTransition, results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
             expect(isValid, 'Verify user state transition circuit off-chain failed').to.be.true
             const newGSTLeaf = results.finalTransitionProof.newGlobalStateTreeLeaf
 
@@ -284,7 +282,6 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id,
-                users[firstUser].commitment,
             )
             console.log('----------------------User State----------------------')
             console.log(userStateFromContract.toJSON(4))
@@ -320,7 +317,6 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[secondUser],
-                userCommitments[secondUser],
             )
             
             expect(users[secondUser].latestTransitionedEpoch).equal(latestTransitionedToEpoch)
@@ -333,7 +329,7 @@ describe('Integration', function () {
         it('first user generate an epoch key and verify it', async () => {
             const epochKeyNonce = 0
             const results = await users[firstUser].genVerifyEpochKeyProof(epochKeyNonce)
-            const isValid = await verifyProof('verifyEpochKey', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.verifyEpochKey, results.proof, results.publicSignals)
             expect(isValid, 'Verify epk proof off-chain failed').to.be.true
             
             // Verify on-chain
@@ -360,12 +356,11 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser],
-                userCommitments[firstUser],
             )
             const nonceList: BigInt[] = findValidNonce(users[firstUser], repNullifiersAmount, currentEpoch.toNumber(), BigInt(unirepSocialId))
 
             const results = await users[firstUser].genProveReputationProof(BigInt(unirepSocialId), epkNonce, minRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
             
             // Verify on-chain
@@ -439,7 +434,7 @@ describe('Integration', function () {
 
             // second user's reputaiton proof
             const results = await users[secondUser].genProveReputationProof(BigInt(unirepSocialId), epkNonce, minRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true 
             const secondUserEpochKey = BigInt(results.epochKey)
 
@@ -499,7 +494,7 @@ describe('Integration', function () {
             const nonceList: BigInt[] = findValidNonce(users[firstUser], repNullifiersAmount, currentEpoch.toNumber(), BigInt(unirepSocialId))
 
             const results = await users[firstUser].genProveReputationProof(BigInt(unirepSocialId), epkNonce, minRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
             
             // Verify on-chain
@@ -673,10 +668,9 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser],
-                userCommitments[firstUser],
             )
             const results = await users[firstUser].genUserStateTransitionProofs()
-            let isValid = await verifyProof('startTransition', results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
+            let isValid = await verifyProof(CircuitName.startTransition, results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
             expect(isValid, 'Verify start transition circuit off-chain failed').to.be.true
 
             const blindedUserState = results.startTransitionProof.blindedUserState
@@ -702,7 +696,7 @@ describe('Integration', function () {
             proofIndexes.push(BigInt(proofIndex))
 
             for (let i = 0; i < results.processAttestationProofs.length; i++) {
-                isValid = await verifyProof('processAttestations', results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
+                isValid = await verifyProof(CircuitName.processAttestations, results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
                 expect(isValid, 'Verify process attestations circuit off-chain failed').to.be.true
 
                 const outputBlindedUserState = results.processAttestationProofs[i].outputBlindedUserState
@@ -728,7 +722,7 @@ describe('Integration', function () {
                 proofIndexes.push(BigInt(proofIndex))
             }
 
-            isValid = await verifyProof('userStateTransition', results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
+            isValid = await verifyProof(CircuitName.userStateTransition, results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
             expect(isValid, 'Verify user state transition circuit off-chain failed').to.be.true
             const newGSTLeaf = results.finalTransitionProof.newGlobalStateTreeLeaf
 
@@ -785,7 +779,6 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id,
-                users[firstUser].commitment,
             )
             console.log('----------------------User State----------------------')
             console.log(userStateFromContract.toJSON(4))
@@ -805,12 +798,11 @@ describe('Integration', function () {
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser],
-                userCommitments[firstUser],
             )
 
             console.log(`Proving reputation from attester ${attesterId} with minRep ${minRep} and graffitiPreimage ${graffitiPreImage}`)
             const results = await users[firstUser].genProveReputationProof(attesterId, epkNonce, minRep, proveGraffiti, graffitiPreImage)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             // Verify on-chain

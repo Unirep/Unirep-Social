@@ -1,7 +1,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import { verifyProof, formatProofForVerifierContract } from "@unirep/circuits"
+import { verifyProof, formatProofForVerifierContract, CircuitName } from "@unirep/circuits"
 import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepState, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genNewSMT, maxAttesters, ISettings } from '@unirep/unirep'
 import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
@@ -132,7 +132,6 @@ describe('Post', function () {
                 users[i] = new UserState(
                     unirepState,
                     ids[i],
-                    commitments[i],
                     false
                 )
 
@@ -166,7 +165,7 @@ describe('Post', function () {
             const epoch = users[0].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(users[0], defaultPostReputation, epoch, BigInt(attesterId))
             results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const isProofValid = await unirepContract.verifyReputation(
@@ -224,7 +223,7 @@ describe('Post', function () {
             const epoch = users[0].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(users[0], falseRepAmout, epoch, BigInt(attesterId))
             results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const publicSignals = [
@@ -257,7 +256,7 @@ describe('Post', function () {
             const epoch = users[1].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(users[1], defaultCommentReputation, epoch, BigInt(attesterId))
             results = await users[1].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const isProofValid = await unirepContract.verifyReputation(
@@ -314,7 +313,7 @@ describe('Post', function () {
             const epoch = users[1].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(users[1], falseRepAmout, epoch, BigInt(attesterId))
             results = await users[1].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
-            const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             const publicSignals = [

@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { genRandomSalt, hashLeftRight, IncrementalQuinTree, stringifyBigInts, genIdentity, genIdentityCommitment } from '@unirep/crypto'
-import { genProofAndPublicSignals, verifyProof } from "@unirep/circuits"
+import { CircuitName, genProofAndPublicSignals, verifyProof } from "@unirep/circuits"
 import { numEpochKeyNoncePerEpoch, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, genEpochKey } from "@unirep/unirep"
 
 describe('Verify Epoch Key circuits', function () {
@@ -49,10 +49,10 @@ describe('Verify Epoch Key circuits', function () {
                 epoch_key: epk,
             }
             const startTime = new Date().getTime()
-            const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+            const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
             const endTime = new Date().getTime()
             console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-            const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+            const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
             expect(isValid).to.be.true
         }
     })
@@ -74,10 +74,10 @@ describe('Verify Epoch Key circuits', function () {
         }
 
         const startTime = new Date().getTime()
-        const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+        const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
         const endTime = new Date().getTime()
         console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-        const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid).to.be.false
     })
 
@@ -96,10 +96,10 @@ describe('Verify Epoch Key circuits', function () {
             epoch_key: epochKey,
         }
         const startTime = new Date().getTime()
-        const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+        const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
         const endTime = new Date().getTime()
         console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-        const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid).to.be.false
     })
 
@@ -118,10 +118,10 @@ describe('Verify Epoch Key circuits', function () {
             epoch_key: epochKey,
         }
         const startTime = new Date().getTime()
-        const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+        const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
         const endTime = new Date().getTime()
         console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-        const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid).to.be.false
     })
 
@@ -140,10 +140,10 @@ describe('Verify Epoch Key circuits', function () {
             epoch_key: epochKey,
         }
         const startTime = new Date().getTime()
-        const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+        const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
         const endTime = new Date().getTime()
         console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-        const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid).to.be.false
     })
 
@@ -168,10 +168,10 @@ describe('Verify Epoch Key circuits', function () {
             epoch_key: epochKey,
         }
         const startTime = new Date().getTime()
-        const results = await genProofAndPublicSignals('verifyEpochKey', stringifyBigInts(circuitInputs))
+        const results = await genProofAndPublicSignals(CircuitName.verifyEpochKey, stringifyBigInts(circuitInputs))
         const endTime = new Date().getTime()
         console.log(`Gen Proof time: ${endTime - startTime} ms (${Math.floor((endTime - startTime) / 1000)} s)`)
-        const isValid = await verifyProof('verifyEpochKey', results['proof'], results['publicSignals'])
+        const isValid = await verifyProof(CircuitName.verifyEpochKey, results['proof'], results['publicSignals'])
         expect(isValid).to.be.false
     })
 })

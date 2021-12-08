@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { add0x, genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { add0x, unSerialiseIdentity } from '@unirep/crypto'
+import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genReputationNullifier, genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -120,7 +120,6 @@ const genReputationProof = async (args: any) => {
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
     const id = unSerialiseIdentity(decodedIdentity)
-    const commitment = genIdentityCommitment(id)
 
     // gen reputation proof 
     let proveReputationAmount
@@ -179,7 +178,6 @@ const genReputationProof = async (args: any) => {
             provider,
             unirepContract.address,
             id,
-            commitment,
         )
         const nonceList: BigInt[] = []
         const rep = userState.getRepByAttester(attesterId)
@@ -214,7 +212,7 @@ const genReputationProof = async (args: any) => {
     }
     
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof('proveReputation', results.proof, results.publicSignals)
+    const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
     if(!isValid) {
         console.error('Error: reputation proof generated is not valid!')
         return
