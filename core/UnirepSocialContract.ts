@@ -105,34 +105,34 @@ export class UnirepSocialContract {
         return tx
     }
 
-    public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
-        if(this.signer != undefined){
-            this.contract = this.contract.connect(this.signer)
-        }
-        else{
-            console.log("Error: should connect a signer")
-            return
-        }
+    // public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
+    //     if(this.signer != undefined){
+    //         this.contract = this.contract.connect(this.signer)
+    //     }
+    //     else{
+    //         console.log("Error: should connect a signer")
+    //         return
+    //     }
 
-        const attestingFee = await this.attestingFee()
-        const userSignUpProof = publicSignals.concat([proof])
+    //     const attestingFee = await this.attestingFee()
+    //     const userSignUpProof = publicSignals.concat([proof])
 
-        let tx
-        try {
-            tx = await this.contract.userSignUpWithProof(
-                userSignUpProof,
-                { value: attestingFee, gasLimit: 1000000 }
-            )
+    //     let tx
+    //     try {
+    //         tx = await this.contract.userSignUpWithProof(
+    //             userSignUpProof,
+    //             { value: attestingFee, gasLimit: 1000000 }
+    //         )
     
-        } catch(e) {
-            console.error('Error: the transaction failed')
-            if (e) {
-                console.error(e)
-            }
-            return tx
-        }
-        return tx
-    }
+    //     } catch(e) {
+    //         console.error('Error: the transaction failed')
+    //         if (e) {
+    //             console.error(e)
+    //         }
+    //         return tx
+    //     }
+    //     return tx
+    // }
 
     private parseRepuationProof = (publicSignals: any, proof: any) => {
         const reputationNullifiers = publicSignals.slice(0, maxReputationBudget)

@@ -148,7 +148,6 @@ const vote = async (args: any) => {
         console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())
     }
-    process.exit(0)
 }
 
 export {

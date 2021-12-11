@@ -128,14 +128,13 @@ const giveAirdrop = async (args: any) => {
         tx = await unirepSocialContract.airdrop(publicSignals, proof)
     } else {
         // else, sign up the user 
-        tx = await unirepSocialContract.userSignUpWithProof(publicSignals, proof)
+        // tx = await unirepSocialContract.userSignUpWithProof(publicSignals, proof)
     }
 
     if(tx != undefined){
         console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
         console.log('Transaction hash:', tx?.hash)
     }
-    process.exit(0)
 }
 
 export {

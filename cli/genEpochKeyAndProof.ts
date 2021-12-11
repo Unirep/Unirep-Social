@@ -102,7 +102,6 @@ const genEpochKeyAndProof = async (args: any) => {
     console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
     console.log(epkProofPrefix + encodedProof)
     console.log(epkPublicSignalsPrefix + encodedPublicSignals)
-    process.exit(0)
 }
 
 export {

@@ -16,7 +16,6 @@ export declare class UnirepSocialContract {
     attesterId: () => Promise<any>;
     attestingFee: () => Promise<any>;
     userSignUp: (commitment: string) => Promise<any>;
-    userSignUpWithProof: (publicSignals: any, proof: any) => Promise<any>;
     private parseRepuationProof;
     publishPost: (postId: string, publicSignals: any, proof: any, postContent: string) => Promise<any>;
     leaveComment: (publicSignals: any, proof: any, postId: string, commentId: string, commentContent: string) => Promise<any>;

@@ -146,8 +146,7 @@ const userStateTransition = async (args: any) => {
     if(txList[0] != undefined){
         console.log('Transaction hash:', txList[txList.length - 1]?.hash)
         console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)  
-    }
-    process.exit(0)      
+    }     
 }
 
 export {

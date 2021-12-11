@@ -79,29 +79,31 @@ class UnirepSocialContract {
             }
             return tx;
         };
-        this.userSignUpWithProof = async (publicSignals, proof) => {
-            if (this.signer != undefined) {
-                this.contract = this.contract.connect(this.signer);
-            }
-            else {
-                console.log("Error: should connect a signer");
-                return;
-            }
-            const attestingFee = await this.attestingFee();
-            const userSignUpProof = publicSignals.concat([proof]);
-            let tx;
-            try {
-                tx = await this.contract.userSignUpWithProof(userSignUpProof, { value: attestingFee, gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
-        };
+        // public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
+        //     if(this.signer != undefined){
+        //         this.contract = this.contract.connect(this.signer)
+        //     }
+        //     else{
+        //         console.log("Error: should connect a signer")
+        //         return
+        //     }
+        //     const attestingFee = await this.attestingFee()
+        //     const userSignUpProof = publicSignals.concat([proof])
+        //     let tx
+        //     try {
+        //         tx = await this.contract.userSignUpWithProof(
+        //             userSignUpProof,
+        //             { value: attestingFee, gasLimit: 1000000 }
+        //         )
+        //     } catch(e) {
+        //         console.error('Error: the transaction failed')
+        //         if (e) {
+        //             console.error(e)
+        //         }
+        //         return tx
+        //     }
+        //     return tx
+        // }
         this.parseRepuationProof = (publicSignals, proof) => {
             const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
             const epoch = publicSignals[unirep_1.maxReputationBudget];
@@ -332,12 +334,14 @@ class UnirepSocialContract {
             let tx = await this.submitStartTransitionProof(results.startTransitionProof);
             txList.push(tx);
             await tx.wait();
-            const proofIndex = await this.getStartTransitionProofIndex(results.startTransitionProof);
-            proofIndexes.push(BigInt(proofIndex));
             for (let i = 0; i < results.processAttestationProofs.length; i++) {
                 tx = await this.submitProcessAttestationsProof(results.processAttestationProofs[i]);
                 txList.push(tx);
                 await tx.wait();
+            }
+            const proofIndex = await this.getStartTransitionProofIndex(results.startTransitionProof);
+            proofIndexes.push(BigInt(proofIndex));
+            for (let i = 0; i < results.processAttestationProofs.length; i++) {
                 const proofIndex = await this.getProcessAttestationsProofIndex(results.processAttestationProofs[i]);
                 proofIndexes.push(BigInt(proofIndex));
             }

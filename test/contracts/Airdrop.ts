@@ -464,31 +464,31 @@ describe('Airdrop', function () {
         expect(newGSTLeaf).equal(hashedLeaf)
     })
 
-    it('user can get Unirep Social airdrop with a sign up proof', async () => {
-        const userState = await genUserStateFromContract(
-            hardhatEthers.provider,
-            unirepContract.address,
-            id,
-        )
-        const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
-        const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
-        expect(Number(proofResults.userHasSignedUp), 'user should not get sign up flag').equal(0)
+    // it('user can get Unirep Social airdrop with a sign up proof', async () => {
+    //     const userState = await genUserStateFromContract(
+    //         hardhatEthers.provider,
+    //         unirepContract.address,
+    //         id,
+    //     )
+    //     const proofResults = await userState.genUserSignUpProof(BigInt(attesterId))
+    //     const signUpProof = proofResults.publicSignals.concat([formatProofForVerifierContract(proofResults.proof)])
+    //     expect(Number(proofResults.userHasSignedUp), 'user should not get sign up flag').equal(0)
 
-        let tx = await unirepSocialContract.userSignUpWithProof(signUpProof, {value: attestingFee})
-        let receipt = await tx.wait()
-        expect(receipt.status).equal(1)
+    //     let tx = await unirepSocialContract.userSignUpWithProof(signUpProof, {value: attestingFee})
+    //     let receipt = await tx.wait()
+    //     expect(receipt.status).equal(1)
 
-        const userStateAfterAirdrop = await genUserStateFromContract(
-            hardhatEthers.provider,
-            unirepContract.address,
-            id,
-        )
-        const attestations = userStateAfterAirdrop.getAttestations(proofResults.epochKey)
-        expect(attestations.length).equal(1)
-        expect(attestations[0].attesterId, 'wrong attestation id').equal(BigInt(attesterId))
-        expect(attestations[0].posRep, 'wrong airdrop amount').equal(BigInt(airdropAmount))
-        expect(attestations[0].signUp, 'wrong sign up flag').equal(BigInt(1))
-    })
+    //     const userStateAfterAirdrop = await genUserStateFromContract(
+    //         hardhatEthers.provider,
+    //         unirepContract.address,
+    //         id,
+    //     )
+    //     const attestations = userStateAfterAirdrop.getAttestations(proofResults.epochKey)
+    //     expect(attestations.length).equal(1)
+    //     expect(attestations[0].attesterId, 'wrong attestation id').equal(BigInt(attesterId))
+    //     expect(attestations[0].posRep, 'wrong airdrop amount').equal(BigInt(airdropAmount))
+    //     expect(attestations[0].signUp, 'wrong sign up flag').equal(BigInt(1))
+    // })
 
     it('query airdrop event', async () => {
         const airdropFilter = unirepSocialContract.filters.AirdropSubmitted()

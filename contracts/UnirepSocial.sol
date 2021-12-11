@@ -110,23 +110,23 @@ contract UnirepSocial {
      * Give a user sign up flag if user has already signed up in Unirep but not Unirep Social
      * @param _signUpProofData A sign up proof indicates that the user has not signed up in Unirep Social
      */
-    function userSignUpWithProof(Unirep.SignUpProofRelated memory _signUpProofData) external payable {
-        require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
-        require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
+    // function userSignUpWithProof(Unirep.SignUpProofRelated memory _signUpProofData) external payable {
+    //     require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
+    //     require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+    //     require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
         
-        // Submit airdrop
-        unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
+    //     // Submit airdrop
+    //     unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
 
-        // Set the epoch key has been airdropped
-        isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
+    //     // Set the epoch key has been airdropped
+    //     isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
 
-        emit AirdropSubmitted(
-            unirep.currentEpoch(),
-            _signUpProofData.epochKey, 
-            _signUpProofData
-        );
-    }
+    //     emit AirdropSubmitted(
+    //         unirep.currentEpoch(),
+    //         _signUpProofData.epochKey, 
+    //         _signUpProofData
+    //     );
+    // }
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
