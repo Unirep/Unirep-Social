@@ -264,6 +264,39 @@ describe('Vote', function () {
             )).to.be.revertedWith('Unirep Social: submit different nullifiers amount from the vote value')
         })
 
+        it('submit zero proof index upvote should fail', async() => {
+            const proveGraffiti = BigInt(0)
+            const minPosRep = BigInt(0), graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            const epoch = users[0].getUnirepStateCurrentEpoch()
+            const nonceList: BigInt[] = findValidNonce(users[0], upvoteValue, epoch, BigInt(attesterId))
+            const results = await users[0].genProveReputationProof(BigInt(attesterId), epkNonce, minPosRep, proveGraffiti, graffitiPreImage, nonceList)
+            const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+            reputationProofData = [
+                results.reputationNullifiers,
+                results.epoch,
+                results.epochKey,
+                results.globalStatetreeRoot,
+                results.attesterId,
+                results.proveReputationAmount,
+                results.minRep,
+                results.proveGraffiti,
+                results.graffitiPreImage,
+                formatProofForVerifierContract(results.proof)
+            ]
+            const zeroProofIndex = 0
+            await expect(unirepSocialContract.vote(
+                upvoteValue,
+                0,
+                toEpochKey,
+                zeroProofIndex,
+                reputationProofData,
+                { value: attestingFee.mul(2), gasLimit: 1000000 }
+            )).to.be.revertedWith('Unirep: invalid proof index')
+        })
+
         it('submit upvote with both upvote and downvote value should fail', async() => {
             await expect(unirepSocialContract.vote(
                 upvoteValue,
