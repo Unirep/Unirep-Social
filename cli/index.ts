@@ -12,20 +12,10 @@ import {
     configureSubparser as configureSubparserForDeploy,
 } from './deploy'
 
-// import {
-//     eventListeners,
-//     configureSubparser as configureSubparserForEventListeners,
-// } from './eventListeners'
-
 import {
     userSignUp,
     configureSubparser as configureSubparserForUserSignUp,
 } from './userSignUp'
-
-// import {
-//     attesterSignup,
-//     configureSubparser as configureSubparserForAttesterSignup,
-// } from './attesterSignUp'
 
 import {
     genEpochKeyAndProof,
@@ -82,6 +72,11 @@ import {
     genAirdropProof,
     configureSubparser as configureSubparserForGenAirdropProof,
 } from './genAirdropProof'
+
+import {
+    verifyAirdropProof,
+    configureSubparser as configureSubparserForVerifyAirdropProof,
+} from './verifyAirdropProof'
 
 import {
     giveAirdrop,
@@ -147,6 +142,9 @@ const main = async () => {
     // Subcommand: genAirdropProof
     configureSubparserForGenAirdropProof(subparsers)
 
+    // Subcommand: verifyAirdropProof
+    configureSubparserForVerifyAirdropProof(subparsers)
+
     // Subcommand: giveAirdrop
     configureSubparserForGiveAirdrop(subparsers)
 
@@ -157,12 +155,8 @@ const main = async () => {
         await genUnirepIdentity(args)
     } else if (args.subcommand === 'deploy') {
         await deploy(args)
-    // } else if (args.subcommand === 'eventListeners') {
-    //     await eventListeners(args)
     } else if (args.subcommand === 'userSignUp') {
         await userSignUp(args)
-    // } else if (args.subcommand === 'attesterSignup') {
-    //     await attesterSignup(args)
     } else if (args.subcommand === 'genEpochKeyAndProof') {
         await genEpochKeyAndProof(args)
     } else if (args.subcommand === 'verifyEpochKeyProof') {
@@ -185,6 +179,8 @@ const main = async () => {
         await userStateTransition(args)
     } else if (args.subcommand === 'genAirdropProof') {
         await genAirdropProof(args)
+    } else if (args.subcommand === 'verifyAirdropProof') {
+        await verifyAirdropProof(args)
     } else if (args.subcommand === 'giveAirdrop') {
         await giveAirdrop(args)
     }

@@ -26,7 +26,6 @@ describe('Airdrop', function () {
     let attester, attesterId, unirepContractCalledByAttester
     let airdropAmount
 
-    const repNullifiersAmount = 0
     const epkNonce = 0
     const proofIndexes: BigInt[] = []
     let duplicatedProof

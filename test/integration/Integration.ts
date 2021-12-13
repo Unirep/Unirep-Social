@@ -27,14 +27,11 @@ describe('Integration', function () {
     let _treeDepths
     let unirepSocialId
 
-    let prevEpoch: ethers.BigNumber
     let currentEpoch: ethers.BigNumber
-    let GSTreeLeafIndex = 0 
     let emptyUserStateRoot: BigInt
     let blankGSLeaf: BigInt
     let userStateTransitionedNum: {[key: number]: ethers.BigNumber[]} = {}
     let epochKeys: {[key: string]: boolean} = {}
-    let validProofIndex: {[key: number]: boolean} = {}
     let reputationProofIndex
 
     let accounts: ethers.Signer[]
@@ -144,7 +141,6 @@ describe('Integration', function () {
         const secondEpochEpochKeys: string[] = []
         let attestationsFromUnirepSocial: number = 0
         it('begin first epoch epoch transition', async () => {
-            prevEpoch = currentEpoch
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send("evm_increaseTime", [epochLength])
             // Begin epoch transition
@@ -165,7 +161,6 @@ describe('Integration', function () {
             console.log('------------------------------------------------------')
 
             userStateTransitionedNum[currentEpoch.toNumber()] = []
-            GSTreeLeafIndex = 0
         })
 
         it('First user transition from first epoch', async () => {
@@ -346,6 +341,11 @@ describe('Integration', function () {
         })
 
         it('first user publish a post and generate epoch key', async () => {
+            users[firstUser] = await genUserStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                userIds[firstUser],
+            )
             const repNullifiersAmount = defaultPostReputation
             const epkNonce = 0
             const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
@@ -400,10 +400,6 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
-            for (let i = 0; i < maxReputationBudget; i++) {
-                unirepState.addReputationNullifiers(results.reputationNullifiers[i])
-            }
-
             // User submit a post through Unirep Social should be found in Unirep Social Events
             const postFilter = unirepSocialContract.filters.PostSubmitted(currentEpoch, BigInt(postId), epochKey)
             const postEvents = await unirepSocialContract.queryFilter(postFilter)
@@ -420,6 +416,11 @@ describe('Integration', function () {
         })
 
         it('Second user upvote to first user', async () => {
+            users[secondUser] = await genUserStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                userIds[secondUser],
+            )
             // gen nullifier nonce list
             const upvoteValue = 3
             const repNullifiersAmount = upvoteValue
@@ -463,10 +464,6 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
 
-            for (let i = 0; i < maxReputationBudget; i++) {
-                unirepState.addReputationNullifiers(results.reputationNullifiers[i])
-            }
-
             // User submit a vote through Unirep Social should be found in Unirep Social Events
             const voteFilter = unirepSocialContract.filters.VoteSubmitted(currentEpoch, secondUserEpochKey, firstUserEpochKey)
             const voteEvents = await unirepSocialContract.queryFilter(voteFilter)
@@ -485,6 +482,11 @@ describe('Integration', function () {
         })
 
         it('first user leave a comment and generate epoch key', async () => {
+            users[firstUser] = await genUserStateFromContract(
+                hardhatEthers.provider,
+                unirepContract.address,
+                userIds[firstUser],
+            )
             const repNullifiersAmount = defaultCommentReputation
             const epkNonce = 1
             const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
@@ -535,10 +537,6 @@ describe('Integration', function () {
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
-
-            for (let i = 0; i < maxReputationBudget; i++) {
-                unirepState.addReputationNullifiers(results.reputationNullifiers[i])
-            }
 
             // User submit a comment through Unirep Social should be found in Unirep Social Events
             const commentFilter = unirepSocialContract.filters.CommentSubmitted(currentEpoch, BigInt(postId), epochKey)
@@ -628,7 +626,6 @@ describe('Integration', function () {
 
     describe('Third epoch', () => {
         it('begin second epoch epoch transition', async () => {
-            prevEpoch = currentEpoch
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send("evm_increaseTime", [epochLength])
             // Begin epoch transition
@@ -649,7 +646,6 @@ describe('Integration', function () {
             console.log('------------------------------------------------------')
 
             userStateTransitionedNum[currentEpoch.toNumber()] = []
-            GSTreeLeafIndex = 0
         })
 
         it('First user transition from second epoch', async () => {

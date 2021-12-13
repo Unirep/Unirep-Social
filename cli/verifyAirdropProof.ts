@@ -1,13 +1,14 @@
 import base64url from 'base64url'
+import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
+import { genUnirepStateFromContract } from '@unirep/unirep'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { verifyAirdropProof } from './verifyAirdropProof'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
-        'giveAirdrop',
+        'verifyAirdropProof',
         { add_help: true },
     )
 
@@ -17,6 +18,15 @@ const configureSubparser = (subparsers: any) => {
             action: 'store',
             type: 'str',
             help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
+        }
+    )
+
+    parser.add_argument(
+        '-ep', '--epoch',
+        {
+            action: 'store',
+            type: 'int',
+            help: 'The latest epoch user transitioned to. Default: current epoch',
         }
     )
 
@@ -46,7 +56,7 @@ const configureSubparser = (subparsers: any) => {
             help: 'The block the Unirep contract is deployed. Default: 0',
         }
     )
-    
+
     parser.add_argument(
         '-x', '--contract',
         {
@@ -55,24 +65,23 @@ const configureSubparser = (subparsers: any) => {
             help: 'The Unirep Social contract address',
         }
     )
-
-    parser.add_argument(
-        '-d', '--eth-privkey',
-        {
-            required: true,
-            action: 'store',
-            type: 'str',
-            help: 'The deployer\'s Ethereum private key',
-        }
-    )
 }
 
-const giveAirdrop = async (args: any) => {
+const verifyAirdropProof = async (args: any) => {
+
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
 
     // Unirep Social contract
     const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    // Unirep contract
+    const unirepContract = await unirepSocialContract.getUnirep()
+    
+    const unirepState = await genUnirepStateFromContract(
+        provider,
+        unirepContract.address,
+    )
 
     // Parse Inputs
     const decodedProof = base64url.decode(args.proof.slice(signUpProofPrefix.length))
@@ -85,28 +94,40 @@ const giveAirdrop = async (args: any) => {
     const userHasSignedUp = publicSignals[4]
     const proof = JSON.parse(decodedProof)
 
-    // Verify reputation proof
-    await verifyAirdropProof(args)
-
-    // Connect a signer
-    await unirepSocialContract.unlock(args.eth_privkey)
-
-    let tx
-    if(Number(userHasSignedUp)) {
-        // if user has signed before, call the airdrop function
-        tx = await unirepSocialContract.airdrop(publicSignals, proof)
-    } else {
-        // else, sign up the user 
-        // tx = await unirepSocialContract.userSignUpWithProof(publicSignals, proof)
+    // Check if Global state tree root exists
+    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
+    if(!isGSTRootExisted) {
+        console.error('Error: invalid global state tree root')
+        process.exit(0)
     }
 
-    if(tx != undefined){
-        console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
-        console.log('Transaction hash:', tx?.hash)
+    // Check if user has sign up flag
+    if(Number(userHasSignedUp) === 0) {
+        console.log('Error: user does not sign up through Unirep Social')
+        process.exit(0)
     }
+
+    // Check if attester is correct
+    const unirepSocialId = await unirepSocialContract.attesterId()
+    if(Number(unirepSocialId) != Number(attesterId)) {
+        console.error('Error: wrong attester ID proof')
+        process.exit(0)
+    }
+
+    // Verify the proof on-chain
+    const isProofValid = await unirepSocialContract.verifyUserSignUp(
+        publicSignals,
+        proof,
+    )
+    if (!isProofValid) {
+        console.error('Error: invalid reputation proof')
+        process.exit(0)
+    }
+
+    console.log(`Verify reputation proof of epoch key ${epk.toString(16)} airdrop proof success`)
 }
 
 export {
-    giveAirdrop,
+    verifyAirdropProof,
     configureSubparser,
 }

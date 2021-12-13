@@ -1,6 +1,6 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genUnirepStateFromContract, UnirepContract } from '@unirep/unirep'
+import { genUnirepStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
@@ -91,7 +91,7 @@ const verifyEpochKeyProof = async (args: any) => {
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, inputEpoch)
     if(!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
-        return
+        process.exit(0)
     }
     
     // Verify the proof on-chain
@@ -101,7 +101,7 @@ const verifyEpochKeyProof = async (args: any) => {
     )
     if (!isProofValid) {
         console.error('Error: invalid epoch key proof')
-        return
+        process.exit(0)
     }
     console.log(`Verify epoch key proof with epoch key ${epk} succeed`)
 }

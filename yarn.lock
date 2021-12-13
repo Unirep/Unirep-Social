@@ -1385,7 +1385,7 @@
 
 "@unirep/unirep@git+https://github.com/Unirep/unirep.git":
   version "0.0.4"
-  resolved "git+https://github.com/Unirep/unirep.git#637c6add8b1fb1bca4c52019b2bc0096aad7f9dd"
+  resolved "git+https://github.com/Unirep/unirep.git#4bb46ebce55c9a5c3be191422fe7f0f0dce7baa3"
   dependencies:
     "@unirep/circuits" "git+https://github.com/Unirep/circuits.git"
     "@unirep/contracts" "git+https://github.com/Unirep/contracts.git"

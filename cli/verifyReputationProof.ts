@@ -102,7 +102,14 @@ const verifyReputationProof = async (args: any) => {
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
     if(!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
-        return
+        process.exit(0)
+    }
+
+    // Check if attester is correct
+    const unirepSocialId = await unirepSocialContract.attesterId()
+    if(Number(unirepSocialId) != Number(attesterId)) {
+        console.error('Error: wrong attester ID proof')
+        process.exit(0)
     }
 
     // Verify the proof on-chain
@@ -112,7 +119,7 @@ const verifyReputationProof = async (args: any) => {
     )
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
-        return
+        process.exit(0)
     }
 
     console.log(`Verify reputation proof of epoch key ${epk.toString(16)} with ${repNullifiersAmount} reputation spent in transaction and minimum reputation ${minRep} succeed`)
