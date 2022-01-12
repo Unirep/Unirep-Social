@@ -139,7 +139,7 @@ contract UnirepSocial {
         string memory content, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
-        require(isPostIDSubmitted[postId] == false, "Unirep Social: duplicated post ID");
+        // require(isPostIDSubmitted[postId] == false, "Unirep Social: duplicated post ID");
         require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
@@ -171,8 +171,8 @@ contract UnirepSocial {
         string memory content, 
         Unirep.ReputationProofRelated memory _proofRelated
     ) external payable {
-        require(isPostIDSubmitted[postId] == true, "Unirep Social: should leave comment to a submiited post");
-        require(isCommentIDSubmitted[commentId] == false, "Unirep Social: duplicated comment ID");
+        // require(isPostIDSubmitted[postId] == true, "Unirep Social: should leave comment to a submiited post");
+        // require(isCommentIDSubmitted[commentId] == false, "Unirep Social: duplicated comment ID");
         require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
