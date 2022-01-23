@@ -66,7 +66,13 @@ const userSignUp = async (args: any) => {
     const commitment = add0x(decodedCommitment)
 
     // Submit the user sign up transaction
-    const tx = await unirepSocialContract.userSignUp(commitment)
+    let tx
+    try {
+        tx = await unirepSocialContract.userSignUp(commitment)
+    } catch (error) {
+        console.log('Transaction Error', error)
+        return
+    }
     await tx.wait()
     const epoch = await unirepSocialContract.currentEpoch()
 

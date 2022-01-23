@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "UnirepObjs",
+  "sourceName": "@unirep/contracts/contracts/UnirepObjs.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212207b491102067e70b7314aad46c05dfa8ee1347c76288af2e40b3d40735c1fc53764736f6c63430008000033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212207b491102067e70b7314aad46c05dfa8ee1347c76288af2e40b3d40735c1fc53764736f6c63430008000033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

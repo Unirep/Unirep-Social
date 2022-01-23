@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { unSerialiseIdentity } from '@unirep/crypto'
-import { CircuitName, verifyProof } from '@unirep/circuits'
+import { Circuit, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -51,14 +51,6 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
-        '-db', '--from-database',
-        {
-            action: 'store_true',
-            help: 'Indicate if to generate proving circuit from database',
-        }
-    )
-
-    parser.add_argument(
         '-d', '--eth-privkey',
         {
             required: true,
@@ -92,49 +84,41 @@ const userStateTransition = async (args: any) => {
         unirepContract.address,
         id,
     )
-    console.log(userState.toJSON(4))
-    let results
+    const results = await userState.genUserStateTransitionProofs()
 
-    // let circuitInputs: any
-
-    if(args.from_database){
-        console.log('generating proving circuit from database...')
-
-        // circuitInputs = await genUserStateTransitionCircuitInputsFromDB(
-        //     currentEpoch,
-        //     id
-        // )
-    } else {
-
-        console.log('generating proving circuit from contract...')
-
-        // const userState = await genUserStateFromContract(
-        //     provider,
-        //     unirepContract.address,
-        //     id,
-        //     commitment,
-        // )
-        results = await userState.genUserStateTransitionProofs()
-
-    }
     // Start user state transition proof
-    let isValid = await verifyProof(CircuitName.startTransition, results.startTransitionProof.proof, results.startTransitionProof.publicSignals)
+    let isValid = await verifyProof(
+        Circuit.startTransition, 
+        results.startTransitionProof.proof, 
+        results.startTransitionProof.publicSignals
+    )
     if (!isValid) {
         console.error('Error: start state transition proof generated is not valid!')
+        return
     }
 
     // Process attestations proofs
     for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const isValid = await verifyProof(CircuitName.processAttestations, results.processAttestationProofs[i].proof, results.processAttestationProofs[i].publicSignals)
+        const isValid = await verifyProof(
+            Circuit.processAttestations, 
+            results.processAttestationProofs[i].proof, 
+            results.processAttestationProofs[i].publicSignals
+        )
         if (!isValid) {
             console.error('Error: process attestations proof generated is not valid!')
+            return
         }
     }
 
     // User state transition proof
-    isValid = await verifyProof(CircuitName.userStateTransition, results.finalTransitionProof.proof, results.finalTransitionProof.publicSignals)
+    isValid = await verifyProof(
+        Circuit.userStateTransition, 
+        results.finalTransitionProof.proof, 
+        results.finalTransitionProof.publicSignals
+    )
     if (!isValid) {
         console.error('Error: user state transition proof generated is not valid!')
+        return
     }
 
     // submit user state transition proofs

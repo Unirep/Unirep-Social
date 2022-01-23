@@ -1,8 +1,7 @@
 import { ethers } from 'ethers'
 import Keyv from "keyv"
-import { SparseMerkleTreeImpl, add0x, SnarkBigInt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
+import { SparseMerkleTreeImpl, add0x, SnarkBigInt, hash5, hashLeftRight, IncrementalQuinTree, genRandomSalt } from '@unirep/crypto'
 import { circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochTreeDepth, genReputationNullifier, globalStateTreeDepth, maxReputationBudget, UserState, userStateTreeDepth} from '@unirep/unirep'
-import { EPOCH_KEY_NULLIFIER_DOMAIN, REPUTATION_NULLIFIER_DOMAIN } from '../config/nullifierDomainSeparator'
 
 const getTreeDepthsForTesting = (deployEnv: string = "circuit") => {
     if (deployEnv === 'contract') {
@@ -20,28 +19,6 @@ const getTreeDepthsForTesting = (deployEnv: string = "circuit") => {
     } else {
         throw new Error('Only contract and circuit testing env are supported')
     }
-}
-
-const genEpochKey = (identityNullifier: SnarkBigInt, epoch: number, nonce: number, _epochTreeDepth: number = circuitEpochTreeDepth): SnarkBigInt => {
-    const values: any[] = [
-        identityNullifier,
-        epoch,
-        nonce,
-        BigInt(0),
-        BigInt(0),
-    ]
-    let epochKey = hash5(values)
-    // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = BigInt(epochKey.toString()) % BigInt(2 ** _epochTreeDepth)
-    return epochKeyModed
-}
-
-const genEpochKeyNullifier = (identityNullifier: SnarkBigInt, epoch: number, nonce: number): SnarkBigInt => {
-    return hash5([EPOCH_KEY_NULLIFIER_DOMAIN, identityNullifier, BigInt(epoch), BigInt(nonce), BigInt(0)])
-}
-
-const genKarmaNullifier = (identityNullifier: SnarkBigInt, epoch: number, nonce: number): SnarkBigInt => {
-    return hash5([REPUTATION_NULLIFIER_DOMAIN, identityNullifier, BigInt(epoch), BigInt(nonce), BigInt(0)])
 }
 
 const toCompleteHexString = (str: string, len?: number): string => {
@@ -113,19 +90,24 @@ const findValidNonce = (userState: UserState, repNullifiersAmount: number, epoch
     return nonceList
 }
 
+const genRandomList = (length): BigInt[] => {
+    const array: BigInt[] = []
+    for (let i = 0; i < length; i++) {
+        array.push(genRandomSalt())
+    }
+    return array
+}
+
 export {
     SMT_ONE_LEAF,
     SMT_ZERO_LEAF,
     computeEmptyUserStateRoot,
     defaultUserStateLeaf,
-    // deployUnirep,
     getTreeDepthsForTesting,
-    genEpochKey,
-    genEpochKeyNullifier,
-    genKarmaNullifier,
     genNewEpochTree,
     genNewUserStateTree,
     genNewSMT,
     toCompleteHexString,
     findValidNonce,
+    genRandomList,
 }

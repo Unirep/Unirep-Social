@@ -1,5 +1,6 @@
 import base64url from 'base64url'
-import { maxReputationBudget } from '@unirep/unirep'
+import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { ReputationProof } from '@unirep/contracts'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
@@ -83,14 +84,6 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
-        '-db', '--from-database',
-        {
-            action: 'store_true',
-            help: 'Indicate if to generate proving circuit from database',
-        }
-    )
-
-    parser.add_argument(
         '-d', '--eth-privkey',
         {
             required: true,
@@ -113,10 +106,11 @@ const vote = async (args: any) => {
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(reputationPublicSignalsPrefix.length))
     const publicSignals = JSON.parse(decodedPublicSignals)
     const proof = JSON.parse(decodedProof)
-    const epoch = publicSignals[maxReputationBudget]
-    const epochKey = publicSignals[maxReputationBudget + 1]
-    const repNullifiersAmount = publicSignals[maxReputationBudget + 4]
-    const minRep = publicSignals[maxReputationBudget + 5]
+    const reputationProof = new ReputationProof(publicSignals, formatProofForSnarkjsVerification(proof))
+    const epoch = reputationProof.epoch
+    const epochKey = reputationProof.epochKey
+    const repNullifiersAmount = reputationProof.proveReputationAmount
+    const minRep = reputationProof.minRep
 
     // upvote / downvote user
     const upvoteValue = args.upvote_value != null ? args.upvote_value : 0
@@ -139,15 +133,25 @@ const vote = async (args: any) => {
     // Connect a signer
     await unirepSocialContract.unlock(args.eth_privkey)
     // Submit tx
-    const tx = await unirepSocialContract.vote(publicSignals, proof, args.epoch_key, args.proof_index, upvoteValue, downvoteValue)
-
-    if(tx != undefined){
-        console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
-        await tx.wait()
-        const proofIndex = await unirepSocialContract.getReputationProofIndex(publicSignals, proof)
-        console.log('Transaction hash:', tx?.hash)
-        console.log('Proof index:', proofIndex.toNumber())
+    let tx
+    try {
+        tx = await unirepSocialContract.vote(
+            reputationProof, 
+            args.epoch_key, 
+            args.proof_index, 
+            upvoteValue, 
+            downvoteValue
+        )
+    } catch (error) {
+        console.log('Transaction Error', error)
+        return
     }
+
+    console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
+    await tx.wait()
+    const proofIndex = await unirepSocialContract.getReputationProofIndex(reputationProof)
+    console.log('Transaction hash:', tx?.hash)
+    console.log('Proof index:', proofIndex.toNumber())
 }
 
 export {

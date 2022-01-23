@@ -18,24 +18,6 @@ const computeEmptyUserStateRoot = (treeDepth: number): BigInt => {
     return t.root
 }
 
-const getTreeDepthsForTesting = (deployEnv: string = "circuit") => {
-    if (deployEnv === 'contract') {
-        return {
-            "userStateTreeDepth": userStateTreeDepth,
-            "globalStateTreeDepth": globalStateTreeDepth,
-            "epochTreeDepth": epochTreeDepth,
-        }
-    } else if (deployEnv === 'circuit') {
-        return {
-            "userStateTreeDepth": circuitUserStateTreeDepth,
-            "globalStateTreeDepth": circuitGlobalStateTreeDepth,
-            "epochTreeDepth": circuitEpochTreeDepth,
-        }
-    } else {
-        throw new Error('Only contract and circuit testing env are supported')
-    }
-}
-
 const deployUnirepSocial = async (
     deployer: ethers.Signer,
     UnirepAddr: string,
@@ -84,11 +66,5 @@ const genEpochKey = (identityNullifier: SnarkBigInt, epoch: number, nonce: numbe
 }
 
 export {
-    defaultUserStateLeaf,
-    SMT_ONE_LEAF,
-    SMT_ZERO_LEAF,
-    computeEmptyUserStateRoot,
-    getTreeDepthsForTesting,
     deployUnirepSocial,
-    genEpochKey,
 }

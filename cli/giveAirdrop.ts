@@ -4,6 +4,8 @@ import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { verifyAirdropProof } from './verifyAirdropProof'
+import { SignUpProof } from '@unirep/contracts'
+import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -78,12 +80,9 @@ const giveAirdrop = async (args: any) => {
     const decodedProof = base64url.decode(args.proof.slice(signUpProofPrefix.length))
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(signUpPublicSignalsPrefix.length))
     const publicSignals = JSON.parse(decodedPublicSignals)
-    const epoch = publicSignals[0]
-    const epk = publicSignals[1]
-    const GSTRoot = publicSignals[2]
-    const attesterId = publicSignals[3]
-    const userHasSignedUp = publicSignals[4]
     const proof = JSON.parse(decodedProof)
+    const signUpProof = new SignUpProof(publicSignals, formatProofForSnarkjsVerification(proof))
+    const epk = signUpProof.epochKey
 
     // Verify reputation proof
     await verifyAirdropProof(args)
@@ -92,18 +91,15 @@ const giveAirdrop = async (args: any) => {
     await unirepSocialContract.unlock(args.eth_privkey)
 
     let tx
-    if(Number(userHasSignedUp)) {
-        // if user has signed before, call the airdrop function
-        tx = await unirepSocialContract.airdrop(publicSignals, proof)
-    } else {
-        // else, sign up the user 
-        // tx = await unirepSocialContract.userSignUpWithProof(publicSignals, proof)
+    try {
+        tx = await unirepSocialContract.airdrop(signUpProof)
+    } catch (error) {
+        console.log('Transaction Error', error)
+        return
     }
-
-    if(tx != undefined){
-        console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
-        console.log('Transaction hash:', tx?.hash)
-    }
+    
+    console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
+    console.log('Transaction hash:', tx?.hash)
 }
 
 export {

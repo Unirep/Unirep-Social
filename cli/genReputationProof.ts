@@ -1,13 +1,14 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { add0x, unSerialiseIdentity } from '@unirep/crypto'
-import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { formatProofForVerifierContract } from '@unirep/circuits'
 import { genReputationNullifier, genUserStateFromContract, maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { identityPrefix, reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
+import { ReputationProof } from '@unirep/contracts'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -90,14 +91,6 @@ const configureSubparser = (subparsers: any) => {
             help: 'The Unirep Social contract address',
         }
     )
-
-    parser.add_argument(
-        '-db', '--from-database',
-        {
-            action: 'store_true',
-            help: 'Indicate if to generate proving circuit from database',
-        }
-    )
 }
 
 const genReputationProof = async (args: any) => {
@@ -141,49 +134,21 @@ const genReputationProof = async (args: any) => {
     } else {
         proveReputationAmount = 0
     }
-    const attesterId = await unirepSocialContract.attesterId()
+    const attesterId = BigInt(await unirepSocialContract.attesterId())
     const proveGraffiti = args.graffiti_preimage != null ? BigInt(1) : BigInt(0)
-    const minRep = args.min_rep != null ? BigInt(args.min_rep) : BigInt(0)
+    const minRep = args.min_rep != null ? args.min_rep : 0
     const graffitiPreImage = args.graffiti_preimage != null ? BigInt(add0x(args.graffiti_preimage)) : BigInt(0)
-    let results
-
-    if(args.from_database){
-
-        console.log('generating proving circuit from database...')
-        
-    //      // Gen epoch key proof and reputation proof from database
-    //     circuitInputs = await genProveReputationCircuitInputsFromDB(
-    //         currentEpoch,
-    //         id,
-    //         epkNonce,                       // generate epoch key from epoch nonce
-    //         proveKarmaAmount,               // the amount of output karma nullifiers
-    //         minRep                          // the amount of minimum reputation the user wants to prove
-    //     )
-        
-    //     const db = await mongoose.connect(
-    //         dbUri, 
-    //         { useNewUrlParser: true, 
-    //           useFindAndModify: false, 
-    //           useUnifiedTopology: true
-    //         }
-    //     )
-    //     GSTRoot = (await genGSTreeFromDB(currentEpoch)).root
-    //     nullifierTreeRoot = (await genNullifierTreeFromDB()).getRootHash()
-    //     db.disconnect();
-
-    } else {
-
-        console.log('generating proving circuit from contract...')
-        const userState = await genUserStateFromContract(
-            provider,
-            unirepContract.address,
-            id,
-        )
-        const nonceList: BigInt[] = []
-        const rep = userState.getRepByAttester(attesterId)
-        const epoch = userState.getUnirepStateCurrentEpoch()
-        let nonceStarter: number = -1
-        if(proveReputationAmount > 0) {
+    
+    const userState = await genUserStateFromContract(
+        provider,
+        unirepContract.address,
+        id,
+    )
+    const nonceList: BigInt[] = []
+    const rep = userState.getRepByAttester(attesterId)
+    const epoch = userState.getUnirepStateCurrentEpoch()
+    let nonceStarter: number = -1
+    if(proveReputationAmount > 0) {
         // find valid nonce starter
         for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
             const reputationNullifier = genReputationNullifier(id.identityNullifier, epoch, n, attesterId)
@@ -194,11 +159,11 @@ const genReputationProof = async (args: any) => {
         }
         if(nonceStarter == -1) {
             console.error('Error: All nullifiers are spent')
-            process.exit(0)
+            return
         }
         if((nonceStarter + proveReputationAmount) > Number(rep.posRep) - Number(rep.negRep)){
             console.error('Error: Not enough reputation to spend')
-            process.exit(0)
+            return
         }
         for (let i = 0; i < proveReputationAmount; i++) {
             nonceList.push( BigInt(nonceStarter + i) )
@@ -208,11 +173,19 @@ const genReputationProof = async (args: any) => {
     for (let i = proveReputationAmount ; i < maxReputationBudget ; i++) {
         nonceList.push(BigInt(-1))
     }
-        results = await userState.genProveReputationProof(BigInt(attesterId), epkNonce, minRep, proveGraffiti, graffitiPreImage, nonceList)
-    }
+    const { publicSignals, proof, epochKey } = await userState.genProveReputationProof(
+        attesterId, 
+        epkNonce, 
+        minRep, 
+        proveGraffiti, 
+        graffitiPreImage, 
+        nonceList
+    )
+    const reputationProof = new ReputationProof(publicSignals, proof)
+
     
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof(CircuitName.proveReputation, results.proof, results.publicSignals)
+    const isValid = await reputationProof.verify()
     if(!isValid) {
         console.error('Error: reputation proof generated is not valid!')
         return
@@ -222,13 +195,12 @@ const genReputationProof = async (args: any) => {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
     
-    const formattedProof = formatProofForVerifierContract(results.proof)
+    const formattedProof = formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
-    const encodedPublicSignals = base64url.encode(JSON.stringify(results.publicSignals))
-    console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
+    const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
+    console.log(`Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${epochKey}`)
     console.log(reputationProofPrefix + encodedProof)
     console.log(reputationPublicSignalsPrefix + encodedPublicSignals)
-    process.exit(0)
 }
 
 export {

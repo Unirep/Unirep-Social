@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { unSerialiseIdentity } from '@unirep/crypto'
-import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { Circuit, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -87,19 +87,19 @@ const genEpochKeyAndProof = async (args: any) => {
         unirepContract.address,
         id,
     )
-    const results = await userState.genVerifyEpochKeyProof(epkNonce)
+    const { publicSignals, proof, epoch, epochKey } = await userState.genVerifyEpochKeyProof(epkNonce)
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof(CircuitName.verifyEpochKey, results.proof, results.publicSignals)
+    const isValid = await verifyProof(Circuit.verifyEpochKey, proof, publicSignals)
     if(!isValid) {
         console.error('Error: epoch key proof generated is not valid!')
         return
     }
 
-    const formattedProof = formatProofForVerifierContract(results.proof)
+    const formattedProof = formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
-    const encodedPublicSignals = base64url.encode(JSON.stringify(results.publicSignals))
-    console.log(`Epoch key of epoch ${results.epoch} and nonce ${epkNonce}: ${results.epochKey}`)
+    const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
+    console.log(`Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${epochKey}`)
     console.log(epkProofPrefix + encodedProof)
     console.log(epkPublicSignalsPrefix + encodedPublicSignals)
 }

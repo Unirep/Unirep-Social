@@ -3,43 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.genEpochKey = exports.deployUnirepSocial = exports.getTreeDepthsForTesting = exports.computeEmptyUserStateRoot = exports.SMT_ZERO_LEAF = exports.SMT_ONE_LEAF = exports.defaultUserStateLeaf = void 0;
+exports.deployUnirepSocial = void 0;
 const ethers_1 = require("ethers");
 const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"));
 const unirep_1 = require("@unirep/unirep");
 const maci_crypto_1 = require("maci-crypto");
 const socialMedia_1 = require("../config/socialMedia");
 const defaultUserStateLeaf = maci_crypto_1.hash5([BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]);
-exports.defaultUserStateLeaf = defaultUserStateLeaf;
 const SMT_ZERO_LEAF = maci_crypto_1.hashLeftRight(BigInt(0), BigInt(0));
-exports.SMT_ZERO_LEAF = SMT_ZERO_LEAF;
 const SMT_ONE_LEAF = maci_crypto_1.hashLeftRight(BigInt(1), BigInt(0));
-exports.SMT_ONE_LEAF = SMT_ONE_LEAF;
 const computeEmptyUserStateRoot = (treeDepth) => {
     const t = new maci_crypto_1.IncrementalQuinTree(treeDepth, defaultUserStateLeaf, 2);
     return t.root;
 };
-exports.computeEmptyUserStateRoot = computeEmptyUserStateRoot;
-const getTreeDepthsForTesting = (deployEnv = "circuit") => {
-    if (deployEnv === 'contract') {
-        return {
-            "userStateTreeDepth": unirep_1.userStateTreeDepth,
-            "globalStateTreeDepth": unirep_1.globalStateTreeDepth,
-            "epochTreeDepth": unirep_1.epochTreeDepth,
-        };
-    }
-    else if (deployEnv === 'circuit') {
-        return {
-            "userStateTreeDepth": unirep_1.circuitUserStateTreeDepth,
-            "globalStateTreeDepth": unirep_1.circuitGlobalStateTreeDepth,
-            "epochTreeDepth": unirep_1.circuitEpochTreeDepth,
-        };
-    }
-    else {
-        throw new Error('Only contract and circuit testing env are supported');
-    }
-};
-exports.getTreeDepthsForTesting = getTreeDepthsForTesting;
 const deployUnirepSocial = async (deployer, UnirepAddr, _settings) => {
     console.log('Deploying Unirep Social');
     const _defaultAirdroppedRep = socialMedia_1.defaultAirdroppedReputation;
@@ -72,4 +48,3 @@ const genEpochKey = (identityNullifier, epoch, nonce, _epochTreeDepth = unirep_1
     const epochKeyModed = BigInt(epochKey.toString()) % BigInt(2 ** _epochTreeDepth);
     return epochKeyModed;
 };
-exports.genEpochKey = genEpochKey;

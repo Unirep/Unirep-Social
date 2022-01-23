@@ -5,13 +5,10 @@
     "main": "build/core/index.js",
     "scripts": {
         "build": "tsc",
-        "compile": "npx hardhat compile && npx ts-node scripts/buildPoseidon.ts",
+        "compile": "npx hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
-        "test": "yarn run contractUnitTests && yarn run circuitUnitTests && yarn run databaseTests && yarn run integrationTest",
-        "contractUnitTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/contracts -name '*.ts')",
-        "circuitUnitTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/circuits -name '*.ts')",
-        "databaseTests": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/database -name '*.ts')",
-        "integrationTest": " NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/integration -name '*.ts')"
+        "test": "yarn scriptsTest",
+        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/ -name '*.ts')"
     },
     "repository": {
         "type": "git",

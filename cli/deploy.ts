@@ -1,10 +1,10 @@
 // @ts-ignore
 import { ethers } from 'ethers'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
-import { maxUsers, maxAttesters, maxReputationBudget } from '@unirep/unirep'
+import { maxUsers, maxAttesters, maxReputationBudget, circuitUserStateTreeDepth, circuitGlobalStateTreeDepth, circuitEpochTreeDepth } from '@unirep/unirep'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
-import { deployUnirepSocial, getTreeDepthsForTesting } from '../core/utils'
-import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_TREE_DEPTHS_CONFIG } from './defaults'
+import { deployUnirepSocial } from '../core/utils'
+import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE } from './defaults'
 
 import {
     checkDeployerProviderConnection,
@@ -40,7 +40,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'str',
-            help: 'A connection string to an Ethereum provider. Default: http://localhost:8545',
+            help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
         }
     )
 
@@ -59,15 +59,6 @@ const configureSubparser = (subparsers: any) => {
             action: 'store',
             type: 'str',
             help: 'The fee to make an attestation. Default: 0.01 eth (i.e., 10 * 16)',
-        }
-    )
-
-    deployParser.add_argument(
-        '-td', '--tree-depths-config',
-        {
-            action: 'store',
-            type: 'str',
-            help: 'The configuration of tree depths: circuit or contract. Default: circuit',
         }
     )
 
@@ -131,16 +122,11 @@ const deploy = async (args: any) => {
         attestingFee: _attestingFee
     }
 
-    // Tree depths config
-    const _treeDepthsConfig = args.tree_depths_config ? args.tree_depths_config : DEFAULT_TREE_DEPTHS_CONFIG
-
-    if (_treeDepthsConfig !== 'circuit' && _treeDepthsConfig !== 'contract') {
-        console.error('Error: this codebase only supports circuit or contract configurations for tree depths')
-        return
+    const treeDepths = {
+        "userStateTreeDepth": circuitUserStateTreeDepth,
+        "globalStateTreeDepth": circuitGlobalStateTreeDepth,
+        "epochTreeDepth": circuitEpochTreeDepth,
     }
-
-    const treeDepths = getTreeDepthsForTesting(_treeDepthsConfig)
-
     const _postReputation = (args.post_reputation != undefined) ? args.post_reputation : defaultPostReputation
 
     const _commentReputation = (args.comment_reputation != undefined) ? args.comment_reputation : defaultCommentReputation

@@ -5,10 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UnirepSocialContract = void 0;
 const ethers_1 = require("ethers");
-const crypto_1 = require("@unirep/crypto");
 const contracts_1 = require("@unirep/contracts");
 const circuits_1 = require("@unirep/circuits");
-const unirep_1 = require("@unirep/unirep");
 const defaults_1 = require("../cli/defaults");
 const utils_1 = require("../cli/utils");
 const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"));
@@ -104,30 +102,7 @@ class UnirepSocialContract {
         //     }
         //     return tx
         // }
-        this.parseRepuationProof = (publicSignals, proof) => {
-            const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
-            const epoch = publicSignals[unirep_1.maxReputationBudget];
-            const epochKey = publicSignals[unirep_1.maxReputationBudget + 1];
-            const globalStatetreeRoot = publicSignals[unirep_1.maxReputationBudget + 2];
-            const attesterId = publicSignals[unirep_1.maxReputationBudget + 3];
-            const proveReputationAmount = publicSignals[unirep_1.maxReputationBudget + 4];
-            const minRep = publicSignals[unirep_1.maxReputationBudget + 5];
-            const proveGraffiti = publicSignals[unirep_1.maxReputationBudget + 6];
-            const graffitiPreImage = publicSignals[unirep_1.maxReputationBudget + 7];
-            return [
-                reputationNullifiers,
-                epoch,
-                epochKey,
-                globalStatetreeRoot,
-                attesterId,
-                proveReputationAmount,
-                minRep,
-                proveGraffiti,
-                graffitiPreImage,
-                proof
-            ];
-        };
-        this.publishPost = async (postId, publicSignals, proof, postContent) => {
+        this.publishPost = async (reputationProof, postContent) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -135,22 +110,10 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            const proofsRelated = this.parseRepuationProof(publicSignals, proof);
             const attestingFee = await this.attestingFee();
-            let tx;
-            try {
-                tx = await this.contract.publishPost(BigInt(crypto_1.add0x(postId)), postContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.publishPost(postContent, reputationProof, { value: attestingFee, gasLimit: 1000000 });
         };
-        this.leaveComment = async (publicSignals, proof, postId, commentId, commentContent) => {
+        this.leaveComment = async (reputationProof, commentContent) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -158,22 +121,10 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            const proofsRelated = this.parseRepuationProof(publicSignals, proof);
             const attestingFee = await this.attestingFee();
-            let tx;
-            try {
-                tx = await this.contract.leaveComment(BigInt(crypto_1.add0x(postId)), BigInt(crypto_1.add0x(commentId)), commentContent, proofsRelated, { value: attestingFee, gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.leaveComment(commentContent, reputationProof, { value: attestingFee, gasLimit: 1000000 });
         };
-        this.vote = async (publicSignals, proof, toEpochKey, epochKeyProofIndex, upvoteValue, downvoteValue) => {
+        this.vote = async (reputationProof, toEpochKey, epochKeyProofIndex, upvoteValue, downvoteValue) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -181,29 +132,15 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            const proofsRelated = this.parseRepuationProof(publicSignals, proof);
             const attestingFee = await this.attestingFee();
-            let tx;
-            try {
-                tx = await this.contract.vote(upvoteValue, downvoteValue, toEpochKey, epochKeyProofIndex, proofsRelated, { value: attestingFee.mul(2), gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.vote(upvoteValue, downvoteValue, toEpochKey, epochKeyProofIndex, reputationProof, { value: attestingFee.mul(2), gasLimit: 1000000 });
         };
-        this.getReputationProofIndex = async (publicSignals, proof) => {
-            var _a, _b;
+        this.getReputationProofIndex = async (reputationProof) => {
+            var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            const proofsRelated = this.parseRepuationProof(publicSignals, proof);
-            const proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashReputationProof(proofsRelated));
-            return (_b = this.unirep) === null || _b === void 0 ? void 0 : _b.getProofIndex(proofNullifier);
+            return (_a = this.unirep) === null || _a === void 0 ? void 0 : _a.getProofIndex(reputationProof.hash());
         };
         this.fastForward = async () => {
             var _a;
@@ -227,18 +164,7 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            let tx;
-            try {
-                tx = await this.unirep.beginEpochTransition({ gasLimit: 9000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.unirep.beginEpochTransition({ gasLimit: 9000000 });
         };
         this.submitStartTransitionProof = async (startTransitionProof) => {
             if (this.signer != undefined) {
@@ -248,26 +174,15 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            let tx;
-            try {
-                tx = await this.contract.startUserStateTransition(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof));
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.startUserStateTransition(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof));
         };
         this.getStartTransitionProofIndex = async (startTransitionProof) => {
-            var _a, _b;
+            var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashStartTransitionProof(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof)));
-            return (_b = this.unirep) === null || _b === void 0 ? void 0 : _b.getProofIndex(proofNullifier);
+            const proofNullifier = contracts_1.computeStartTransitionProofHash(startTransitionProof.blindedUserState, startTransitionProof.blindedHashChain, startTransitionProof.globalStateTreeRoot, circuits_1.formatProofForVerifierContract(startTransitionProof.proof));
+            return (_a = this.unirep) === null || _a === void 0 ? void 0 : _a.getProofIndex(proofNullifier);
         };
         this.submitProcessAttestationsProof = async (processAttestaitonProof) => {
             if (this.signer != undefined) {
@@ -277,28 +192,17 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            let tx;
-            try {
-                tx = await this.contract.processAttestations(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof));
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.processAttestations(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof));
         };
         this.getProcessAttestationsProofIndex = async (processAttestaitonProof) => {
-            var _a, _b;
+            var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            let proofNullifier = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.hashProcessAttestationsProof(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof)));
-            return (_b = this.unirep) === null || _b === void 0 ? void 0 : _b.getProofIndex(proofNullifier);
+            const proofNullifier = contracts_1.computeProcessAttestationsProofHash(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof));
+            return (_a = this.unirep) === null || _a === void 0 ? void 0 : _a.getProofIndex(proofNullifier);
         };
-        this.submitUserStateTransitionProof = async (finalTransitionProof, proofIndexes) => {
+        this.submitUserStateTransitionProof = async (USTProof, proofIndexes) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -306,27 +210,7 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            let tx;
-            try {
-                tx = await this.contract.updateUserStateRoot([
-                    finalTransitionProof.newGlobalStateTreeLeaf,
-                    finalTransitionProof.epochKeyNullifiers,
-                    finalTransitionProof.transitionedFromEpoch,
-                    finalTransitionProof.blindedUserStates,
-                    finalTransitionProof.fromGSTRoot,
-                    finalTransitionProof.blindedHashChains,
-                    finalTransitionProof.fromEpochTree,
-                    circuits_1.formatProofForVerifierContract(finalTransitionProof.proof),
-                ], proofIndexes);
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.updateUserStateRoot(USTProof, proofIndexes);
         };
         this.userStateTransition = async (results) => {
             const txList = [];
@@ -345,12 +229,13 @@ class UnirepSocialContract {
                 const proofIndex = await this.getProcessAttestationsProofIndex(results.processAttestationProofs[i]);
                 proofIndexes.push(BigInt(proofIndex));
             }
-            tx = await this.submitUserStateTransitionProof(results.finalTransitionProof, proofIndexes);
+            const USTProof = new contracts_1.UserTransitionProof(results.finalTransitionProof.publicSignals, results.finalTransitionProof.proof);
+            tx = await this.submitUserStateTransitionProof(USTProof, proofIndexes);
             txList.push(tx);
             await tx.wait();
             return txList;
         };
-        this.airdrop = async (publicSignals, proof) => {
+        this.airdrop = async (signUpProof) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -359,64 +244,35 @@ class UnirepSocialContract {
                 return;
             }
             const attestingFee = await this.attestingFee();
-            const userSignUpProof = publicSignals.concat([proof]);
-            let tx;
-            try {
-                tx = await this.contract.airdrop(userSignUpProof, { value: attestingFee, gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.airdrop(signUpProof, { value: attestingFee, gasLimit: 1000000 });
         };
         this.getPostEvents = async (epoch) => {
             const postFilter = this.contract.filters.PostSubmitted(epoch);
             const postEvents = await this.contract.queryFilter(postFilter);
             return postEvents;
         };
-        this.verifyEpochKeyValidity = async (publicSignals, proof) => {
+        this.verifyEpochKeyValidity = async (epochKeyProof) => {
             var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            const globalStateTree = publicSignals[0];
-            const epoch = publicSignals[1];
-            const epochKey = publicSignals[2];
-            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyEpochKeyValidity(globalStateTree, epoch, epochKey, proof));
+            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyEpochKeyValidity(epochKeyProof));
             return isValid;
         };
-        this.verifyReputation = async (publicSignals, proof) => {
+        this.verifyReputation = async (reputationProof) => {
             var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            const reputationNullifiers = publicSignals.slice(0, unirep_1.maxReputationBudget);
-            const epoch = publicSignals[unirep_1.maxReputationBudget];
-            const epochKey = publicSignals[unirep_1.maxReputationBudget + 1];
-            const globalStatetreeRoot = publicSignals[unirep_1.maxReputationBudget + 2];
-            const attesterId = publicSignals[unirep_1.maxReputationBudget + 3];
-            const proveReputationAmount = publicSignals[unirep_1.maxReputationBudget + 4];
-            const minRep = publicSignals[unirep_1.maxReputationBudget + 5];
-            const proveGraffiti = publicSignals[unirep_1.maxReputationBudget + 6];
-            const graffitiPreImage = publicSignals[unirep_1.maxReputationBudget + 7];
-            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyReputation(reputationNullifiers, epoch, epochKey, globalStatetreeRoot, attesterId, proveReputationAmount, minRep, proveGraffiti, graffitiPreImage, proof));
+            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyReputation(reputationProof));
             return isValid;
         };
-        this.verifyUserSignUp = async (publicSignals, proof) => {
+        this.verifyUserSignUp = async (signUpProof) => {
             var _a;
             if (this.unirep == undefined) {
                 await this.getUnirep();
             }
-            const epoch = publicSignals[0];
-            const epochKey = publicSignals[1];
-            const globalStateTreeRoot = publicSignals[2];
-            const attesterId = publicSignals[3];
-            const userHasSignedUp = publicSignals[4];
-            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyUserSignUp(epoch, epochKey, globalStateTreeRoot, attesterId, userHasSignedUp, proof));
+            const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyUserSignUp(signUpProof));
             return isValid;
         };
         this.url = providerUrl ? providerUrl : defaults_1.DEFAULT_ETH_PROVIDER;

@@ -1,11 +1,10 @@
-import base64url from 'base64url'
+// @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
+import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { getUnirepContract } from '@unirep/contracts'
-import chai from "chai"
-
-const { expect } = chai
+import { getUnirepContract } from '@unirep/contracts' 
+import { expect } from 'chai'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 import { genUnirepStateFromContract, UnirepState } from '@unirep/unirep'
@@ -24,7 +23,6 @@ describe('test all CLI subcommands', function() {
     let attesterAddr
     let userPrivKey
     let userAddr
-    let postID
     
     const startBlock = 0
     const attestingFee = ethers.BigNumber.from(10).pow(18)
@@ -34,8 +32,6 @@ describe('test all CLI subcommands', function() {
     let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
     let unirepState: UnirepState
-    const dbOption = ``
-    // const dbOption = ` -db`
     
     let userIdentity1, userIdentityCommitment1, userIdentity2, userIdentityCommitment2
     const attesterId = 2
@@ -221,8 +217,7 @@ describe('test all CLI subcommands', function() {
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce}` + 
-                ` -act post ` +
-                dbOption
+                ` -act post `
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -248,15 +243,12 @@ describe('test all CLI subcommands', function() {
                 ` -tx ${text}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
-                ` -pf ${userRepProof}` +
-                dbOption
+                ` -pf ${userRepProof}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const idRegMatch = output.match(/Post ID: ([a-fA-F0-9]+)/)
-            postID = idRegMatch[1]
             const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(postRegMatch).not.equal(null)
             transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
@@ -291,7 +283,7 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const postRegMatch = output.match(/Post/)
+            const postRegMatch = output.match(/Epoch key/)
             expect(postRegMatch).not.equal(null)
         })
     })
@@ -303,8 +295,7 @@ describe('test all CLI subcommands', function() {
                 ` -id ${userIdentity1}` +
                 ` -n ${epochKeyNonce}` + 
                 ` -act comment ` +
-                ` -mr ${minRepDiff}` +
-                dbOption
+                ` -mr ${minRepDiff}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -326,12 +317,10 @@ describe('test all CLI subcommands', function() {
         it('should leave a comment', async () => {
             const command = `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${postID} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
-                ` -pf ${userRepProof}` +
-                dbOption
+                ` -pf ${userRepProof}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -385,8 +374,7 @@ describe('test all CLI subcommands', function() {
                 ` -id ${userIdentity2}` +
                 ` -n ${epochKeyNonce}` + 
                 ` -act vote ` +
-                ` -v ${posRep}` +
-                dbOption
+                ` -v ${posRep}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -414,8 +402,7 @@ describe('test all CLI subcommands', function() {
                 ` -i ${proofIdx} ` +
                 ` -p ${repPublicSignals}` +
                 ` -pf ${userRepProof}` +
-                ` -uv ${posRep} ` +
-                dbOption
+                ` -uv ${posRep} `
 
             console.log(command)
             const output = exec(command).stdout.trim()
@@ -464,8 +451,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${deployerPrivKey} ` +
-                ` -id ${userIdentity1} ` +
-                dbOption
+                ` -id ${userIdentity1} `
 
                 console.log(command)
                 const output = exec(command).stdout.trim()
@@ -479,8 +465,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${deployerPrivKey} ` +
-                ` -id ${userIdentity2} ` + 
-                dbOption
+                ` -id ${userIdentity2} `
 
             console.log(command)
             const output = exec(command).stdout.trim()

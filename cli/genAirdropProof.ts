@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { unSerialiseIdentity } from '@unirep/crypto'
-import { CircuitName, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import { Circuit, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -62,19 +62,19 @@ const genAirdropProof = async (args: any) => {
         id,
     )
     const attesterId = await unirepSocialContract.attesterId()
-    const results = await userState.genUserSignUpProof(BigInt(attesterId))
+    const { publicSignals, proof, epoch, epochKey } = await userState.genUserSignUpProof(BigInt(attesterId))
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof(CircuitName.proveUserSignUp, results.proof, results.publicSignals)
+    const isValid = await verifyProof(Circuit.proveUserSignUp, proof, publicSignals)
     if(!isValid) {
         console.error('Error: user sign up proof generated is not valid!')
         return
     }
 
-    const formattedProof = formatProofForVerifierContract(results.proof)
+    const formattedProof = formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
-    const encodedPublicSignals = base64url.encode(JSON.stringify(results.publicSignals))
-    console.log(`Epoch key of epoch ${results.epoch}: ${results.epochKey}`)
+    const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
+    console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
     console.log(signUpProofPrefix + encodedProof)
     console.log(signUpPublicSignalsPrefix + encodedPublicSignals)
 }

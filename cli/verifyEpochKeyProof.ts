@@ -5,6 +5,8 @@ import { genUnirepStateFromContract } from '@unirep/unirep'
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { EpochKeyProof } from '@unirep/contracts'
+import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -78,10 +80,11 @@ const verifyEpochKeyProof = async (args: any) => {
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(epkPublicSignalsPrefix.length))
     const proof = JSON.parse(decodedProof)
     const publicSignals = JSON.parse(decodedPublicSignals)
+    const epochKeyProof = new EpochKeyProof(publicSignals, formatProofForSnarkjsVerification(proof))
     const currentEpoch = unirepState.currentEpoch
-    const epk = publicSignals[2]
-    const inputEpoch = publicSignals[1]
-    const GSTRoot = publicSignals[0]
+    const epk = epochKeyProof.epochKey
+    const inputEpoch = Number(epochKeyProof.epoch)
+    const GSTRoot = epochKeyProof.globalStateTree.toString()
     console.log(`Verifying epoch key ${epk} with GSTRoot ${GSTRoot} in epoch ${inputEpoch}`)
     if(inputEpoch != currentEpoch) {
         console.log(`Warning: the epoch key is expired. Epoch key is in epoch ${inputEpoch}, but the current epoch is ${currentEpoch}`)
@@ -91,17 +94,14 @@ const verifyEpochKeyProof = async (args: any) => {
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, inputEpoch)
     if(!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
-        process.exit(0)
+        return
     }
     
     // Verify the proof on-chain
-    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(
-        publicSignals,
-        proof,
-    )
+    const isProofValid = await unirepSocialContract.verifyEpochKeyValidity(epochKeyProof)
     if (!isProofValid) {
         console.error('Error: invalid epoch key proof')
-        process.exit(0)
+        return
     }
     console.log(`Verify epoch key proof with epoch key ${epk} succeed`)
 }

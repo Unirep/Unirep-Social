@@ -28,14 +28,6 @@ contract UnirepSocial {
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
 
-    // A mapping between post ID and if the post ID is submitted before
-    // The post ID should be unique
-    mapping(uint256 => bool) public isPostIDSubmitted; 
-
-    // A mapping between comment ID and if the comment ID is submitted before
-    // The comment ID should be unique
-    mapping(uint256 => bool) public isCommentIDSubmitted; 
-
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -45,24 +37,21 @@ contract UnirepSocial {
     event AirdropSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
-        Unirep.SignUpProofRelated proofRelated
+        Unirep.SignUpProof proofRelated
     );
 
     event PostSubmitted(
         uint256 indexed _epoch,
-        uint256 indexed _postId,
         uint256 indexed _epochKey,
-        string _hahsedContent,
-        Unirep.ReputationProofRelated proofRelated
+        string _postContent,
+        Unirep.ReputationProof proofRelated
     );
 
     event CommentSubmitted(
         uint256 indexed _epoch,
-        uint256 indexed _postId,
         uint256 indexed _epochKey,
-        uint256 _commentId,
-        string _hahsedContent,
-        Unirep.ReputationProofRelated proofRelated
+        string _commentContent,
+        Unirep.ReputationProof proofRelated
     );
 
     event VoteSubmitted(
@@ -71,7 +60,7 @@ contract UnirepSocial {
         uint256 indexed _toEpochKey,
         uint256 upvoteValue,
         uint256 downvoteValue,
-        Unirep.ReputationProofRelated proofRelated
+        Unirep.ReputationProof proofRelated
     );
 
     constructor(
@@ -130,28 +119,21 @@ contract UnirepSocial {
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
-     * @param postId An ID to the post, it should be unique in Unirep Social
      * @param content The text content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
      */
     function publishPost(
-        uint256 postId, 
         string memory content, 
-        Unirep.ReputationProofRelated memory _proofRelated
+        Unirep.ReputationProof memory _proofRelated
     ) external payable {
-        // require(isPostIDSubmitted[postId] == false, "Unirep Social: duplicated post ID");
         require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
         unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
 
-        // Save the post ID
-        isPostIDSubmitted[postId] = true;
-
         emit PostSubmitted(
             unirep.currentEpoch(),
-            postId,
             _proofRelated.epochKey,
             content,
             _proofRelated
@@ -160,33 +142,22 @@ contract UnirepSocial {
 
     /*
      * Leave a comment on chain with a reputation proof to prove that the user has enough karma to spend
-     * @param postId An ID to the post, it should be existed in Unirep Social
-     * @param commentId An ID to the comment, it should be unique in Unirep Social
      * @param content The text content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to comment
      */
     function leaveComment(
-        uint256 postId, 
-        uint256 commentId, 
         string memory content, 
-        Unirep.ReputationProofRelated memory _proofRelated
+        Unirep.ReputationProof memory _proofRelated
     ) external payable {
-        // require(isPostIDSubmitted[postId] == true, "Unirep Social: should leave comment to a submiited post");
-        // require(isCommentIDSubmitted[commentId] == false, "Unirep Social: duplicated comment ID");
         require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
         unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
-
-        // Save comment ID
-        isCommentIDSubmitted[commentId] = true;
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
-            postId,
             _proofRelated.epochKey,
-            commentId,
             content,
             _proofRelated
         );
@@ -205,7 +176,7 @@ contract UnirepSocial {
         uint256 downvoteValue,
         uint256 toEpochKey,
         uint256 toEpochKeyProofIndex,
-        Unirep.ReputationProofRelated memory _proofRelated
+        Unirep.ReputationProof memory _proofRelated
     ) external payable {
         uint256 voteValue = upvoteValue + downvoteValue;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
@@ -239,7 +210,7 @@ contract UnirepSocial {
      * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
      */
     function airdrop(
-        Unirep.SignUpProofRelated memory _signUpProofData
+        Unirep.SignUpProof memory _signUpProofData
     ) external payable {
         require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
         require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
@@ -295,68 +266,7 @@ contract UnirepSocial {
      * @param userTransitionedData The public signals and proof of the user state transition
      * @param proofIndexes The proof indexes of start user state transition and process attestations
      */
-    function updateUserStateRoot(Unirep.UserTransitionedRelated memory userTransitionedData, uint256[] memory proofIndexes) external {
+    function updateUserStateRoot(Unirep.UserTransitionProof memory userTransitionedData, uint256[] memory proofIndexes) external {
         unirep.updateUserStateRoot(userTransitionedData, proofIndexes);
-    }
-
-
-    function verifyEpochKeyValidity(
-        uint256 _globalStateTree,
-        uint256 _epoch,
-        uint256 _epochKey,
-        uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyEpochKeyValidity(_globalStateTree, _epoch, _epochKey, _proof);
-    }
-
-    function verifyStartTransitionProof(
-        uint256 _blindedUserState,
-        uint256 _blindedHashChain,
-        uint256 _GSTRoot,
-        uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyStartTransitionProof(_blindedUserState, _blindedHashChain, _GSTRoot, _proof);
-    }
-
-    function verifyProcessAttestationProof(
-        uint256 _outputBlindedUserState,
-        uint256 _outputBlindedHashChain,
-        uint256 _inputBlindedUserState,
-        uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyProcessAttestationProof(_outputBlindedUserState, _outputBlindedHashChain, _inputBlindedUserState, _proof);
-    }
-
-    function verifyUserStateTransition(
-        uint256 _newGlobalStateTreeLeaf,
-        uint256[] memory _epkNullifiers,
-        uint256 _transitionFromEpoch,
-        uint256[] memory _blindedUserStates,
-        uint256 _fromGlobalStateTree,
-        uint256[] memory _blindedHashChains,
-        uint256 _fromEpochTree,
-        uint256[8] memory _proof) external view returns (bool) {
-        return unirep.verifyUserStateTransition(_newGlobalStateTreeLeaf, _epkNullifiers, _transitionFromEpoch, _blindedUserStates, _fromGlobalStateTree, _blindedHashChains, _fromEpochTree, _proof);
-    }
-
-    function verifyReputation(
-        uint256[] memory _repNullifiers,
-        uint256 _epoch,
-        uint256 _epochKey,
-        uint256 _globalStateTree,
-        uint256 _attesterId,
-        uint256 _proveReputationAmount,
-        uint256 _minRep,
-        uint256 _proveGraffiti,
-        uint256 _graffitiPreImage,
-        uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyReputation(_repNullifiers, _epoch, _epochKey, _globalStateTree, _attesterId, _proveReputationAmount, _minRep, _proveGraffiti, _graffitiPreImage, _proof);
-    }
-
-    function verifyUserSignUp(
-        uint256 _epoch,
-        uint256 _epochKey,
-        uint256 _globalStateTree,
-        uint256 _attesterId,
-        uint256 _userHasSignedUp,
-        uint256[8] calldata _proof) external view returns (bool) {
-        return unirep.verifyUserSignUp(_epoch, _epochKey, _globalStateTree, _attesterId, _userHasSignedUp, _proof);
     }
 }

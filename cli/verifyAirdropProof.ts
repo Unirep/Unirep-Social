@@ -2,9 +2,10 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { genUnirepStateFromContract } from '@unirep/unirep'
+import { formatProofForSnarkjsVerification, genUnirepStateFromContract } from '@unirep/unirep'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { SignUpProof } from '@unirep/contracts'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -87,44 +88,42 @@ const verifyAirdropProof = async (args: any) => {
     const decodedProof = base64url.decode(args.proof.slice(signUpProofPrefix.length))
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(signUpPublicSignalsPrefix.length))
     const publicSignals = JSON.parse(decodedPublicSignals)
-    const epoch = publicSignals[0]
-    const epk = publicSignals[1]
-    const GSTRoot = publicSignals[2]
-    const attesterId = publicSignals[3]
-    const userHasSignedUp = publicSignals[4]
     const proof = JSON.parse(decodedProof)
+    const signUpProof = new SignUpProof(publicSignals, formatProofForSnarkjsVerification(proof))
+    const GSTRoot = signUpProof.globalStateTree.toString()
+    const epoch = Number(signUpProof.epoch)
+    const epk = signUpProof.epochKey
+    const userHasSignedUp = Number(signUpProof.userHasSignedUp)
+    const attesterId = signUpProof.attesterId
 
     // Check if Global state tree root exists
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
     if(!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
-        process.exit(0)
+        return
     }
 
     // Check if user has sign up flag
     if(Number(userHasSignedUp) === 0) {
         console.log('Error: user does not sign up through Unirep Social')
-        process.exit(0)
+        return
     }
 
     // Check if attester is correct
     const unirepSocialId = await unirepSocialContract.attesterId()
     if(Number(unirepSocialId) != Number(attesterId)) {
         console.error('Error: wrong attester ID proof')
-        process.exit(0)
+        return
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepSocialContract.verifyUserSignUp(
-        publicSignals,
-        proof,
-    )
+    const isProofValid = await unirepSocialContract.verifyUserSignUp(signUpProof)
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
-        process.exit(0)
+        return
     }
 
-    console.log(`Verify reputation proof of epoch key ${epk.toString(16)} airdrop proof success`)
+    console.log(`Verify reputation proof of epoch key ${epk.toString()} airdrop proof success`)
 }
 
 export {

@@ -62,9 +62,15 @@ const epochTransition = async (args: any) => {
     }
 
     const currentEpoch = await unirepContract.currentEpoch()
-    const tx = await unirepSocialContract.epochTransition()
+    let tx
+    try {
+        tx = await unirepSocialContract.epochTransition()
+    } catch (error) {
+        console.log('Transaction Error', error)
+        return
+    }
+    
     await tx.wait()
-
     console.log('Transaction hash:', tx?.hash)
     console.log('End of epoch:', currentEpoch.toString())
 }
