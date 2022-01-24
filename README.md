@@ -1,4 +1,4 @@
-# Unirep Social
+# Unirep Social v1.0.0
 
 For more information about Unirep Social, refer to the [documentation](https://vivi432.gitbook.io/unirep-social/)
 
@@ -116,7 +116,6 @@ npx ts-node cli/index.ts publishPost \
 - After the proof is submitted, a proof index will be printed, then other users can upvote or downvote this epoch key with the proof index.
 ```
 Verify reputation proof of epoch key 1920144953 with 5 reputation spent in transaction and minimum reputation 0 succeed
-Post ID: 6166d2da227d8dbafca27879
 Epoch key of epoch 1: 1920144953
 Transaction hash: 0x724cc01ad7b084da45c8e67bc930958282a07bf3b7c4381e1d7a9cdc5ae63a99
 Proof index: 3
@@ -156,13 +155,11 @@ Unirep.reputation.publicSignals.WyI3NzU0OTg3Njc0ODAwOTgyMDIzMjA2MDE3NDM1MjYxNjQ3
 ```
 npx ts-node cli/index.ts leaveComment \
     -x 0x4D15B2E51aa7d1b4fcBcd702d2AdBc94D85748e2  \
-    -pid 6166d2da227d8dbafca27879  \
     -tx commentText \
     -d 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563 \
     -p Unirep.reputation.publicSignals.WyI3NzU0OTg3Njc0ODAwOTgyMDIzMjA2MDE3NDM1MjYxNjQ3MzcyOTE2NDI4MDYwNTk4NTQxMjA5ODg1Nzc2OTc4OTc1MDk3NTU0MjAxIiwiMjEwNzcxMzAzMjIzNTk2MDEzMTE2MTY2MTQzNDQ1NjMwODc1MDQxMjg1ODE0MjE2ODg2MzY4NjkyNzUxNjMzMzc2NjA5NDAzODIyMzIiLCIxNzg4NzEwNDE0MTcwOTI4NDcyNzYwNzUwMzkwNDcyODAzODg3MzMzMjc1NTYxODUxNDQ2MTkyMzkxODA4OTczNTk4MDk4NzQ5Mzc5OCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMTkyMDE0NDk1MyIsIjY0MzM4MDI0MDI0OTQwNDA4Nzc5NTMxNTkzNzY1MTY3MzQ2OTcyMjI1ODMyNzIyNzc1NDQzOTE2OTcyNzE5MTc2MDQ1NjIyMTc4MzQiLCIxIiwiMyIsIjE1IiwiMCIsIjAiXQ \
     -pf Unirep.reputation.proof.WyI5NjIwNjQ2ODY1NTM1MTk3NjEzNzA2OTc5NDc1NjEwMzA3Njg3OTYzMzM3MjcwMTg5NDk0NjQwNDE3NDIzOTAxNzEzODg4MjM3MDU2IiwiMjAxMzQ2NDQzNjc3ODIyMDYxNzkwMzYxMTc4MTY1Njc5MDE2NDY3MDMxMzEzMzg1MDEzNDA5Mjg3OTU4NzQxNTE0MjM4OTU3NTk4ODgiLCIxMzg1Nzg2MDg3OTgyMjM0Nzk5NTU3MDg0NjQ3ODc0MDQ2OTczNTE0MzYzNjk0MjM0NjQwNDY5MTEyNzEyODc3OTI3MjE1MjUyNzMyOSIsIjc4ODQzNTcwOTM0ODMwNTQzODU0MzQzMTYzNzkwMTkwNDE5ODEwMTU0MDU4NDI2MTk1MDI2NTY0OTUxMjEwMDA0MTUzNTkwOTY4NTgiLCIyMzMxMzAxNTc4OTc4NTc3NTgxNzk5NzA2OTU0NTAzODk3MzE4MjY4MjMxOTA4MzkyMzgyNzMxMDE4NzQxNjMyMjY5MzQxODE0NDciLCI1NzYyNTI4Nzg4NzMyMDM4ODA2MTczMjY5MzgzMjgyNDM0ODM0MTU5NDIxNzg4NDg2MDgyNjA4ODY4Mjk5MTUzNzUxNDk4OTQ4MzI3IiwiMTUyOTE3NzY3ODY3NDc0MDc3MjA1NTMzMTI3ODY1MTQxNjY3NzY0NTY4ODM3NDI4NjEwODk5MDQ3NzE5NDAxODg4NzgxNzYyNDg2MTYiLCIxNDczMjI2OTMxNDgxMTQ3OTQxOTgyMzE2NTY5MzcxMTM3MDU0OTA5NTI4NTI0OTU5NzA0ODcyNTg1MDk1ODcwOTYwNzYwMjk5MTM5MiJd
 ```
-- NOTE: the post id should be provided in `-pid`
 - After the proof is submitted, a proof index will be printed, then other users can upvote or downvote this epoch key with the proof index.
 ```
 Verify reputation proof of epoch key 1920144953 with 3 reputation spent in transaction and minimum reputation 15 succeed
