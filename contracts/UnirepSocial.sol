@@ -194,7 +194,6 @@ contract UnirepSocial {
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
         require(_proofRelated.proveReputationAmount == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(toEpochKey != _proofRelated.epochKey, "Unirep Social: epoch key sender and receiver cannot be the same");
 
         // Submit attestation to receiver's epoch key
         Unirep.Attestation memory attestation;
