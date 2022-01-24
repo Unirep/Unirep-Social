@@ -19,14 +19,14 @@ to compile Unirep Social contracts if contracts change
 
 - The address of Unirep Social smart contract on goerli testnet
     ```
-    0x77CdFb9889b38259E1DCbd0D3cEd2889Ccff8ba0
+    0xB74dc0cb924b25E034D1e3a569A8680Afc6b3407
     ```
-    See [Etherscan](https://goerli.etherscan.io/address/0x77CdFb9889b38259E1DCbd0D3cEd2889Ccff8ba0)
+    See [Etherscan](https://goerli.etherscan.io/address/0xB74dc0cb924b25E034D1e3a569A8680Afc6b3407)
 - The address of Unirep smart contract on goerli testnet
     ```
-    0x3d04278f609Ec95559f626a2be9877311ba165b0
+    0xcbE33B11a18B0388a2f2BD8eF53778fAF6c221cC
     ```
-    See [Etherscan](https://goerli.etherscan.io/address/0x3d04278f609Ec95559f626a2be9877311ba165b0)
+    See [Etherscan](https://goerli.etherscan.io/address/0xcbE33B11a18B0388a2f2BD8eF53778fAF6c221cC)
     
 - Apply for an account from [Alchemy](https://www.alchemy.com/) or [Infura](https://infura.io/), change the `DEFAULT_ETH_PROVIDER` to the given provider url
     For example

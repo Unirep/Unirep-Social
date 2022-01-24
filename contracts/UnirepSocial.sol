@@ -12,6 +12,10 @@ contract UnirepSocial {
 
     Unirep public unirep;
 
+    // Before Unirep integrates with InterRep
+    // We use an admin to controll user sign up
+    address internal admin;
+
     // Unirep social's attester ID
     uint256 immutable public attesterId;
 
@@ -72,6 +76,8 @@ contract UnirepSocial {
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
+        // Set admin user
+        admin = msg.sender;
 
         // signup Unirep Social contract as an attester in Unirep contract
         unirep.attesterSignUp();
@@ -88,6 +94,7 @@ contract UnirepSocial {
      * @param _identityCommitment Commitment of the user's identity which is a semaphore identity.
      */
     function userSignUp(uint256 _identityCommitment) external {
+        require(msg.sender == admin, "Unirep Social: sign up should through an admin");
         unirep.userSignUp(_identityCommitment);
 
         emit UserSignedUp(
