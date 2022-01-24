@@ -49,6 +49,7 @@ contract UnirepSocial {
 
     event CommentSubmitted(
         uint256 indexed _epoch,
+        uint256 indexed _postId,
         uint256 indexed _epochKey,
         string _commentContent,
         Unirep.ReputationProof proofRelated
@@ -142,10 +143,12 @@ contract UnirepSocial {
 
     /*
      * Leave a comment on chain with a reputation proof to prove that the user has enough karma to spend
+     * @param postId The transaction hash of the post
      * @param content The text content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to comment
      */
     function leaveComment(
+        uint256 postId,
         string memory content, 
         Unirep.ReputationProof memory _proofRelated
     ) external payable {
@@ -157,6 +160,7 @@ contract UnirepSocial {
     
         emit CommentSubmitted(
             unirep.currentEpoch(),
+            postId,
             _proofRelated.epochKey,
             content,
             _proofRelated

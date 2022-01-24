@@ -33,6 +33,15 @@ const configureSubparser = (subparsers: any) => {
     )
 
     parser.add_argument(
+        '-pid', '--post-id',
+        {
+            required: true,
+            type: 'str',
+            help: 'The post id where the comment replies to (in decimal representation)',
+        }
+    )
+
+    parser.add_argument(
         '-p', '--public-signals',
         {
             required: true,
@@ -107,7 +116,7 @@ const leaveComment = async (args: any) => {
     // Submit tx
     let tx
     try {
-        tx = await unirepSocialContract.leaveComment(reputationProof, args.text)
+        tx = await unirepSocialContract.leaveComment(reputationProof, args.post_id, args.text)
     } catch (error) {
         console.log('Transaction Error', error)
         return

@@ -1,15 +1,16 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { expect } from 'chai'
-import { genRandomSalt, genIdentity, genIdentityCommitment, IncrementalQuinTree, hashLeftRight, } from '@unirep/crypto'
+import { genRandomSalt, genIdentity, genIdentityCommitment } from '@unirep/crypto'
 import { Circuit, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
 import { computeProcessAttestationsProofHash, computeStartTransitionProofHash, deployUnirep, EpochKeyProof, ReputationProof, SignUpProof, UserTransitionProof } from '@unirep/contracts'
-import { attestingFee, circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IUserStateLeaf, computeEmptyUserStateRoot, IAttestation, genUserStateFromContract, genUnirepStateFromContract, ISettings, maxUsers, maxAttesters, computeInitUserStateRoot, genEpochKey } from '@unirep/unirep'
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IAttestation, genUserStateFromContract, genUnirepStateFromContract, maxUsers, maxAttesters, genEpochKey } from '@unirep/unirep'
 
 import { findValidNonce, getTreeDepthsForTesting } from './utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
 import { deployUnirepSocial } from '../core/utils'
+
 describe('Integration', function () {
     this.timeout(500000)
 
@@ -20,13 +21,11 @@ describe('Integration', function () {
     let userIds: any[] = []
     let userCommitments: BigInt[] = []
 
-    // Data that are needed for verifying proof
-    let userStateLeavesAfterTransition: IUserStateLeaf[][] = new Array(2)
-
     let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
     let _treeDepths
     let unirepSocialId
+    let postId
 
     let currentEpoch: ethers.BigNumber
     let emptyUserStateRoot: BigInt
@@ -312,6 +311,7 @@ describe('Integration', function () {
             epochKeys[epochKey.toString()] = true
             // store reputation proof index
             reputationProofIndex = await unirepContract.getProofIndex(reputationProof.hash())
+            postId = tx.hash
 
             console.log(`Attester attest to epk ${epochKey} with proof index ${reputationProofIndex.toNumber()}`)
         })
@@ -413,6 +413,7 @@ describe('Integration', function () {
             
             // submit comment
             const tx = await unirepSocialContract.leaveComment(
+                postId,
                 commentText, 
                 reputationProof,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -421,7 +422,7 @@ describe('Integration', function () {
             expect(receipt.status, 'Submit post failed').to.equal(1)
 
             // User submit a comment through Unirep Social should be found in Unirep Social Events
-            const commentFilter = unirepSocialContract.filters.CommentSubmitted(currentEpoch, epochKey)
+            const commentFilter = unirepSocialContract.filters.CommentSubmitted(currentEpoch, postId, epochKey)
             const commentEvents = await unirepSocialContract.queryFilter(commentFilter)
             expect(commentEvents.length).to.equal(1)
 

@@ -113,7 +113,7 @@ class UnirepSocialContract {
             const attestingFee = await this.attestingFee();
             return this.contract.publishPost(postContent, reputationProof, { value: attestingFee, gasLimit: 1000000 });
         };
-        this.leaveComment = async (reputationProof, commentContent) => {
+        this.leaveComment = async (reputationProof, postId, commentContent) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -122,7 +122,7 @@ class UnirepSocialContract {
                 return;
             }
             const attestingFee = await this.attestingFee();
-            return this.contract.leaveComment(commentContent, reputationProof, { value: attestingFee, gasLimit: 1000000 });
+            return this.contract.leaveComment(postId, commentContent, reputationProof, { value: attestingFee, gasLimit: 1000000 });
         };
         this.vote = async (reputationProof, toEpochKey, epochKeyProofIndex, upvoteValue, downvoteValue) => {
             if (this.signer != undefined) {

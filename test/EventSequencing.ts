@@ -37,6 +37,7 @@ describe('EventSequencing', function (){
     let userIds: any[] = [], userCommitments: any[] = []
     const text = genRandomSalt().toString()
     let proofIndex
+    let postId
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -89,6 +90,7 @@ describe('EventSequencing', function (){
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
+        postId = tx.hash
         expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
         expectedPostEventsLength++
     })
@@ -122,6 +124,7 @@ describe('EventSequencing', function (){
             proof
         ]
         const tx = await unirepSocialContract.leaveComment(
+            postId,
             text, 
             publicSignals,
             { value: attestingFee, gasLimit: 1000000 }

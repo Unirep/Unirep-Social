@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import Keyv from "keyv"
-import { SparseMerkleTreeImpl, add0x, SnarkBigInt, hash5, hashLeftRight, IncrementalQuinTree, genRandomSalt } from '@unirep/crypto'
+import { SparseMerkleTreeImpl, add0x, hash5, hashLeftRight, IncrementalQuinTree, genRandomSalt } from '@unirep/crypto'
 import { circuitEpochTreeDepth, circuitGlobalStateTreeDepth, circuitUserStateTreeDepth, epochTreeDepth, genReputationNullifier, globalStateTreeDepth, maxReputationBudget, UserState, userStateTreeDepth} from '@unirep/unirep'
 
 const getTreeDepthsForTesting = (deployEnv: string = "circuit") => {

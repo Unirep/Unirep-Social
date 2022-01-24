@@ -1,8 +1,6 @@
 import { ethers } from 'ethers';
-import { add0x } from '@unirep/crypto';
 import { computeProcessAttestationsProofHash, computeStartTransitionProofHash, EpochKeyProof, getUnirepContract, ReputationProof, SignUpProof, UserTransitionProof } from '@unirep/contracts'
 import { formatProofForVerifierContract } from '@unirep/circuits'
-import { maxReputationBudget } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, } from '../cli/defaults';
 import { checkDeployerProviderConnection, validateEthAddress, validateEthSk } from '../cli/utils';
@@ -152,7 +150,11 @@ export class UnirepSocialContract {
         )
     }
 
-    public leaveComment = async (reputationProof: ReputationProof, commentContent: string): Promise<any> => {
+    public leaveComment = async (
+        reputationProof: ReputationProof, 
+        postId: string, 
+        commentContent: string
+    ): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -164,7 +166,8 @@ export class UnirepSocialContract {
         const attestingFee = await this.attestingFee()
 
         return this.contract.leaveComment(
-            commentContent, 
+            postId,
+            commentContent,
             reputationProof,
             { value: attestingFee, gasLimit: 1000000 }
         )

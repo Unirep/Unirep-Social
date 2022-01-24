@@ -18,7 +18,7 @@ export declare class UnirepSocialContract {
     attestingFee: () => Promise<any>;
     userSignUp: (commitment: string) => Promise<any>;
     publishPost: (reputationProof: ReputationProof, postContent: string) => Promise<any>;
-    leaveComment: (reputationProof: ReputationProof, commentContent: string) => Promise<any>;
+    leaveComment: (reputationProof: ReputationProof, postId: string, commentContent: string) => Promise<any>;
     vote: (reputationProof: ReputationProof, toEpochKey: BigInt | string, epochKeyProofIndex: BigInt | number, upvoteValue: number, downvoteValue: number) => Promise<any>;
     getReputationProofIndex: (reputationProof: ReputationProof) => Promise<any>;
     fastForward: () => Promise<void>;

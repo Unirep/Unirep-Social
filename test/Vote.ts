@@ -1,13 +1,13 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { expect } from 'chai'
-import { verifyProof, formatProofForVerifierContract, Circuit, formatProofForSnarkjsVerification } from "@unirep/circuits"
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UnirepState, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, genNewSMT, maxAttesters, ISettings, genUserStateFromContract } from '@unirep/unirep'
+import { formatProofForSnarkjsVerification } from "@unirep/circuits"
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, maxAttesters, genUserStateFromContract } from '@unirep/unirep'
 import { deployUnirep, EpochKeyProof, ReputationProof } from '@unirep/contracts'
-import { genIdentity, genIdentityCommitment, genRandomSalt, hash5, hashLeftRight, IncrementalQuinTree } from '@unirep/crypto'
+import { genIdentity, genIdentityCommitment, genRandomSalt } from '@unirep/crypto'
 
-import { findValidNonce, genNewUserStateTree, getTreeDepthsForTesting } from './utils'
+import { findValidNonce, getTreeDepthsForTesting } from './utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../config/socialMedia'
 import { deployUnirepSocial } from '../core/utils'
 

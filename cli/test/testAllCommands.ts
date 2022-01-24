@@ -251,7 +251,7 @@ describe('test all CLI subcommands', function() {
 
             const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
             expect(postRegMatch).not.equal(null)
-            transactionHash =postRegMatch[0].split('Transaction hash: ')[1]
+            transactionHash = postRegMatch[0].split('Transaction hash: ')[1]
 
             const proofIndexRegMatch = output.match(/Proof index: ([0-9]+)/)
             proofIdx = proofIndexRegMatch[1]
@@ -317,6 +317,7 @@ describe('test all CLI subcommands', function() {
         it('should leave a comment', async () => {
             const command = `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
+                ` -pid ${transactionHash} `+
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +

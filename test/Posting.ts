@@ -23,6 +23,7 @@ describe('Post', function () {
     let accounts: ethers.Signer[]
     const text = genRandomSalt().toString()
     let attesterId
+    let postId
 
     let reputationProof: ReputationProof
 
@@ -136,6 +137,7 @@ describe('Post', function () {
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
+            postId = tx.hash
         })
 
         it('submit post with different amount of nullifiers should fail', async() => {
@@ -206,6 +208,7 @@ describe('Post', function () {
 
         it('submit comment should succeed', async() => {
             const tx = await unirepSocialContract.leaveComment(
+                postId,
                 text, 
                 reputationProof,
                 { value: attestingFee, gasLimit: 1000000 }
@@ -242,6 +245,7 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
             await expect(unirepSocialContract.leaveComment(
+                postId,
                 text, 
                 reputationProof,
                 { value: attestingFee, gasLimit: 1000000 }
