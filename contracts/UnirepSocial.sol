@@ -65,6 +65,7 @@ contract UnirepSocial {
         uint256 indexed _toEpochKey,
         uint256 upvoteValue,
         uint256 downvoteValue,
+        uint256 toEpochKeyProofIndex,
         Unirep.ReputationProof proofRelated
     );
 
@@ -211,6 +212,7 @@ contract UnirepSocial {
             toEpochKey, 
             upvoteValue,
             downvoteValue, 
+            toEpochKeyProofIndex,
             _proofRelated
         );
     }

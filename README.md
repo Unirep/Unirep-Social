@@ -19,9 +19,9 @@ to compile Unirep Social contracts if contracts change
 
 - The address of Unirep Social smart contract on goerli testnet
     ```
-    0x22c84C0f0Ee72DB3d384Aa5Acb7Bb13AF47747B6
+    0x377d747C0040C0460dCAfaFBb5bAddc7a6F7e5DB
     ```
-    See [Etherscan](https://goerli.etherscan.io/address/0x22c84C0f0Ee72DB3d384Aa5Acb7Bb13AF47747B6)
+    See [Etherscan](https://goerli.etherscan.io/address/0x377d747C0040C0460dCAfaFBb5bAddc7a6F7e5DB)
 - The address of Unirep smart contract on goerli testnet
     ```
     0x861F280876Ba65219Cb50D217ffA11237271b0B6
