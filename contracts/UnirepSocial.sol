@@ -189,15 +189,22 @@ contract UnirepSocial {
         require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         require(toEpochKey != _proofRelated.epochKey, "Unirep Social: epoch key sender and receiver cannot be the same");
 
+        // Spend reputation
+        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+        bytes32 repProofHash = unirep.hashReputationProof(_proofRelated);
+        uint256 repProofIndex = unirep.getProofIndex(repProofHash);
+
         // Submit attestation to receiver's epoch key
         Unirep.Attestation memory attestation;
         attestation.attesterId = attesterId;
         attestation.posRep = upvoteValue;
         attestation.negRep = downvoteValue;
-        unirep.submitAttestation{value: unirep.attestingFee()}(attestation, toEpochKey, toEpochKeyProofIndex);
-
-        // Spend reputation
-        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+        unirep.submitAttestation{value: unirep.attestingFee()}(
+            attestation, 
+            toEpochKey, 
+            toEpochKeyProofIndex,
+            repProofIndex
+        );
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
