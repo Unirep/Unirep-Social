@@ -25,6 +25,7 @@ describe('Epoch Transition', function () {
     let epochKeyProofIndex
     const proofIndexes: BigInt[] = []
     const attestingFee = ethers.utils.parseEther("0.1") // to avoid VM Exception: 'Address: insufficient balance'
+    const fromProofIndex = 0
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -92,6 +93,7 @@ describe('Epoch Transition', function () {
                 attestation,
                 epochKey,
                 epochKeyProofIndex,
+                fromProofIndex,
                 {value: attestingFee}
             )
             receipt = await tx.wait()
@@ -121,6 +123,7 @@ describe('Epoch Transition', function () {
                 attestation,
                 epochKey,
                 epochKeyProofIndex,
+                fromProofIndex,
                 {value: attestingFee}
             )
             receipt = await tx.wait()
@@ -150,6 +153,7 @@ describe('Epoch Transition', function () {
                 attestation,
                 epochKey,
                 epochKeyProofIndex,
+                fromProofIndex,
                 {value: attestingFee}
             )
             receipt = await tx.wait()

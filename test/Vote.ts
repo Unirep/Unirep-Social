@@ -3,7 +3,7 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { ethers } from 'ethers'
 import { expect } from 'chai'
 import { formatProofForSnarkjsVerification } from "@unirep/circuits"
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, maxAttesters, genUserStateFromContract } from '@unirep/unirep'
+import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, maxAttesters, genUserStateFromContract, genEpochKey } from '@unirep/unirep'
 import { deployUnirep, EpochKeyProof, ReputationProof } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt } from '@unirep/crypto'
 
@@ -133,8 +133,8 @@ describe('Vote', function () {
     })
 
     describe('Upvote', () => {
-        let toEpochKey = genRandomSalt()
         const currentEpoch = 1
+        let toEpochKey = genEpochKey(genRandomSalt(), currentEpoch, 0)
         let epochKeyProofIndex
         it('submit epoch key proof should succeed', async() => {
             const proof: string[] = []
