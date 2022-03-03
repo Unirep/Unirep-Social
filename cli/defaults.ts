@@ -5,7 +5,7 @@ dotenv.config({
     path: '.env'
 });
 
-// const DEFAULT_ETH_PROVIDER = `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
+// const DEFAULT_ETH_PROVIDER = `wss://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`
 const DEFAULT_PRIVATE_KEY = process.env.PRIVATE_KEY
 const DEFAULT_ETH_PROVIDER = "ws://localhost:8545"
 const DEFAULT_MAX_EPOCH_KEY_NONCE = numEpochKeyNoncePerEpoch
