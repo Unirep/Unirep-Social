@@ -1,12 +1,13 @@
 import base64url from 'base64url'
+import { ethers } from 'ethers'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { ReputationProof } from '@unirep/contracts'
 
-import { DEFAULT_ETH_PROVIDER } from './defaults'
+import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 import { defaultPostReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
-import { ReputationProof } from '@unirep/contracts'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -62,10 +63,9 @@ const configureSubparser = (subparsers: any) => {
     parser.add_argument(
         '-d', '--eth-privkey',
         {
-            required: true,
             action: 'store',
             type: 'str',
-            help: 'The deployer\'s Ethereum private key',
+            help: 'The deployer\'s Ethereum private key. Default: set in the `.env` file',
         }
     )
 }
@@ -73,9 +73,10 @@ const configureSubparser = (subparsers: any) => {
 const publishPost = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
 
     // Parse Inputs
     const decodedProof = base64url.decode(args.proof.slice(reputationProofPrefix.length))
@@ -101,7 +102,8 @@ const publishPost = async (args: any) => {
     await verifyReputationProof(args)
 
     // Connect a signer
-    await unirepSocialContract.unlock(args.eth_privkey)
+    const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
+    await unirepSocialContract.unlock(privKey)
 
     // Submit tx
     let tx

@@ -2,7 +2,6 @@ import { ethers } from 'ethers';
 import { computeProcessAttestationsProofHash, computeStartTransitionProofHash, EpochKeyProof, getUnirepContract, ReputationProof, SignUpProof, UserTransitionProof } from '@unirep/contracts'
 import { formatProofForVerifierContract } from '@unirep/circuits'
 
-import { DEFAULT_ETH_PROVIDER, } from '../cli/defaults';
 import { checkDeployerProviderConnection, validateEthAddress, validateEthSk } from '../cli/utils';
 import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
 
@@ -11,8 +10,7 @@ import UnirepSocial from "../artifacts/contracts/UnirepSocial.sol/UnirepSocial.j
  * All contract-interacting domain logic should be defined in here.
  */
 export class UnirepSocialContract {
-    private url: string;
-    private provider: ethers.providers.JsonRpcProvider;
+    private provider: ethers.providers.Provider;
     private signer?: ethers.Signer;
     
     // Unirep Social contract
@@ -21,9 +19,8 @@ export class UnirepSocialContract {
     // Unirep contract
     public unirep?: ethers.Contract;
 
-    constructor(unirepSocialAddress?, providerUrl?) {
-        this.url = providerUrl? providerUrl : DEFAULT_ETH_PROVIDER;
-        this.provider = new ethers.providers.JsonRpcProvider(this.url)
+    constructor(unirepSocialAddress, provider) {
+        this.provider = provider
          if (!validateEthAddress(unirepSocialAddress)) {
             console.error('Error: invalid Unirep contract address')
         }
@@ -43,8 +40,8 @@ export class UnirepSocialContract {
             return ''
         }
 
-        if (! (await checkDeployerProviderConnection(ethSk, this.url))) {
-            console.error('Error: unable to connect to the Ethereum provider at', this.url)
+        if (! (await checkDeployerProviderConnection(ethSk, this.provider))) {
+            console.error('Error: unable to connect to the Ethereum provider at', this.provider)
             return ''
         }
         this.signer = new ethers.Wallet(ethSk, this.provider)
@@ -86,21 +83,10 @@ export class UnirepSocialContract {
             console.log("Error: should connect a signer")
             return
         }
-        let tx
-        try {
-            tx = await this.contract.userSignUp(
-                commitment,
-                { gasLimit: 1000000 }
-            )
-    
-        } catch(e) {
-            console.error('Error: the transaction failed')
-            if (e) {
-                console.error(e)
-            }
-            return tx
-        }
-        return tx
+        return this.contract.userSignUp(
+            commitment,
+            { gasLimit: 1000000 }
+        )
     }
 
     // public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
@@ -153,7 +139,7 @@ export class UnirepSocialContract {
     public leaveComment = async (
         reputationProof: ReputationProof, 
         postId: string, 
-        commentContent: string
+        commentContent: string,
     ): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
@@ -178,7 +164,7 @@ export class UnirepSocialContract {
         toEpochKey: BigInt | string, 
         epochKeyProofIndex: BigInt | number, 
         upvoteValue: number, 
-        downvoteValue: number
+        downvoteValue: number,
     ): Promise<any> => {
 
         if(this.signer != undefined){
@@ -207,14 +193,6 @@ export class UnirepSocialContract {
         return this.unirep?.getProofIndex(reputationProof.hash())
     }
 
-    public fastForward = async () => {
-        if(this.unirep == undefined){
-            await this.getUnirep()
-        }
-        const epochLength = (await this.unirep?.epochLength()).toNumber()
-        await this.provider.send("evm_increaseTime", [epochLength])
-    }
-
     public epochTransition = async (): Promise<any> => {
         if(this.signer != undefined){
             if(this.unirep != undefined){
@@ -233,7 +211,7 @@ export class UnirepSocialContract {
         return this.unirep.beginEpochTransition({ gasLimit: 9000000 })
     }
 
-    private submitStartTransitionProof = async (startTransitionProof: any): Promise<any> => {
+    public submitStartTransitionProof = async (startTransitionProof: any): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -263,7 +241,7 @@ export class UnirepSocialContract {
         return this.unirep?.getProofIndex(proofNullifier)
     }
 
-    private submitProcessAttestationsProof = async (processAttestaitonProof: any): Promise<any> => {
+    public submitProcessAttestationsProof = async (processAttestaitonProof: any): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }
@@ -293,7 +271,7 @@ export class UnirepSocialContract {
         return this.unirep?.getProofIndex(proofNullifier)
     }
 
-    private submitUserStateTransitionProof = async (USTProof: UserTransitionProof, proofIndexes: BigInt[]): Promise<any> => {
+    public submitUserStateTransitionProof = async (USTProof: UserTransitionProof, proofIndexes: BigInt[], nonce?: number): Promise<any> => {
         if(this.signer != undefined){
             this.contract = this.contract.connect(this.signer)
         }

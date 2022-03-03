@@ -1,6 +1,8 @@
 node_modules
 .DS_Store
-privateKey.ts
 
 #Buidler files
 cache
+
+# .env file
+.env

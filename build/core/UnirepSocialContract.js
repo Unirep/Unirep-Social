@@ -7,7 +7,6 @@ exports.UnirepSocialContract = void 0;
 const ethers_1 = require("ethers");
 const contracts_1 = require("@unirep/contracts");
 const circuits_1 = require("@unirep/circuits");
-const defaults_1 = require("../cli/defaults");
 const utils_1 = require("../cli/utils");
 const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"));
 /**
@@ -15,7 +14,7 @@ const UnirepSocial_json_1 = __importDefault(require("../artifacts/contracts/Unir
  * All contract-interacting domain logic should be defined in here.
  */
 class UnirepSocialContract {
-    constructor(unirepSocialAddress, providerUrl) {
+    constructor(unirepSocialAddress, provider) {
         this.unlock = async (eth_privkey) => {
             // The deployer's Ethereum private key
             const ethSk = eth_privkey;
@@ -23,8 +22,8 @@ class UnirepSocialContract {
                 console.error('Error: invalid Ethereum private key');
                 return '';
             }
-            if (!(await utils_1.checkDeployerProviderConnection(ethSk, this.url))) {
-                console.error('Error: unable to connect to the Ethereum provider at', this.url);
+            if (!(await utils_1.checkDeployerProviderConnection(ethSk, this.provider))) {
+                console.error('Error: unable to connect to the Ethereum provider at', this.provider);
                 return '';
             }
             this.signer = new ethers_1.ethers.Wallet(ethSk, this.provider);
@@ -64,18 +63,7 @@ class UnirepSocialContract {
                 console.log("Error: should connect a signer");
                 return;
             }
-            let tx;
-            try {
-                tx = await this.contract.userSignUp(commitment, { gasLimit: 1000000 });
-            }
-            catch (e) {
-                console.error('Error: the transaction failed');
-                if (e) {
-                    console.error(e);
-                }
-                return tx;
-            }
-            return tx;
+            return this.contract.userSignUp(commitment, { gasLimit: 1000000 });
         };
         // public userSignUpWithProof = async (publicSignals: any, proof: any): Promise<any> => {
         //     if(this.signer != undefined){
@@ -142,14 +130,6 @@ class UnirepSocialContract {
             }
             return (_a = this.unirep) === null || _a === void 0 ? void 0 : _a.getProofIndex(reputationProof.hash());
         };
-        this.fastForward = async () => {
-            var _a;
-            if (this.unirep == undefined) {
-                await this.getUnirep();
-            }
-            const epochLength = (await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.epochLength())).toNumber();
-            await this.provider.send("evm_increaseTime", [epochLength]);
-        };
         this.epochTransition = async () => {
             if (this.signer != undefined) {
                 if (this.unirep != undefined) {
@@ -202,7 +182,7 @@ class UnirepSocialContract {
             const proofNullifier = contracts_1.computeProcessAttestationsProofHash(processAttestaitonProof.outputBlindedUserState, processAttestaitonProof.outputBlindedHashChain, processAttestaitonProof.inputBlindedUserState, circuits_1.formatProofForVerifierContract(processAttestaitonProof.proof));
             return (_a = this.unirep) === null || _a === void 0 ? void 0 : _a.getProofIndex(proofNullifier);
         };
-        this.submitUserStateTransitionProof = async (USTProof, proofIndexes) => {
+        this.submitUserStateTransitionProof = async (USTProof, proofIndexes, nonce) => {
             if (this.signer != undefined) {
                 this.contract = this.contract.connect(this.signer);
             }
@@ -275,8 +255,7 @@ class UnirepSocialContract {
             const isValid = await ((_a = this.unirep) === null || _a === void 0 ? void 0 : _a.verifyUserSignUp(signUpProof));
             return isValid;
         };
-        this.url = providerUrl ? providerUrl : defaults_1.DEFAULT_ETH_PROVIDER;
-        this.provider = new ethers_1.ethers.providers.JsonRpcProvider(this.url);
+        this.provider = provider;
         if (!utils_1.validateEthAddress(unirepSocialAddress)) {
             console.error('Error: invalid Unirep contract address');
         }

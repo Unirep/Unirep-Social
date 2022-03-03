@@ -1,3 +1,5 @@
+import { ethers } from 'ethers'
+
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -38,9 +40,10 @@ const configureSubparser = (subparsers: any) => {
 const listAllPosts = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
     const postEvents = await unirepSocialContract.getPostEvents(args.epoch)
 
     for (let i = 0; i < postEvents.length; i++) {

@@ -6,8 +6,8 @@ class JSONRPCDeployer {
     signer: ethers.Signer
     options: any
 
-    constructor(privateKey: string, providerUrl: string, options?: any) {
-        this.provider = new ethers.providers.JsonRpcProvider(providerUrl)
+    constructor(privateKey: string, provider: ethers.providers.Provider, options?: any) {
+        this.provider = provider
         this.signer = new ethers.Wallet(privateKey, this.provider)
         this.options = options
     }
@@ -20,21 +20,21 @@ class JSONRPCDeployer {
 
 const genJsonRpcDeployer = (
     privateKey: string,
-    url: string,
+    provider: ethers.providers.Provider,
 ) => {
 
     return new JSONRPCDeployer(
         privateKey,
-        url,
+        provider,
     )
 }
 
 const checkDeployerProviderConnection = async (
     sk: string,
-    ethProvider: string,
+    provider: ethers.providers.Provider,
 ) => {
 
-    const deployer = genJsonRpcDeployer(sk, ethProvider)
+    const deployer = genJsonRpcDeployer(sk, provider)
     try {
         await deployer.provider.getBlockNumber()
     } catch {

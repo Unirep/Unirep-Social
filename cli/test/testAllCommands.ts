@@ -76,7 +76,7 @@ describe('test all CLI subcommands', function() {
             const unirepAddress = unirepRegMatch[1]
             const unirepSocialAddress = socialRegMatch[1]
 
-            const provider = new hardhatEthers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER)
+            const provider = new hardhatEthers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER)
             unirepContract = getUnirepContract(unirepAddress, provider)
 
             unirepSocialContract = new ethers.Contract(

@@ -4,7 +4,7 @@ import { unSerialiseIdentity } from '@unirep/crypto'
 import { Circuit, verifyProof } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
-import { DEFAULT_ETH_PROVIDER } from './defaults'
+import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
 
@@ -53,10 +53,9 @@ const configureSubparser = (subparsers: any) => {
     parser.add_argument(
         '-d', '--eth-privkey',
         {
-            required: true,
             action: 'store',
             type: 'str',
-            help: 'The deployer\'s Ethereum private key',
+            help: 'The deployer\'s Ethereum private key. Default: set in the `.env` file',
         }
     )
 }
@@ -65,15 +64,16 @@ const userStateTransition = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
 
     // Connect a signer
-    await unirepSocialContract.unlock(args.eth_privkey)
+    const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
+    await unirepSocialContract.unlock(privKey)
     
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)

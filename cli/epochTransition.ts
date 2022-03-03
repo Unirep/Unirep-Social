@@ -1,5 +1,6 @@
-import { DEFAULT_ETH_PROVIDER } from './defaults'
+import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { ethers } from 'ethers'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -36,10 +37,9 @@ const configureSubparser = (subparsers: any) => {
     parser.add_argument(
         '-d', '--eth-privkey',
         {
-            required: true,
             action: 'store',
             type: 'str',
-            help: 'The deployer\'s Ethereum private key',
+            help: 'The deployer\'s Ethereum private key. Default: set in the `.env` file',
         }
     )
 }
@@ -48,17 +48,20 @@ const epochTransition = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
     const unirepContract = await unirepSocialContract.getUnirep()
 
     // Connect a signer
-    await unirepSocialContract.unlock(args.eth_privkey)
+    const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
+    await unirepSocialContract.unlock(privKey)
 
     // Fast-forward to end of epoch if in test environment
     if (args.is_test) {
-        await unirepSocialContract.fastForward()
+        const epochLength = (await unirepContract?.epochLength()).toNumber()
+        await provider.send("evm_increaseTime", [epochLength])
     }
 
     const currentEpoch = await unirepContract.currentEpoch()

@@ -63,10 +63,10 @@ const configureSubparser = (subparsers: any) => {
 const genEpochKeyAndProof = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, ethProvider)
+    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
     // Unirep contract
     const unirepContract = await unirepSocialContract.getUnirep()
     

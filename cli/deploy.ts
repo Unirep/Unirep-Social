@@ -4,7 +4,7 @@ import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReput
 import { maxUsers, maxAttesters, maxReputationBudget, circuitUserStateTreeDepth, circuitGlobalStateTreeDepth, circuitEpochTreeDepth } from '@unirep/unirep'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import { deployUnirepSocial } from '../core/utils'
-import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE } from './defaults'
+import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_PRIVATE_KEY } from './defaults'
 
 import {
     checkDeployerProviderConnection,
@@ -23,7 +23,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'str',
-            help: 'The deployer\'s Ethereum private key',
+            help: 'The deployer\'s Ethereum private key. Default: set in the `.env` file',
         }
     )
 
@@ -94,7 +94,7 @@ const configureSubparser = (subparsers: any) => {
 const deploy = async (args: any) => {
 
     // The deployer's Ethereum private key
-    const deployerPrivkey = args.deployer_privkey
+    const deployerPrivkey = args.deployer_privkey ? args.deployer_privkey : DEFAULT_PRIVATE_KEY
 
     if (!validateEthSk(deployerPrivkey)) {
         console.error('Error: invalid Ethereum private key')
@@ -141,13 +141,13 @@ const deploy = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.JsonRpcProvider(ethProvider)
+    const provider = new ethers.providers.WebSocketProvider(ethProvider)
 
-    if (! (await checkDeployerProviderConnection(deployerPrivkey, ethProvider))) {
+    if (! (await checkDeployerProviderConnection(deployerPrivkey, provider))) {
         console.error('Error: unable to connect to the Ethereum provider at', ethProvider)
         return
     }
-    const deployer = genJsonRpcDeployer(deployerPrivkey, ethProvider)
+    const deployer = genJsonRpcDeployer(deployerPrivkey, provider)
     
     let unirepContract
     if(args.contract == null){

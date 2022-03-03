@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEthSk = exports.validateEthAddress = exports.genJsonRpcDeployer = exports.contractExists = exports.checkDeployerProviderConnection = void 0;
 const ethers_1 = require("ethers");
 class JSONRPCDeployer {
-    constructor(privateKey, providerUrl, options) {
-        this.provider = new ethers_1.ethers.providers.JsonRpcProvider(providerUrl);
+    constructor(privateKey, provider, options) {
+        this.provider = provider;
         this.signer = new ethers_1.ethers.Wallet(privateKey, this.provider);
         this.options = options;
     }
@@ -13,12 +13,12 @@ class JSONRPCDeployer {
         return await factory.deploy(...args);
     }
 }
-const genJsonRpcDeployer = (privateKey, url) => {
-    return new JSONRPCDeployer(privateKey, url);
+const genJsonRpcDeployer = (privateKey, provider) => {
+    return new JSONRPCDeployer(privateKey, provider);
 };
 exports.genJsonRpcDeployer = genJsonRpcDeployer;
-const checkDeployerProviderConnection = async (sk, ethProvider) => {
-    const deployer = genJsonRpcDeployer(sk, ethProvider);
+const checkDeployerProviderConnection = async (sk, provider) => {
+    const deployer = genJsonRpcDeployer(sk, provider);
     try {
         await deployer.provider.getBlockNumber();
     }

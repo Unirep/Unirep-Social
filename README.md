@@ -52,7 +52,7 @@ to test all cli commands.
 npx hardhat node
 ```
 - NOTE: a list of default accounts will be printed, choose one of them to be the deployer's account
-- For example, choose `0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563` as the deployer's private key
+- For example, choose `0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563` as the deployer's private key, and set it in `.env` file.
 
 #### 2. Deploy Unirep contract
 ```
