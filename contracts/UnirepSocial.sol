@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma abicoder v2;
-pragma solidity 0.8.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -22,7 +22,7 @@ contract UnirepSocial {
     // The amount of karma required to publish a post
     uint256 immutable public postReputation;
 
-    // The amount of karma required to submit a comment 
+    // The amount of karma required to submit a comment
     uint256 immutable public commentReputation;
 
     // The amount of karma airdropped to user when user signs up and executes user state transition
@@ -112,7 +112,7 @@ contract UnirepSocial {
     //     require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
     //     require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
     //     require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
-        
+
     //     // Submit airdrop
     //     unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
 
@@ -121,7 +121,7 @@ contract UnirepSocial {
 
     //     emit AirdropSubmitted(
     //         unirep.currentEpoch(),
-    //         _signUpProofData.epochKey, 
+    //         _signUpProofData.epochKey,
     //         _signUpProofData
     //     );
     // }
@@ -132,7 +132,7 @@ contract UnirepSocial {
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
      */
     function publishPost(
-        string memory content, 
+        string memory content,
         Unirep.ReputationProof memory _proofRelated
     ) external payable {
         require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
@@ -157,7 +157,7 @@ contract UnirepSocial {
      */
     function leaveComment(
         uint256 postId,
-        string memory content, 
+        string memory content,
         Unirep.ReputationProof memory _proofRelated
     ) external payable {
         require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
@@ -165,7 +165,7 @@ contract UnirepSocial {
 
         // Spend reputation
         unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
-    
+
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
@@ -207,18 +207,18 @@ contract UnirepSocial {
         attestation.posRep = upvoteValue;
         attestation.negRep = downvoteValue;
         unirep.submitAttestation{value: unirep.attestingFee()}(
-            attestation, 
-            toEpochKey, 
+            attestation,
+            toEpochKey,
             toEpochKeyProofIndex,
             repProofIndex
         );
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
-            _proofRelated.epochKey, 
-            toEpochKey, 
+            _proofRelated.epochKey,
+            toEpochKey,
             upvoteValue,
-            downvoteValue, 
+            downvoteValue,
             toEpochKeyProofIndex,
             _proofRelated
         );
@@ -234,7 +234,7 @@ contract UnirepSocial {
         require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
         require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         require(_signUpProofData.userHasSignedUp == 1, "Unirep Social: user should have signed up in Unirep Social before");
-        
+
         // Submit airdrop
         unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
 
@@ -243,7 +243,7 @@ contract UnirepSocial {
 
         emit AirdropSubmitted(
             unirep.currentEpoch(),
-            _signUpProofData.epochKey, 
+            _signUpProofData.epochKey,
             _signUpProofData
         );
     }

@@ -8,6 +8,7 @@
         "compile": "npx hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
+        "deploy": "hardhat run scripts/deploy.js",
         "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/ -name '*.ts')"
     },
     "repository": {
@@ -36,7 +37,7 @@
     },
     "dependencies": {
         "@unirep/circuits": "git+https://github.com/Unirep/circuits.git",
-        "@unirep/contracts": "git+https://github.com/Unirep/contracts.git",
+        "@unirep/contracts": "git+https://github.com/Unirep/contracts.git#solc-version",
         "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
         "@unirep/unirep": "git+https://github.com/Unirep/unirep.git",
         "argparse": "^2.0.1",
