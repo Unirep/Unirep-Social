@@ -1,5 +1,5 @@
 declare const DEFAULT_PRIVATE_KEY: string | undefined;
-declare const DEFAULT_ETH_PROVIDER = "ws://localhost:8545";
+declare const DEFAULT_ETH_PROVIDER = "http://localhost:8545";
 declare const DEFAULT_MAX_EPOCH_KEY_NONCE = 3;
 declare const DEFAULT_EPOCH_LENGTH = 30;
 declare const DEFAULT_ATTESTING_FEE: import("ethers").BigNumber;

@@ -2,19 +2,19 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { getUnirepContract } from '@unirep/contracts' 
+import { genIdentityCommitment, unSerialiseIdentity, hashOne } from '@unirep/crypto'
+import { getUnirepContract } from '@unirep/contracts'
 import { expect } from 'chai'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 import { genUnirepStateFromContract, UnirepState } from '@unirep/unirep'
 import { exec } from './utils'
 
-import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import { hashOne } from "maci-crypto"
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
+import { getProvider } from '../utils'
+import { UnirepSocialFacory } from '../../core/utils'
 
-describe('test all CLI subcommands', function() {
+describe('test all CLI subcommands', function () {
     this.timeout(500000)
 
     let deployerPrivKey
@@ -23,7 +23,7 @@ describe('test all CLI subcommands', function() {
     let attesterAddr
     let userPrivKey
     let userAddr
-    
+
     const startBlock = 0
     const attestingFee = ethers.BigNumber.from(10).pow(18)
     const epochKeyNonce = 0
@@ -32,7 +32,7 @@ describe('test all CLI subcommands', function() {
     let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
     let unirepState: UnirepState
-    
+
     let userIdentity1, userIdentityCommitment1, userIdentity2, userIdentityCommitment2
     const attesterId = 2
     let epk, epkProof, epkPublicSignals
@@ -45,7 +45,7 @@ describe('test all CLI subcommands', function() {
     let transactionHash
     let proofIdx
 
-    before(async() => {
+    before(async () => {
         deployerPrivKey = ethers.utils.solidityKeccak256(['uint'], [0])
         deployerAddr = ethers.utils.computeAddress(deployerPrivKey)
         userPrivKey = ethers.utils.solidityKeccak256(['uint'], [1])
@@ -55,9 +55,9 @@ describe('test all CLI subcommands', function() {
 
         // Transfer ether so they can execute transactions
         const defaultAccount: ethers.Signer = (await hardhatEthers.getSigners())[0]
-        await defaultAccount.sendTransaction({to: deployerAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
-        await defaultAccount.sendTransaction({to: userAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
-        await defaultAccount.sendTransaction({to: attesterAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
+        await defaultAccount.sendTransaction({ to: deployerAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000 })
+        await defaultAccount.sendTransaction({ to: userAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000 })
+        await defaultAccount.sendTransaction({ to: attesterAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000 })
     })
 
     describe('deploy CLI subcommand', () => {
@@ -76,13 +76,12 @@ describe('test all CLI subcommands', function() {
             const unirepAddress = unirepRegMatch[1]
             const unirepSocialAddress = socialRegMatch[1]
 
-            const provider = new hardhatEthers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER)
+            const provider = getProvider(DEFAULT_ETH_PROVIDER)
             unirepContract = getUnirepContract(unirepAddress, provider)
 
-            unirepSocialContract = new ethers.Contract(
+            unirepSocialContract = UnirepSocialFacory.connect(
                 unirepSocialAddress,
-                UnirepSocial.abi,
-                provider,
+                provider
             )
 
             unirepState = await genUnirepStateFromContract(
@@ -216,7 +215,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act post `
 
             console.log(command)
@@ -262,7 +261,7 @@ describe('test all CLI subcommands', function() {
         it('should verify reputation proof', async () => {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pf ${userRepProof} ` + 
+                ` -pf ${userRepProof} ` +
                 ` -p ${repPublicSignals}`
 
             console.log(command)
@@ -274,26 +273,12 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-    describe('listAllPosts CLI subcommand', () => {
-        it('should list all posts', async () => {
-            const command = `npx ts-node cli/index.ts listAllPosts` +
-                ` -x ${unirepSocialContract.address} ` 
-
-            console.log(command)
-            const output = exec(command).stdout.trim()
-            console.log(output)
-
-            const postRegMatch = output.match(/Epoch key/)
-            expect(postRegMatch).not.equal(null)
-        })
-    })
-
     describe('genReputation CLI subcommand', () => {
         it('should generate a reputation proof for a comment', async () => {
             const command = `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act comment ` +
                 ` -mr ${minRepDiff}`
 
@@ -317,7 +302,7 @@ describe('test all CLI subcommands', function() {
         it('should leave a comment', async () => {
             const command = `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${transactionHash} `+
+                ` -pid ${transactionHash} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
@@ -373,7 +358,7 @@ describe('test all CLI subcommands', function() {
             const command = `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity2}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act vote ` +
                 ` -v ${posRep}`
 
@@ -419,7 +404,7 @@ describe('test all CLI subcommands', function() {
         it('should verify reputation proof', async () => {
             const command = `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pf ${userRepProof} ` + 
+                ` -pf ${userRepProof} ` +
                 ` -p ${repPublicSignals}`
 
             console.log(command)
@@ -454,9 +439,9 @@ describe('test all CLI subcommands', function() {
                 ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity1} `
 
-                console.log(command)
-                const output = exec(command).stdout.trim()
-                console.log(output)
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
 
             const userTransitionRegMatch = output.match(/User transitioned from epoch 1 to epoch 2/)
             expect(userTransitionRegMatch).not.equal(null)

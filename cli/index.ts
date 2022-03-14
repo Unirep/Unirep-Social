@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import argparse from 'argparse' 
+import argparse from 'argparse'
 
 import {
     genUnirepIdentity,
@@ -44,11 +44,6 @@ import {
 } from './publishPost'
 
 import {
-    listAllPosts,
-    configureSubparser as configureSubparserForListAllPosts,
-} from './listAllPosts'
-
-import {
     leaveComment,
     configureSubparser as configureSubparserForLeaveComment,
 } from './leaveComment'
@@ -85,7 +80,7 @@ import {
 
 
 const main = async () => {
-    const parser = new argparse.ArgumentParser({ 
+    const parser = new argparse.ArgumentParser({
         description: 'Unirep Social',
     })
 
@@ -123,9 +118,6 @@ const main = async () => {
 
     // Subcommand: publishPost
     configureSubparserForPublishPost(subparsers)
-
-    // Subcommand: listAllPosts
-    configureSubparserForListAllPosts(subparsers)
 
     // Subcommand: leaveComment
     configureSubparserForLeaveComment(subparsers)
@@ -167,8 +159,6 @@ const main = async () => {
         await verifyReputationProof(args)
     } else if (args.subcommand === 'publishPost') {
         await publishPost(args)
-    } else if (args.subcommand === 'listAllPosts') {
-        await listAllPosts(args)
     } else if (args.subcommand === 'leaveComment') {
         await leaveComment(args)
     } else if (args.subcommand === 'vote') {

@@ -1,5 +1,9 @@
 import base64url from 'base64url'
-import { genIdentity, genIdentityCommitment, serialiseIdentity } from '@unirep/crypto'
+import {
+    genIdentity,
+    genIdentityCommitment,
+    serialiseIdentity
+} from '@unirep/crypto'
 
 import { identityPrefix, identityCommitmentPrefix } from "./prefix"
 

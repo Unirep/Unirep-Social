@@ -1,13 +1,23 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { ReputationProof } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { Unirep } from '@unirep/contracts'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
-import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import {
+    DEFAULT_ETH_PROVIDER,
+    DEFAULT_PRIVATE_KEY
+} from './defaults'
+import {
+    reputationProofPrefix,
+    reputationPublicSignalsPrefix
+} from './prefix'
 import { defaultCommentReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
+import { UnirepSocialFacory } from '../core/utils'
+import { getProvider } from './utils'
+
+// TODO: use export package from '@unirep/unirep'
+import { ReputationProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -83,11 +93,14 @@ const leaveComment = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
-    
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
+    const unirepContractAddr = await unirepSocialContract.unirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+    const attestingFee = await unirepContract.attestingFee()
+
     // Parse Inputs
     const decodedProof = base64url.decode(args.proof.slice(reputationProofPrefix.length))
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(reputationPublicSignalsPrefix.length))
@@ -99,26 +112,35 @@ const leaveComment = async (args: any) => {
     const repNullifiersAmount = reputationProof.proveReputationAmount
     const minRep = reputationProof.minRep
 
-    if(args.min_rep != null){
+    if (args.min_rep != null) {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    if(repNullifiersAmount != defaultCommentReputation) {
+    if (repNullifiersAmount != defaultCommentReputation) {
         console.error(`Error: wrong comment amount, expect ${defaultCommentReputation}`)
         return
     }
 
-     // Verify reputation proof
-     await verifyReputationProof(args)
+    // Verify reputation proof
+    await verifyReputationProof(args)
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
-    await unirepSocialContract.unlock(privKey)
+    const wallet = new ethers.Wallet(privKey, provider)
 
     // Submit tx
     let tx
     try {
-        tx = await unirepSocialContract.leaveComment(reputationProof, args.post_id, args.text)
+        tx = await unirepSocialContract
+            .connect(wallet)
+            .leaveComment(
+                args.post_id,
+                args.text,
+                reputationProof,
+                {
+                    value: attestingFee,
+                }
+            )
     } catch (error) {
         console.log('Transaction Error', error)
         return
@@ -127,7 +149,7 @@ const leaveComment = async (args: any) => {
     // TODO: Unirep Social should verify if the reputation proof submitted before
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)
     await tx.wait()
-    const proofIndex = await unirepSocialContract.getReputationProofIndex(reputationProof)
+    const proofIndex = await unirepContract.getProofIndex(reputationProof.hash())
     console.log('Transaction hash:', tx?.hash)
     console.log('Proof index:', proofIndex.toNumber())
 }

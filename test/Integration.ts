@@ -1,15 +1,53 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { ethers } from 'ethers'
+import {
+    BigNumber,
+    BigNumberish,
+    ethers
+} from 'ethers'
 import { expect } from 'chai'
-import { genRandomSalt, genIdentity, genIdentityCommitment } from '@unirep/crypto'
-import { Circuit, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
-import { computeProcessAttestationsProofHash, computeStartTransitionProofHash, deployUnirep, EpochKeyProof, ReputationProof, SignUpProof, UserTransitionProof } from '@unirep/contracts'
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxReputationBudget, UnirepState, UserState, IAttestation, genUserStateFromContract, genUnirepStateFromContract, maxUsers, maxAttesters, genEpochKey } from '@unirep/unirep'
+import {
+    genRandomSalt,
+    genIdentity,
+    genIdentityCommitment
+} from '@unirep/crypto'
+import {
+    Circuit,
+    formatProofForVerifierContract,
+    verifyProof
+} from '@unirep/circuits'
+import {
+    computeProcessAttestationsProofHash,
+    computeStartTransitionProofHash,
+    deployUnirep,
+} from '@unirep/contracts'
+import * as config from '@unirep/unirep'
+import {
+    UnirepState,
+    UserState,
+    IAttestation,
+    genUserStateFromContract,
+    genUnirepStateFromContract,
+    genEpochKey
+} from '@unirep/unirep'
 
-import { findValidNonce, getTreeDepthsForTesting } from './utils'
-import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
-import { deployUnirepSocial } from '../core/utils'
+import {
+    findValidNonce,
+    getTreeDepthsForTesting,
+    EpochKeyProof,
+    ReputationProof,
+    SignUpProof,
+    UserTransitionProof
+} from './utils'
+import {
+    defaultAirdroppedReputation,
+    defaultCommentReputation,
+    defaultPostReputation
+} from '../config/socialMedia'
+import {
+    deployUnirepSocial,
+    UnirepSocial
+} from '../core/utils'
 
 describe('Integration', function () {
     this.timeout(500000)
@@ -22,16 +60,14 @@ describe('Integration', function () {
     let userCommitments: BigInt[] = []
 
     let unirepContract: ethers.Contract
-    let unirepSocialContract: ethers.Contract
+    let unirepSocialContract: UnirepSocial
     let _treeDepths
     let unirepSocialId
     let postId
 
     let currentEpoch: ethers.BigNumber
-    let emptyUserStateRoot: BigInt
-    let blankGSLeaf: BigInt
-    let userStateTransitionedNum: {[key: number]: ethers.BigNumber[]} = {}
-    let epochKeys: {[key: string]: boolean} = {}
+    let userStateTransitionedNum: { [key: number]: ethers.BigNumber[] } = {}
+    let epochKeys: { [key: string]: boolean } = {}
     let reputationProofIndex
 
     let accounts: ethers.Signer[]
@@ -46,12 +82,12 @@ describe('Integration', function () {
 
         _treeDepths = getTreeDepthsForTesting("circuit")
         const _settings = {
-            maxUsers: maxUsers,
-            maxAttesters: maxAttesters,
-            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
-            maxReputationBudget: maxReputationBudget,
-            epochLength: epochLength,
-            attestingFee: attestingFee
+            maxUsers: config.maxUsers,
+            maxAttesters: config.maxAttesters,
+            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
+            maxReputationBudget: config.maxReputationBudget,
+            epochLength: config.epochLength,
+            attestingFee: config.attestingFee
         }
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
@@ -65,7 +101,7 @@ describe('Integration', function () {
             userIds.push(id)
             userCommitments.push(commitment)
 
-            const tx = await unirepSocialContract.userSignUp(commitment)
+            const tx = await unirepSocialContract.userSignUp(BigNumber.from(commitment))
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
@@ -74,7 +110,7 @@ describe('Integration', function () {
                 unirepContract.address,
                 userIds[firstUser],
             )
-            
+
             console.log(`First user signs up with commitment (${commitment}), in epoch ${users[firstUser].latestTransitionedEpoch} and GST leaf ${users[firstUser].latestGSTLeafIndex}`)
             console.log('----------------------User State----------------------')
             console.log(users[firstUser].toJSON(4))
@@ -90,7 +126,7 @@ describe('Integration', function () {
         let attestationsFromUnirepSocial: number = 0
         it('begin first epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
-            await hardhatEthers.provider.send("evm_increaseTime", [epochLength])
+            await hardhatEthers.provider.send("evm_increaseTime", [config.epochLength])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
             let receipt = await tx.wait()
@@ -122,8 +158,8 @@ describe('Integration', function () {
                 finalTransitionProof
             } = await users[firstUser].genUserStateTransitionProofs()
             let isValid = await verifyProof(
-                Circuit.startTransition, 
-                startTransitionProof.proof, 
+                Circuit.startTransition,
+                startTransitionProof.proof,
                 startTransitionProof.publicSignals
             )
             expect(isValid, 'Verify start transition circuit off-chain failed').to.be.true
@@ -152,8 +188,8 @@ describe('Integration', function () {
 
             for (let i = 0; i < processAttestationProofs.length; i++) {
                 isValid = await verifyProof(
-                    Circuit.processAttestations, 
-                    processAttestationProofs[i].proof, 
+                    Circuit.processAttestations,
+                    processAttestationProofs[i].proof,
                     processAttestationProofs[i].publicSignals
                 )
                 expect(isValid, 'Verify process attestations circuit off-chain failed').to.be.true
@@ -170,7 +206,7 @@ describe('Integration', function () {
                 )
                 receipt = await tx.wait()
                 expect(receipt.status, 'Submit process attestations proof failed').to.equal(1)
-                
+
                 const proofNullifier = computeProcessAttestationsProofHash(
                     outputBlindedUserState,
                     outputBlindedHashChain,
@@ -216,7 +252,7 @@ describe('Integration', function () {
             userIds.push(id)
             userCommitments.push(commitment)
 
-            const tx = await unirepSocialContract.userSignUp(commitment)
+            const tx = await unirepSocialContract.userSignUp(BigNumber.from(commitment))
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
@@ -225,7 +261,7 @@ describe('Integration', function () {
                 unirepContract.address,
                 userIds[secondUser],
             )
-            
+
             console.log(`Second user signs up with commitment (${commitment}), in epoch ${users[secondUser].latestTransitionedEpoch} and GST leaf ${users[secondUser].latestGSTLeafIndex}`)
             console.log('----------------------User State----------------------')
             console.log(users[secondUser].toJSON(4))
@@ -241,7 +277,7 @@ describe('Integration', function () {
             )
             const isValid = await epochKeyProof.verify()
             expect(isValid, 'Verify epk proof off-chain failed').to.be.true
-            
+
             // Verify on-chain
             const GSTree = unirepState.genGSTree(currentEpoch.toNumber())
             const firstUserEpochKey = epochKeyProof.epochKey
@@ -258,7 +294,11 @@ describe('Integration', function () {
             )
             const repNullifiersAmount = defaultPostReputation
             const epkNonce = 0
-            const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
+            const epochKey = genEpochKey(
+                users[firstUser].id.identityNullifier,
+                currentEpoch.toNumber(),
+                epkNonce
+            ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
@@ -268,18 +308,18 @@ describe('Integration', function () {
                 userIds[firstUser],
             )
             const nonceList: BigInt[] = findValidNonce(
-                users[firstUser], 
-                repNullifiersAmount, 
-                currentEpoch.toNumber(), 
+                users[firstUser],
+                repNullifiersAmount,
+                currentEpoch.toNumber(),
                 unirepSocialId
             )
 
             const { publicSignals, proof } = await users[firstUser].genProveReputationProof(
-                unirepSocialId, 
-                epkNonce, 
-                minRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                unirepSocialId,
+                epkNonce,
+                minRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             const reputationProof = new ReputationProof(
@@ -288,15 +328,15 @@ describe('Integration', function () {
             )
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
-            
+
             // Verify on-chain
             const isProofValid = await unirepContract.verifyReputation(reputationProof)
             expect(isProofValid, 'Verify reputation on-chain failed').to.be.true
 
             const tx = await unirepSocialContract.publishPost(
-                postText, 
+                postText,
                 reputationProof,
-                { value: attestingFee, gasLimit: 1000000 }
+                { value: config.attestingFee, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -328,7 +368,11 @@ describe('Integration', function () {
             const epkNonce = 0
 
             // first user's epoch key
-            const firstUserEpochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
+            const firstUserEpochKey = genEpochKey(
+                users[firstUser].id.identityNullifier,
+                currentEpoch.toNumber(),
+                epkNonce
+            ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
@@ -336,16 +380,16 @@ describe('Integration', function () {
 
             // second user's reputaiton proof
             const { publicSignals, proof, epochKey } = await users[secondUser].genProveReputationProof(
-                unirepSocialId, 
-                epkNonce, 
-                minRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                unirepSocialId,
+                epkNonce,
+                minRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             const reputationProof = new ReputationProof(publicSignals, proof)
             const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be.true 
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
             const secondUserEpochKey = BigInt(epochKey)
 
             // submit vote
@@ -355,7 +399,7 @@ describe('Integration', function () {
                 firstUserEpochKey,
                 reputationProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
@@ -366,7 +410,7 @@ describe('Integration', function () {
             expect(voteEvents.length).to.equal(1)
 
             secondEpochEpochKeys.push(secondUserEpochKey.toString())
-            
+
             attestationsFromUnirepSocial += 2
             epochKeys[firstUserEpochKey.toString()] = true
             epochKeys[secondUserEpochKey.toString()] = true
@@ -384,39 +428,43 @@ describe('Integration', function () {
             )
             const repNullifiersAmount = defaultCommentReputation
             const epkNonce = 1
-            const epochKey = genEpochKey(users[firstUser].id.identityNullifier, currentEpoch.toNumber(), epkNonce)
+            const epochKey = genEpochKey(
+                users[firstUser].id.identityNullifier,
+                currentEpoch.toNumber(),
+                epkNonce
+            ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
             const nonceList: BigInt[] = findValidNonce(
-                users[firstUser], 
-                repNullifiersAmount, 
-                currentEpoch.toNumber(), 
+                users[firstUser],
+                repNullifiersAmount,
+                currentEpoch.toNumber(),
                 unirepSocialId
             )
 
             const { publicSignals, proof } = await users[firstUser].genProveReputationProof(
-                unirepSocialId, 
-                epkNonce, 
-                minRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                unirepSocialId,
+                epkNonce,
+                minRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             const reputationProof = new ReputationProof(publicSignals, proof)
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
-            
+
             // Verify on-chain
             const isProofValid = await unirepContract.verifyReputation(reputationProof)
             expect(isProofValid, 'Verify reputation on-chain failed').to.be.true
-            
+
             // submit comment
             const tx = await unirepSocialContract.leaveComment(
                 postId,
-                commentText, 
+                commentText,
                 reputationProof,
-                { value: attestingFee, gasLimit: 1000000 }
+                { value: config.attestingFee, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -441,8 +489,8 @@ describe('Integration', function () {
 
             // submit epoch key
             let tx = await unirepSocialContract.airdrop(
-                signUpProof, 
-                {value: attestingFee}
+                signUpProof,
+                { value: config.attestingFee }
             )
             let receipt = await tx.wait()
             expect(receipt.status).equal(1)
@@ -495,7 +543,7 @@ describe('Integration', function () {
     describe('Third epoch', () => {
         it('begin second epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
-            await hardhatEthers.provider.send("evm_increaseTime", [epochLength])
+            await hardhatEthers.provider.send("evm_increaseTime", [config.epochLength])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
             let receipt = await tx.wait()
@@ -529,8 +577,8 @@ describe('Integration', function () {
                 finalTransitionProof
             } = await users[firstUser].genUserStateTransitionProofs()
             let isValid = await verifyProof(
-                Circuit.startTransition, 
-                startTransitionProof.proof, 
+                Circuit.startTransition,
+                startTransitionProof.proof,
                 startTransitionProof.publicSignals
             )
             expect(isValid, 'Verify start transition circuit off-chain failed').to.be.true
@@ -559,8 +607,8 @@ describe('Integration', function () {
 
             for (let i = 0; i < processAttestationProofs.length; i++) {
                 isValid = await verifyProof(
-                    Circuit.processAttestations, 
-                    processAttestationProofs[i].proof, 
+                    Circuit.processAttestations,
+                    processAttestationProofs[i].proof,
                     processAttestationProofs[i].publicSignals
                 )
                 expect(isValid, 'Verify process attestations circuit off-chain failed').to.be.true
@@ -577,7 +625,7 @@ describe('Integration', function () {
                 )
                 receipt = await tx.wait()
                 expect(receipt.status, 'Submit process attestations proof failed').to.equal(1)
-                
+
                 const proofNullifier = computeProcessAttestationsProofHash(
                     outputBlindedUserState,
                     outputBlindedHashChain,

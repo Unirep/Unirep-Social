@@ -1,12 +1,22 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { SignUpProof } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { Unirep } from '@unirep/contracts'
 
-import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
-import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import {
+    DEFAULT_ETH_PROVIDER,
+    DEFAULT_PRIVATE_KEY
+} from './defaults'
+import {
+    signUpProofPrefix,
+    signUpPublicSignalsPrefix
+} from './prefix'
 import { verifyAirdropProof } from './verifyAirdropProof'
+import { UnirepSocialFacory } from '../core/utils'
+import { getProvider } from './utils'
+
+// TODO: use export package from '@unirep/unirep'
+import { SignUpProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -49,7 +59,7 @@ const configureSubparser = (subparsers: any) => {
             help: 'The block the Unirep contract is deployed. Default: 0',
         }
     )
-    
+
     parser.add_argument(
         '-x', '--contract',
         {
@@ -72,17 +82,24 @@ const configureSubparser = (subparsers: any) => {
 const giveAirdrop = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
+    // Unirep contract
+    const unirepContractAddr = await unirepSocialContract.unirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+    const attestingFee = await unirepContract.attestingFee()
 
     // Parse Inputs
     const decodedProof = base64url.decode(args.proof.slice(signUpProofPrefix.length))
     const decodedPublicSignals = base64url.decode(args.public_signals.slice(signUpPublicSignalsPrefix.length))
     const publicSignals = JSON.parse(decodedPublicSignals)
     const proof = JSON.parse(decodedProof)
-    const signUpProof = new SignUpProof(publicSignals, formatProofForSnarkjsVerification(proof))
+    const signUpProof = new SignUpProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
     const epk = signUpProof.epochKey
 
     // Verify reputation proof
@@ -90,16 +107,22 @@ const giveAirdrop = async (args: any) => {
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
-    await unirepSocialContract.unlock(privKey)
+    const wallet = new ethers.Wallet(privKey, provider)
 
     let tx
     try {
-        tx = await unirepSocialContract.airdrop(signUpProof)
+        tx = await unirepSocialContract
+            .connect(wallet)
+            .airdrop(signUpProof,
+                {
+                    value: attestingFee,
+                }
+            )
     } catch (error) {
         console.log('Transaction Error', error)
         return
     }
-    
+
     console.log(`The user of epoch key ${epk} will get airdrop in the next epoch`)
     console.log('Transaction hash:', tx?.hash)
 }

@@ -2,10 +2,20 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { formatProofForSnarkjsVerification, genUnirepStateFromContract } from '@unirep/unirep'
-import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { SignUpProof } from '@unirep/contracts'
+import {
+    formatProofForSnarkjsVerification,
+    genUnirepStateFromContract
+} from '@unirep/unirep'
+import { Unirep } from '@unirep/contracts'
+import {
+    signUpProofPrefix,
+    signUpPublicSignalsPrefix
+} from './prefix'
+import { UnirepSocialFacory } from '../core/utils'
+import { getProvider } from './utils'
+
+// TODO: use export package from '@unirep/unirep'
+import { SignUpProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -72,13 +82,14 @@ const verifyAirdropProof = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
     // Unirep contract
-    const unirepContract = await unirepSocialContract.getUnirep()
-    
+    const unirepContractAddr = await unirepSocialContract.unirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+
     const unirepState = await genUnirepStateFromContract(
         provider,
         unirepContract.address,
@@ -98,26 +109,26 @@ const verifyAirdropProof = async (args: any) => {
 
     // Check if Global state tree root exists
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
-    if(!isGSTRootExisted) {
+    if (!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
     }
 
     // Check if user has sign up flag
-    if(Number(userHasSignedUp) === 0) {
+    if (Number(userHasSignedUp) === 0) {
         console.log('Error: user does not sign up through Unirep Social')
         return
     }
 
     // Check if attester is correct
-    const unirepSocialId = await unirepSocialContract.attesterId()
-    if(Number(unirepSocialId) != Number(attesterId)) {
+    const unirepSocialId = await unirepContract.attesters(unirepSocialContract.address)
+    if (Number(unirepSocialId) != Number(attesterId)) {
         console.error('Error: wrong attester ID proof')
         return
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepSocialContract.verifyUserSignUp(signUpProof)
+    const isProofValid = await unirepContract.verifyUserSignUp(signUpProof)
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
         return

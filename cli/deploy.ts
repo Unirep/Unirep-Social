@@ -1,14 +1,19 @@
 // @ts-ignore
 import { ethers } from 'ethers'
-import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation } from '../config/socialMedia'
-import { maxUsers, maxAttesters, maxReputationBudget, circuitUserStateTreeDepth, circuitGlobalStateTreeDepth, circuitEpochTreeDepth } from '@unirep/unirep'
+import * as config from '@unirep/unirep'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
+import {
+    defaultAirdroppedReputation,
+    defaultCommentReputation,
+    defaultPostReputation
+} from '../config/socialMedia'
 import { deployUnirepSocial } from '../core/utils'
-import { DEFAULT_ATTESTING_FEE, DEFAULT_EPOCH_LENGTH, DEFAULT_ETH_PROVIDER, DEFAULT_MAX_EPOCH_KEY_NONCE, DEFAULT_PRIVATE_KEY } from './defaults'
+import * as defaultConfig from './defaults'
 
 import {
     checkDeployerProviderConnection,
     genJsonRpcDeployer,
+    getProvider,
     validateEthSk,
 } from './utils'
 
@@ -40,7 +45,7 @@ const configureSubparser = (subparsers: any) => {
         {
             action: 'store',
             type: 'str',
-            help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
+            help: `A connection string to an Ethereum provider. Default: ${defaultConfig.DEFAULT_ETH_PROVIDER}`,
         }
     )
 
@@ -94,7 +99,7 @@ const configureSubparser = (subparsers: any) => {
 const deploy = async (args: any) => {
 
     // The deployer's Ethereum private key
-    const deployerPrivkey = args.deployer_privkey ? args.deployer_privkey : DEFAULT_PRIVATE_KEY
+    const deployerPrivkey = args.deployer_privkey ? args.deployer_privkey : defaultConfig.DEFAULT_PRIVATE_KEY
 
     if (!validateEthSk(deployerPrivkey)) {
         console.error('Error: invalid Ethereum private key')
@@ -103,19 +108,19 @@ const deploy = async (args: any) => {
 
     // Max epoch key nonce
     // const _numEpochKeyNoncePerEpoch = (args.max_epoch_key_nonce != undefined) ? args.max_epoch_key_nonce : DEFAULT_MAX_EPOCH_KEY_NONCE
-    const _numEpochKeyNoncePerEpoch = DEFAULT_MAX_EPOCH_KEY_NONCE
+    const _numEpochKeyNoncePerEpoch = defaultConfig.DEFAULT_MAX_EPOCH_KEY_NONCE
 
-    const _maxReputationBudget = maxReputationBudget
+    const _maxReputationBudget = config.maxReputationBudget
 
     // Epoch length
-    const _epochLength = (args.epoch_length != undefined) ? args.epoch_length : DEFAULT_EPOCH_LENGTH
+    const _epochLength = (args.epoch_length != undefined) ? args.epoch_length : defaultConfig.DEFAULT_EPOCH_LENGTH
 
     // Attesting fee
-    const _attestingFee = (args.attesting_fee != undefined) ? ethers.BigNumber.from(args.attesting_fee) : DEFAULT_ATTESTING_FEE
+    const _attestingFee = (args.attesting_fee != undefined) ? ethers.BigNumber.from(args.attesting_fee) : defaultConfig.DEFAULT_ATTESTING_FEE
 
     const UnirepSettings = {
-        maxUsers: maxUsers,
-        maxAttesters: maxAttesters,
+        maxUsers: config.maxUsers,
+        maxAttesters: config.maxAttesters,
         numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
         maxReputationBudget: _maxReputationBudget,
         epochLength: _epochLength,
@@ -123,9 +128,9 @@ const deploy = async (args: any) => {
     }
 
     const treeDepths = {
-        "userStateTreeDepth": circuitUserStateTreeDepth,
-        "globalStateTreeDepth": circuitGlobalStateTreeDepth,
-        "epochTreeDepth": circuitEpochTreeDepth,
+        "userStateTreeDepth": config.circuitUserStateTreeDepth,
+        "globalStateTreeDepth": config.circuitGlobalStateTreeDepth,
+        "epochTreeDepth": config.circuitEpochTreeDepth,
     }
     const _postReputation = (args.post_reputation != undefined) ? args.post_reputation : defaultPostReputation
 
@@ -140,17 +145,17 @@ const deploy = async (args: any) => {
     }
 
     // Ethereum provider
-    const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const ethProvider = args.eth_provider !== undefined ? args.eth_provider : defaultConfig.DEFAULT_ETH_PROVIDER
+    const provider = getProvider(ethProvider)
 
-    if (! (await checkDeployerProviderConnection(deployerPrivkey, provider))) {
+    if (!(await checkDeployerProviderConnection(deployerPrivkey, provider))) {
         console.error('Error: unable to connect to the Ethereum provider at', ethProvider)
         return
     }
     const deployer = genJsonRpcDeployer(deployerPrivkey, provider)
-    
+
     let unirepContract
-    if(args.contract == null){
+    if (args.contract == null) {
         unirepContract = await deployUnirep(
             deployer.signer,
             treeDepths,

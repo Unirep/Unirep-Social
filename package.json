@@ -33,13 +33,16 @@
         "hardhat": "^2.6.4",
         "keyv": "^4.0.3",
         "shelljs": "^0.8.3",
-        "ts-node": "^10.2.1"
+        "ts-node": "^10.2.1",
+        "typechain": "^7.0.1"
     },
     "dependencies": {
         "@unirep/circuits": "git+https://github.com/Unirep/circuits.git",
         "@unirep/contracts": "git+https://github.com/Unirep/contracts.git#solc-version",
         "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
         "@unirep/unirep": "git+https://github.com/Unirep/unirep.git",
+        "@typechain/ethers-v5": "^9.0.0",
+        "@typechain/hardhat": "^5.0.0",
         "argparse": "^2.0.1",
         "base64url": "^3.0.1",
         "dotenv": "^10.0.0",

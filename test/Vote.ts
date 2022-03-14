@@ -1,32 +1,35 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { ethers } from 'ethers'
+import { BigNumberish, ethers } from 'ethers'
 import { expect } from 'chai'
 import { formatProofForSnarkjsVerification } from "@unirep/circuits"
-import { attestingFee, epochLength, numEpochKeyNoncePerEpoch, maxUsers, UserState, circuitGlobalStateTreeDepth, circuitEpochTreeDepth, circuitUserStateTreeDepth, maxAttesters, genUserStateFromContract, genEpochKey } from '@unirep/unirep'
-import { deployUnirep, EpochKeyProof, ReputationProof } from '@unirep/contracts'
+import * as config from '@unirep/unirep'
+import {
+    UserState,
+    genUserStateFromContract,
+    genEpochKey
+} from '@unirep/unirep'
+import { deployUnirep } from '@unirep/contracts'
 import { genIdentity, genIdentityCommitment, genRandomSalt } from '@unirep/crypto'
 
-import { findValidNonce, getTreeDepthsForTesting } from './utils'
+import { findValidNonce, getTreeDepthsForTesting, EpochKeyProof, ReputationProof } from './utils'
 import { defaultAirdroppedReputation, defaultCommentReputation, defaultPostReputation, maxReputationBudget } from '../config/socialMedia'
-import { deployUnirepSocial } from '../core/utils'
-
+import {
+    deployUnirepSocial,
+    UnirepSocial
+} from '../core/utils'
 
 describe('Vote', function () {
     this.timeout(300000)
 
     let unirepContract
-    let unirepSocialContract
-    let GSTree
-    let emptyUserStateRoot
+    let unirepSocialContract: UnirepSocial
     const ids = new Array(2)
     const commitments = new Array(2)
     let users: UserState[] = new Array(2)
-    let unirepState
-    
+
     let accounts: ethers.Signer[]
     let reputationProof: ReputationProof
-    const text = genRandomSalt().toString()
     let attesterId
     const upvoteValue = 3
     const downvoteValue = 5
@@ -36,12 +39,12 @@ describe('Vote', function () {
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
         const _settings = {
-            maxUsers: maxUsers,
-            maxAttesters: maxAttesters,
-            numEpochKeyNoncePerEpoch: numEpochKeyNoncePerEpoch,
+            maxUsers: config.maxUsers,
+            maxAttesters: config.maxAttesters,
+            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
             maxReputationBudget: maxReputationBudget,
-            epochLength: epochLength,
-            attestingFee: attestingFee
+            epochLength: config.epochLength,
+            attestingFee: config.attestingFee
         }
         unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
         unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
@@ -49,18 +52,18 @@ describe('Vote', function () {
 
     it('should have the correct config value', async () => {
         const attestingFee_ = await unirepContract.attestingFee()
-        expect(attestingFee).equal(attestingFee_)
+        expect(config.attestingFee).equal(attestingFee_)
         const epochLength_ = await unirepContract.epochLength()
-        expect(epochLength).equal(epochLength_)
+        expect(config.epochLength).equal(epochLength_)
         const numEpochKeyNoncePerEpoch_ = await unirepContract.numEpochKeyNoncePerEpoch()
-        expect(numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
+        expect(config.numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
         const maxUsers_ = await unirepContract.maxUsers()
-        expect(maxUsers).equal(maxUsers_)
+        expect(config.maxUsers).equal(maxUsers_)
 
         const treeDepths_ = await unirepContract.treeDepths()
-        expect(circuitEpochTreeDepth).equal(treeDepths_.epochTreeDepth)
-        expect(circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
-        expect(circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
+        expect(config.circuitEpochTreeDepth).equal(treeDepths_.epochTreeDepth)
+        expect(config.circuitGlobalStateTreeDepth).equal(treeDepths_.globalStateTreeDepth)
+        expect(config.circuitUserStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
 
         const postReputation_ = await unirepSocialContract.postReputation()
         expect(postReputation_).equal(defaultPostReputation)
@@ -78,7 +81,7 @@ describe('Vote', function () {
     })
 
     describe('User sign-ups', () => {
-        it('sign up should succeed', async () => {            
+        it('sign up should succeed', async () => {
             for (let i = 0; i < 2; i++) {
                 ids[i] = genIdentity()
                 commitments[i] = genIdentityCommitment(ids[i])
@@ -88,7 +91,7 @@ describe('Vote', function () {
                 expect(receipt.status).equal(1)
 
                 const numUserSignUps_ = await unirepContract.numUserSignUps()
-                expect(i+1).equal(numUserSignUps_)
+                expect(i + 1).equal(numUserSignUps_)
 
                 users[i] = await genUserStateFromContract(
                     hardhatEthers.provider,
@@ -101,23 +104,23 @@ describe('Vote', function () {
 
     describe('Generate reputation proof for verification', () => {
 
-        it('reputation proof should be verified valid off-chain and on-chain', async() => {
+        it('reputation proof should be verified valid off-chain and on-chain', async () => {
             const proveGraffiti = BigInt(0)
             const minPosRep = 0, graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const epoch = users[0].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(
-                users[0], 
-                upvoteValue, 
-                epoch, 
+                users[0],
+                upvoteValue,
+                epoch,
                 attesterId
             )
             const { publicSignals, proof } = await users[0].genProveReputationProof(
-                attesterId, 
-                epkNonce, 
-                minPosRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             reputationProof = new ReputationProof(
@@ -134,14 +137,18 @@ describe('Vote', function () {
 
     describe('Upvote', () => {
         const currentEpoch = 1
-        let toEpochKey = genEpochKey(genRandomSalt(), currentEpoch, 0)
+        let toEpochKey = genEpochKey(
+            genRandomSalt(),
+            currentEpoch,
+            0
+        ) as BigNumberish
         let epochKeyProofIndex
-        it('submit epoch key proof should succeed', async() => {
+        it('submit epoch key proof should succeed', async () => {
             const proof: string[] = []
             for (let i = 0; i < 8; i++) {
                 proof.push('0')
             }
-            const publicSignals = [genRandomSalt(), currentEpoch, toEpochKey]
+            const publicSignals = [genRandomSalt(), currentEpoch, toEpochKey] as BigNumberish[]
             const epochKeyProof = new EpochKeyProof(
                 publicSignals,
                 formatProofForSnarkjsVerification(proof)
@@ -153,37 +160,37 @@ describe('Vote', function () {
             epochKeyProofIndex = await unirepContract.getProofIndex(epochKeyProof.hash())
         })
 
-        it('submit upvote should succeed', async() => {
+        it('submit upvote should succeed', async () => {
             const tx = await unirepSocialContract.vote(
                 upvoteValue,
                 0,
                 toEpochKey,
                 epochKeyProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
         })
 
-        it('submit upvote with different amount of nullifiers should fail', async() => {
+        it('submit upvote with different amount of nullifiers should fail', async () => {
             const proveGraffiti = BigInt(0)
             const minPosRep = 0, graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const falseRepAmout = upvoteValue + 1
             const epoch = users[0].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(
-                users[0], 
-                falseRepAmout, 
-                epoch, 
+                users[0],
+                falseRepAmout,
+                epoch,
                 attesterId
             )
             const { publicSignals, proof } = await users[0].genProveReputationProof(
-                attesterId, 
-                epkNonce, 
-                minPosRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             reputationProof = new ReputationProof(
@@ -199,27 +206,27 @@ describe('Vote', function () {
                 toEpochKey,
                 epochKeyProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit different nullifiers amount from the vote value')
         })
 
-        it('submit zero proof index upvote should fail', async() => {
+        it('submit zero proof index upvote should fail', async () => {
             const proveGraffiti = BigInt(0)
             const minPosRep = 0, graffitiPreImage = BigInt(0)
             const epkNonce = 0
             const epoch = users[0].getUnirepStateCurrentEpoch()
             const nonceList: BigInt[] = findValidNonce(
-                users[0], 
-                upvoteValue, 
-                epoch, 
+                users[0],
+                upvoteValue,
+                epoch,
                 attesterId
             )
             const { publicSignals, proof } = await users[0].genProveReputationProof(
-                attesterId, 
-                epkNonce, 
-                minPosRep, 
-                proveGraffiti, 
-                graffitiPreImage, 
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
                 nonceList
             )
             reputationProof = new ReputationProof(
@@ -236,34 +243,34 @@ describe('Vote', function () {
                 toEpochKey,
                 zeroProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep: invalid proof index')
         })
 
-        it('submit upvote with both upvote and downvote value should fail', async() => {
+        it('submit upvote with both upvote and downvote value should fail', async () => {
             await expect(unirepSocialContract.vote(
                 upvoteValue,
                 downvoteValue,
                 toEpochKey,
                 epochKeyProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should only choose to upvote or to downvote')
         })
 
-        it('submit vote with 0 value should fail', async() => {
+        it('submit vote with 0 value should fail', async () => {
             await expect(unirepSocialContract.vote(
                 0,
                 0,
                 toEpochKey,
                 epochKeyProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: should submit a positive vote value')
         })
-        
 
-        it('submit upvote proof with wrong attester id should fail', async() => {
+
+        it('submit upvote proof with wrong attester id should fail', async () => {
             const falseAttesterId = attesterId + BigInt(1)
             reputationProof.attesterId = falseAttesterId
 
@@ -273,7 +280,7 @@ describe('Vote', function () {
                 toEpochKey,
                 epochKeyProofIndex,
                 reputationProof,
-                { value: attestingFee.mul(2), gasLimit: 1000000 }
+                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
             )).to.be.revertedWith('Unirep Social: submit a proof with different attester ID from Unirep Social')
         })
     })

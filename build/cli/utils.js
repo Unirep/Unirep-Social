@@ -1,7 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateEthSk = exports.validateEthAddress = exports.genJsonRpcDeployer = exports.contractExists = exports.checkDeployerProviderConnection = void 0;
+exports.validateEthSk = exports.validateEthAddress = exports.genJsonRpcDeployer = exports.contractExists = exports.checkDeployerProviderConnection = exports.getProvider = void 0;
 const ethers_1 = require("ethers");
+const getProvider = (url) => {
+    const provider = url.startsWith('http') ?
+        new ethers_1.ethers.providers.JsonRpcProvider(url) :
+        new ethers_1.ethers.providers.WebSocketProvider(url);
+    return provider;
+};
+exports.getProvider = getProvider;
 class JSONRPCDeployer {
     constructor(privateKey, provider, options) {
         this.provider = provider;

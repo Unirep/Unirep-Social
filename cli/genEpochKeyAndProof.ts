@@ -1,12 +1,14 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { unSerialiseIdentity } from '@unirep/crypto'
-import { Circuit, formatProofForVerifierContract, verifyProof } from '@unirep/circuits'
+import * as circuit from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix, identityPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { UnirepSocialFacory } from '../core/utils'
+import { Unirep } from '@unirep/contracts'
+import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -63,13 +65,13 @@ const configureSubparser = (subparsers: any) => {
 const genEpochKeyAndProof = async (args: any) => {
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
-    // Unirep contract
-    const unirepContract = await unirepSocialContract.getUnirep()
-    
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
+    const unirepContractAddr = await unirepSocialContract.unirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
     const numEpochKeyNoncePerEpoch = await unirepContract.numEpochKeyNoncePerEpoch()
@@ -90,13 +92,17 @@ const genEpochKeyAndProof = async (args: any) => {
     const { publicSignals, proof, epoch, epochKey } = await userState.genVerifyEpochKeyProof(epkNonce)
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await verifyProof(Circuit.verifyEpochKey, proof, publicSignals)
-    if(!isValid) {
+    const isValid = await circuit.verifyProof(
+        circuit.Circuit.verifyEpochKey,
+        proof,
+        publicSignals
+    )
+    if (!isValid) {
         console.error('Error: epoch key proof generated is not valid!')
         return
     }
 
-    const formattedProof = formatProofForVerifierContract(proof)
+    const formattedProof = circuit.formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
     const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
     console.log(`Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${epochKey}`)

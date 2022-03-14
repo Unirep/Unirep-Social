@@ -1,5 +1,13 @@
 import { ethers } from 'ethers'
 
+const getProvider = (url: string): ethers.providers.Provider => {
+    const provider = url.startsWith('http') ?
+        new ethers.providers.JsonRpcProvider(url) :
+        new ethers.providers.WebSocketProvider(url);
+
+    return provider
+}
+
 class JSONRPCDeployer {
 
     provider: ethers.providers.Provider
@@ -66,6 +74,7 @@ const contractExists = async (
 }
 
 export {
+    getProvider,
     checkDeployerProviderConnection,
     contractExists,
     genJsonRpcDeployer,

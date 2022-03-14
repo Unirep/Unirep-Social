@@ -1,12 +1,21 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { unSerialiseIdentity } from '@unirep/crypto'
-import { Circuit, verifyProof } from '@unirep/circuits'
+import {
+    Circuit,
+    formatProofForVerifierContract,
+    verifyProof
+} from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
+import { UnirepSocialFacory } from '../core/utils'
+import { computeStartTransitionProofHash, Unirep } from '@unirep/contracts'
+import { getProvider } from './utils'
+
+// TODO: use export package from '@unirep/unirep'
+import { UserTransitionProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -64,17 +73,18 @@ const userStateTransition = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
+    const unirepContractAddr = await unirepSocialContract.unirep()
     // Unirep contract
-    const unirepContract = await unirepSocialContract.getUnirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
-    await unirepSocialContract.unlock(privKey)
-    
+    const wallet = new ethers.Wallet(privKey, provider)
+
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
@@ -88,8 +98,8 @@ const userStateTransition = async (args: any) => {
 
     // Start user state transition proof
     let isValid = await verifyProof(
-        Circuit.startTransition, 
-        results.startTransitionProof.proof, 
+        Circuit.startTransition,
+        results.startTransitionProof.proof,
         results.startTransitionProof.publicSignals
     )
     if (!isValid) {
@@ -100,8 +110,8 @@ const userStateTransition = async (args: any) => {
     // Process attestations proofs
     for (let i = 0; i < results.processAttestationProofs.length; i++) {
         const isValid = await verifyProof(
-            Circuit.processAttestations, 
-            results.processAttestationProofs[i].proof, 
+            Circuit.processAttestations,
+            results.processAttestationProofs[i].proof,
             results.processAttestationProofs[i].publicSignals
         )
         if (!isValid) {
@@ -112,8 +122,8 @@ const userStateTransition = async (args: any) => {
 
     // User state transition proof
     isValid = await verifyProof(
-        Circuit.userStateTransition, 
-        results.finalTransitionProof.proof, 
+        Circuit.userStateTransition,
+        results.finalTransitionProof.proof,
         results.finalTransitionProof.publicSignals
     )
     if (!isValid) {
@@ -122,15 +132,92 @@ const userStateTransition = async (args: any) => {
     }
 
     // submit user state transition proofs
-    const txList = await unirepSocialContract.userStateTransition(results)
+    const txPromises = [] as Promise<any>[]
+    const {
+        blindedUserState,
+        blindedHashChain,
+        globalStateTreeRoot,
+        proof
+    } = results.startTransitionProof
+    {
+        const tx = await unirepSocialContract
+            .connect(wallet)
+            .startUserStateTransition(
+                blindedUserState,
+                blindedHashChain,
+                globalStateTreeRoot,
+                formatProofForVerifierContract(proof)
+            )
+        txPromises.push(tx.wait())
+    }
+
+    for (let i = 0; i < results.processAttestationProofs.length; i++) {
+        const {
+            outputBlindedUserState,
+            outputBlindedHashChain,
+            inputBlindedUserState,
+            proof,
+        } = results.processAttestationProofs[i]
+        const tx = await unirepSocialContract
+            .connect(wallet)
+            .processAttestations(
+                outputBlindedUserState,
+                outputBlindedHashChain,
+                inputBlindedUserState,
+                formatProofForVerifierContract(proof),
+            )
+        txPromises.push(tx.wait())
+    }
+    await Promise.all(txPromises)
+
+    const proofIndexes: number[] = []
+    {
+        const proofNullifier = computeStartTransitionProofHash(
+            blindedUserState,
+            blindedHashChain,
+            globalStateTreeRoot,
+            formatProofForVerifierContract(proof)
+        )
+        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
+        proofIndexes.push(Number(proofIndex))
+    }
+    for (let i = 0; i < results.processAttestationProofs.length; i++) {
+        const {
+            outputBlindedUserState,
+            outputBlindedHashChain,
+            inputBlindedUserState,
+            proof,
+        } = results.processAttestationProofs[i]
+        const proofNullifier = computeStartTransitionProofHash(
+            outputBlindedUserState,
+            outputBlindedHashChain,
+            inputBlindedUserState,
+            formatProofForVerifierContract(proof),
+        )
+        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
+        proofIndexes.push(Number(proofIndex))
+    }
+    const USTProof = new UserTransitionProof(
+        results.finalTransitionProof.publicSignals,
+        results.finalTransitionProof.proof
+    )
+    let tx
+    try {
+        tx = await unirepSocialContract
+            .connect(wallet)
+            .updateUserStateRoot(
+                USTProof,
+                proofIndexes
+            )
+        await tx.wait()
+    } catch (error) {
+        console.log('Transaction error: ', error)
+    }
 
     const fromEpoch = userState.latestTransitionedEpoch
     const toEpoch = userState.getUnirepStateCurrentEpoch()
 
-    if(txList[0] != undefined){
-        console.log('Transaction hash:', txList[txList.length - 1]?.hash)
-        console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)  
-    }     
+    console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)
 }
 
 export {

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+declare const getProvider: (url: string) => ethers.providers.Provider;
 declare class JSONRPCDeployer {
     provider: ethers.providers.Provider;
     signer: ethers.Signer;
@@ -11,4 +12,4 @@ declare const checkDeployerProviderConnection: (sk: string, provider: ethers.pro
 declare const validateEthSk: (sk: string) => boolean;
 declare const validateEthAddress: (address: string) => boolean;
 declare const contractExists: (provider: ethers.providers.Provider, address: string) => Promise<boolean>;
-export { checkDeployerProviderConnection, contractExists, genJsonRpcDeployer, validateEthAddress, validateEthSk, };
+export { getProvider, checkDeployerProviderConnection, contractExists, genJsonRpcDeployer, validateEthAddress, validateEthSk, };

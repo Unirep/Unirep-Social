@@ -4,9 +4,10 @@ import { ethers } from 'ethers'
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { genUnirepStateFromContract } from '@unirep/unirep'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
-import { UnirepSocialContract } from '../core/UnirepSocialContract'
-import { ReputationProof } from '@unirep/contracts'
+import { ReputationProof, Unirep } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { UnirepSocialFacory } from '../core/utils'
+import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser(
@@ -73,13 +74,14 @@ const verifyReputationProof = async (args: any) => {
 
     // Ethereum provider
     const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
-    const provider = new ethers.providers.WebSocketProvider(ethProvider)
+    const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = new UnirepSocialContract(args.contract, provider)
+    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
     // Unirep contract
-    const unirepContract = await unirepSocialContract.getUnirep()
-    
+    const unirepContractAddr = await unirepSocialContract.unirep()
+    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+
     const unirepState = await genUnirepStateFromContract(
         provider,
         unirepContract.address,
@@ -97,24 +99,24 @@ const verifyReputationProof = async (args: any) => {
     const attesterId = reputationProof.attesterId
     const repNullifiersAmount = reputationProof.proveReputationAmount
     const minRep = reputationProof.minRep
-    
+
 
     // Check if Global state tree root exists
     const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
-    if(!isGSTRootExisted) {
+    if (!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
     }
 
     // Check if attester is correct
-    const unirepSocialId = await unirepSocialContract.attesterId()
-    if(Number(unirepSocialId) != Number(attesterId)) {
+    const unirepSocialId = await unirepContract.attesters(unirepSocialContract.address)
+    if (Number(unirepSocialId) != Number(attesterId)) {
         console.error('Error: wrong attester ID proof')
         return
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepSocialContract.verifyReputation(reputationProof)
+    const isProofValid = await unirepContract.verifyReputation(reputationProof)
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
         return
