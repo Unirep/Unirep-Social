@@ -4,7 +4,7 @@
     "description": "",
     "main": "build/core/index.js",
     "scripts": {
-        "build": "tsc",
+        "build": "npx hardhat typechain && tsc",
         "compile": "npx hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
