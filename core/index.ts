@@ -1,14 +1,10 @@
-import {  
-    deployUnirepSocial,
-    UnirepSocialFacory,
-    UnirepSocial, 
-} from "./utils";
-import { 
-    defaultAirdroppedReputation, 
-    defaultPostReputation, 
-    defaultCommentReputation, 
-    maxReputationBudget, 
-} from "../config/socialMedia"
+import { deployUnirepSocial, UnirepSocialFacory, UnirepSocial } from './utils'
+import {
+    defaultAirdroppedReputation,
+    defaultPostReputation,
+    defaultCommentReputation,
+    maxReputationBudget,
+} from '../config/socialMedia'
 import {
     identityPrefix,
     identityCommitmentPrefix,
@@ -18,15 +14,15 @@ import {
     reputationPublicSignalsPrefix,
     signUpProofPrefix,
     signUpPublicSignalsPrefix,
-} from "../cli/prefix"
+} from '../cli/prefix'
 
 export {
     UnirepSocialFacory,
-    UnirepSocial, 
+    UnirepSocial,
     deployUnirepSocial,
-    defaultAirdroppedReputation, 
-    defaultPostReputation, 
-    defaultCommentReputation, 
+    defaultAirdroppedReputation,
+    defaultPostReputation,
+    defaultCommentReputation,
     maxReputationBudget,
     identityPrefix,
     identityCommitmentPrefix,

@@ -1,13 +1,13 @@
 import '@typechain/hardhat'
-import { HardhatUserConfig } from "hardhat/config"
-import "@nomiclabs/hardhat-ethers"
-import "@nomiclabs/hardhat-waffle"
+import { HardhatUserConfig } from 'hardhat/config'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 
 const config: HardhatUserConfig = {
-    defaultNetwork: "hardhat",
+    defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
-            blockGasLimit: 12000000
+            blockGasLimit: 12000000,
         },
         optimism: {
             url: 'https://kovan.optimism.io',
@@ -17,18 +17,18 @@ const config: HardhatUserConfig = {
             ],
         },
         local: {
-            url: "http://localhost:8545"
+            url: 'http://localhost:8545',
         },
     },
     solidity: {
-        version: "0.8.1",
+        version: '0.8.1',
         settings: {
-            optimizer: { enabled: true, runs: 200 }
-        }
+            optimizer: { enabled: true, runs: 200 },
+        },
     },
     typechain: {
         outDir: './typechain',
-    }
+    },
 }
 
-export default config;
+export default config

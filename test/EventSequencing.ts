@@ -1,49 +1,36 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
-import {
-    BigNumber,
-    BigNumberish,
-    ethers
-} from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 import {
     genRandomSalt,
     genIdentity,
     genIdentityCommitment,
-    SnarkProof
+    SnarkProof,
 } from '@unirep/crypto'
-import {
-    deployUnirep,
-    Event
-} from '@unirep/contracts'
+import { deployUnirep, Event } from '@unirep/contracts'
 import * as config from '@unirep/unirep'
-import {
-    genEpochKey,
-} from '@unirep/unirep'
+import { genEpochKey } from '@unirep/unirep'
 import {
     formatProofForVerifierContract,
-    formatProofForSnarkjsVerification
+    formatProofForSnarkjsVerification,
 } from '@unirep/circuits'
 
 import {
     genRandomList,
     getTreeDepthsForTesting,
     ReputationProof,
-    UserTransitionProof
+    UserTransitionProof,
 } from './utils'
 import {
     defaultCommentReputation,
-    defaultPostReputation
+    defaultPostReputation,
 } from '../config/socialMedia'
-import {
-    deployUnirepSocial,
-    UnirepSocial
-} from '../core/utils'
+import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 
 const genRandomProof = (): SnarkProof => {
     return formatProofForSnarkjsVerification(
-        genRandomList(8)
-            .map(n => n.toString())
+        genRandomList(8).map((n) => n.toString())
     ) as SnarkProof
 }
 
@@ -73,7 +60,8 @@ describe('EventSequencing', function () {
     const indexes = [1, 2, 3, 4] as BigNumberish[]
 
     let currentEpoch
-    let userIds: any[] = [], userCommitments: any[] = []
+    let userIds: any[] = [],
+        userCommitments: any[] = []
     const text = genRandomSalt().toString()
     let proofIndex
     let postId
@@ -88,10 +76,17 @@ describe('EventSequencing', function () {
             numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
             maxReputationBudget: config.maxReputationBudget,
             epochLength: config.epochLength,
-            attestingFee: config.attestingFee
+            attestingFee: config.attestingFee,
         }
-        unirepContract = await deployUnirep(<ethers.Wallet>accounts[0], _treeDepths, _settings)
-        unirepSocialContract = await deployUnirepSocial(<ethers.Wallet>accounts[0], unirepContract.address)
+        unirepContract = await deployUnirep(
+            <ethers.Wallet>accounts[0],
+            _treeDepths,
+            _settings
+        )
+        unirepSocialContract = await deployUnirepSocial(
+            <ethers.Wallet>accounts[0],
+            unirepContract.address
+        )
     })
 
     it('should sign up first user', async () => {
@@ -99,7 +94,9 @@ describe('EventSequencing', function () {
         const userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
         userCommitments.push(userCommitment)
-        const tx = await unirepSocialContract.userSignUp(BigNumber.from(userCommitment))
+        const tx = await unirepSocialContract.userSignUp(
+            BigNumber.from(userCommitment)
+        )
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         expectedUnirepEventsInOrder.push(Event.UserSignedUp)
@@ -134,7 +131,9 @@ describe('EventSequencing', function () {
         const userCommitment = genIdentityCommitment(userId)
         userIds.push(userId)
         userCommitments.push(userCommitment)
-        const tx = await unirepSocialContract.userSignUp(BigNumber.from(userCommitment))
+        const tx = await unirepSocialContract.userSignUp(
+            BigNumber.from(userCommitment)
+        )
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         expectedUnirepEventsInOrder.push(Event.UserSignedUp)
@@ -162,14 +161,20 @@ describe('EventSequencing', function () {
         expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
         expectedCommentEventsLength++
 
-        const proofNullifier = await unirepContract.hashReputationProof(reputationProof)
+        const proofNullifier = await unirepContract.hashReputationProof(
+            reputationProof
+        )
         proofIndex = await unirepContract.getProofIndex(proofNullifier)
     })
 
     it('first user should upvote second user', async () => {
         let upvoteValue = 3
         let epochKeyNonce = 1
-        const toEpochKey = genEpochKey(userIds[1].identityNullifier, currentEpoch, epochKeyNonce)
+        const toEpochKey = genEpochKey(
+            userIds[1].identityNullifier,
+            currentEpoch,
+            epochKeyNonce
+        )
 
         const reputationProof = new ReputationProof(
             repPublicSignals,
@@ -179,7 +184,6 @@ describe('EventSequencing', function () {
         reputationProof.epoch = 1
         reputationProof.attesterId = 1
         reputationProof.epochKey = epochKey as BigNumberish
-
 
         const tx = await unirepSocialContract.vote(
             upvoteValue,
@@ -197,10 +201,9 @@ describe('EventSequencing', function () {
     })
 
     it('first epoch ended', async () => {
-        await hardhatEthers.provider.send(
-            "evm_increaseTime",
-            [config.epochLength]
-        )  // Fast-forward epochLength of seconds
+        await hardhatEthers.provider.send('evm_increaseTime', [
+            config.epochLength,
+        ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -213,7 +216,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -222,7 +225,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -239,12 +242,10 @@ describe('EventSequencing', function () {
         expectedUnirepEventsInOrder.push(Event.UserStateTransitioned)
     })
 
-
     it('second epoch ended', async () => {
-        await hardhatEthers.provider.send(
-            "evm_increaseTime",
-            [config.epochLength]
-        )  // Fast-forward epochLength of seconds
+        await hardhatEthers.provider.send('evm_increaseTime', [
+            config.epochLength,
+        ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -253,10 +254,9 @@ describe('EventSequencing', function () {
     })
 
     it('Third epoch ended', async () => {
-        await hardhatEthers.provider.send(
-            "evm_increaseTime",
-            [config.epochLength]
-        )  // Fast-forward epochLength of seconds
+        await hardhatEthers.provider.send('evm_increaseTime', [
+            config.epochLength,
+        ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -269,7 +269,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -278,7 +278,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -300,7 +300,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -309,7 +309,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof()),
+            formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -328,7 +328,9 @@ describe('EventSequencing', function () {
 
     it('Unirep events order should match sequencer order', async () => {
         const sequencerFilter = unirepContract.filters.Sequencer()
-        const sequencerEvents = await unirepContract.queryFilter(sequencerFilter)
+        const sequencerEvents = await unirepContract.queryFilter(
+            sequencerFilter
+        )
 
         for (let i = 0; i < sequencerEvents.length; i++) {
             const event = sequencerEvents[i]
@@ -338,7 +340,9 @@ describe('EventSequencing', function () {
 
     it('Unirep Social events should match all actions', async () => {
         const userSignUpFilter = unirepSocialContract.filters.UserSignedUp()
-        const userSignUpEvents = await unirepSocialContract.queryFilter(userSignUpFilter)
+        const userSignUpEvents = await unirepSocialContract.queryFilter(
+            userSignUpFilter
+        )
         expect(userSignUpEvents.length).equal(expectedSignUpEventsLength)
 
         const postFilter = unirepSocialContract.filters.PostSubmitted()
@@ -346,7 +350,9 @@ describe('EventSequencing', function () {
         expect(postEvents.length).equal(expectedPostEventsLength)
 
         const commentFilter = unirepSocialContract.filters.CommentSubmitted()
-        const commentEvents = await unirepSocialContract.queryFilter(commentFilter)
+        const commentEvents = await unirepSocialContract.queryFilter(
+            commentFilter
+        )
         expect(commentEvents.length).equal(expectedCommentEventsLength)
 
         const voteFilter = unirepSocialContract.filters.VoteSubmitted()

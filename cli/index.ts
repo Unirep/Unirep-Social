@@ -32,7 +32,6 @@ import {
     configureSubparser as configureSubparserForGenReputationProof,
 } from './genReputationProof'
 
-
 import {
     verifyReputationProof,
     configureSubparser as configureSubparserForVerifyReputationProof,
@@ -48,10 +47,7 @@ import {
     configureSubparser as configureSubparserForLeaveComment,
 } from './leaveComment'
 
-import {
-    vote,
-    configureSubparser as configureSubparserForVote,
-} from './vote'
+import { vote, configureSubparser as configureSubparserForVote } from './vote'
 
 import {
     epochTransition,
@@ -77,7 +73,6 @@ import {
     giveAirdrop,
     configureSubparser as configureSubparserForGiveAirdrop,
 } from './giveAirdrop'
-
 
 const main = async () => {
     const parser = new argparse.ArgumentParser({

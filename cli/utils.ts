@@ -1,20 +1,23 @@
 import { ethers } from 'ethers'
 
 const getProvider = (url: string): ethers.providers.Provider => {
-    const provider = url.startsWith('http') ?
-        new ethers.providers.JsonRpcProvider(url) :
-        new ethers.providers.WebSocketProvider(url);
+    const provider = url.startsWith('http')
+        ? new ethers.providers.JsonRpcProvider(url)
+        : new ethers.providers.WebSocketProvider(url)
 
     return provider
 }
 
 class JSONRPCDeployer {
-
     provider: ethers.providers.Provider
     signer: ethers.Signer
     options: any
 
-    constructor(privateKey: string, provider: ethers.providers.Provider, options?: any) {
+    constructor(
+        privateKey: string,
+        provider: ethers.providers.Provider,
+        options?: any
+    ) {
         this.provider = provider
         this.signer = new ethers.Wallet(privateKey, this.provider)
         this.options = options
@@ -28,20 +31,15 @@ class JSONRPCDeployer {
 
 const genJsonRpcDeployer = (
     privateKey: string,
-    provider: ethers.providers.Provider,
+    provider: ethers.providers.Provider
 ) => {
-
-    return new JSONRPCDeployer(
-        privateKey,
-        provider,
-    )
+    return new JSONRPCDeployer(privateKey, provider)
 }
 
 const checkDeployerProviderConnection = async (
     sk: string,
-    provider: ethers.providers.Provider,
+    provider: ethers.providers.Provider
 ) => {
-
     const deployer = genJsonRpcDeployer(sk, provider)
     try {
         await deployer.provider.getBlockNumber()
@@ -67,7 +65,7 @@ const validateEthAddress = (address: string) => {
 
 const contractExists = async (
     provider: ethers.providers.Provider,
-    address: string,
+    address: string
 ) => {
     const code = await provider.getCode(address)
     return code.length > 2

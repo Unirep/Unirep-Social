@@ -1,13 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("@typechain/hardhat");
-require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-waffle");
+'use strict'
+Object.defineProperty(exports, '__esModule', { value: true })
+require('@typechain/hardhat')
+require('@nomiclabs/hardhat-ethers')
+require('@nomiclabs/hardhat-waffle')
 const config = {
-    defaultNetwork: "hardhat",
+    defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
-            blockGasLimit: 12000000
+            blockGasLimit: 12000000,
         },
         optimism: {
             url: 'https://kovan.optimism.io',
@@ -17,17 +17,17 @@ const config = {
             ],
         },
         local: {
-            url: "http://localhost:8545"
+            url: 'http://localhost:8545',
         },
     },
     solidity: {
-        version: "0.8.1",
+        version: '0.8.1',
         settings: {
-            optimizer: { enabled: true, runs: 200 }
-        }
+            optimizer: { enabled: true, runs: 200 },
+        },
     },
     typechain: {
         outDir: './typechain',
-    }
-};
-exports.default = config;
+    },
+}
+exports.default = config

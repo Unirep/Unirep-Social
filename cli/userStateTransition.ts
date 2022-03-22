@@ -4,7 +4,7 @@ import { unSerialiseIdentity } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
-    verifyProof
+    verifyProof,
 } from '@unirep/circuits'
 import { genUserStateFromContract } from '@unirep/unirep'
 
@@ -18,68 +18,60 @@ import { getProvider } from './utils'
 import { UserTransitionProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
-    const parser = subparsers.add_parser(
-        'userStateTransition',
-        { add_help: true },
-    )
+    const parser = subparsers.add_parser('userStateTransition', {
+        add_help: true,
+    })
 
-    parser.add_argument(
-        '-e', '--eth-provider',
-        {
-            action: 'store',
-            type: 'str',
-            help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
-        }
-    )
+    parser.add_argument('-e', '--eth-provider', {
+        action: 'store',
+        type: 'str',
+        help: `A connection string to an Ethereum provider. Default: ${DEFAULT_ETH_PROVIDER}`,
+    })
 
-    parser.add_argument(
-        '-id', '--identity',
-        {
-            required: true,
-            type: 'str',
-            help: 'The (serialized) user\'s identity',
-        }
-    )
+    parser.add_argument('-id', '--identity', {
+        required: true,
+        type: 'str',
+        help: "The (serialized) user's identity",
+    })
 
-    parser.add_argument(
-        '-b', '--start-block',
-        {
-            action: 'store',
-            type: 'int',
-            help: 'The block the Unirep contract is deployed. Default: 0',
-        }
-    )
+    parser.add_argument('-b', '--start-block', {
+        action: 'store',
+        type: 'int',
+        help: 'The block the Unirep contract is deployed. Default: 0',
+    })
 
-    parser.add_argument(
-        '-x', '--contract',
-        {
-            required: true,
-            type: 'str',
-            help: 'The Unirep Social contract address',
-        }
-    )
+    parser.add_argument('-x', '--contract', {
+        required: true,
+        type: 'str',
+        help: 'The Unirep Social contract address',
+    })
 
-    parser.add_argument(
-        '-d', '--eth-privkey',
-        {
-            action: 'store',
-            type: 'str',
-            help: 'The deployer\'s Ethereum private key. Default: set in the `.env` file',
-        }
-    )
+    parser.add_argument('-d', '--eth-privkey', {
+        action: 'store',
+        type: 'str',
+        help: "The deployer's Ethereum private key. Default: set in the `.env` file",
+    })
 }
 
 const userStateTransition = async (args: any) => {
-
     // Ethereum provider
-    const ethProvider = args.eth_provider ? args.eth_provider : DEFAULT_ETH_PROVIDER
+    const ethProvider = args.eth_provider
+        ? args.eth_provider
+        : DEFAULT_ETH_PROVIDER
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(args.contract, provider)
+    const unirepSocialContract = UnirepSocialFacory.connect(
+        args.contract,
+        provider
+    )
     const unirepContractAddr = await unirepSocialContract.unirep()
     // Unirep contract
-    const unirepContract = new ethers.Contract(unirepContractAddr, Unirep.abi, provider)
+    const unirepContract = new ethers.Contract(
+        unirepContractAddr,
+        Unirep.abi,
+        provider
+    )
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
@@ -92,7 +84,7 @@ const userStateTransition = async (args: any) => {
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
-        id,
+        id
     )
     const results = await userState.genUserStateTransitionProofs()
 
@@ -103,7 +95,9 @@ const userStateTransition = async (args: any) => {
         results.startTransitionProof.publicSignals
     )
     if (!isValid) {
-        console.error('Error: start state transition proof generated is not valid!')
+        console.error(
+            'Error: start state transition proof generated is not valid!'
+        )
         return
     }
 
@@ -115,7 +109,9 @@ const userStateTransition = async (args: any) => {
             results.processAttestationProofs[i].publicSignals
         )
         if (!isValid) {
-            console.error('Error: process attestations proof generated is not valid!')
+            console.error(
+                'Error: process attestations proof generated is not valid!'
+            )
             return
         }
     }
@@ -127,18 +123,16 @@ const userStateTransition = async (args: any) => {
         results.finalTransitionProof.publicSignals
     )
     if (!isValid) {
-        console.error('Error: user state transition proof generated is not valid!')
+        console.error(
+            'Error: user state transition proof generated is not valid!'
+        )
         return
     }
 
     // submit user state transition proofs
     const txPromises = [] as Promise<any>[]
-    const {
-        blindedUserState,
-        blindedHashChain,
-        globalStateTreeRoot,
-        proof
-    } = results.startTransitionProof
+    const { blindedUserState, blindedHashChain, globalStateTreeRoot, proof } =
+        results.startTransitionProof
     {
         const tx = await unirepSocialContract
             .connect(wallet)
@@ -164,7 +158,7 @@ const userStateTransition = async (args: any) => {
                 outputBlindedUserState,
                 outputBlindedHashChain,
                 inputBlindedUserState,
-                formatProofForVerifierContract(proof),
+                formatProofForVerifierContract(proof)
             )
         txPromises.push(tx.wait())
     }
@@ -192,7 +186,7 @@ const userStateTransition = async (args: any) => {
             outputBlindedUserState,
             outputBlindedHashChain,
             inputBlindedUserState,
-            formatProofForVerifierContract(proof),
+            formatProofForVerifierContract(proof)
         )
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
@@ -205,10 +199,7 @@ const userStateTransition = async (args: any) => {
     try {
         tx = await unirepSocialContract
             .connect(wallet)
-            .updateUserStateRoot(
-                USTProof,
-                proofIndexes
-            )
+            .updateUserStateRoot(USTProof, proofIndexes)
         await tx.wait()
     } catch (error) {
         console.log('Transaction error: ', error)
@@ -220,7 +211,4 @@ const userStateTransition = async (args: any) => {
     console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)
 }
 
-export {
-    userStateTransition,
-    configureSubparser,
-}
+export { userStateTransition, configureSubparser }
