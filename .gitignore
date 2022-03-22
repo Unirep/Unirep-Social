@@ -3,6 +3,7 @@ node_modules
 
 #Buidler files
 cache
+typechain
 
 # .env file
 .env

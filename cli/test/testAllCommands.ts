@@ -2,19 +2,23 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
-import { getUnirepContract } from '@unirep/contracts' 
+import {
+    genIdentityCommitment,
+    unSerialiseIdentity,
+    hashOne,
+} from '@unirep/crypto'
+import { getUnirepContract } from '@unirep/contracts'
 import { expect } from 'chai'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
 import { genUnirepStateFromContract, UnirepState } from '@unirep/unirep'
 import { exec } from './utils'
 
-import UnirepSocial from "../../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json"
-import { hashOne } from "maci-crypto"
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
+import { getProvider } from '../utils'
+import { UnirepSocialFacory } from '../../core/utils'
 
-describe('test all CLI subcommands', function() {
+describe('test all CLI subcommands', function () {
     this.timeout(500000)
 
     let deployerPrivKey
@@ -23,7 +27,7 @@ describe('test all CLI subcommands', function() {
     let attesterAddr
     let userPrivKey
     let userAddr
-    
+
     const startBlock = 0
     const attestingFee = ethers.BigNumber.from(10).pow(18)
     const epochKeyNonce = 0
@@ -32,20 +36,28 @@ describe('test all CLI subcommands', function() {
     let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
     let unirepState: UnirepState
-    
-    let userIdentity1, userIdentityCommitment1, userIdentity2, userIdentityCommitment2
+
+    let userIdentity1,
+        userIdentityCommitment1,
+        userIdentity2,
+        userIdentityCommitment2
     const attesterId = 2
     let epk, epkProof, epkPublicSignals
-    const text = "postText"
-    const text2 = "commentText"
-    const posRep = 3, negRep = 8, graffitiPreimage = 0, graffiti = hashOne(BigInt(graffitiPreimage))
-    const minPosRep = 0, maxNegRep = 10, minRepDiff = 15
+    const text = 'postText'
+    const text2 = 'commentText'
+    const posRep = 3,
+        negRep = 8,
+        graffitiPreimage = 0,
+        graffiti = hashOne(BigInt(graffitiPreimage))
+    const minPosRep = 0,
+        maxNegRep = 10,
+        minRepDiff = 15
     let userRepProof, repPublicSignals
     let airdropProof, airdropPublicSignals
     let transactionHash
     let proofIdx
 
-    before(async() => {
+    before(async () => {
         deployerPrivKey = ethers.utils.solidityKeccak256(['uint'], [0])
         deployerAddr = ethers.utils.computeAddress(deployerPrivKey)
         userPrivKey = ethers.utils.solidityKeccak256(['uint'], [1])
@@ -54,15 +66,30 @@ describe('test all CLI subcommands', function() {
         attesterAddr = ethers.utils.computeAddress(attesterPrivKey)
 
         // Transfer ether so they can execute transactions
-        const defaultAccount: ethers.Signer = (await hardhatEthers.getSigners())[0]
-        await defaultAccount.sendTransaction({to: deployerAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
-        await defaultAccount.sendTransaction({to: userAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
-        await defaultAccount.sendTransaction({to: attesterAddr, value: ethers.utils.parseEther('10'), gasLimit: 21000})
+        const defaultAccount: ethers.Signer = (
+            await hardhatEthers.getSigners()
+        )[0]
+        await defaultAccount.sendTransaction({
+            to: deployerAddr,
+            value: ethers.utils.parseEther('10'),
+            gasLimit: 21000,
+        })
+        await defaultAccount.sendTransaction({
+            to: userAddr,
+            value: ethers.utils.parseEther('10'),
+            gasLimit: 21000,
+        })
+        await defaultAccount.sendTransaction({
+            to: attesterAddr,
+            value: ethers.utils.parseEther('10'),
+            gasLimit: 21000,
+        })
     })
 
     describe('deploy CLI subcommand', () => {
         it('should deploy a Unirep contract', async () => {
-            const command = `npx ts-node cli/index.ts deploy` +
+            const command =
+                `npx ts-node cli/index.ts deploy` +
                 ` -d ${deployerPrivKey} ` +
                 ` -l ${epochLength} ` +
                 ` -f ${attestingFee.toString()} `
@@ -72,29 +99,32 @@ describe('test all CLI subcommands', function() {
             console.log(output)
 
             const unirepRegMatch = output.match(/Unirep: (0x[a-fA-F0-9]{40})/)
-            const socialRegMatch = output.match(/Unirep Social: (0x[a-fA-F0-9]{40})$/)
+            const socialRegMatch = output.match(
+                /Unirep Social: (0x[a-fA-F0-9]{40})$/
+            )
             const unirepAddress = unirepRegMatch[1]
             const unirepSocialAddress = socialRegMatch[1]
 
-            const provider = new hardhatEthers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER)
+            const provider = getProvider(DEFAULT_ETH_PROVIDER)
             unirepContract = getUnirepContract(unirepAddress, provider)
 
-            unirepSocialContract = new ethers.Contract(
+            unirepSocialContract = UnirepSocialFacory.connect(
                 unirepSocialAddress,
-                UnirepSocial.abi,
-                provider,
+                provider
             )
 
             unirepState = await genUnirepStateFromContract(
                 provider,
-                unirepAddress,
+                unirepAddress
                 // startBlock,
             )
 
             // expect(unirepState.epochLength).equal(epochLength)
             // expect(unirepState.attestingFee).equal(attestingFee)
 
-            const unirepSocialAttesterId = await unirepContract.attesters(unirepSocialContract.address)
+            const unirepSocialAttesterId = await unirepContract.attesters(
+                unirepSocialContract.address
+            )
             expect(unirepSocialAttesterId.toNumber()).equal(1)
         })
     })
@@ -107,16 +137,26 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const idRegMatch = output.match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/)
+            const idRegMatch = output.match(
+                /^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/
+            )
             const encodedIdentity = idRegMatch[1]
-            const serializedIdentity = base64url.decode(encodedIdentity.slice(identityPrefix.length))
+            const serializedIdentity = base64url.decode(
+                encodedIdentity.slice(identityPrefix.length)
+            )
             const _userIdentity = unSerialiseIdentity(serializedIdentity)
 
-            const commitmentRegMatch = output.match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/)
+            const commitmentRegMatch = output.match(
+                /(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/
+            )
             const encodedIdentityCommitment = commitmentRegMatch[1]
-            const serializedIdentityCommitment = base64url.decode(encodedIdentityCommitment.slice(identityCommitmentPrefix.length))
+            const serializedIdentityCommitment = base64url.decode(
+                encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
+            )
             const _userIdentityCommitment = genIdentityCommitment(_userIdentity)
-            expect(serializedIdentityCommitment).equal(_userIdentityCommitment.toString(16))
+            expect(serializedIdentityCommitment).equal(
+                _userIdentityCommitment.toString(16)
+            )
 
             userIdentity1 = encodedIdentity
             userIdentityCommitment1 = encodedIdentityCommitment
@@ -128,16 +168,26 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const idRegMatch = output.match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/)
+            const idRegMatch = output.match(
+                /^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/
+            )
             const encodedIdentity = idRegMatch[1]
-            const serializedIdentity = base64url.decode(encodedIdentity.slice(identityPrefix.length))
+            const serializedIdentity = base64url.decode(
+                encodedIdentity.slice(identityPrefix.length)
+            )
             const _userIdentity = unSerialiseIdentity(serializedIdentity)
 
-            const commitmentRegMatch = output.match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/)
+            const commitmentRegMatch = output.match(
+                /(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/
+            )
             const encodedIdentityCommitment = commitmentRegMatch[1]
-            const serializedIdentityCommitment = base64url.decode(encodedIdentityCommitment.slice(identityCommitmentPrefix.length))
+            const serializedIdentityCommitment = base64url.decode(
+                encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
+            )
             const _userIdentityCommitment = genIdentityCommitment(_userIdentity)
-            expect(serializedIdentityCommitment).equal(_userIdentityCommitment.toString(16))
+            expect(serializedIdentityCommitment).equal(
+                _userIdentityCommitment.toString(16)
+            )
 
             userIdentity2 = encodedIdentity
             userIdentityCommitment2 = encodedIdentityCommitment
@@ -146,7 +196,8 @@ describe('test all CLI subcommands', function() {
 
     describe('userSignup CLI subcommand', () => {
         it('should sign user 1 up', async () => {
-            const command = `npx ts-node cli/index.ts userSignUp` +
+            const command =
+                `npx ts-node cli/index.ts userSignUp` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -c ${userIdentityCommitment1} ` +
                 ` -d ${deployerPrivKey} `
@@ -160,7 +211,8 @@ describe('test all CLI subcommands', function() {
         })
 
         it('should sign user 2 up', async () => {
-            const command = `npx ts-node cli/index.ts userSignUp` +
+            const command =
+                `npx ts-node cli/index.ts userSignUp` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -c ${userIdentityCommitment2} ` +
                 ` -d ${deployerPrivKey} `
@@ -176,7 +228,8 @@ describe('test all CLI subcommands', function() {
 
     describe('genEpochKeyAndProof CLI subcommand', () => {
         it('should generate epoch key proof', async () => {
-            const command = `npx ts-node cli/index.ts genEpochKeyAndProof` +
+            const command =
+                `npx ts-node cli/index.ts genEpochKeyAndProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1} ` +
                 ` -n ${epochKeyNonce} `
@@ -185,18 +238,25 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            const epkRegMatch = output.match(
+                /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+            )
             epk = epkRegMatch[1]
-            const epkProofRegMatch = output.match(/(Unirep.epk.proof.[a-zA-Z0-9\-\_]+)/)
+            const epkProofRegMatch = output.match(
+                /(Unirep.epk.proof.[a-zA-Z0-9\-\_]+)/
+            )
             epkProof = epkProofRegMatch[1]
-            const epkPublicSignalsRegMatch = output.match(/(Unirep.epk.publicSignals.[a-zA-Z0-9\-\_]+)$/)
+            const epkPublicSignalsRegMatch = output.match(
+                /(Unirep.epk.publicSignals.[a-zA-Z0-9\-\_]+)$/
+            )
             epkPublicSignals = epkPublicSignalsRegMatch[1]
         })
     })
 
     describe('verifyEpochKeyProof CLI subcommand', () => {
         it('should verify epoch key proof', async () => {
-            const command = `npx ts-node cli/index.ts verifyEpochKeyProof` +
+            const command =
+                `npx ts-node cli/index.ts verifyEpochKeyProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -pf ${epkProof} ` +
                 ` -p ${epkPublicSignals}`
@@ -205,7 +265,9 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const verifyRegMatch = output.match(/Verify epoch key proof with epoch key ([0-9]+) succeed/)
+            const verifyRegMatch = output.match(
+                /Verify epoch key proof with epoch key ([0-9]+) succeed/
+            )
             expect(verifyRegMatch[1]).equals(epk)
             expect(verifyRegMatch).not.equal(null)
         })
@@ -213,21 +275,28 @@ describe('test all CLI subcommands', function() {
 
     describe('genReputation CLI subcommand', () => {
         it('should generate a reputation proof for a post', async () => {
-            const command = `npx ts-node cli/index.ts genReputationProof` +
+            const command =
+                `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act post `
 
             console.log(command)
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            const epkRegMatch = output.match(
+                /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+            )
             epk = epkRegMatch[1]
 
-            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
-            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+            const userRepProofRegMatch = output.match(
+                /(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/
+            )
+            const publicSignalRegMatch = output.match(
+                /(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/
+            )
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -235,10 +304,10 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-
     describe('publishPost CLI subcommand', () => {
         it('should publish a post', async () => {
-            const command = `npx ts-node cli/index.ts publishPost` +
+            const command =
+                `npx ts-node cli/index.ts publishPost` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -tx ${text}` +
                 ` -d ${deployerPrivKey}` +
@@ -249,7 +318,9 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const postRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+            const postRegMatch = output.match(
+                /Transaction hash: 0x[a-fA-F0-9]{64}/
+            )
             expect(postRegMatch).not.equal(null)
             transactionHash = postRegMatch[0].split('Transaction hash: ')[1]
 
@@ -260,40 +331,30 @@ describe('test all CLI subcommands', function() {
 
     describe('verifyReputationProof CLI subcommand', () => {
         it('should verify reputation proof', async () => {
-            const command = `npx ts-node cli/index.ts verifyReputationProof` +
+            const command =
+                `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pf ${userRepProof} ` + 
+                ` -pf ${userRepProof} ` +
                 ` -p ${repPublicSignals}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const verifyRegMatch = output.match(/Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/)
+            const verifyRegMatch = output.match(
+                /Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/
+            )
             expect(verifyRegMatch).not.equal(null)
-        })
-    })
-
-    describe('listAllPosts CLI subcommand', () => {
-        it('should list all posts', async () => {
-            const command = `npx ts-node cli/index.ts listAllPosts` +
-                ` -x ${unirepSocialContract.address} ` 
-
-            console.log(command)
-            const output = exec(command).stdout.trim()
-            console.log(output)
-
-            const postRegMatch = output.match(/Epoch key/)
-            expect(postRegMatch).not.equal(null)
         })
     })
 
     describe('genReputation CLI subcommand', () => {
         it('should generate a reputation proof for a comment', async () => {
-            const command = `npx ts-node cli/index.ts genReputationProof` +
+            const command =
+                `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act comment ` +
                 ` -mr ${minRepDiff}`
 
@@ -301,11 +362,17 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            const epkRegMatch = output.match(
+                /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+            )
             epk = epkRegMatch[1]
 
-            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
-            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+            const userRepProofRegMatch = output.match(
+                /(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/
+            )
+            const publicSignalRegMatch = output.match(
+                /(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/
+            )
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -315,9 +382,10 @@ describe('test all CLI subcommands', function() {
 
     describe('leaveComment CLI subcommand', () => {
         it('should leave a comment', async () => {
-            const command = `npx ts-node cli/index.ts leaveComment` +
+            const command =
+                `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${transactionHash} `+
+                ` -pid ${transactionHash} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
@@ -327,14 +395,17 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const commentRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+            const commentRegMatch = output.match(
+                /Transaction hash: 0x[a-fA-F0-9]{64}/
+            )
             expect(commentRegMatch).not.equal(null)
         })
     })
 
     describe('genAirdropProof CLI subcommand', () => {
         it('should submit an airdrop query', async () => {
-            const command = `npx ts-node cli/index.ts genAirdropProof` +
+            const command =
+                `npx ts-node cli/index.ts genAirdropProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity1}`
 
@@ -342,8 +413,12 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const airdropProofRegMatch = output.match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/)
-            const publicSignalRegMatch = output.match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/)
+            const airdropProofRegMatch = output.match(
+                /(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/
+            )
+            const publicSignalRegMatch = output.match(
+                /(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/
+            )
             expect(airdropProofRegMatch).not.equal(null)
             airdropProof = airdropProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -353,7 +428,8 @@ describe('test all CLI subcommands', function() {
 
     describe('giveAirdrop CLI subcommand', () => {
         it('should submit an airdrop query', async () => {
-            const command = `npx ts-node cli/index.ts giveAirdrop` +
+            const command =
+                `npx ts-node cli/index.ts giveAirdrop` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -p ${airdropPublicSignals} ` +
                 ` -pf ${airdropProof} ` +
@@ -363,17 +439,20 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const commentRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+            const commentRegMatch = output.match(
+                /Transaction hash: 0x[a-fA-F0-9]{64}/
+            )
             expect(commentRegMatch).not.equal(null)
         })
     })
 
     describe('genReputation CLI subcommand', () => {
         it('should generate a reputation proof for a vote', async () => {
-            const command = `npx ts-node cli/index.ts genReputationProof` +
+            const command =
+                `npx ts-node cli/index.ts genReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -id ${userIdentity2}` +
-                ` -n ${epochKeyNonce}` + 
+                ` -n ${epochKeyNonce}` +
                 ` -act vote ` +
                 ` -v ${posRep}`
 
@@ -381,11 +460,17 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const epkRegMatch = output.match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+            const epkRegMatch = output.match(
+                /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+            )
             expect(epkRegMatch).not.equal(null)
 
-            const userRepProofRegMatch = output.match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
-            const publicSignalRegMatch = output.match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+            const userRepProofRegMatch = output.match(
+                /(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/
+            )
+            const publicSignalRegMatch = output.match(
+                /(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/
+            )
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -393,10 +478,10 @@ describe('test all CLI subcommands', function() {
         })
     })
 
-
     describe('upvote CLI subcommand', () => {
         it('should upvote to user 1', async () => {
-            const command = `npx ts-node cli/index.ts vote` +
+            const command =
+                `npx ts-node cli/index.ts vote` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${attesterPrivKey} ` +
                 ` -epk ${epk} ` +
@@ -409,7 +494,9 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const txRegMatch = output.match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+            const txRegMatch = output.match(
+                /Transaction hash: 0x[a-fA-F0-9]{64}/
+            )
             expect(txRegMatch).not.equal(null)
             transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
@@ -417,23 +504,27 @@ describe('test all CLI subcommands', function() {
 
     describe('verifyReputationProof CLI subcommand', () => {
         it('should verify reputation proof', async () => {
-            const command = `npx ts-node cli/index.ts verifyReputationProof` +
+            const command =
+                `npx ts-node cli/index.ts verifyReputationProof` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pf ${userRepProof} ` + 
+                ` -pf ${userRepProof} ` +
                 ` -p ${repPublicSignals}`
 
             console.log(command)
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const verifyRegMatch = output.match(/Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/)
+            const verifyRegMatch = output.match(
+                /Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/
+            )
             expect(verifyRegMatch).not.equal(null)
         })
     })
 
     describe('epochTransition CLI subcommand', () => {
         it('should transition to next epoch', async () => {
-            const command = `npx ts-node cli/index.ts epochTransition` +
+            const command =
+                `npx ts-node cli/index.ts epochTransition` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${deployerPrivKey} ` +
                 ` -t `
@@ -449,21 +540,25 @@ describe('test all CLI subcommands', function() {
 
     describe('userStateTransition CLI subcommand', () => {
         it('should transition user 1 state', async () => {
-            const command = `npx ts-node cli/index.ts userStateTransition` +
+            const command =
+                `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity1} `
 
-                console.log(command)
-                const output = exec(command).stdout.trim()
-                console.log(output)
+            console.log(command)
+            const output = exec(command).stdout.trim()
+            console.log(output)
 
-            const userTransitionRegMatch = output.match(/User transitioned from epoch 1 to epoch 2/)
+            const userTransitionRegMatch = output.match(
+                /User transitioned from epoch 1 to epoch 2/
+            )
             expect(userTransitionRegMatch).not.equal(null)
         })
 
         it('should transition user 2 state', async () => {
-            const command = `npx ts-node cli/index.ts userStateTransition` +
+            const command =
+                `npx ts-node cli/index.ts userStateTransition` +
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${deployerPrivKey} ` +
                 ` -id ${userIdentity2} `
@@ -472,7 +567,9 @@ describe('test all CLI subcommands', function() {
             const output = exec(command).stdout.trim()
             console.log(output)
 
-            const userTransitionRegMatch = output.match(/User transitioned from epoch 1 to epoch 2/)
+            const userTransitionRegMatch = output.match(
+                /User transitioned from epoch 1 to epoch 2/
+            )
             expect(userTransitionRegMatch).not.equal(null)
         })
     })
