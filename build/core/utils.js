@@ -1,8 +1,17 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
-exports.UnirepSocialFacory = exports.deployUnirepSocial = void 0
+exports.UnirepSocialFacory =
+    exports.UnirepFactory =
+    exports.deployUnirepSocial =
+        void 0
 const socialMedia_1 = require('../config/socialMedia')
 const Unirep__factory_1 = require('../typechain/factories/Unirep__factory')
+Object.defineProperty(exports, 'UnirepFactory', {
+    enumerable: true,
+    get: function () {
+        return Unirep__factory_1.Unirep__factory
+    },
+})
 const UnirepSocial__factory_1 = require('../typechain/factories/UnirepSocial__factory')
 Object.defineProperty(exports, 'UnirepSocialFacory', {
     enumerable: true,
