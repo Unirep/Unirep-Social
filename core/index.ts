@@ -1,4 +1,10 @@
-import { deployUnirepSocial, UnirepSocialFacory, UnirepSocial } from './utils'
+import {
+    deployUnirepSocial,
+    UnirepSocialFacory,
+    UnirepSocial,
+    UnirepFactory,
+    Unirep,
+} from './utils'
 import {
     defaultAirdroppedReputation,
     defaultPostReputation,
@@ -19,6 +25,8 @@ import {
 export {
     UnirepSocialFacory,
     UnirepSocial,
+    UnirepFactory,
+    Unirep,
     deployUnirepSocial,
     defaultAirdroppedReputation,
     defaultPostReputation,

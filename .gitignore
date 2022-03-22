@@ -4,6 +4,7 @@ node_modules
 #Buidler files
 cache
 typechain
+!/build/typechain
 
 # .env file
 .env
