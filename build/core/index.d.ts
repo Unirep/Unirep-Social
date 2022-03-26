@@ -1,6 +1,6 @@
 import {
     deployUnirepSocial,
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
     Unirep,
@@ -22,7 +22,7 @@ import {
     signUpPublicSignalsPrefix,
 } from '../cli/prefix'
 export {
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
     Unirep,

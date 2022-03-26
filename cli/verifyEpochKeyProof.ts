@@ -6,7 +6,7 @@ import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'
@@ -56,7 +56,7 @@ const verifyEpochKeyProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

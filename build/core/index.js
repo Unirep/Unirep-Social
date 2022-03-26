@@ -14,7 +14,7 @@ exports.signUpPublicSignalsPrefix =
     exports.defaultAirdroppedReputation =
     exports.deployUnirepSocial =
     exports.UnirepFactory =
-    exports.UnirepSocialFacory =
+    exports.UnirepSocialFactory =
         void 0
 const utils_1 = require('./utils')
 Object.defineProperty(exports, 'deployUnirepSocial', {
@@ -23,10 +23,10 @@ Object.defineProperty(exports, 'deployUnirepSocial', {
         return utils_1.deployUnirepSocial
     },
 })
-Object.defineProperty(exports, 'UnirepSocialFacory', {
+Object.defineProperty(exports, 'UnirepSocialFactory', {
     enumerable: true,
     get: function () {
-        return utils_1.UnirepSocialFacory
+        return utils_1.UnirepSocialFactory
     },
 })
 Object.defineProperty(exports, 'UnirepFactory', {

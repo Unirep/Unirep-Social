@@ -7,7 +7,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { defaultCommentReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'
@@ -67,7 +67,7 @@ const leaveComment = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

@@ -10,7 +10,7 @@ import {
     epkPublicSignalsPrefix,
     identityPrefix,
 } from './prefix'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { Unirep } from '@unirep/contracts'
 import { getProvider } from './utils'
 
@@ -58,7 +58,7 @@ const genEpochKeyAndProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

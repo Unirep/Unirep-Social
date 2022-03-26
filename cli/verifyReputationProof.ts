@@ -6,7 +6,7 @@ import { genUnirepStateFromContract } from '@unirep/unirep'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { ReputationProof, Unirep } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -59,7 +59,7 @@ const verifyReputationProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )
