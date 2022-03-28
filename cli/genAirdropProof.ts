@@ -10,7 +10,7 @@ import {
     signUpProofPrefix,
     signUpPublicSignalsPrefix,
 } from './prefix'
-import { UnirepSocial, UnirepSocialFacory } from '../core/utils'
+import { UnirepSocial, UnirepSocialFactory } from '../core/utils'
 import { Unirep } from '@unirep/contracts'
 import { getProvider } from './utils'
 
@@ -44,7 +44,7 @@ const genAirdropProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract: UnirepSocial = UnirepSocialFacory.connect(
+    const unirepSocialContract: UnirepSocial = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

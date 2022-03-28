@@ -10,7 +10,7 @@ import { genUserStateFromContract } from '@unirep/unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { computeStartTransitionProofHash, Unirep } from '@unirep/contracts'
 import { getProvider } from './utils'
 
@@ -61,7 +61,7 @@ const userStateTransition = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

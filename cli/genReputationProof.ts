@@ -19,7 +19,7 @@ import {
     defaultPostReputation,
 } from '../config/socialMedia'
 import { ReputationProof, Unirep } from '@unirep/contracts'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -85,7 +85,7 @@ const genReputationProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

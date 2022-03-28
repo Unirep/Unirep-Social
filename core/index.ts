@@ -1,6 +1,6 @@
 import {
     deployUnirepSocial,
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
     Unirep,
@@ -23,7 +23,7 @@ import {
 } from '../cli/prefix'
 
 export {
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
     Unirep,

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
-import { UnirepSocial__factory as UnirepSocialFacory } from '../typechain/factories/UnirepSocial__factory'
+import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
 import { UnirepSocial } from '../typechain/UnirepSocial'
 import { Unirep } from '../typechain/Unirep'
 declare const deployUnirepSocial: (
@@ -11,7 +11,7 @@ declare const deployUnirepSocial: (
 export {
     deployUnirepSocial,
     UnirepFactory,
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     Unirep,
 }

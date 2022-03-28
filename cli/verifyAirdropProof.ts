@@ -8,7 +8,7 @@ import {
 } from '@unirep/unirep'
 import { Unirep } from '@unirep/contracts'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'
@@ -64,7 +64,7 @@ const verifyAirdropProof = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

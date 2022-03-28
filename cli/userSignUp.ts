@@ -4,7 +4,7 @@ import { add0x } from '@unirep/crypto'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityCommitmentPrefix } from './prefix'
-import { UnirepSocialFacory } from '../core/utils'
+import { UnirepSocialFactory } from '../core/utils'
 import { Unirep } from '@unirep/contracts'
 import { getProvider } from './utils'
 
@@ -44,7 +44,7 @@ const userSignUp = async (args: any) => {
     const provider = getProvider(ethProvider)
 
     // Unirep Social contract
-    const unirepSocialContract = UnirepSocialFacory.connect(
+    const unirepSocialContract = UnirepSocialFactory.connect(
         args.contract,
         provider
     )

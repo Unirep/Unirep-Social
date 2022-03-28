@@ -6,7 +6,7 @@ import {
     defaultPostReputation,
 } from '../config/socialMedia'
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
-import { UnirepSocial__factory as UnirepSocialFacory } from '../typechain/factories/UnirepSocial__factory'
+import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
 import { UnirepSocial } from '../typechain/UnirepSocial'
 
 // TODO: use export package from '@unirep/unirep'
@@ -23,7 +23,7 @@ const deployUnirepSocial = async (
     const _postReputation = defaultPostReputation
     const _commentReputation = defaultCommentReputation
 
-    const f = new UnirepSocialFacory(deployer)
+    const f = new UnirepSocialFactory(deployer)
     const c = await f.deploy(
         UnirepAddr,
         _postReputation,
@@ -61,7 +61,7 @@ const deployUnirepSocial = async (
 export {
     deployUnirepSocial,
     UnirepFactory,
-    UnirepSocialFacory,
+    UnirepSocialFactory,
     UnirepSocial,
     Unirep,
 }

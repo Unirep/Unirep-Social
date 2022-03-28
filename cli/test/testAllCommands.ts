@@ -16,7 +16,7 @@ import { exec } from './utils'
 
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
 import { getProvider } from '../utils'
-import { UnirepSocialFacory } from '../../core/utils'
+import { UnirepSocialFactory } from '../../core/utils'
 
 describe('test all CLI subcommands', function () {
     this.timeout(500000)
@@ -108,7 +108,7 @@ describe('test all CLI subcommands', function () {
             const provider = getProvider(DEFAULT_ETH_PROVIDER)
             unirepContract = getUnirepContract(unirepAddress, provider)
 
-            unirepSocialContract = UnirepSocialFacory.connect(
+            unirepSocialContract = UnirepSocialFactory.connect(
                 unirepSocialAddress,
                 provider
             )
