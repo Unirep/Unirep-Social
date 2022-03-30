@@ -9,7 +9,7 @@ import {
     defaultAirdroppedReputation,
     defaultPostReputation,
     defaultCommentReputation,
-    maxReputationBudget,
+    MAX_REPUTATION_BUDGET,
 } from '../config/socialMedia'
 import {
     identityPrefix,
@@ -31,7 +31,7 @@ export {
     defaultAirdroppedReputation,
     defaultPostReputation,
     defaultCommentReputation,
-    maxReputationBudget,
+    MAX_REPUTATION_BUDGET,
     identityPrefix,
     identityCommitmentPrefix,
     epkProofPrefix,

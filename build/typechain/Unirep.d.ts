@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare namespace UnirepObjs {
+export declare namespace UnirepTypes {
     type TreeDepthsStruct = {
         globalStateTreeDepth: BigNumberish;
         userStateTreeDepth: BigNumberish;
@@ -197,7 +197,7 @@ export interface UnirepInterface extends utils.Interface {
         "verifyUserStateTransition((uint256,uint256[],uint256,uint256[],uint256,uint256[],uint256,uint256[8]))": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "airdropAmount", values: [string]): string;
-    encodeFunctionData(functionFragment: "airdropEpochKey", values: [UnirepObjs.SignUpProofStruct]): string;
+    encodeFunctionData(functionFragment: "airdropEpochKey", values: [UnirepTypes.SignUpProofStruct]): string;
     encodeFunctionData(functionFragment: "attesterSignUp", values?: undefined): string;
     encodeFunctionData(functionFragment: "attesterSignUpViaRelayer", values: [string, BytesLike]): string;
     encodeFunctionData(functionFragment: "attesters", values: [string]): string;
@@ -211,12 +211,12 @@ export interface UnirepInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "epochTransitionCompensation", values: [string]): string;
     encodeFunctionData(functionFragment: "getProofIndex", values: [BytesLike]): string;
     encodeFunctionData(functionFragment: "hasUserSignedUp", values: [BigNumberish]): string;
-    encodeFunctionData(functionFragment: "hashEpochKeyProof", values: [UnirepObjs.EpochKeyProofStruct]): string;
+    encodeFunctionData(functionFragment: "hashEpochKeyProof", values: [UnirepTypes.EpochKeyProofStruct]): string;
     encodeFunctionData(functionFragment: "hashProcessAttestationsProof", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "hashReputationProof", values: [UnirepObjs.ReputationProofStruct]): string;
-    encodeFunctionData(functionFragment: "hashSignUpProof", values: [UnirepObjs.SignUpProofStruct]): string;
+    encodeFunctionData(functionFragment: "hashReputationProof", values: [UnirepTypes.ReputationProofStruct]): string;
+    encodeFunctionData(functionFragment: "hashSignUpProof", values: [UnirepTypes.SignUpProofStruct]): string;
     encodeFunctionData(functionFragment: "hashStartTransitionProof", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "hashUserStateTransitionProof", values: [UnirepObjs.UserTransitionProofStruct]): string;
+    encodeFunctionData(functionFragment: "hashUserStateTransitionProof", values: [UnirepTypes.UserTransitionProofStruct]): string;
     encodeFunctionData(functionFragment: "latestEpochTransitionTime", values?: undefined): string;
     encodeFunctionData(functionFragment: "maxAttesters", values?: undefined): string;
     encodeFunctionData(functionFragment: "maxEpochKey", values?: undefined): string;
@@ -227,10 +227,10 @@ export interface UnirepInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "numUserSignUps", values?: undefined): string;
     encodeFunctionData(functionFragment: "processAttestations", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
     encodeFunctionData(functionFragment: "setAirdropAmount", values: [BigNumberish]): string;
-    encodeFunctionData(functionFragment: "spendReputation", values: [UnirepObjs.ReputationProofStruct]): string;
+    encodeFunctionData(functionFragment: "spendReputation", values: [UnirepTypes.ReputationProofStruct]): string;
     encodeFunctionData(functionFragment: "startUserStateTransition", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
     encodeFunctionData(functionFragment: "submitAttestation", values: [
-        UnirepObjs.AttestationStruct,
+        UnirepTypes.AttestationStruct,
         BigNumberish,
         BigNumberish,
         BigNumberish
@@ -238,22 +238,22 @@ export interface UnirepInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "submitAttestationViaRelayer", values: [
         string,
         BytesLike,
-        UnirepObjs.AttestationStruct,
+        UnirepTypes.AttestationStruct,
         BigNumberish,
         BigNumberish,
         BigNumberish
     ]): string;
-    encodeFunctionData(functionFragment: "submitEpochKeyProof", values: [UnirepObjs.EpochKeyProofStruct]): string;
+    encodeFunctionData(functionFragment: "submitEpochKeyProof", values: [UnirepTypes.EpochKeyProofStruct]): string;
     encodeFunctionData(functionFragment: "treeDepths", values?: undefined): string;
     encodeFunctionData(functionFragment: "unpackProof", values: [BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "updateUserStateRoot", values: [UnirepObjs.UserTransitionProofStruct, BigNumberish[]]): string;
+    encodeFunctionData(functionFragment: "updateUserStateRoot", values: [UnirepTypes.UserTransitionProofStruct, BigNumberish[]]): string;
     encodeFunctionData(functionFragment: "userSignUp", values: [BigNumberish]): string;
-    encodeFunctionData(functionFragment: "verifyEpochKeyValidity", values: [UnirepObjs.EpochKeyProofStruct]): string;
+    encodeFunctionData(functionFragment: "verifyEpochKeyValidity", values: [UnirepTypes.EpochKeyProofStruct]): string;
     encodeFunctionData(functionFragment: "verifyProcessAttestationProof", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "verifyReputation", values: [UnirepObjs.ReputationProofStruct]): string;
+    encodeFunctionData(functionFragment: "verifyReputation", values: [UnirepTypes.ReputationProofStruct]): string;
     encodeFunctionData(functionFragment: "verifyStartTransitionProof", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "verifyUserSignUp", values: [UnirepObjs.SignUpProofStruct]): string;
-    encodeFunctionData(functionFragment: "verifyUserStateTransition", values: [UnirepObjs.UserTransitionProofStruct]): string;
+    encodeFunctionData(functionFragment: "verifyUserSignUp", values: [UnirepTypes.SignUpProofStruct]): string;
+    encodeFunctionData(functionFragment: "verifyUserStateTransition", values: [UnirepTypes.UserTransitionProofStruct]): string;
     decodeFunctionResult(functionFragment: "airdropAmount", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "airdropEpochKey", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "attesterSignUp", data: BytesLike): Result;
@@ -301,7 +301,7 @@ export interface UnirepInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "verifyUserSignUp", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "verifyUserStateTransition", data: BytesLike): Result;
     events: {
-        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256,uint256)": EventFragment;
+        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256)": EventFragment;
         "EpochEnded(uint256)": EventFragment;
         "IndexedEpochKeyProof(uint256,uint256,uint256,tuple)": EventFragment;
         "IndexedProcessedAttestationsProof(uint256,uint256,uint256,uint256,uint256[8])": EventFragment;
@@ -330,35 +330,33 @@ export declare type AttestationSubmittedEvent = TypedEvent<[
     BigNumber,
     string,
     number,
-    UnirepObjs.AttestationStructOutput,
-    BigNumber,
+    UnirepTypes.AttestationStructOutput,
     BigNumber,
     BigNumber
 ], {
-    _epoch: BigNumber;
-    _epochKey: BigNumber;
-    _attester: string;
-    _event: number;
-    _attestation: UnirepObjs.AttestationStructOutput;
+    epoch: BigNumber;
+    epochKey: BigNumber;
+    attester: string;
+    attestationEvent: number;
+    attestation: UnirepTypes.AttestationStructOutput;
     toProofIndex: BigNumber;
     fromProofIndex: BigNumber;
-    attestIndex: BigNumber;
 }>;
 export declare type AttestationSubmittedEventFilter = TypedEventFilter<AttestationSubmittedEvent>;
 export declare type EpochEndedEvent = TypedEvent<[BigNumber], {
-    _epoch: BigNumber;
+    epoch: BigNumber;
 }>;
 export declare type EpochEndedEventFilter = TypedEventFilter<EpochEndedEvent>;
 export declare type IndexedEpochKeyProofEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     BigNumber,
-    UnirepObjs.EpochKeyProofStructOutput
+    UnirepTypes.EpochKeyProofStructOutput
 ], {
-    _proofIndex: BigNumber;
-    _epoch: BigNumber;
-    _epochKey: BigNumber;
-    _proof: UnirepObjs.EpochKeyProofStructOutput;
+    proofIndex: BigNumber;
+    epoch: BigNumber;
+    epochKey: BigNumber;
+    proof: UnirepTypes.EpochKeyProofStructOutput;
 }>;
 export declare type IndexedEpochKeyProofEventFilter = TypedEventFilter<IndexedEpochKeyProofEvent>;
 export declare type IndexedProcessedAttestationsProofEvent = TypedEvent<[
@@ -368,23 +366,23 @@ export declare type IndexedProcessedAttestationsProofEvent = TypedEvent<[
     BigNumber,
     BigNumber[]
 ], {
-    _proofIndex: BigNumber;
-    _inputBlindedUserState: BigNumber;
-    _outputBlindedUserState: BigNumber;
-    _outputBlindedHashChain: BigNumber;
-    _proof: BigNumber[];
+    proofIndex: BigNumber;
+    inputBlindedUserState: BigNumber;
+    outputBlindedUserState: BigNumber;
+    outputBlindedHashChain: BigNumber;
+    proof: BigNumber[];
 }>;
 export declare type IndexedProcessedAttestationsProofEventFilter = TypedEventFilter<IndexedProcessedAttestationsProofEvent>;
 export declare type IndexedReputationProofEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     BigNumber,
-    UnirepObjs.ReputationProofStructOutput
+    UnirepTypes.ReputationProofStructOutput
 ], {
-    _proofIndex: BigNumber;
-    _epoch: BigNumber;
-    _epochKey: BigNumber;
-    _proof: UnirepObjs.ReputationProofStructOutput;
+    proofIndex: BigNumber;
+    epoch: BigNumber;
+    epochKey: BigNumber;
+    proof: UnirepTypes.ReputationProofStructOutput;
 }>;
 export declare type IndexedReputationProofEventFilter = TypedEventFilter<IndexedReputationProofEvent>;
 export declare type IndexedStartedTransitionProofEvent = TypedEvent<[
@@ -394,41 +392,41 @@ export declare type IndexedStartedTransitionProofEvent = TypedEvent<[
     BigNumber,
     BigNumber[]
 ], {
-    _proofIndex: BigNumber;
-    _blindedUserState: BigNumber;
-    _globalStateTree: BigNumber;
-    _blindedHashChain: BigNumber;
-    _proof: BigNumber[];
+    proofIndex: BigNumber;
+    blindedUserState: BigNumber;
+    globalStateTree: BigNumber;
+    blindedHashChain: BigNumber;
+    proof: BigNumber[];
 }>;
 export declare type IndexedStartedTransitionProofEventFilter = TypedEventFilter<IndexedStartedTransitionProofEvent>;
 export declare type IndexedUserSignedUpProofEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     BigNumber,
-    UnirepObjs.SignUpProofStructOutput
+    UnirepTypes.SignUpProofStructOutput
 ], {
-    _proofIndex: BigNumber;
-    _epoch: BigNumber;
-    _epochKey: BigNumber;
-    _proof: UnirepObjs.SignUpProofStructOutput;
+    proofIndex: BigNumber;
+    epoch: BigNumber;
+    epochKey: BigNumber;
+    proof: UnirepTypes.SignUpProofStructOutput;
 }>;
 export declare type IndexedUserSignedUpProofEventFilter = TypedEventFilter<IndexedUserSignedUpProofEvent>;
 export declare type IndexedUserStateTransitionProofEvent = TypedEvent<[
     BigNumber,
-    UnirepObjs.UserTransitionProofStructOutput,
+    UnirepTypes.UserTransitionProofStructOutput,
     BigNumber[]
 ], {
-    _proofIndex: BigNumber;
-    _proof: UnirepObjs.UserTransitionProofStructOutput;
-    _proofIndexRecords: BigNumber[];
+    proofIndex: BigNumber;
+    proof: UnirepTypes.UserTransitionProofStructOutput;
+    proofIndexRecords: BigNumber[];
 }>;
 export declare type IndexedUserStateTransitionProofEventFilter = TypedEventFilter<IndexedUserStateTransitionProofEvent>;
 export declare type SequencerEvent = TypedEvent<[
     BigNumber,
     number
 ], {
-    _epoch: BigNumber;
-    _event: number;
+    epoch: BigNumber;
+    userEvent: number;
 }>;
 export declare type SequencerEventFilter = TypedEventFilter<SequencerEvent>;
 export declare type UserSignedUpEvent = TypedEvent<[
@@ -437,10 +435,10 @@ export declare type UserSignedUpEvent = TypedEvent<[
     BigNumber,
     BigNumber
 ], {
-    _epoch: BigNumber;
-    _identityCommitment: BigNumber;
-    _attesterId: BigNumber;
-    _airdropAmount: BigNumber;
+    epoch: BigNumber;
+    identityCommitment: BigNumber;
+    attesterId: BigNumber;
+    airdropAmount: BigNumber;
 }>;
 export declare type UserSignedUpEventFilter = TypedEventFilter<UserSignedUpEvent>;
 export declare type UserStateTransitionedEvent = TypedEvent<[
@@ -448,9 +446,9 @@ export declare type UserStateTransitionedEvent = TypedEvent<[
     BigNumber,
     BigNumber
 ], {
-    _epoch: BigNumber;
-    _hashedLeaf: BigNumber;
-    _proofIndex: BigNumber;
+    epoch: BigNumber;
+    hashedLeaf: BigNumber;
+    proofIndex: BigNumber;
 }>;
 export declare type UserStateTransitionedEventFilter = TypedEventFilter<UserStateTransitionedEvent>;
 export interface Unirep extends BaseContract {
@@ -470,7 +468,7 @@ export interface Unirep extends BaseContract {
     removeListener: OnEvent<this>;
     functions: {
         airdropAmount(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-        airdropEpochKey(_input: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdropEpochKey(_input: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         attesterSignUp(overrides?: Overrides & {
@@ -496,12 +494,12 @@ export interface Unirep extends BaseContract {
         epochTransitionCompensation(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
         getProofIndex(arg0: BytesLike, overrides?: CallOverrides): Promise<[BigNumber]>;
         hasUserSignedUp(arg0: BigNumberish, overrides?: CallOverrides): Promise<[boolean]>;
-        hashEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<[string]>;
+        hashEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<[string]>;
         hashProcessAttestationsProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<[string]>;
-        hashReputationProof(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<[string]>;
-        hashSignUpProof(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<[string]>;
+        hashReputationProof(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<[string]>;
+        hashSignUpProof(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<[string]>;
         hashStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<[string]>;
-        hashUserStateTransitionProof(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<[string]>;
+        hashUserStateTransitionProof(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<[string]>;
         latestEpochTransitionTime(overrides?: CallOverrides): Promise<[BigNumber]>;
         maxAttesters(overrides?: CallOverrides): Promise<[BigNumber]>;
         maxEpochKey(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -516,19 +514,19 @@ export interface Unirep extends BaseContract {
         setAirdropAmount(_airdropAmount: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        spendReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        spendReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        submitAttestation(attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestation(attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        submitEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: Overrides & {
+        submitEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         treeDepths(overrides?: CallOverrides): Promise<[
@@ -554,21 +552,21 @@ export interface Unirep extends BaseContract {
                 BigNumber
             ]
         ]>;
-        updateUserStateRoot(_proof: UnirepObjs.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(_proof: UnirepTypes.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        verifyEpochKeyValidity(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
+        verifyEpochKeyValidity(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
         verifyProcessAttestationProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<[boolean]>;
-        verifyReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
+        verifyReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
         verifyStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<[boolean]>;
-        verifyUserSignUp(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
-        verifyUserStateTransition(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
+        verifyUserSignUp(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
+        verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<[boolean]>;
     };
     airdropAmount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-    airdropEpochKey(_input: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+    airdropEpochKey(_input: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     attesterSignUp(overrides?: Overrides & {
@@ -594,12 +592,12 @@ export interface Unirep extends BaseContract {
     epochTransitionCompensation(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
     getProofIndex(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
     hasUserSignedUp(arg0: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-    hashEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<string>;
+    hashEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<string>;
     hashProcessAttestationsProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<string>;
-    hashReputationProof(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<string>;
-    hashSignUpProof(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<string>;
+    hashReputationProof(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<string>;
+    hashSignUpProof(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<string>;
     hashStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<string>;
-    hashUserStateTransitionProof(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<string>;
+    hashUserStateTransitionProof(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<string>;
     latestEpochTransitionTime(overrides?: CallOverrides): Promise<BigNumber>;
     maxAttesters(overrides?: CallOverrides): Promise<BigNumber>;
     maxEpochKey(overrides?: CallOverrides): Promise<BigNumber>;
@@ -614,19 +612,19 @@ export interface Unirep extends BaseContract {
     setAirdropAmount(_airdropAmount: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    spendReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+    spendReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    submitAttestation(attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+    submitAttestation(attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+    submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    submitEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: Overrides & {
+    submitEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     treeDepths(overrides?: CallOverrides): Promise<[
@@ -652,21 +650,21 @@ export interface Unirep extends BaseContract {
             BigNumber
         ]
     ]>;
-    updateUserStateRoot(_proof: UnirepObjs.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
+    updateUserStateRoot(_proof: UnirepTypes.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    verifyEpochKeyValidity(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<boolean>;
+    verifyEpochKeyValidity(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<boolean>;
     verifyProcessAttestationProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<boolean>;
-    verifyReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<boolean>;
+    verifyReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<boolean>;
     verifyStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<boolean>;
-    verifyUserSignUp(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<boolean>;
-    verifyUserStateTransition(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<boolean>;
+    verifyUserSignUp(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<boolean>;
+    verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<boolean>;
     callStatic: {
         airdropAmount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        airdropEpochKey(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<void>;
+        airdropEpochKey(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<void>;
         attesterSignUp(overrides?: CallOverrides): Promise<void>;
         attesterSignUpViaRelayer(attester: string, signature: BytesLike, overrides?: CallOverrides): Promise<void>;
         attesters(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
@@ -680,12 +678,12 @@ export interface Unirep extends BaseContract {
         epochTransitionCompensation(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
         getProofIndex(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
         hasUserSignedUp(arg0: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-        hashEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<string>;
+        hashEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<string>;
         hashProcessAttestationsProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<string>;
-        hashReputationProof(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<string>;
-        hashSignUpProof(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<string>;
+        hashReputationProof(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<string>;
+        hashSignUpProof(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<string>;
         hashStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<string>;
-        hashUserStateTransitionProof(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<string>;
+        hashUserStateTransitionProof(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<string>;
         latestEpochTransitionTime(overrides?: CallOverrides): Promise<BigNumber>;
         maxAttesters(overrides?: CallOverrides): Promise<BigNumber>;
         maxEpochKey(overrides?: CallOverrides): Promise<BigNumber>;
@@ -696,11 +694,11 @@ export interface Unirep extends BaseContract {
         numUserSignUps(overrides?: CallOverrides): Promise<BigNumber>;
         processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<void>;
         setAirdropAmount(_airdropAmount: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        spendReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
+        spendReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<void>;
-        submitAttestation(attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        submitEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<void>;
+        submitAttestation(attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: CallOverrides): Promise<void>;
+        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: CallOverrides): Promise<void>;
+        submitEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<void>;
         treeDepths(overrides?: CallOverrides): Promise<[
             number,
             number,
@@ -724,42 +722,42 @@ export interface Unirep extends BaseContract {
                 BigNumber
             ]
         ]>;
-        updateUserStateRoot(_proof: UnirepObjs.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: CallOverrides): Promise<void>;
+        updateUserStateRoot(_proof: UnirepTypes.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: CallOverrides): Promise<void>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        verifyEpochKeyValidity(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<boolean>;
+        verifyEpochKeyValidity(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<boolean>;
         verifyProcessAttestationProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<boolean>;
-        verifyReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<boolean>;
+        verifyReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<boolean>;
         verifyStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<boolean>;
-        verifyUserSignUp(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<boolean>;
-        verifyUserStateTransition(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<boolean>;
+        verifyUserSignUp(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<boolean>;
+        verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<boolean>;
     };
     filters: {
-        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256,uint256)"(_epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _attester?: string | null, _event?: null, _attestation?: null, toProofIndex?: null, fromProofIndex?: null, attestIndex?: null): AttestationSubmittedEventFilter;
-        AttestationSubmitted(_epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _attester?: string | null, _event?: null, _attestation?: null, toProofIndex?: null, fromProofIndex?: null, attestIndex?: null): AttestationSubmittedEventFilter;
-        "EpochEnded(uint256)"(_epoch?: BigNumberish | null): EpochEndedEventFilter;
-        EpochEnded(_epoch?: BigNumberish | null): EpochEndedEventFilter;
-        "IndexedEpochKeyProof(uint256,uint256,uint256,tuple)"(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedEpochKeyProofEventFilter;
-        IndexedEpochKeyProof(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedEpochKeyProofEventFilter;
-        "IndexedProcessedAttestationsProof(uint256,uint256,uint256,uint256,uint256[8])"(_proofIndex?: BigNumberish | null, _inputBlindedUserState?: BigNumberish | null, _outputBlindedUserState?: null, _outputBlindedHashChain?: null, _proof?: null): IndexedProcessedAttestationsProofEventFilter;
-        IndexedProcessedAttestationsProof(_proofIndex?: BigNumberish | null, _inputBlindedUserState?: BigNumberish | null, _outputBlindedUserState?: null, _outputBlindedHashChain?: null, _proof?: null): IndexedProcessedAttestationsProofEventFilter;
-        "IndexedReputationProof(uint256,uint256,uint256,tuple)"(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedReputationProofEventFilter;
-        IndexedReputationProof(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedReputationProofEventFilter;
-        "IndexedStartedTransitionProof(uint256,uint256,uint256,uint256,uint256[8])"(_proofIndex?: BigNumberish | null, _blindedUserState?: BigNumberish | null, _globalStateTree?: BigNumberish | null, _blindedHashChain?: null, _proof?: null): IndexedStartedTransitionProofEventFilter;
-        IndexedStartedTransitionProof(_proofIndex?: BigNumberish | null, _blindedUserState?: BigNumberish | null, _globalStateTree?: BigNumberish | null, _blindedHashChain?: null, _proof?: null): IndexedStartedTransitionProofEventFilter;
-        "IndexedUserSignedUpProof(uint256,uint256,uint256,tuple)"(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedUserSignedUpProofEventFilter;
-        IndexedUserSignedUpProof(_proofIndex?: BigNumberish | null, _epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, _proof?: null): IndexedUserSignedUpProofEventFilter;
-        "IndexedUserStateTransitionProof(uint256,tuple,uint256[])"(_proofIndex?: BigNumberish | null, _proof?: null, _proofIndexRecords?: null): IndexedUserStateTransitionProofEventFilter;
-        IndexedUserStateTransitionProof(_proofIndex?: BigNumberish | null, _proof?: null, _proofIndexRecords?: null): IndexedUserStateTransitionProofEventFilter;
-        "Sequencer(uint256,uint8)"(_epoch?: BigNumberish | null, _event?: null): SequencerEventFilter;
-        Sequencer(_epoch?: BigNumberish | null, _event?: null): SequencerEventFilter;
-        "UserSignedUp(uint256,uint256,uint256,uint256)"(_epoch?: BigNumberish | null, _identityCommitment?: BigNumberish | null, _attesterId?: null, _airdropAmount?: null): UserSignedUpEventFilter;
-        UserSignedUp(_epoch?: BigNumberish | null, _identityCommitment?: BigNumberish | null, _attesterId?: null, _airdropAmount?: null): UserSignedUpEventFilter;
-        "UserStateTransitioned(uint256,uint256,uint256)"(_epoch?: BigNumberish | null, _hashedLeaf?: BigNumberish | null, _proofIndex?: null): UserStateTransitionedEventFilter;
-        UserStateTransitioned(_epoch?: BigNumberish | null, _hashedLeaf?: BigNumberish | null, _proofIndex?: null): UserStateTransitionedEventFilter;
+        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256)"(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null): AttestationSubmittedEventFilter;
+        AttestationSubmitted(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null): AttestationSubmittedEventFilter;
+        "EpochEnded(uint256)"(epoch?: BigNumberish | null): EpochEndedEventFilter;
+        EpochEnded(epoch?: BigNumberish | null): EpochEndedEventFilter;
+        "IndexedEpochKeyProof(uint256,uint256,uint256,tuple)"(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedEpochKeyProofEventFilter;
+        IndexedEpochKeyProof(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedEpochKeyProofEventFilter;
+        "IndexedProcessedAttestationsProof(uint256,uint256,uint256,uint256,uint256[8])"(proofIndex?: BigNumberish | null, inputBlindedUserState?: BigNumberish | null, outputBlindedUserState?: null, outputBlindedHashChain?: null, proof?: null): IndexedProcessedAttestationsProofEventFilter;
+        IndexedProcessedAttestationsProof(proofIndex?: BigNumberish | null, inputBlindedUserState?: BigNumberish | null, outputBlindedUserState?: null, outputBlindedHashChain?: null, proof?: null): IndexedProcessedAttestationsProofEventFilter;
+        "IndexedReputationProof(uint256,uint256,uint256,tuple)"(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedReputationProofEventFilter;
+        IndexedReputationProof(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedReputationProofEventFilter;
+        "IndexedStartedTransitionProof(uint256,uint256,uint256,uint256,uint256[8])"(proofIndex?: BigNumberish | null, blindedUserState?: BigNumberish | null, globalStateTree?: BigNumberish | null, blindedHashChain?: null, proof?: null): IndexedStartedTransitionProofEventFilter;
+        IndexedStartedTransitionProof(proofIndex?: BigNumberish | null, blindedUserState?: BigNumberish | null, globalStateTree?: BigNumberish | null, blindedHashChain?: null, proof?: null): IndexedStartedTransitionProofEventFilter;
+        "IndexedUserSignedUpProof(uint256,uint256,uint256,tuple)"(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedUserSignedUpProofEventFilter;
+        IndexedUserSignedUpProof(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedUserSignedUpProofEventFilter;
+        "IndexedUserStateTransitionProof(uint256,tuple,uint256[])"(proofIndex?: BigNumberish | null, proof?: null, proofIndexRecords?: null): IndexedUserStateTransitionProofEventFilter;
+        IndexedUserStateTransitionProof(proofIndex?: BigNumberish | null, proof?: null, proofIndexRecords?: null): IndexedUserStateTransitionProofEventFilter;
+        "Sequencer(uint256,uint8)"(epoch?: BigNumberish | null, userEvent?: null): SequencerEventFilter;
+        Sequencer(epoch?: BigNumberish | null, userEvent?: null): SequencerEventFilter;
+        "UserSignedUp(uint256,uint256,uint256,uint256)"(epoch?: BigNumberish | null, identityCommitment?: BigNumberish | null, attesterId?: null, airdropAmount?: null): UserSignedUpEventFilter;
+        UserSignedUp(epoch?: BigNumberish | null, identityCommitment?: BigNumberish | null, attesterId?: null, airdropAmount?: null): UserSignedUpEventFilter;
+        "UserStateTransitioned(uint256,uint256,uint256)"(epoch?: BigNumberish | null, hashedLeaf?: BigNumberish | null, proofIndex?: null): UserStateTransitionedEventFilter;
+        UserStateTransitioned(epoch?: BigNumberish | null, hashedLeaf?: BigNumberish | null, proofIndex?: null): UserStateTransitionedEventFilter;
     };
     estimateGas: {
         airdropAmount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        airdropEpochKey(_input: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdropEpochKey(_input: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         attesterSignUp(overrides?: Overrides & {
@@ -785,12 +783,12 @@ export interface Unirep extends BaseContract {
         epochTransitionCompensation(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
         getProofIndex(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
         hasUserSignedUp(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-        hashEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        hashEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
         hashProcessAttestationsProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<BigNumber>;
-        hashReputationProof(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
-        hashSignUpProof(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        hashReputationProof(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        hashSignUpProof(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
         hashStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<BigNumber>;
-        hashUserStateTransitionProof(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        hashUserStateTransitionProof(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
         latestEpochTransitionTime(overrides?: CallOverrides): Promise<BigNumber>;
         maxAttesters(overrides?: CallOverrides): Promise<BigNumber>;
         maxEpochKey(overrides?: CallOverrides): Promise<BigNumber>;
@@ -805,39 +803,39 @@ export interface Unirep extends BaseContract {
         setAirdropAmount(_airdropAmount: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        spendReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        spendReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        submitAttestation(attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestation(attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        submitEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: Overrides & {
+        submitEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         treeDepths(overrides?: CallOverrides): Promise<BigNumber>;
         unpackProof(_proof: BigNumberish[], overrides?: CallOverrides): Promise<BigNumber>;
-        updateUserStateRoot(_proof: UnirepObjs.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(_proof: UnirepTypes.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        verifyEpochKeyValidity(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        verifyEpochKeyValidity(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
         verifyProcessAttestationProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<BigNumber>;
-        verifyReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        verifyReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
         verifyStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<BigNumber>;
-        verifyUserSignUp(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
-        verifyUserStateTransition(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        verifyUserSignUp(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         airdropAmount(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        airdropEpochKey(_input: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdropEpochKey(_input: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         attesterSignUp(overrides?: Overrides & {
@@ -863,12 +861,12 @@ export interface Unirep extends BaseContract {
         epochTransitionCompensation(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getProofIndex(arg0: BytesLike, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         hasUserSignedUp(arg0: BigNumberish, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        hashEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        hashEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         hashProcessAttestationsProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        hashReputationProof(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        hashSignUpProof(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        hashReputationProof(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        hashSignUpProof(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         hashStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        hashUserStateTransitionProof(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        hashUserStateTransitionProof(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         latestEpochTransitionTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         maxAttesters(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         maxEpochKey(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -883,34 +881,34 @@ export interface Unirep extends BaseContract {
         setAirdropAmount(_airdropAmount: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        spendReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        spendReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _globalStateTree: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        submitAttestation(attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestation(attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepObjs.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
+        submitAttestationViaRelayer(attester: string, signature: BytesLike, attestation: UnirepTypes.AttestationStruct, epochKey: BigNumberish, toProofIndex: BigNumberish, fromProofIndex: BigNumberish, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        submitEpochKeyProof(_input: UnirepObjs.EpochKeyProofStruct, overrides?: Overrides & {
+        submitEpochKeyProof(_input: UnirepTypes.EpochKeyProofStruct, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         treeDepths(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         unpackProof(_proof: BigNumberish[], overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        updateUserStateRoot(_proof: UnirepObjs.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(_proof: UnirepTypes.UserTransitionProofStruct, proofIndexRecords: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        verifyEpochKeyValidity(_input: UnirepObjs.EpochKeyProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        verifyEpochKeyValidity(_input: UnirepTypes.EpochKeyProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         verifyProcessAttestationProof(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        verifyReputation(_input: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        verifyReputation(_input: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         verifyStartTransitionProof(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        verifyUserSignUp(_input: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        verifyUserStateTransition(_input: UnirepObjs.UserTransitionProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        verifyUserSignUp(_input: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

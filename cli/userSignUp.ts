@@ -1,12 +1,11 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
-import { add0x } from '@unirep/crypto'
+import { BigNumber, ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityCommitmentPrefix } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
-import { Unirep } from '@unirep/contracts'
 import { getProvider } from './utils'
+import { UnirepFactory } from '@unirep/contracts'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('userSignUp', { add_help: true })
@@ -49,11 +48,7 @@ const userSignUp = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
@@ -64,7 +59,7 @@ const userSignUp = async (args: any) => {
         identityCommitmentPrefix.length
     )
     const decodedCommitment = base64url.decode(encodedCommitment)
-    const commitment = add0x(decodedCommitment)
+    const commitment = BigNumber.from('0x' + decodedCommitment)
 
     // Submit the user sign up transaction
     let tx

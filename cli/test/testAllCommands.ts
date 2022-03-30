@@ -2,21 +2,23 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import {
-    genIdentityCommitment,
-    unSerialiseIdentity,
-    hashOne,
-} from '@unirep/crypto'
-import { getUnirepContract } from '@unirep/contracts'
+import { ZkIdentity, hashOne, Strategy } from '@unirep/crypto'
+import { getUnirepContract, Unirep } from '@unirep/contracts'
 import { expect } from 'chai'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
-import { genUnirepStateFromContract, UnirepState } from '@unirep/unirep'
+import { genUnirepStateFromContract, UnirepState } from '@unirep/core'
 import { exec } from './utils'
 
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
 import { getProvider } from '../utils'
-import { UnirepSocialFactory } from '../../core/utils'
+import { UnirepSocial, UnirepSocialFactory } from '../../core/utils'
+
+import dotenv from 'dotenv'
+
+dotenv.config({
+    path: '.env',
+})
 
 describe('test all CLI subcommands', function () {
     this.timeout(500000)
@@ -33,8 +35,8 @@ describe('test all CLI subcommands', function () {
     const epochKeyNonce = 0
     const epochKeyNonce2 = 1
     const epochLength = 5
-    let unirepContract: ethers.Contract
-    let unirepSocialContract: ethers.Contract
+    let unirepContract: Unirep
+    let unirepSocialContract: UnirepSocial
     let unirepState: UnirepState
 
     let userIdentity1,
@@ -106,7 +108,10 @@ describe('test all CLI subcommands', function () {
             const unirepSocialAddress = socialRegMatch[1]
 
             const provider = getProvider(DEFAULT_ETH_PROVIDER)
-            unirepContract = getUnirepContract(unirepAddress, provider)
+            unirepContract = getUnirepContract(
+                unirepAddress,
+                provider
+            ) as Unirep
 
             unirepSocialContract = UnirepSocialFactory.connect(
                 unirepSocialAddress,
@@ -144,7 +149,10 @@ describe('test all CLI subcommands', function () {
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
             )
-            const _userIdentity = unSerialiseIdentity(serializedIdentity)
+            const _userIdentity = new ZkIdentity(
+                Strategy.SERIALIZED,
+                serializedIdentity
+            )
 
             const commitmentRegMatch = output.match(
                 /(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/
@@ -153,9 +161,10 @@ describe('test all CLI subcommands', function () {
             const serializedIdentityCommitment = base64url.decode(
                 encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
             )
-            const _userIdentityCommitment = genIdentityCommitment(_userIdentity)
-            expect(serializedIdentityCommitment).equal(
-                _userIdentityCommitment.toString(16)
+            const _userIdentityCommitment =
+                _userIdentity.genIdentityCommitment()
+            expect(serializedIdentityCommitment.padStart(64, '0')).equal(
+                _userIdentityCommitment.toString(16).padStart(64, '0')
             )
 
             userIdentity1 = encodedIdentity
@@ -175,7 +184,10 @@ describe('test all CLI subcommands', function () {
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
             )
-            const _userIdentity = unSerialiseIdentity(serializedIdentity)
+            const _userIdentity = new ZkIdentity(
+                Strategy.SERIALIZED,
+                serializedIdentity
+            )
 
             const commitmentRegMatch = output.match(
                 /(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/
@@ -184,9 +196,10 @@ describe('test all CLI subcommands', function () {
             const serializedIdentityCommitment = base64url.decode(
                 encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
             )
-            const _userIdentityCommitment = genIdentityCommitment(_userIdentity)
-            expect(serializedIdentityCommitment).equal(
-                _userIdentityCommitment.toString(16)
+            const _userIdentityCommitment =
+                _userIdentity.genIdentityCommitment()
+            expect(serializedIdentityCommitment.padStart(64, '0')).equal(
+                _userIdentityCommitment.toString(16).padStart(64, '0')
             )
 
             userIdentity2 = encodedIdentity

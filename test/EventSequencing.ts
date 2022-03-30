@@ -2,15 +2,10 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
-import {
-    genRandomSalt,
-    genIdentity,
-    genIdentityCommitment,
-    SnarkProof,
-} from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity, SnarkProof } from '@unirep/crypto'
 import { deployUnirep, Event } from '@unirep/contracts'
-import * as config from '@unirep/unirep'
-import { genEpochKey } from '@unirep/unirep'
+import * as config from '@unirep/config'
+import { genEpochKey } from '@unirep/core'
 import {
     formatProofForVerifierContract,
     formatProofForSnarkjsVerification,
@@ -69,14 +64,14 @@ describe('EventSequencing', function () {
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        const _treeDepths = getTreeDepthsForTesting('circuit')
+        const _treeDepths = getTreeDepthsForTesting()
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
-            attestingFee: config.attestingFee,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
+            attestingFee: config.ATTESTTING_FEE,
         }
         unirepContract = await deployUnirep(
             <ethers.Wallet>accounts[0],
@@ -90,8 +85,8 @@ describe('EventSequencing', function () {
     })
 
     it('should sign up first user', async () => {
-        const userId = genIdentity()
-        const userCommitment = genIdentityCommitment(userId)
+        const userId = new ZkIdentity()
+        const userCommitment = userId.genIdentityCommitment()
         userIds.push(userId)
         userCommitments.push(userCommitment)
         const tx = await unirepSocialContract.userSignUp(
@@ -117,7 +112,7 @@ describe('EventSequencing', function () {
         const tx = await unirepSocialContract.publishPost(
             text,
             reputationProof,
-            { value: config.attestingFee, gasLimit: 1000000 }
+            { value: config.ATTESTTING_FEE, gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -127,8 +122,8 @@ describe('EventSequencing', function () {
     })
 
     it('should sign up second user', async () => {
-        const userId = genIdentity()
-        const userCommitment = genIdentityCommitment(userId)
+        const userId = new ZkIdentity()
+        const userCommitment = userId.genIdentityCommitment()
         userIds.push(userId)
         userCommitments.push(userCommitment)
         const tx = await unirepSocialContract.userSignUp(
@@ -154,7 +149,7 @@ describe('EventSequencing', function () {
             postId,
             text,
             reputationProof,
-            { value: config.attestingFee, gasLimit: 1000000 }
+            { value: config.ATTESTTING_FEE, gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit comment failed').to.equal(1)
@@ -171,7 +166,7 @@ describe('EventSequencing', function () {
         let upvoteValue = 3
         let epochKeyNonce = 1
         const toEpochKey = genEpochKey(
-            userIds[1].identityNullifier,
+            userIds[1].getNullifier(),
             currentEpoch,
             epochKeyNonce
         )
@@ -191,7 +186,7 @@ describe('EventSequencing', function () {
             toEpochKey as BigNumberish,
             proofIndex as BigNumberish,
             reputationProof,
-            { value: config.attestingFee.mul(2), gasLimit: 1000000 }
+            { value: config.ATTESTTING_FEE.mul(2), gasLimit: 1000000 }
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit upvote failed').to.equal(1)
@@ -202,7 +197,7 @@ describe('EventSequencing', function () {
 
     it('first epoch ended', async () => {
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
@@ -244,7 +239,7 @@ describe('EventSequencing', function () {
 
     it('second epoch ended', async () => {
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
@@ -255,7 +250,7 @@ describe('EventSequencing', function () {
 
     it('Third epoch ended', async () => {
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ]) // Fast-forward epochLength of seconds
         const tx = await unirepContract.beginEpochTransition()
         const receipt = await tx.wait()
@@ -334,7 +329,7 @@ describe('EventSequencing', function () {
 
         for (let i = 0; i < sequencerEvents.length; i++) {
             const event = sequencerEvents[i]
-            expect(event.args._event).equal(expectedUnirepEventsInOrder[i])
+            expect(event.args.userEvent).equal(expectedUnirepEventsInOrder[i])
         }
     })
 

@@ -2,14 +2,10 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, ethers } from 'ethers'
-import * as config from '@unirep/unirep'
-import { UserState, genUserStateFromContract } from '@unirep/unirep'
+import * as config from '@unirep/config'
+import { UserState, genUserStateFromContract } from '@unirep/core'
 import { deployUnirep } from '@unirep/contracts'
-import {
-    genIdentity,
-    genIdentityCommitment,
-    genRandomSalt,
-} from '@unirep/crypto'
+import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 
 import {
     findValidNonce,
@@ -20,7 +16,6 @@ import {
     defaultAirdroppedReputation,
     defaultCommentReputation,
     defaultPostReputation,
-    maxReputationBudget,
 } from '../config/socialMedia'
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 
@@ -43,14 +38,14 @@ describe('Post', function () {
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        const _treeDepths = getTreeDepthsForTesting('circuit')
+        const _treeDepths = getTreeDepthsForTesting()
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: maxReputationBudget,
-            epochLength: config.epochLength,
-            attestingFee: config.attestingFee,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
+            attestingFee: config.ATTESTTING_FEE,
         }
         unirepContract = await deployUnirep(
             <ethers.Wallet>accounts[0],
@@ -65,21 +60,23 @@ describe('Post', function () {
 
     it('should have the correct config value', async () => {
         const attestingFee_ = await unirepContract.attestingFee()
-        expect(config.attestingFee).equal(attestingFee_)
+        expect(config.ATTESTTING_FEE).equal(attestingFee_)
         const epochLength_ = await unirepContract.epochLength()
-        expect(config.epochLength).equal(epochLength_)
+        expect(config.EPOCH_LENGTH).equal(epochLength_)
         const numEpochKeyNoncePerEpoch_ =
             await unirepContract.numEpochKeyNoncePerEpoch()
-        expect(config.numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
+        expect(config.NUM_EPOCH_KEY_NONCE_PER_EPOCH).equal(
+            numEpochKeyNoncePerEpoch_
+        )
         const maxUsers_ = await unirepContract.maxUsers()
-        expect(config.maxUsers).equal(maxUsers_)
+        expect(config.MAX_USERS).equal(maxUsers_)
 
         const treeDepths_ = await unirepContract.treeDepths()
-        expect(config.circuitEpochTreeDepth).equal(treeDepths_.epochTreeDepth)
-        expect(config.circuitGlobalStateTreeDepth).equal(
+        expect(config.EPOCH_TREE_DEPTH).equal(treeDepths_.epochTreeDepth)
+        expect(config.GLOBAL_STATE_TREE_DEPTH).equal(
             treeDepths_.globalStateTreeDepth
         )
-        expect(config.circuitUserStateTreeDepth).equal(
+        expect(config.USER_STATE_TREE_DEPTH).equal(
             treeDepths_.userStateTreeDepth
         )
 
@@ -107,8 +104,8 @@ describe('Post', function () {
     describe('User sign-ups', () => {
         it('sign up should succeed', async () => {
             for (let i = 0; i < 2; i++) {
-                ids[i] = genIdentity()
-                commitments[i] = genIdentityCommitment(ids[i])
+                ids[i] = new ZkIdentity()
+                commitments[i] = ids[i].genIdentityCommitment()
                 const tx = await unirepSocialContract.userSignUp(
                     BigNumber.from(commitments[i])
                 )
@@ -166,7 +163,10 @@ describe('Post', function () {
             const tx = await unirepSocialContract.publishPost(
                 text,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                {
+                    value: config.ATTESTTING_FEE,
+                    gasLimit: 1000000,
+                }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -202,7 +202,7 @@ describe('Post', function () {
 
             await expect(
                 unirepSocialContract.publishPost(text, reputationProof, {
-                    value: config.attestingFee,
+                    value: config.ATTESTTING_FEE,
                     gasLimit: 1000000,
                 })
             ).to.be.revertedWith(
@@ -249,7 +249,10 @@ describe('Post', function () {
                 postId,
                 text,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                {
+                    value: config.ATTESTTING_FEE,
+                    gasLimit: 1000000,
+                }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit comment failed').to.equal(1)
@@ -287,7 +290,10 @@ describe('Post', function () {
                     postId,
                     text,
                     reputationProof,
-                    { value: config.attestingFee, gasLimit: 1000000 }
+                    {
+                        value: config.ATTESTTING_FEE,
+                        gasLimit: 1000000,
+                    }
                 )
             ).to.be.revertedWith(
                 'Unirep Social: submit different nullifiers amount from the required amount for comment'

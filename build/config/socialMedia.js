@@ -1,15 +1,15 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
-exports.maxReputationBudget =
+exports.MAX_REPUTATION_BUDGET =
     exports.defaultCommentReputation =
     exports.defaultPostReputation =
     exports.defaultAirdroppedReputation =
         void 0
-const unirep_1 = require('@unirep/unirep')
-Object.defineProperty(exports, 'maxReputationBudget', {
+const config_1 = require('@unirep/config')
+Object.defineProperty(exports, 'MAX_REPUTATION_BUDGET', {
     enumerable: true,
     get: function () {
-        return unirep_1.maxReputationBudget
+        return config_1.MAX_REPUTATION_BUDGET
     },
 })
 const defaultAirdroppedReputation = 30

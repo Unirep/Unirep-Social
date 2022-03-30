@@ -1,12 +1,11 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
     formatProofForSnarkjsVerification,
     genUnirepStateFromContract,
-} from '@unirep/unirep'
-import { Unirep } from '@unirep/contracts'
+} from '@unirep/core'
+import { UnirepFactory } from '@unirep/contracts'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
@@ -70,11 +69,7 @@ const verifyAirdropProof = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     const unirepState = await genUnirepStateFromContract(
         provider,

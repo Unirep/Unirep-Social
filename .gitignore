@@ -5,6 +5,7 @@ node_modules
 cache
 typechain
 !/build/typechain
+build/Unirep
 
 # .env file
 .env

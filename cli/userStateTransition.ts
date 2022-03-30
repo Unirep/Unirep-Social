@@ -1,17 +1,20 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { unSerialiseIdentity } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
     verifyProof,
 } from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/unirep'
+import { genUserStateFromContract } from '@unirep/core'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
-import { computeStartTransitionProofHash, Unirep } from '@unirep/contracts'
+import {
+    computeStartTransitionProofHash,
+    UnirepFactory,
+} from '@unirep/contracts'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'
@@ -67,11 +70,7 @@ const userStateTransition = async (args: any) => {
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
     // Unirep contract
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
@@ -80,7 +79,7 @@ const userStateTransition = async (args: any) => {
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = unSerialiseIdentity(decodedIdentity)
+    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,

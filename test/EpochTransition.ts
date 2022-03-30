@@ -1,12 +1,8 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import {
-    genRandomSalt,
-    genIdentity,
-    genIdentityCommitment,
-} from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
@@ -20,21 +16,22 @@ import {
     getUnirepContract,
     UserTransitionProof,
 } from '@unirep/contracts'
-import * as config from '@unirep/unirep'
+import * as config from '@unirep/config'
 import {
     genEpochKey,
     Attestation,
     genUserStateFromContract,
     UserState,
-} from '@unirep/unirep'
+} from '@unirep/core'
 
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 import { getTreeDepthsForTesting } from './utils'
+import { Unirep } from '@unirep/contracts'
 
 describe('Epoch Transition', function () {
     this.timeout(1000000)
 
-    let unirepContract: ethers.Contract
+    let unirepContract: Unirep
     let unirepSocialContract: UnirepSocial
     let accounts: ethers.Signer[]
 
@@ -45,20 +42,20 @@ describe('Epoch Transition', function () {
     let userState: UserState
     const signedUpInLeaf = 1
     let epochKeyProofIndex
-    const proofIndexes: BigInt[] = []
+    const proofIndexes: number[] = []
     const attestingFee = ethers.utils.parseEther('0.1') // to avoid VM Exception: 'Address: insufficient balance'
     const fromProofIndex = 0
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        const _treeDepths = getTreeDepthsForTesting('circuit')
+        const _treeDepths = getTreeDepthsForTesting()
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
         unirepContract = await deployUnirep(
@@ -72,8 +69,8 @@ describe('Epoch Transition', function () {
         )
 
         console.log('User sign up')
-        userId = genIdentity()
-        userCommitment = genIdentityCommitment(userId)
+        userId = new ZkIdentity()
+        userCommitment = userId.genIdentityCommitment()
         let tx = await unirepSocialContract.userSignUp(userCommitment)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -97,9 +94,9 @@ describe('Epoch Transition', function () {
         attesterId = await unirepContract.attesters(attesterAddress)
 
         // Submit attestations
-        let epoch = await unirepContract.currentEpoch()
+        let epoch = (await unirepContract.currentEpoch()).toNumber()
         let nonce = 1
-        let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        let epochKey = genEpochKey(userId.getNullifier(), epoch, nonce)
         let results = await userState.genVerifyEpochKeyProof(nonce)
         let epochKeyProof = new EpochKeyProof(
             results.publicSignals,
@@ -123,7 +120,7 @@ describe('Epoch Transition', function () {
                 BigInt(attesterId.toString()),
                 BigInt(i),
                 BigInt(0),
-                genRandomSalt(),
+                BigNumber.from(genRandomSalt()),
                 BigInt(signedUpInLeaf)
             )
             tx = await unirepContractCalledByAttester.submitAttestation(
@@ -138,7 +135,7 @@ describe('Epoch Transition', function () {
         }
 
         nonce = 2
-        epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        epochKey = genEpochKey(userId.getNullifier(), epoch, nonce)
         results = await userState.genVerifyEpochKeyProof(nonce)
         epochKeyProof = new EpochKeyProof(results.publicSignals, results.proof)
 
@@ -155,7 +152,7 @@ describe('Epoch Transition', function () {
                 BigInt(attesterId.toString()),
                 BigInt(i),
                 BigInt(0),
-                genRandomSalt(),
+                BigNumber.from(genRandomSalt()),
                 BigInt(signedUpInLeaf)
             )
             tx = await unirepContractCalledByAttester.submitAttestation(
@@ -170,7 +167,7 @@ describe('Epoch Transition', function () {
         }
 
         nonce = 0
-        epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
+        epochKey = genEpochKey(userId.getNullifier(), epoch, nonce)
         results = await userState.genVerifyEpochKeyProof(nonce)
         epochKeyProof = new EpochKeyProof(results.publicSignals, results.proof)
 
@@ -187,7 +184,7 @@ describe('Epoch Transition', function () {
                 BigInt(attesterId.toString()),
                 BigInt(i),
                 BigInt(0),
-                genRandomSalt(),
+                BigNumber.from(genRandomSalt()),
                 BigInt(signedUpInLeaf)
             )
             tx = await unirepContractCalledByAttester.submitAttestation(
@@ -214,7 +211,7 @@ describe('Epoch Transition', function () {
 
         // Fast-forward epochLength of seconds
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ])
         // Assert no epoch transition compensation is dispensed to volunteer
         expect(
@@ -305,7 +302,7 @@ describe('Epoch Transition', function () {
             proof
         )
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(BigInt(proofIndex))
+        proofIndexes.push(proofIndex.toNumber())
 
         for (let i = 0; i < processAttestationProofs.length; i++) {
             const isValid = await verifyProof(
@@ -369,7 +366,7 @@ describe('Epoch Transition', function () {
             const proofIndex = await unirepContract.getProofIndex(
                 proofNullifier
             )
-            proofIndexes.push(BigInt(proofIndex))
+            proofIndexes.push(proofIndex.toNumber())
         }
 
         const USTProof = new UserTransitionProof(
@@ -416,7 +413,7 @@ describe('Epoch Transition', function () {
 
         // Fast-forward epochLength of seconds
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ])
         // Begin epoch transition
         let tx = await unirepContract.beginEpochTransition()

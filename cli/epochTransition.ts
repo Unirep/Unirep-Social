@@ -1,7 +1,7 @@
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { UnirepSocialFactory } from '../core/utils'
 import { ethers } from 'ethers'
-import { Unirep } from '@unirep/contracts'
+import { Unirep, UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -44,11 +44,7 @@ const epochTransition = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY

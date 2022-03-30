@@ -1,8 +1,7 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
-import { unSerialiseIdentity } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
 import * as circuit from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/unirep'
+import { genUserStateFromContract } from '@unirep/core'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -11,7 +10,7 @@ import {
     signUpPublicSignalsPrefix,
 } from './prefix'
 import { UnirepSocial, UnirepSocialFactory } from '../core/utils'
-import { Unirep } from '@unirep/contracts'
+import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -49,24 +48,20 @@ const genAirdropProof = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = unSerialiseIdentity(decodedIdentity)
+    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
     const userState = await genUserStateFromContract(
         provider,
         unirepContract.address,
         id
     )
-    const attesterId = BigInt(
+    const attesterId = (
         await unirepContract.attesters(unirepSocialContract.address)
-    )
+    ).toBigInt()
     const { publicSignals, proof, epoch, epochKey } =
         await userState.genUserSignUpProof(attesterId)
 

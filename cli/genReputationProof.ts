@@ -1,12 +1,11 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
-import { add0x, unSerialiseIdentity } from '@unirep/crypto'
+import { Strategy, ZkIdentity } from '@unirep/crypto'
 import { formatProofForVerifierContract } from '@unirep/circuits'
 import {
     genReputationNullifier,
     genUserStateFromContract,
     maxReputationBudget,
-} from '@unirep/unirep'
+} from '@unirep/core'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -18,7 +17,7 @@ import {
     defaultCommentReputation,
     defaultPostReputation,
 } from '../config/socialMedia'
-import { ReputationProof, Unirep } from '@unirep/contracts'
+import { ReputationProof, UnirepFactory } from '@unirep/contracts'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
@@ -90,11 +89,7 @@ const genReputationProof = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
@@ -108,7 +103,7 @@ const genReputationProof = async (args: any) => {
     }
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = unSerialiseIdentity(decodedIdentity)
+    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
 
     // gen reputation proof
     let proveReputationAmount
@@ -136,14 +131,14 @@ const genReputationProof = async (args: any) => {
     } else {
         proveReputationAmount = 0
     }
-    const attesterId = BigInt(
+    const attesterId = (
         await unirepContract.attesters(unirepSocialContract.address)
-    )
+    ).toBigInt()
     const proveGraffiti = args.graffiti_preimage != null ? BigInt(1) : BigInt(0)
     const minRep = args.min_rep != null ? args.min_rep : 0
     const graffitiPreImage =
         args.graffiti_preimage != null
-            ? BigInt(add0x(args.graffiti_preimage))
+            ? BigInt(args.graffiti_preimage)
             : BigInt(0)
 
     const userState = await genUserStateFromContract(
@@ -159,7 +154,7 @@ const genReputationProof = async (args: any) => {
         // find valid nonce starter
         for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
             const reputationNullifier = genReputationNullifier(
-                id.identityNullifier,
+                id.getNullifier(),
                 epoch,
                 n,
                 attesterId

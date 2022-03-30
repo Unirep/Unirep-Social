@@ -1,10 +1,9 @@
 import base64url from 'base64url'
-import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { genUnirepStateFromContract } from '@unirep/unirep'
+import { genUnirepStateFromContract } from '@unirep/core'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
-import { ReputationProof, Unirep } from '@unirep/contracts'
+import { ReputationProof, Unirep, UnirepFactory } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
@@ -65,11 +64,7 @@ const verifyReputationProof = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = new ethers.Contract(
-        unirepContractAddr,
-        Unirep.abi,
-        provider
-    )
+    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
 
     const unirepState = await genUnirepStateFromContract(
         provider,

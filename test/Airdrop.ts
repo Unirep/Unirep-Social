@@ -2,7 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, ethers } from 'ethers'
-import { genIdentity, genIdentityCommitment } from '@unirep/crypto'
+import { ZkIdentity } from '@unirep/crypto'
 import {
     verifyProof,
     formatProofForVerifierContract,
@@ -13,8 +13,8 @@ import {
     computeStartTransitionProofHash,
     deployUnirep,
 } from '@unirep/contracts'
-import * as config from '@unirep/unirep'
-import { genUserStateFromContract, UserState } from '@unirep/unirep'
+import * as config from '@unirep/config'
+import { genUserStateFromContract, UserState } from '@unirep/core'
 
 import {
     getTreeDepthsForTesting,
@@ -30,8 +30,8 @@ describe('Airdrop', function () {
 
     let unirepContract, unirepSocialContract: UnirepSocial
     let userState: UserState
-    const userId = genIdentity()
-    const userCommitment = genIdentityCommitment(userId)
+    const userId = new ZkIdentity()
+    const userCommitment = userId.genIdentityCommitment()
 
     let accounts: ethers.Signer[]
     let attester, attesterId, unirepContractCalledByAttester
@@ -44,13 +44,13 @@ describe('Airdrop', function () {
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
-        const _treeDepths = getTreeDepthsForTesting('circuit')
+        const _treeDepths = getTreeDepthsForTesting()
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
         unirepContract = await deployUnirep(
@@ -146,7 +146,7 @@ describe('Airdrop', function () {
     it('user can receive airdrop after user state transition', async () => {
         // epoch transition
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ]) // Fast-forward epochLength of seconds
         let tx = await unirepContract.beginEpochTransition()
         let receipt = await tx.wait()
@@ -326,8 +326,8 @@ describe('Airdrop', function () {
 
     it('user signs up through a signed up attester with 0 airdrop should not get airdrop', async () => {
         console.log('User sign up')
-        const userId2 = genIdentity()
-        const userCommitment2 = genIdentityCommitment(userId2)
+        const userId2 = new ZkIdentity()
+        const userCommitment2 = userId2.genIdentityCommitment()
         let tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment2
         )
@@ -353,8 +353,8 @@ describe('Airdrop', function () {
 
     it('user signs up through a non-signed up attester should succeed and gets no airdrop', async () => {
         console.log('User sign up')
-        const userId3 = genIdentity()
-        const userCommitment3 = genIdentityCommitment(userId3)
+        const userId3 = new ZkIdentity()
+        const userCommitment3 = userId3.genIdentityCommitment()
         let tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment3
         )

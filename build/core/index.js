@@ -8,7 +8,7 @@ exports.signUpPublicSignalsPrefix =
     exports.epkProofPrefix =
     exports.identityCommitmentPrefix =
     exports.identityPrefix =
-    exports.maxReputationBudget =
+    exports.MAX_REPUTATION_BUDGET =
     exports.defaultCommentReputation =
     exports.defaultPostReputation =
     exports.defaultAirdroppedReputation =
@@ -54,10 +54,10 @@ Object.defineProperty(exports, 'defaultCommentReputation', {
         return socialMedia_1.defaultCommentReputation
     },
 })
-Object.defineProperty(exports, 'maxReputationBudget', {
+Object.defineProperty(exports, 'MAX_REPUTATION_BUDGET', {
     enumerable: true,
     get: function () {
-        return socialMedia_1.maxReputationBudget
+        return socialMedia_1.MAX_REPUTATION_BUDGET
     },
 })
 const prefix_1 = require('../cli/prefix')

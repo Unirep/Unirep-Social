@@ -1,4 +1,4 @@
-import { maxReputationBudget } from '@unirep/unirep'
+import { MAX_REPUTATION_BUDGET } from '@unirep/config'
 
 const defaultAirdroppedReputation = 30
 
@@ -10,5 +10,5 @@ export {
     defaultAirdroppedReputation,
     defaultPostReputation,
     defaultCommentReputation,
-    maxReputationBudget,
+    MAX_REPUTATION_BUDGET,
 }

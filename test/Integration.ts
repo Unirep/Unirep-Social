@@ -2,11 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { expect } from 'chai'
-import {
-    genRandomSalt,
-    genIdentity,
-    genIdentityCommitment,
-} from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
@@ -16,8 +12,9 @@ import {
     computeProcessAttestationsProofHash,
     computeStartTransitionProofHash,
     deployUnirep,
+    Unirep,
 } from '@unirep/contracts'
-import * as config from '@unirep/unirep'
+import * as config from '@unirep/config'
 import {
     UnirepState,
     UserState,
@@ -25,7 +22,7 @@ import {
     genUserStateFromContract,
     genUnirepStateFromContract,
     genEpochKey,
-} from '@unirep/unirep'
+} from '@unirep/core'
 
 import {
     findValidNonce,
@@ -52,7 +49,7 @@ describe('Integration', function () {
     let userIds: any[] = []
     let userCommitments: BigInt[] = []
 
-    let unirepContract: ethers.Contract
+    let unirepContract: Unirep
     let unirepSocialContract: UnirepSocial
     let _treeDepths
     let unirepSocialId
@@ -73,14 +70,14 @@ describe('Integration', function () {
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        _treeDepths = getTreeDepthsForTesting('circuit')
+        _treeDepths = getTreeDepthsForTesting()
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
-            attestingFee: config.attestingFee,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
+            attestingFee: config.ATTESTTING_FEE,
         }
         unirepContract = await deployUnirep(
             <ethers.Wallet>accounts[0],
@@ -91,15 +88,15 @@ describe('Integration', function () {
             <ethers.Wallet>accounts[0],
             unirepContract.address
         )
-        unirepSocialId = BigInt(
+        unirepSocialId = (
             await unirepContract.attesters(unirepSocialContract.address)
-        )
+        ).toBigInt()
     })
 
     describe('First epoch', () => {
         it('First user signs up', async () => {
-            const id = genIdentity()
-            const commitment = genIdentityCommitment(id)
+            const id = new ZkIdentity()
+            const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
 
@@ -137,7 +134,7 @@ describe('Integration', function () {
         it('begin first epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send('evm_increaseTime', [
-                config.epochLength,
+                config.EPOCH_LENGTH,
             ])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
@@ -298,8 +295,8 @@ describe('Integration', function () {
         })
 
         it('Second user signs up', async () => {
-            const id = genIdentity()
-            const commitment = genIdentityCommitment(id)
+            const id = new ZkIdentity()
+            const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
 
@@ -357,7 +354,7 @@ describe('Integration', function () {
             const repNullifiersAmount = defaultPostReputation
             const epkNonce = 0
             const epochKey = genEpochKey(
-                users[firstUser].id.identityNullifier,
+                users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
@@ -400,7 +397,10 @@ describe('Integration', function () {
             const tx = await unirepSocialContract.publishPost(
                 postText,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                {
+                    value: config.ATTESTTING_FEE,
+                    gasLimit: 1000000,
+                }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -442,7 +442,7 @@ describe('Integration', function () {
 
             // first user's epoch key
             const firstUserEpochKey = genEpochKey(
-                users[firstUser].id.identityNullifier,
+                users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
@@ -480,7 +480,10 @@ describe('Integration', function () {
                 firstUserEpochKey,
                 reputationProofIndex,
                 reputationProof,
-                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
+                {
+                    value: config.ATTESTTING_FEE.mul(2),
+                    gasLimit: 1000000,
+                }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
@@ -520,7 +523,7 @@ describe('Integration', function () {
             const repNullifiersAmount = defaultCommentReputation
             const epkNonce = 1
             const epochKey = genEpochKey(
-                users[firstUser].id.identityNullifier,
+                users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
@@ -560,7 +563,10 @@ describe('Integration', function () {
                 postId,
                 commentText,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                {
+                    value: config.ATTESTTING_FEE,
+                    gasLimit: 1000000,
+                }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -597,7 +603,7 @@ describe('Integration', function () {
 
             // submit epoch key
             let tx = await unirepSocialContract.airdrop(signUpProof, {
-                value: config.attestingFee,
+                value: config.ATTESTTING_FEE,
             })
             let receipt = await tx.wait()
             expect(receipt.status).equal(1)
@@ -660,7 +666,7 @@ describe('Integration', function () {
                     )
                 let attestations_: IAttestation[] =
                     attestationsByEpochKeyEvent.map(
-                        (event: any) => event['args']['_attestation']
+                        (event: any) => event['args']['attestation']
                     )
 
                 let attestations: IAttestation[] =
@@ -703,7 +709,7 @@ describe('Integration', function () {
         it('begin second epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send('evm_increaseTime', [
-                config.epochLength,
+                config.EPOCH_LENGTH,
             ])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
