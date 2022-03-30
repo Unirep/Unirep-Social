@@ -13,6 +13,7 @@ else
     git clone https://github.com/Unirep/Unirep.git
 fi
 cd Unirep
+git reset 33b917bfbe796a5001ef9b039205e57daaf37d47 --hard
 yarn install && yarn build
 cd packages
 
@@ -20,8 +21,7 @@ cd packages
 for directory in *
 do
     cd ${directory}
-    yarn link ../../../..
-    npm link
+    yarn link
     cd ../../../..
     yarn link "@unirep/${directory}"
     cd build/Unirep/packages
