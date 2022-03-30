@@ -21,5 +21,8 @@ for directory in *
 do
     cd ${directory}
     yarn link ../../../..
-    cd ..
+    npm link
+    cd ../../../..
+    yarn link "@unirep/${directory}"
+    cd build/Unirep/packages
 done
