@@ -4,7 +4,7 @@
     "description": "",
     "main": "build/core/index.js",
     "scripts": {
-        "build": "link-unirep && npx hardhat typechain && tsc && yarn lint --write",
+        "build": "yarn link-unirep && npx hardhat typechain && tsc && yarn lint --write",
         "compile": "npx hardhat compile",
         "link-unirep": "./scripts/linkPackages.sh",
         "test-cli": "./scripts/testCLI.sh",
@@ -39,6 +39,7 @@
         "typechain": "^7.0.1"
     },
     "dependencies": {
+        "@openzeppelin/contracts": "^4.5.0",
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
         "argparse": "^2.0.1",

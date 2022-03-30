@@ -19,7 +19,6 @@ cd packages
 # link all packages
 for directory in *
 do
-    echo ${directory} 🦄
     cd ${directory}
     yarn link
     cd ../../../..
