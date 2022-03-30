@@ -20,8 +20,6 @@ cd packages
 for directory in *
 do
     cd ${directory}
-    yarn link
-    cd ../../../..
-    yarn link "@unirep/${directory}"
-    cd build/Unirep/packages
+    yarn link ../../../..
+    cd ..
 done
