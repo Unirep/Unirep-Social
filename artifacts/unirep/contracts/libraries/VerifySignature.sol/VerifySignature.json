@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "VerifySignature",
+  "sourceName": "unirep/contracts/libraries/VerifySignature.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea264697066735822122048708a37ae13e33c866b47aa508c6d8c19fc1d04a82b4541d03953e958c6d22564736f6c63430008010033",
+  "deployedBytecode": "0x6080604052600080fdfea264697066735822122048708a37ae13e33c866b47aa508c6d8c19fc1d04a82b4541d03953e958c6d22564736f6c63430008010033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

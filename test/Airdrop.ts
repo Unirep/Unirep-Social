@@ -2,19 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, ethers } from 'ethers'
-import { ZkIdentity } from '@unirep/crypto'
-import {
-    verifyProof,
-    formatProofForVerifierContract,
-    Circuit,
-} from '@unirep/circuits'
-import {
-    computeProcessAttestationsProofHash,
-    computeStartTransitionProofHash,
-    deployUnirep,
-} from '@unirep/contracts'
-import * as config from '@unirep/config'
-import { genUserStateFromContract, UserState } from '@unirep/core'
+import { config, circuits, contracts, core, crypto } from 'unirep'
 
 import {
     getTreeDepthsForTesting,
@@ -28,9 +16,10 @@ import { defaultAirdroppedReputation } from '../config/socialMedia'
 describe('Airdrop', function () {
     this.timeout(100000)
 
-    let unirepContract, unirepSocialContract: UnirepSocial
-    let userState: UserState
-    const userId = new ZkIdentity()
+    let unirepContract: contracts.Unirep
+    let unirepSocialContract: UnirepSocial
+    let userState: core.UserState
+    const userId = new crypto.ZkIdentity()
     const userCommitment = userId.genIdentityCommitment()
 
     let accounts: ethers.Signer[]
@@ -53,7 +42,7 @@ describe('Airdrop', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -71,10 +60,9 @@ describe('Airdrop', function () {
         let tx = await unirepContractCalledByAttester.attesterSignUp()
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-
-        attesterId = BigInt(
+        attesterId = (
             await unirepContract.attesters(unirepSocialContract.address)
-        )
+        ).toBigInt()
         expect(attesterId).not.equal(0)
         airdropAmount = await unirepContract.airdropAmount(
             unirepSocialContract.address
@@ -90,7 +78,7 @@ describe('Airdrop', function () {
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
-        userState = await genUserStateFromContract(
+        userState = await core.genUserStateFromContract(
             hardhatEthers.provider,
             unirepContract.address,
             userId
@@ -152,7 +140,7 @@ describe('Airdrop', function () {
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
-        userState = await genUserStateFromContract(
+        userState = await core.genUserStateFromContract(
             hardhatEthers.provider,
             unirepContract.address,
             userId
@@ -163,8 +151,8 @@ describe('Airdrop', function () {
             finalTransitionProof,
         } = await userState.genUserStateTransitionProofs()
 
-        let isValid = await verifyProof(
-            Circuit.startTransition,
+        let isValid = await circuits.verifyProof(
+            circuits.Circuit.startTransition,
             startTransitionProof.proof,
             startTransitionProof.publicSignals
         )
@@ -176,7 +164,7 @@ describe('Airdrop', function () {
             startTransitionProof.blindedUserState,
             startTransitionProof.blindedHashChain,
             startTransitionProof.globalStateTreeRoot,
-            formatProofForVerifierContract(startTransitionProof.proof)
+            circuits.formatProofForVerifierContract(startTransitionProof.proof)
         )
         expect(isProofValid, 'Verify start transition circuit on-chain failed')
             .to.be.true
@@ -184,7 +172,7 @@ describe('Airdrop', function () {
         const blindedUserState = startTransitionProof.blindedUserState
         const blindedHashChain = startTransitionProof.blindedHashChain
         const GSTreeRoot = startTransitionProof.globalStateTreeRoot
-        const _proof = formatProofForVerifierContract(
+        const _proof = circuits.formatProofForVerifierContract(
             startTransitionProof.proof
         )
 
@@ -204,7 +192,7 @@ describe('Airdrop', function () {
             receipt.gasUsed.toString()
         )
 
-        let proofNullifier = computeStartTransitionProofHash(
+        let proofNullifier = contracts.computeStartTransitionProofHash(
             blindedUserState,
             blindedHashChain,
             GSTreeRoot,
@@ -214,8 +202,8 @@ describe('Airdrop', function () {
         proofIndexes.push(BigNumber.from(proofIndex))
 
         for (let i = 0; i < processAttestationProofs.length; i++) {
-            const isValid = await verifyProof(
-                Circuit.processAttestations,
+            const isValid = await circuits.verifyProof(
+                circuits.Circuit.processAttestations,
                 processAttestationProofs[i].proof,
                 processAttestationProofs[i].publicSignals
             )
@@ -237,7 +225,7 @@ describe('Airdrop', function () {
                     outputBlindedUserState,
                     outputBlindedHashChain,
                     inputBlindedUserState,
-                    formatProofForVerifierContract(
+                    circuits.formatProofForVerifierContract(
                         processAttestationProofs[i].proof
                     )
                 )
@@ -250,7 +238,7 @@ describe('Airdrop', function () {
                 outputBlindedUserState,
                 outputBlindedHashChain,
                 inputBlindedUserState,
-                formatProofForVerifierContract(
+                circuits.formatProofForVerifierContract(
                     processAttestationProofs[i].proof
                 )
             )
@@ -264,14 +252,15 @@ describe('Airdrop', function () {
                 receipt.gasUsed.toString()
             )
 
-            const proofNullifier = computeProcessAttestationsProofHash(
-                outputBlindedUserState,
-                outputBlindedHashChain,
-                inputBlindedUserState,
-                formatProofForVerifierContract(
-                    processAttestationProofs[i].proof
+            const proofNullifier =
+                contracts.computeProcessAttestationsProofHash(
+                    outputBlindedUserState,
+                    outputBlindedHashChain,
+                    inputBlindedUserState,
+                    circuits.formatProofForVerifierContract(
+                        processAttestationProofs[i].proof
+                    )
                 )
-            )
             const proofIndex = await unirepContract.getProofIndex(
                 proofNullifier
             )
@@ -326,7 +315,7 @@ describe('Airdrop', function () {
 
     it('user signs up through a signed up attester with 0 airdrop should not get airdrop', async () => {
         console.log('User sign up')
-        const userId2 = new ZkIdentity()
+        const userId2 = new crypto.ZkIdentity()
         const userCommitment2 = userId2.genIdentityCommitment()
         let tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment2
@@ -334,7 +323,7 @@ describe('Airdrop', function () {
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
-        const userState2 = await genUserStateFromContract(
+        const userState2 = await core.genUserStateFromContract(
             hardhatEthers.provider,
             unirepContract.address,
             userId2
@@ -353,7 +342,7 @@ describe('Airdrop', function () {
 
     it('user signs up through a non-signed up attester should succeed and gets no airdrop', async () => {
         console.log('User sign up')
-        const userId3 = new ZkIdentity()
+        const userId3 = new crypto.ZkIdentity()
         const userCommitment3 = userId3.genIdentityCommitment()
         let tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment3
@@ -361,7 +350,7 @@ describe('Airdrop', function () {
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
-        const userState3 = await genUserStateFromContract(
+        const userState3 = await core.genUserStateFromContract(
             hardhatEthers.provider,
             unirepContract.address,
             userId3

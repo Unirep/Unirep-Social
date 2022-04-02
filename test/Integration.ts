@@ -2,27 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { expect } from 'chai'
-import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
-import {
-    Circuit,
-    formatProofForVerifierContract,
-    verifyProof,
-} from '@unirep/circuits'
-import {
-    computeProcessAttestationsProofHash,
-    computeStartTransitionProofHash,
-    deployUnirep,
-    Unirep,
-} from '@unirep/contracts'
-import * as config from '@unirep/config'
-import {
-    UnirepState,
-    UserState,
-    IAttestation,
-    genUserStateFromContract,
-    genUnirepStateFromContract,
-    genEpochKey,
-} from '@unirep/core'
+import { config, crypto, circuits, contracts, core } from 'unirep'
 
 import {
     findValidNonce,
@@ -42,14 +22,14 @@ import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 describe('Integration', function () {
     this.timeout(500000)
 
-    let unirepState: UnirepState
-    let users: UserState[] = new Array(2)
+    let unirepState: core.UnirepState
+    let users: core.UserState[] = new Array(2)
     const firstUser = 0
     const secondUser = 1
     let userIds: any[] = []
     let userCommitments: BigInt[] = []
 
-    let unirepContract: Unirep
+    let unirepContract: contracts.Unirep
     let unirepSocialContract: UnirepSocial
     let _treeDepths
     let unirepSocialId
@@ -79,7 +59,7 @@ describe('Integration', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: config.ATTESTTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -95,7 +75,7 @@ describe('Integration', function () {
 
     describe('First epoch', () => {
         it('First user signs up', async () => {
-            const id = new ZkIdentity()
+            const id = new crypto.ZkIdentity()
             const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
@@ -106,7 +86,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -147,7 +127,7 @@ describe('Integration', function () {
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch, 'Current epoch should be 2').to.equal(2)
 
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await core.genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address
             )
@@ -161,7 +141,7 @@ describe('Integration', function () {
         })
 
         it('First user transition from first epoch', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -172,8 +152,8 @@ describe('Integration', function () {
                 processAttestationProofs,
                 finalTransitionProof,
             } = await users[firstUser].genUserStateTransitionProofs()
-            let isValid = await verifyProof(
-                Circuit.startTransition,
+            let isValid = await circuits.verifyProof(
+                circuits.Circuit.startTransition,
                 startTransitionProof.proof,
                 startTransitionProof.publicSignals
             )
@@ -183,7 +163,7 @@ describe('Integration', function () {
             const blindedUserState = startTransitionProof.blindedUserState
             const blindedHashChain = startTransitionProof.blindedHashChain
             const globalStateTree = startTransitionProof.globalStateTreeRoot
-            const proof = formatProofForVerifierContract(
+            const proof = circuits.formatProofForVerifierContract(
                 startTransitionProof.proof
             )
             let tx = await unirepSocialContract.startUserStateTransition(
@@ -198,7 +178,7 @@ describe('Integration', function () {
                 'Submit user state transition proof failed'
             ).to.equal(1)
 
-            let proofNullifier = computeStartTransitionProofHash(
+            let proofNullifier = contracts.computeStartTransitionProofHash(
                 blindedUserState,
                 blindedHashChain,
                 globalStateTree,
@@ -208,8 +188,8 @@ describe('Integration', function () {
             proofIndexes.push(proofIndex)
 
             for (let i = 0; i < processAttestationProofs.length; i++) {
-                isValid = await verifyProof(
-                    Circuit.processAttestations,
+                isValid = await circuits.verifyProof(
+                    circuits.Circuit.processAttestations,
                     processAttestationProofs[i].proof,
                     processAttestationProofs[i].publicSignals
                 )
@@ -229,7 +209,7 @@ describe('Integration', function () {
                     outputBlindedUserState,
                     outputBlindedHashChain,
                     inputBlindedUserState,
-                    formatProofForVerifierContract(
+                    circuits.formatProofForVerifierContract(
                         processAttestationProofs[i].proof
                     )
                 )
@@ -239,14 +219,15 @@ describe('Integration', function () {
                     'Submit process attestations proof failed'
                 ).to.equal(1)
 
-                const proofNullifier = computeProcessAttestationsProofHash(
-                    outputBlindedUserState,
-                    outputBlindedHashChain,
-                    inputBlindedUserState,
-                    formatProofForVerifierContract(
-                        processAttestationProofs[i].proof
+                const proofNullifier =
+                    contracts.computeProcessAttestationsProofHash(
+                        outputBlindedUserState,
+                        outputBlindedHashChain,
+                        inputBlindedUserState,
+                        circuits.formatProofForVerifierContract(
+                            processAttestationProofs[i].proof
+                        )
                     )
-                )
                 const proofIndex = await unirepContract.getProofIndex(
                     proofNullifier
                 )
@@ -275,7 +256,7 @@ describe('Integration', function () {
         })
 
         it('genUserStateFromContract should match', async () => {
-            const userStateFromContract = await genUserStateFromContract(
+            const userStateFromContract = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id
@@ -295,7 +276,7 @@ describe('Integration', function () {
         })
 
         it('Second user signs up', async () => {
-            const id = new ZkIdentity()
+            const id = new crypto.ZkIdentity()
             const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
@@ -306,7 +287,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
-            users[secondUser] = await genUserStateFromContract(
+            users[secondUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[secondUser]
@@ -346,22 +327,22 @@ describe('Integration', function () {
         })
 
         it('first user publish a post and generate epoch key', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
             )
             const repNullifiersAmount = defaultPostReputation
             const epkNonce = 0
-            const epochKey = genEpochKey(
+            const epochKey = core.genEpochKey(
                 users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
-            const graffitiPreImage = genRandomSalt()
-            users[firstUser] = await genUserStateFromContract(
+            const graffitiPreImage = crypto.genRandomSalt()
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -430,7 +411,7 @@ describe('Integration', function () {
         })
 
         it('Second user upvote to first user', async () => {
-            users[secondUser] = await genUserStateFromContract(
+            users[secondUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[secondUser]
@@ -441,14 +422,14 @@ describe('Integration', function () {
             const epkNonce = 0
 
             // first user's epoch key
-            const firstUserEpochKey = genEpochKey(
+            const firstUserEpochKey = core.genEpochKey(
                 users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
-            const graffitiPreImage = genRandomSalt()
+            const graffitiPreImage = crypto.genRandomSalt()
             const nonceList: BigInt[] = findValidNonce(
                 users[secondUser],
                 repNullifiersAmount,
@@ -515,21 +496,21 @@ describe('Integration', function () {
         })
 
         it('first user leave a comment and generate epoch key', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
             )
             const repNullifiersAmount = defaultCommentReputation
             const epkNonce = 1
-            const epochKey = genEpochKey(
+            const epochKey = core.genEpochKey(
                 users[firstUser].id.getNullifier(),
                 currentEpoch.toNumber(),
                 epkNonce
             ) as BigNumberish
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
-            const graffitiPreImage = genRandomSalt()
+            const graffitiPreImage = crypto.genRandomSalt()
             const nonceList: BigInt[] = findValidNonce(
                 users[firstUser],
                 repNullifiersAmount,
@@ -622,7 +603,7 @@ describe('Integration', function () {
 
         it('Attestations gathered from events should match', async () => {
             // Gen Unirep State From Contract
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await core.genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address
             )
@@ -664,12 +645,12 @@ describe('Integration', function () {
                     await unirepContract.queryFilter(
                         attestationsByEpochKeyFilter
                     )
-                let attestations_: IAttestation[] =
+                let attestations_: core.IAttestation[] =
                     attestationsByEpochKeyEvent.map(
                         (event: any) => event['args']['attestation']
                     )
 
-                let attestations: IAttestation[] =
+                let attestations: core.IAttestation[] =
                     unirepState.getAttestations(epochKey)
                 expect(
                     attestationsByEpochKeyEvent.length,
@@ -722,7 +703,7 @@ describe('Integration', function () {
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch, 'Current epoch should be 3').to.equal(3)
 
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await core.genUnirepStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address
             )
@@ -738,7 +719,7 @@ describe('Integration', function () {
         })
 
         it('First user transition from second epoch', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -749,8 +730,8 @@ describe('Integration', function () {
                 processAttestationProofs,
                 finalTransitionProof,
             } = await users[firstUser].genUserStateTransitionProofs()
-            let isValid = await verifyProof(
-                Circuit.startTransition,
+            let isValid = await circuits.verifyProof(
+                circuits.Circuit.startTransition,
                 startTransitionProof.proof,
                 startTransitionProof.publicSignals
             )
@@ -760,7 +741,7 @@ describe('Integration', function () {
             const blindedUserState = startTransitionProof.blindedUserState
             const blindedHashChain = startTransitionProof.blindedHashChain
             const globalStateTree = startTransitionProof.globalStateTreeRoot
-            const proof = formatProofForVerifierContract(
+            const proof = circuits.formatProofForVerifierContract(
                 startTransitionProof.proof
             )
             let tx = await unirepSocialContract.startUserStateTransition(
@@ -775,7 +756,7 @@ describe('Integration', function () {
                 'Submit user state transition proof failed'
             ).to.equal(1)
 
-            let proofNullifier = computeStartTransitionProofHash(
+            let proofNullifier = contracts.computeStartTransitionProofHash(
                 blindedUserState,
                 blindedHashChain,
                 globalStateTree,
@@ -785,8 +766,8 @@ describe('Integration', function () {
             proofIndexes.push(proofIndex)
 
             for (let i = 0; i < processAttestationProofs.length; i++) {
-                isValid = await verifyProof(
-                    Circuit.processAttestations,
+                isValid = await circuits.verifyProof(
+                    circuits.Circuit.processAttestations,
                     processAttestationProofs[i].proof,
                     processAttestationProofs[i].publicSignals
                 )
@@ -806,7 +787,7 @@ describe('Integration', function () {
                     outputBlindedUserState,
                     outputBlindedHashChain,
                     inputBlindedUserState,
-                    formatProofForVerifierContract(
+                    circuits.formatProofForVerifierContract(
                         processAttestationProofs[i].proof
                     )
                 )
@@ -816,14 +797,15 @@ describe('Integration', function () {
                     'Submit process attestations proof failed'
                 ).to.equal(1)
 
-                const proofNullifier = computeProcessAttestationsProofHash(
-                    outputBlindedUserState,
-                    outputBlindedHashChain,
-                    inputBlindedUserState,
-                    formatProofForVerifierContract(
-                        processAttestationProofs[i].proof
+                const proofNullifier =
+                    contracts.computeProcessAttestationsProofHash(
+                        outputBlindedUserState,
+                        outputBlindedHashChain,
+                        inputBlindedUserState,
+                        circuits.formatProofForVerifierContract(
+                            processAttestationProofs[i].proof
+                        )
                     )
-                )
                 const proofIndex = await unirepContract.getProofIndex(
                     proofNullifier
                 )
@@ -858,7 +840,7 @@ describe('Integration', function () {
         })
 
         it('genUserStateFromContract should match', async () => {
-            const userStateFromContract = await genUserStateFromContract(
+            const userStateFromContract = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id
@@ -882,8 +864,8 @@ describe('Integration', function () {
             const proveGraffiti = BigInt(0)
             const minRep = 25
             const epkNonce = 0
-            const graffitiPreImage = genRandomSalt()
-            users[firstUser] = await genUserStateFromContract(
+            const graffitiPreImage = crypto.genRandomSalt()
+            users[firstUser] = await core.genUserStateFromContract(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]

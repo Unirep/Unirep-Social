@@ -1,11 +1,5 @@
 import base64url from 'base64url'
-import { Strategy, ZkIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract } from '@unirep/circuits'
-import {
-    genReputationNullifier,
-    genUserStateFromContract,
-    maxReputationBudget,
-} from '@unirep/core'
+import { config, crypto, circuits, core, contracts } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -17,7 +11,6 @@ import {
     defaultCommentReputation,
     defaultPostReputation,
 } from '../config/socialMedia'
-import { ReputationProof, UnirepFactory } from '@unirep/contracts'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
@@ -56,7 +49,7 @@ const configureSubparser = (subparsers: any) => {
 
     parser.add_argument('-v', '--vote-value', {
         type: 'int',
-        help: `The vote value the user wants to give, at least 1, at most ${maxReputationBudget}`,
+        help: `The vote value the user wants to give, at least 1, at most ${config.MAX_REPUTATION_BUDGET}`,
     })
 
     parser.add_argument('-mr', '--min-rep', {
@@ -89,7 +82,10 @@ const genReputationProof = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
@@ -103,7 +99,10 @@ const genReputationProof = async (args: any) => {
     }
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
+    const id = new crypto.ZkIdentity(
+        crypto.Strategy.SERIALIZED,
+        decodedIdentity
+    )
 
     // gen reputation proof
     let proveReputationAmount
@@ -116,11 +115,11 @@ const genReputationProof = async (args: any) => {
             console.error('Error: should provide a vote value')
             return
         } else if (
-            args.vote_value > maxReputationBudget ||
+            args.vote_value > config.MAX_REPUTATION_BUDGET ||
             args.vote_value < 1
         ) {
             console.error(
-                `Error: should provide a valid vote value, min: 1, max: ${maxReputationBudget}`
+                `Error: should provide a valid vote value, min: 1, max: ${config.MAX_REPUTATION_BUDGET}`
             )
             return
         }
@@ -141,7 +140,7 @@ const genReputationProof = async (args: any) => {
             ? BigInt(args.graffiti_preimage)
             : BigInt(0)
 
-    const userState = await genUserStateFromContract(
+    const userState = await core.genUserStateFromContract(
         provider,
         unirepContract.address,
         id
@@ -153,7 +152,7 @@ const genReputationProof = async (args: any) => {
     if (proveReputationAmount > 0) {
         // find valid nonce starter
         for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
-            const reputationNullifier = genReputationNullifier(
+            const reputationNullifier = core.genReputationNullifier(
                 id.getNullifier(),
                 epoch,
                 n,
@@ -180,7 +179,7 @@ const genReputationProof = async (args: any) => {
         }
     }
 
-    for (let i = proveReputationAmount; i < maxReputationBudget; i++) {
+    for (let i = proveReputationAmount; i < config.MAX_REPUTATION_BUDGET; i++) {
         nonceList.push(BigInt(-1))
     }
     const { publicSignals, proof, epochKey } =
@@ -192,7 +191,7 @@ const genReputationProof = async (args: any) => {
             graffitiPreImage,
             nonceList
         )
-    const reputationProof = new ReputationProof(publicSignals, proof)
+    const reputationProof = new contracts.ReputationProof(publicSignals, proof)
 
     // TODO: Not sure if this validation is necessary
     const isValid = await reputationProof.verify()
@@ -205,7 +204,7 @@ const genReputationProof = async (args: any) => {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    const formattedProof = formatProofForVerifierContract(proof)
+    const formattedProof = circuits.formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
     const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
     console.log(

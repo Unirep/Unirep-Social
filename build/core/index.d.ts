@@ -3,13 +3,11 @@ import {
     UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
-    Unirep,
 } from './utils'
 import {
     defaultAirdroppedReputation,
     defaultPostReputation,
     defaultCommentReputation,
-    MAX_REPUTATION_BUDGET,
 } from '../config/socialMedia'
 import {
     identityPrefix,
@@ -25,12 +23,10 @@ export {
     UnirepSocialFactory,
     UnirepSocial,
     UnirepFactory,
-    Unirep,
     deployUnirepSocial,
     defaultAirdroppedReputation,
     defaultPostReputation,
     defaultCommentReputation,
-    MAX_REPUTATION_BUDGET,
     identityPrefix,
     identityCommitmentPrefix,
     epkProofPrefix,

@@ -1,16 +1,12 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepFactory } from '@unirep/contracts'
+import { circuits, contracts } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { verifyReputationProof } from './verifyReputationProof'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { ReputationProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('vote', { add_help: true })
@@ -82,7 +78,10 @@ const vote = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
     const attestingFee = await unirepContract.attestingFee()
 
     // Parse Inputs
@@ -94,9 +93,9 @@ const vote = async (args: any) => {
     )
     const publicSignals = JSON.parse(decodedPublicSignals)
     const proof = JSON.parse(decodedProof)
-    const reputationProof = new ReputationProof(
+    const reputationProof = new contracts.ReputationProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        circuits.formatProofForSnarkjsVerification(proof)
     )
     const epoch = reputationProof.epoch
     const epochKey = reputationProof.epochKey

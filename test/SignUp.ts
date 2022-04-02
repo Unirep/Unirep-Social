@@ -2,9 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import * as config from '@unirep/config'
-import { deployUnirep } from '@unirep/contracts'
-import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
+import { config, crypto, contracts, core } from 'unirep'
 
 import { getTreeDepthsForTesting } from './utils'
 import {
@@ -16,7 +14,7 @@ import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 
 describe('Signup', function () {
     this.timeout(1000000)
-    let unirepContract
+    let unirepContract: contracts.Unirep
     let unirepSocialContract: UnirepSocial
 
     let accounts: ethers.Signer[]
@@ -35,7 +33,7 @@ describe('Signup', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: config.ATTESTTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -85,7 +83,7 @@ describe('Signup', function () {
     })
 
     describe('User sign-ups', () => {
-        const id = new ZkIdentity()
+        const id = new crypto.ZkIdentity()
         const commitment = id.genIdentityCommitment()
 
         it('sign up should succeed', async () => {
@@ -109,13 +107,15 @@ describe('Signup', function () {
         it('sign up should fail if max capacity reached', async () => {
             for (let i = 1; i < maxUsers; i++) {
                 let tx = await unirepSocialContract.userSignUp(
-                    BigNumber.from(genRandomSalt())
+                    BigNumber.from(crypto.genRandomSalt())
                 )
                 let receipt = await tx.wait()
                 expect(receipt.status).equal(1)
             }
             await expect(
-                unirepSocialContract.userSignUp(BigNumber.from(genRandomSalt()))
+                unirepSocialContract.userSignUp(
+                    BigNumber.from(crypto.genRandomSalt())
+                )
             ).to.be.revertedWith(
                 'Unirep: maximum number of user signups reached'
             )

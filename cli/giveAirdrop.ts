@@ -1,16 +1,12 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepFactory } from '@unirep/contracts'
+import { circuits, contracts } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { verifyAirdropProof } from './verifyAirdropProof'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { SignUpProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('giveAirdrop', { add_help: true })
@@ -66,7 +62,10 @@ const giveAirdrop = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
     const attestingFee = await unirepContract.attestingFee()
 
     // Parse Inputs
@@ -78,9 +77,9 @@ const giveAirdrop = async (args: any) => {
     )
     const publicSignals = JSON.parse(decodedPublicSignals)
     const proof = JSON.parse(decodedProof)
-    const signUpProof = new SignUpProof(
+    const signUpProof = new contracts.SignUpProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        circuits.formatProofForSnarkjsVerification(proof)
     )
     const epk = signUpProof.epochKey
 

@@ -2,10 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, ethers } from 'ethers'
-import * as config from '@unirep/config'
-import { UserState, genUserStateFromContract } from '@unirep/core'
-import { deployUnirep } from '@unirep/contracts'
-import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
+import { config, crypto, contracts, core } from 'unirep'
 
 import {
     findValidNonce,
@@ -26,10 +23,10 @@ describe('Post', function () {
     let unirepSocialContract: UnirepSocial
     const ids = new Array(2)
     const commitments = new Array(2)
-    let users: UserState[] = new Array(2)
+    let users: core.UserState[] = new Array(2)
 
     let accounts: ethers.Signer[]
-    const text = genRandomSalt().toString()
+    const text = crypto.genRandomSalt().toString()
     let attesterId
     let postId
 
@@ -47,7 +44,7 @@ describe('Post', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: config.ATTESTTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -104,7 +101,7 @@ describe('Post', function () {
     describe('User sign-ups', () => {
         it('sign up should succeed', async () => {
             for (let i = 0; i < 2; i++) {
-                ids[i] = new ZkIdentity()
+                ids[i] = new crypto.ZkIdentity()
                 commitments[i] = ids[i].genIdentityCommitment()
                 const tx = await unirepSocialContract.userSignUp(
                     BigNumber.from(commitments[i])
@@ -115,7 +112,7 @@ describe('Post', function () {
                 const numUserSignUps_ = await unirepContract.numUserSignUps()
                 expect(i + 1).equal(numUserSignUps_)
 
-                users[i] = await genUserStateFromContract(
+                users[i] = await core.genUserStateFromContract(
                     hardhatEthers.provider,
                     unirepContract.address,
                     ids[i]

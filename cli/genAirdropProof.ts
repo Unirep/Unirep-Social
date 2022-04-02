@@ -1,7 +1,5 @@
 import base64url from 'base64url'
-import { ZkIdentity, Strategy } from '@unirep/crypto'
-import * as circuit from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/core'
+import { crypto, circuits, core, contracts } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -10,7 +8,6 @@ import {
     signUpPublicSignalsPrefix,
 } from './prefix'
 import { UnirepSocial, UnirepSocialFactory } from '../core/utils'
-import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -48,13 +45,19 @@ const genAirdropProof = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
-    const userState = await genUserStateFromContract(
+    const id = new crypto.ZkIdentity(
+        crypto.Strategy.SERIALIZED,
+        decodedIdentity
+    )
+    const userState = await core.genUserStateFromContract(
         provider,
         unirepContract.address,
         id
@@ -66,8 +69,8 @@ const genAirdropProof = async (args: any) => {
         await userState.genUserSignUpProof(attesterId)
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await circuit.verifyProof(
-        circuit.Circuit.proveUserSignUp,
+    const isValid = await circuits.verifyProof(
+        circuits.Circuit.proveUserSignUp,
         proof,
         publicSignals
     )
@@ -76,7 +79,7 @@ const genAirdropProof = async (args: any) => {
         return
     }
 
-    const formattedProof = circuit.formatProofForVerifierContract(proof)
+    const formattedProof = circuits.formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
     const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
     console.log(`Epoch key of epoch ${epoch}: ${epochKey}`)

@@ -2,14 +2,11 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { ZkIdentity, hashOne, Strategy } from '@unirep/crypto'
-import { getUnirepContract, Unirep } from '@unirep/contracts'
 import { expect } from 'chai'
+import { crypto, contracts, core } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
-import { genUnirepStateFromContract, UnirepState } from '@unirep/core'
 import { exec } from './utils'
-
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
 import { getProvider } from '../utils'
 import { UnirepSocial, UnirepSocialFactory } from '../../core/utils'
@@ -35,9 +32,9 @@ describe('test all CLI subcommands', function () {
     const epochKeyNonce = 0
     const epochKeyNonce2 = 1
     const epochLength = 5
-    let unirepContract: Unirep
+    let unirepContract: contracts.Unirep
     let unirepSocialContract: UnirepSocial
-    let unirepState: UnirepState
+    let unirepState: core.UnirepState
 
     let userIdentity1,
         userIdentityCommitment1,
@@ -50,7 +47,7 @@ describe('test all CLI subcommands', function () {
     const posRep = 3,
         negRep = 8,
         graffitiPreimage = 0,
-        graffiti = hashOne(BigInt(graffitiPreimage))
+        graffiti = crypto.hashOne(BigInt(graffitiPreimage))
     const minPosRep = 0,
         maxNegRep = 10,
         minRepDiff = 15
@@ -108,20 +105,19 @@ describe('test all CLI subcommands', function () {
             const unirepSocialAddress = socialRegMatch[1]
 
             const provider = getProvider(DEFAULT_ETH_PROVIDER)
-            unirepContract = getUnirepContract(
+            unirepContract = contracts.getUnirepContract(
                 unirepAddress,
                 provider
-            ) as Unirep
+            ) as contracts.Unirep
 
             unirepSocialContract = UnirepSocialFactory.connect(
                 unirepSocialAddress,
                 provider
             )
 
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await core.genUnirepStateFromContract(
                 provider,
                 unirepAddress
-                // startBlock,
             )
 
             // expect(unirepState.epochLength).equal(epochLength)
@@ -149,8 +145,8 @@ describe('test all CLI subcommands', function () {
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
             )
-            const _userIdentity = new ZkIdentity(
-                Strategy.SERIALIZED,
+            const _userIdentity = new crypto.ZkIdentity(
+                crypto.Strategy.SERIALIZED,
                 serializedIdentity
             )
 
@@ -184,8 +180,8 @@ describe('test all CLI subcommands', function () {
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
             )
-            const _userIdentity = new ZkIdentity(
-                Strategy.SERIALIZED,
+            const _userIdentity = new crypto.ZkIdentity(
+                crypto.Strategy.SERIALIZED,
                 serializedIdentity
             )
 

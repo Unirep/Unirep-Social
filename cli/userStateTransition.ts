@@ -1,24 +1,11 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy } from '@unirep/crypto'
-import {
-    Circuit,
-    formatProofForVerifierContract,
-    verifyProof,
-} from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/core'
+import { crypto, circuits, contracts, core } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
-import {
-    computeStartTransitionProofHash,
-    UnirepFactory,
-} from '@unirep/contracts'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { UserTransitionProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('userStateTransition', {
@@ -70,7 +57,10 @@ const userStateTransition = async (args: any) => {
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
     // Unirep contract
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
     // Connect a signer
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
@@ -79,8 +69,11 @@ const userStateTransition = async (args: any) => {
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
-    const userState = await genUserStateFromContract(
+    const id = new crypto.ZkIdentity(
+        crypto.Strategy.SERIALIZED,
+        decodedIdentity
+    )
+    const userState = await core.genUserStateFromContract(
         provider,
         unirepContract.address,
         id
@@ -88,8 +81,8 @@ const userStateTransition = async (args: any) => {
     const results = await userState.genUserStateTransitionProofs()
 
     // Start user state transition proof
-    let isValid = await verifyProof(
-        Circuit.startTransition,
+    let isValid = await circuits.verifyProof(
+        circuits.Circuit.startTransition,
         results.startTransitionProof.proof,
         results.startTransitionProof.publicSignals
     )
@@ -102,8 +95,8 @@ const userStateTransition = async (args: any) => {
 
     // Process attestations proofs
     for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const isValid = await verifyProof(
-            Circuit.processAttestations,
+        const isValid = await circuits.verifyProof(
+            circuits.Circuit.processAttestations,
             results.processAttestationProofs[i].proof,
             results.processAttestationProofs[i].publicSignals
         )
@@ -116,8 +109,8 @@ const userStateTransition = async (args: any) => {
     }
 
     // User state transition proof
-    isValid = await verifyProof(
-        Circuit.userStateTransition,
+    isValid = await circuits.verifyProof(
+        circuits.Circuit.userStateTransition,
         results.finalTransitionProof.proof,
         results.finalTransitionProof.publicSignals
     )
@@ -139,7 +132,7 @@ const userStateTransition = async (args: any) => {
                 blindedUserState,
                 blindedHashChain,
                 globalStateTreeRoot,
-                formatProofForVerifierContract(proof)
+                circuits.formatProofForVerifierContract(proof)
             )
         txPromises.push(tx.wait())
     }
@@ -157,7 +150,7 @@ const userStateTransition = async (args: any) => {
                 outputBlindedUserState,
                 outputBlindedHashChain,
                 inputBlindedUserState,
-                formatProofForVerifierContract(proof)
+                circuits.formatProofForVerifierContract(proof)
             )
         txPromises.push(tx.wait())
     }
@@ -165,11 +158,11 @@ const userStateTransition = async (args: any) => {
 
     const proofIndexes: number[] = []
     {
-        const proofNullifier = computeStartTransitionProofHash(
+        const proofNullifier = contracts.computeStartTransitionProofHash(
             blindedUserState,
             blindedHashChain,
             globalStateTreeRoot,
-            formatProofForVerifierContract(proof)
+            circuits.formatProofForVerifierContract(proof)
         )
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
@@ -181,16 +174,16 @@ const userStateTransition = async (args: any) => {
             inputBlindedUserState,
             proof,
         } = results.processAttestationProofs[i]
-        const proofNullifier = computeStartTransitionProofHash(
+        const proofNullifier = contracts.computeStartTransitionProofHash(
             outputBlindedUserState,
             outputBlindedHashChain,
             inputBlindedUserState,
-            formatProofForVerifierContract(proof)
+            circuits.formatProofForVerifierContract(proof)
         )
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
     }
-    const USTProof = new UserTransitionProof(
+    const USTProof = new contracts.UserTransitionProof(
         results.finalTransitionProof.publicSignals,
         results.finalTransitionProof.proof
     )

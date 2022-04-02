@@ -1,7 +1,5 @@
 import base64url from 'base64url'
-import { Strategy, ZkIdentity } from '@unirep/crypto'
-import * as circuit from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/core'
+import { crypto, circuits, core, contracts } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -10,7 +8,6 @@ import {
     identityPrefix,
 } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
-import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -62,7 +59,10 @@ const genEpochKeyAndProof = async (args: any) => {
         provider
     )
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
@@ -78,8 +78,11 @@ const genEpochKeyAndProof = async (args: any) => {
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = new ZkIdentity(Strategy.SERIALIZED, decodedIdentity)
-    const userState = await genUserStateFromContract(
+    const id = new crypto.ZkIdentity(
+        crypto.Strategy.SERIALIZED,
+        decodedIdentity
+    )
+    const userState = await core.genUserStateFromContract(
         provider,
         unirepContract.address,
         id
@@ -88,8 +91,8 @@ const genEpochKeyAndProof = async (args: any) => {
         await userState.genVerifyEpochKeyProof(epkNonce)
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await circuit.verifyProof(
-        circuit.Circuit.verifyEpochKey,
+    const isValid = await circuits.verifyProof(
+        circuits.Circuit.verifyEpochKey,
         proof,
         publicSignals
     )
@@ -98,7 +101,7 @@ const genEpochKeyAndProof = async (args: any) => {
         return
     }
 
-    const formattedProof = circuit.formatProofForVerifierContract(proof)
+    const formattedProof = circuits.formatProofForVerifierContract(proof)
     const encodedProof = base64url.encode(JSON.stringify(formattedProof))
     const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
     console.log(

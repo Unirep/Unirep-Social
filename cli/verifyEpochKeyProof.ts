@@ -1,15 +1,10 @@
 import base64url from 'base64url'
-import { genUnirepStateFromContract } from '@unirep/core'
-import { UnirepFactory } from '@unirep/contracts'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { circuits, contracts, core } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { EpochKeyProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('verifyEpochKeyProof', {
@@ -61,9 +56,12 @@ const verifyEpochKeyProof = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
-    const unirepState = await genUnirepStateFromContract(
+    const unirepState = await core.genUnirepStateFromContract(
         provider,
         unirepContract.address
     )
@@ -76,9 +74,9 @@ const verifyEpochKeyProof = async (args: any) => {
     )
     const proof = JSON.parse(decodedProof)
     const publicSignals = JSON.parse(decodedPublicSignals)
-    const epochKeyProof = new EpochKeyProof(
+    const epochKeyProof = new contracts.EpochKeyProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        circuits.formatProofForSnarkjsVerification(proof)
     )
     const currentEpoch = unirepState.currentEpoch
     const epk = epochKeyProof.epochKey

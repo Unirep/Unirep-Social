@@ -9,9 +9,6 @@ import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep_
 import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
 import { UnirepSocial } from '../typechain/UnirepSocial'
 
-// TODO: use export package from '@unirep/unirep'
-import { Unirep } from '../typechain/Unirep'
-
 const deployUnirepSocial = async (
     deployer: ethers.Signer,
     UnirepAddr: string,
@@ -58,10 +55,4 @@ const deployUnirepSocial = async (
     return c
 }
 
-export {
-    deployUnirepSocial,
-    UnirepFactory,
-    UnirepSocialFactory,
-    UnirepSocial,
-    Unirep,
-}
+export { deployUnirepSocial, UnirepFactory, UnirepSocialFactory, UnirepSocial }

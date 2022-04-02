@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import * as config from '@unirep/config'
+import { config } from 'unirep'
 
 dotenv.config({
     path: '.env',

@@ -1,7 +1,7 @@
 // @ts-ignore
 import { ethers } from 'ethers'
-import * as config from '@unirep/config'
-import { deployUnirep, getUnirepContract } from '@unirep/contracts'
+import { config, contracts } from 'unirep'
+
 import * as socialMediaConfig from '../config/socialMedia'
 import { deployUnirepSocial } from '../core/utils'
 import * as defaultConfig from './defaults'
@@ -146,14 +146,14 @@ const deploy = async (args: any) => {
 
     let unirepContract
     if (args.contract == null) {
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             deployer.signer,
             treeDepths,
             UnirepSettings
         )
     } else {
         // Unirep contract
-        unirepContract = getUnirepContract(args.contract, provider)
+        unirepContract = contracts.getUnirepContract(args.contract, provider)
     }
 
     const unirepSocialContract = await deployUnirepSocial(

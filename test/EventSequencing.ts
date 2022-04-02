@@ -2,14 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
-import { genRandomSalt, ZkIdentity, SnarkProof } from '@unirep/crypto'
-import { deployUnirep, Event } from '@unirep/contracts'
-import * as config from '@unirep/config'
-import { genEpochKey } from '@unirep/core'
-import {
-    formatProofForVerifierContract,
-    formatProofForSnarkjsVerification,
-} from '@unirep/circuits'
+import { config, crypto, circuits, contracts, core } from 'unirep'
 
 import {
     genRandomList,
@@ -23,14 +16,14 @@ import {
 } from '../config/socialMedia'
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 
-const genRandomProof = (): SnarkProof => {
-    return formatProofForSnarkjsVerification(
+const genRandomProof = (): crypto.SnarkProof => {
+    return circuits.formatProofForSnarkjsVerification(
         genRandomList(8).map((n) => n.toString())
-    ) as SnarkProof
+    ) as crypto.SnarkProof
 }
 
 const genRandomBigNumberish = (): BigNumberish => {
-    return genRandomSalt() as BigNumberish
+    return crypto.genRandomSalt() as BigNumberish
 }
 
 describe('EventSequencing', function () {
@@ -48,7 +41,7 @@ describe('EventSequencing', function () {
     let accounts: ethers.Signer[]
     let epochKeyNonce = 0
     const transitionFromEpoch = 1
-    const epochKey = genEpochKey(genRandomSalt(), 1, epochKeyNonce)
+    const epochKey = core.genEpochKey(crypto.genRandomSalt(), 1, epochKeyNonce)
 
     const repPublicSignals = genRandomList(18) as BigNumberish[]
     const ustPublicSignals = genRandomList(12) as BigNumberish[]
@@ -57,7 +50,7 @@ describe('EventSequencing', function () {
     let currentEpoch
     let userIds: any[] = [],
         userCommitments: any[] = []
-    const text = genRandomSalt().toString()
+    const text = crypto.genRandomSalt().toString()
     let proofIndex
     let postId
 
@@ -73,7 +66,7 @@ describe('EventSequencing', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: config.ATTESTTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -85,7 +78,7 @@ describe('EventSequencing', function () {
     })
 
     it('should sign up first user', async () => {
-        const userId = new ZkIdentity()
+        const userId = new crypto.ZkIdentity()
         const userCommitment = userId.genIdentityCommitment()
         userIds.push(userId)
         userCommitments.push(userCommitment)
@@ -94,7 +87,7 @@ describe('EventSequencing', function () {
         )
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(Event.UserSignedUp)
+        expectedUnirepEventsInOrder.push(contracts.Event.UserSignedUp)
         expectedSignUpEventsLength++
     })
 
@@ -117,12 +110,12 @@ describe('EventSequencing', function () {
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
         postId = tx.hash
-        expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(contracts.Event.AttestationSubmitted)
         expectedPostEventsLength++
     })
 
     it('should sign up second user', async () => {
-        const userId = new ZkIdentity()
+        const userId = new crypto.ZkIdentity()
         const userCommitment = userId.genIdentityCommitment()
         userIds.push(userId)
         userCommitments.push(userCommitment)
@@ -131,7 +124,7 @@ describe('EventSequencing', function () {
         )
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(Event.UserSignedUp)
+        expectedUnirepEventsInOrder.push(contracts.Event.UserSignedUp)
         expectedSignUpEventsLength++
     })
 
@@ -153,7 +146,7 @@ describe('EventSequencing', function () {
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit comment failed').to.equal(1)
-        expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(contracts.Event.AttestationSubmitted)
         expectedCommentEventsLength++
 
         const proofNullifier = await unirepContract.hashReputationProof(
@@ -165,7 +158,7 @@ describe('EventSequencing', function () {
     it('first user should upvote second user', async () => {
         let upvoteValue = 3
         let epochKeyNonce = 1
-        const toEpochKey = genEpochKey(
+        const toEpochKey = core.genEpochKey(
             userIds[1].getNullifier(),
             currentEpoch,
             epochKeyNonce
@@ -190,8 +183,8 @@ describe('EventSequencing', function () {
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit upvote failed').to.equal(1)
-        expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
-        expectedUnirepEventsInOrder.push(Event.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(contracts.Event.AttestationSubmitted)
+        expectedUnirepEventsInOrder.push(contracts.Event.AttestationSubmitted)
         expectedVoteEventsLength++
     })
 
@@ -203,7 +196,7 @@ describe('EventSequencing', function () {
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
-        expectedUnirepEventsInOrder.push(Event.EpochEnded)
+        expectedUnirepEventsInOrder.push(contracts.Event.EpochEnded)
     })
 
     it('Second user should perform transition', async () => {
@@ -211,7 +204,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -220,7 +213,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -234,7 +227,7 @@ describe('EventSequencing', function () {
         tx = await unirepSocialContract.updateUserStateRoot(USTProof, indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(Event.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(contracts.Event.UserStateTransitioned)
     })
 
     it('second epoch ended', async () => {
@@ -245,7 +238,7 @@ describe('EventSequencing', function () {
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
-        expectedUnirepEventsInOrder.push(Event.EpochEnded)
+        expectedUnirepEventsInOrder.push(contracts.Event.EpochEnded)
     })
 
     it('Third epoch ended', async () => {
@@ -256,7 +249,7 @@ describe('EventSequencing', function () {
         const receipt = await tx.wait()
         expect(receipt.status).equal(1)
         currentEpoch = await unirepContract.currentEpoch()
-        expectedUnirepEventsInOrder.push(Event.EpochEnded)
+        expectedUnirepEventsInOrder.push(contracts.Event.EpochEnded)
     })
 
     it('First user should perform transition', async () => {
@@ -264,7 +257,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -273,7 +266,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -287,7 +280,7 @@ describe('EventSequencing', function () {
         tx = await unirepSocialContract.updateUserStateRoot(USTProof, indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(Event.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(contracts.Event.UserStateTransitioned)
     })
 
     it('Second user should perform transition', async () => {
@@ -295,7 +288,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -304,7 +297,7 @@ describe('EventSequencing', function () {
             genRandomBigNumberish(),
             genRandomBigNumberish(),
             genRandomBigNumberish(),
-            formatProofForVerifierContract(genRandomProof())
+            circuits.formatProofForVerifierContract(genRandomProof())
         )
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
@@ -318,7 +311,7 @@ describe('EventSequencing', function () {
         tx = await unirepSocialContract.updateUserStateRoot(USTProof, indexes)
         receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        expectedUnirepEventsInOrder.push(Event.UserStateTransitioned)
+        expectedUnirepEventsInOrder.push(contracts.Event.UserStateTransitioned)
     })
 
     it('Unirep events order should match sequencer order', async () => {

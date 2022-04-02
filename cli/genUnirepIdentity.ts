@@ -1,5 +1,5 @@
 import base64url from 'base64url'
-import { ZkIdentity } from '@unirep/crypto'
+import { crypto } from 'unirep'
 
 import { identityPrefix, identityCommitmentPrefix } from './prefix'
 
@@ -9,7 +9,7 @@ const configureSubparser = (subparsers: any) => {
 
 const genUnirepIdentity = async (args: any) => {
     // eslint-disable-line @typescript-eslint/no-unused-vars
-    const id = new ZkIdentity()
+    const id = new crypto.ZkIdentity()
     const commitment = id.genIdentityCommitment()
 
     const serializedIdentity = id.serializeIdentity()

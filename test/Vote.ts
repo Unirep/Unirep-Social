@@ -2,11 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumberish, ethers } from 'ethers'
 import { expect } from 'chai'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import * as config from '@unirep/config'
-import { UserState, genUserStateFromContract, genEpochKey } from '@unirep/core'
-import { deployUnirep } from '@unirep/contracts'
-import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
+import { config, crypto, circuits, contracts, core } from 'unirep'
 
 import {
     findValidNonce,
@@ -24,11 +20,11 @@ import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 describe('Vote', function () {
     this.timeout(300000)
 
-    let unirepContract
+    let unirepContract: contracts.Unirep
     let unirepSocialContract: UnirepSocial
     const ids = new Array(2)
     const commitments = new Array(2)
-    let users: UserState[] = new Array(2)
+    let users: core.UserState[] = new Array(2)
 
     let accounts: ethers.Signer[]
     let reputationProof: ReputationProof
@@ -48,7 +44,7 @@ describe('Vote', function () {
             epochLength: config.EPOCH_LENGTH,
             attestingFee: config.ATTESTTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = await contracts.deployUnirep(
             <ethers.Wallet>accounts[0],
             _treeDepths,
             _settings
@@ -92,9 +88,9 @@ describe('Vote', function () {
         const unirepAddress_ = await unirepSocialContract.unirep()
         expect(unirepAddress_).equal(unirepContract.address)
 
-        attesterId = BigInt(
+        attesterId = (
             await unirepContract.attesters(unirepSocialContract.address)
-        )
+        ).toBigInt()
         expect(attesterId).not.equal(BigInt(0))
         const airdropAmount = await unirepContract.airdropAmount(
             unirepSocialContract.address
@@ -105,7 +101,7 @@ describe('Vote', function () {
     describe('User sign-ups', () => {
         it('sign up should succeed', async () => {
             for (let i = 0; i < 2; i++) {
-                ids[i] = new ZkIdentity()
+                ids[i] = new crypto.ZkIdentity()
                 commitments[i] = ids[i].genIdentityCommitment()
                 const tx = await unirepSocialContract.userSignUp(commitments[i])
                 const receipt = await tx.wait()
@@ -115,7 +111,7 @@ describe('Vote', function () {
                 const numUserSignUps_ = await unirepContract.numUserSignUps()
                 expect(i + 1).equal(numUserSignUps_)
 
-                users[i] = await genUserStateFromContract(
+                users[i] = await core.genUserStateFromContract(
                     hardhatEthers.provider,
                     unirepContract.address,
                     ids[i]
@@ -160,8 +156,8 @@ describe('Vote', function () {
 
     describe('Upvote', () => {
         const currentEpoch = 1
-        let toEpochKey = genEpochKey(
-            genRandomSalt(),
+        let toEpochKey = core.genEpochKey(
+            crypto.genRandomSalt(),
             currentEpoch,
             0
         ) as BigNumberish
@@ -172,13 +168,13 @@ describe('Vote', function () {
                 proof.push('0')
             }
             const publicSignals = [
-                genRandomSalt(),
+                crypto.genRandomSalt(),
                 currentEpoch,
                 toEpochKey,
             ] as BigNumberish[]
             const epochKeyProof = new EpochKeyProof(
                 publicSignals,
-                formatProofForSnarkjsVerification(proof)
+                circuits.formatProofForSnarkjsVerification(proof)
             )
             const tx = await unirepContract.submitEpochKeyProof(epochKeyProof)
             const receipt = await tx.wait()

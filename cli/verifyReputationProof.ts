@@ -1,10 +1,8 @@
 import base64url from 'base64url'
+import { circuits, contracts, core } from 'unirep'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { genUnirepStateFromContract } from '@unirep/core'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
-import { ReputationProof, Unirep, UnirepFactory } from '@unirep/contracts'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
 
@@ -64,9 +62,12 @@ const verifyReputationProof = async (args: any) => {
     )
     // Unirep contract
     const unirepContractAddr = await unirepSocialContract.unirep()
-    const unirepContract = UnirepFactory.connect(unirepContractAddr, provider)
+    const unirepContract = contracts.UnirepFactory.connect(
+        unirepContractAddr,
+        provider
+    )
 
-    const unirepState = await genUnirepStateFromContract(
+    const unirepState = await core.genUnirepStateFromContract(
         provider,
         unirepContract.address
     )
@@ -80,9 +81,9 @@ const verifyReputationProof = async (args: any) => {
     )
     const publicSignals = JSON.parse(decodedPublicSignals)
     const proof = JSON.parse(decodedProof)
-    const reputationProof = new ReputationProof(
+    const reputationProof = new contracts.ReputationProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        circuits.formatProofForSnarkjsVerification(proof)
     )
     const epoch = Number(reputationProof.epoch)
     const epk = reputationProof.epochKey

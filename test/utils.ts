@@ -1,10 +1,6 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import Keyv from 'keyv'
-import * as crypto from '@unirep/crypto'
-import * as config from '@unirep/config'
-import { genReputationNullifier, UserState } from '@unirep/core'
-import * as circuit from '@unirep/circuits'
-import { UnirepFactory } from '@unirep/contracts'
+import { crypto, config, circuits, contracts, core } from 'unirep'
 
 export type Field = BigNumberish
 
@@ -50,7 +46,7 @@ class EpochKeyProof {
 
     constructor(_publicSignals: Field[], _proof: crypto.SnarkProof) {
         const formattedProof: any[] =
-            circuit.formatProofForVerifierContract(_proof)
+            circuits.formatProofForVerifierContract(_proof)
         this.globalStateTree = _publicSignals[0]
         this.epoch = _publicSignals[1]
         this.epochKey = _publicSignals[2]
@@ -59,18 +55,18 @@ class EpochKeyProof {
     }
 
     public verify = (): Promise<boolean> => {
-        const proof_ = circuit.formatProofForSnarkjsVerification(
+        const proof_ = circuits.formatProofForSnarkjsVerification(
             this.proof.map((n) => n.toString())
         )
-        return circuit.verifyProof(
-            circuit.Circuit.verifyEpochKey,
+        return circuits.verifyProof(
+            circuits.Circuit.verifyEpochKey,
             proof_,
             this.publicSignals.map((n) => BigInt(n.toString()))
         )
     }
 
     public hash = () => {
-        const iface = new ethers.utils.Interface(UnirepFactory.abi)
+        const iface = new ethers.utils.Interface(contracts.UnirepFactory.abi)
         const abiEncoder = iface.encodeFunctionData('hashEpochKeyProof', [this])
         return ethers.utils.keccak256(rmFuncSigHash(abiEncoder))
     }
@@ -91,7 +87,7 @@ class ReputationProof {
 
     constructor(_publicSignals: Field[], _proof: crypto.SnarkProof) {
         const formattedProof: any[] =
-            circuit.formatProofForVerifierContract(_proof)
+            circuits.formatProofForVerifierContract(_proof)
         this.repNullifiers = _publicSignals.slice(
             0,
             config.MAX_REPUTATION_BUDGET
@@ -110,11 +106,11 @@ class ReputationProof {
     }
 
     public verify = (): Promise<boolean> => {
-        const proof_ = circuit.formatProofForSnarkjsVerification(
+        const proof_ = circuits.formatProofForSnarkjsVerification(
             this.proof.map((n) => n.toString())
         )
-        return circuit.verifyProof(
-            circuit.Circuit.proveReputation,
+        return circuits.verifyProof(
+            circuits.Circuit.proveReputation,
             proof_,
             this.publicSignals.map((n) => BigInt(n.toString()))
         )
@@ -153,7 +149,7 @@ class SignUpProof {
 
     constructor(_publicSignals: Field[], _proof: crypto.SnarkProof) {
         const formattedProof: any[] =
-            circuit.formatProofForVerifierContract(_proof)
+            circuits.formatProofForVerifierContract(_proof)
         this.epoch = _publicSignals[0]
         this.epochKey = _publicSignals[1]
         this.globalStateTree = _publicSignals[2]
@@ -164,18 +160,18 @@ class SignUpProof {
     }
 
     public verify = (): Promise<boolean> => {
-        const proof_ = circuit.formatProofForSnarkjsVerification(
+        const proof_ = circuits.formatProofForSnarkjsVerification(
             this.proof.map((n) => n.toString())
         )
-        return circuit.verifyProof(
-            circuit.Circuit.proveUserSignUp,
+        return circuits.verifyProof(
+            circuits.Circuit.proveUserSignUp,
             proof_,
             this.publicSignals.map((n) => BigInt(n.toString()))
         )
     }
 
     public hash = () => {
-        const iface = new ethers.utils.Interface(UnirepFactory.abi)
+        const iface = new ethers.utils.Interface(contracts.UnirepFactory.abi)
         const abiEncoder = iface.encodeFunctionData('hashSignUpProof', [this])
         return ethers.utils.keccak256(rmFuncSigHash(abiEncoder))
     }
@@ -194,7 +190,7 @@ class UserTransitionProof {
 
     constructor(_publicSignals: Field[], _proof: crypto.SnarkProof) {
         const formattedProof: any[] =
-            circuit.formatProofForVerifierContract(_proof)
+            circuits.formatProofForVerifierContract(_proof)
         this.newGlobalStateTreeLeaf = _publicSignals[0]
         this.epkNullifiers = []
         this.blindedUserStates = []
@@ -224,11 +220,11 @@ class UserTransitionProof {
     }
 
     public verify = (): Promise<boolean> => {
-        const proof_ = circuit.formatProofForSnarkjsVerification(
+        const proof_ = circuits.formatProofForSnarkjsVerification(
             this.proof.map((n) => n.toString())
         )
-        return circuit.verifyProof(
-            circuit.Circuit.userStateTransition,
+        return circuits.verifyProof(
+            circuits.Circuit.userStateTransition,
             proof_,
             this.publicSignals.map((n) => BigInt(n.toString()))
         )
@@ -310,7 +306,7 @@ const genNewUserStateTree = async (): Promise<crypto.SparseMerkleTree> => {
 }
 
 const findValidNonce = (
-    userState: UserState,
+    userState: core.UserState,
     repNullifiersAmount: number,
     epoch: number,
     attesterId: BigInt
@@ -320,7 +316,7 @@ const findValidNonce = (
     while (nonceList.length < repNullifiersAmount) {
         if (
             !userState.nullifierExist(
-                genReputationNullifier(
+                core.genReputationNullifier(
                     userState.id.getNullifier(),
                     epoch,
                     nonce,
