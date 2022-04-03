@@ -6,6 +6,8 @@ cache
 typechain
 !/build/typechain
 build/Unirep
+**/**.dbg.json
+**/build-info
 
 # .env file
 .env
