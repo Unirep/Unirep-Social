@@ -9517,7 +9517,7 @@ union-value@^1.0.0:
 
 "unirep@git+https://github.com/Unirep/Unirep.git#alpha-monorepo":
   version "1.0.0-alpha"
-  resolved "git+https://github.com/Unirep/Unirep.git#73f40589984d75a3ee74a950d7bea0921964828d"
+  resolved "git+https://github.com/Unirep/Unirep.git#0b43e92000349bfa0f269dc741e39e774613d364"
   dependencies:
     "@ethersproject/bignumber" "^5.5.0"
     "@ethersproject/random" "^5.5.1"

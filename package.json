@@ -6,7 +6,6 @@
     "scripts": {
         "build": "yarn compile && npx hardhat typechain && tsc && yarn lint --write",
         "compile": "npx hardhat compile",
-        "link-unirep": "./scripts/linkPackages.sh",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
