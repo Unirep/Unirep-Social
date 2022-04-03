@@ -2083,16 +2083,6 @@
   resolved "https://registry.npmjs.org/@yarnpkg/lockfile/-/lockfile-1.1.0.tgz"
   integrity sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==
 
-"@zk-kit/identity@^1.4.1":
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@zk-kit/identity/-/identity-1.4.1.tgz#4bb31ba9d2aff64c80a9be92f743a95795b63300"
-  integrity sha512-M+R0npTMAwXr1GkuCUr/jV25D7CnQWOGLS+8ClNu6Y3MAIGOOKllz6pnwLbItoezlQgDxUqCWdQKIwOw2v+RYQ==
-  dependencies:
-    "@ethersproject/bignumber" "^5.5.0"
-    "@ethersproject/random" "^5.5.1"
-    circomlibjs "0.0.8"
-    js-sha256 "^0.9.0"
-
 "@zk-kit/incremental-merkle-tree@^0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@zk-kit/incremental-merkle-tree/-/incremental-merkle-tree-0.4.3.tgz#197f72102d35dd9c546a6a432896d6d6f6de05f4"
@@ -3877,6 +3867,11 @@ crypto-browserify@3.12.0:
     public-encrypt "^4.0.0"
     randombytes "^2.0.0"
     randomfill "^1.0.3"
+
+crypto-js@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
+  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
 
 d@1, d@^1.0.1:
   version "1.0.1"
@@ -6392,11 +6387,6 @@ jake@^10.6.1:
     chalk "^4.0.2"
     filelist "^1.0.1"
     minimatch "^3.0.4"
-
-js-sha256@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/js-sha256/-/js-sha256-0.9.0.tgz#0b89ac166583e91ef9123644bd3c5334ce9d0966"
-  integrity sha512-sga3MHh9sgQN2+pJ9VYZ+1LPwXOxuBJBA5nrR5/ofPfuiJBE2hnjsaN8se8JznOmGLN2p49Pe5U/ttafcs/apA==
 
 js-sha3@0.5.7, js-sha3@^0.5.7:
   version "0.5.7"
@@ -9527,13 +9517,16 @@ union-value@^1.0.0:
 
 "unirep@git+https://github.com/Unirep/Unirep.git#alpha-monorepo":
   version "1.0.0-alpha"
-  resolved "git+https://github.com/Unirep/Unirep.git#0702a2eea4e7d100528c74dfd6fe06fd2483e7aa"
+  resolved "git+https://github.com/Unirep/Unirep.git#73f40589984d75a3ee74a950d7bea0921964828d"
   dependencies:
+    "@ethersproject/bignumber" "^5.5.0"
+    "@ethersproject/random" "^5.5.1"
     "@openzeppelin/contracts" "4.4.2"
-    "@zk-kit/identity" "^1.4.1"
     "@zk-kit/incremental-merkle-tree" "^0.4.3"
     argparse "^2.0.1"
     base64url "^3.0.1"
+    circomlibjs "0.0.8"
+    crypto-js "^4.1.1"
     ethers "^5.5.3"
     link-module-alias "^1.2.0"
     maci-crypto "^0.9.1"
