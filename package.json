@@ -1,6 +1,6 @@
 {
     "name": "@unirep/unirep-social",
-    "version": "1.0.0",
+    "version": "1.0.0-alpha",
     "description": "",
     "main": "build/core/index.js",
     "scripts": {
@@ -23,7 +23,6 @@
     },
     "homepage": "https://github.com/Unirep/Unirep-Social#readme",
     "devDependencies": {
-        "unirep": "git+https://github.com/Unirep/Unirep.git#alpha-monorepo",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-waffle": "^2.0.1",
         "@types/chai": "^4.2.14",
@@ -39,6 +38,7 @@
         "typechain": "^7.0.1"
     },
     "dependencies": {
+        "unirep": "git+https://github.com/Unirep/Unirep.git#alpha-monorepo",
         "@openzeppelin/contracts": "^4.5.0",
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
