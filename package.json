@@ -9,7 +9,7 @@
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/ -name '*.ts')",
+        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/ -name '*.test.ts')",
         "lint": "prettier ."
     },
     "repository": {

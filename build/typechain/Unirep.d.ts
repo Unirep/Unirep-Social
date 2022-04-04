@@ -301,7 +301,7 @@ export interface UnirepInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "verifyUserSignUp", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "verifyUserStateTransition", data: BytesLike): Result;
     events: {
-        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256)": EventFragment;
+        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256,uint256)": EventFragment;
         "EpochEnded(uint256)": EventFragment;
         "IndexedEpochKeyProof(uint256,uint256,uint256,tuple)": EventFragment;
         "IndexedProcessedAttestationsProof(uint256,uint256,uint256,uint256,uint256[8])": EventFragment;
@@ -332,6 +332,7 @@ export declare type AttestationSubmittedEvent = TypedEvent<[
     number,
     UnirepTypes.AttestationStructOutput,
     BigNumber,
+    BigNumber,
     BigNumber
 ], {
     epoch: BigNumber;
@@ -341,6 +342,7 @@ export declare type AttestationSubmittedEvent = TypedEvent<[
     attestation: UnirepTypes.AttestationStructOutput;
     toProofIndex: BigNumber;
     fromProofIndex: BigNumber;
+    attestIndex: BigNumber;
 }>;
 export declare type AttestationSubmittedEventFilter = TypedEventFilter<AttestationSubmittedEvent>;
 export declare type EpochEndedEvent = TypedEvent<[BigNumber], {
@@ -732,8 +734,8 @@ export interface Unirep extends BaseContract {
         verifyUserStateTransition(_input: UnirepTypes.UserTransitionProofStruct, overrides?: CallOverrides): Promise<boolean>;
     };
     filters: {
-        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256)"(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null): AttestationSubmittedEventFilter;
-        AttestationSubmitted(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null): AttestationSubmittedEventFilter;
+        "AttestationSubmitted(uint256,uint256,address,uint8,tuple,uint256,uint256,uint256)"(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null, attestIndex?: null): AttestationSubmittedEventFilter;
+        AttestationSubmitted(epoch?: BigNumberish | null, epochKey?: BigNumberish | null, attester?: string | null, attestationEvent?: null, attestation?: null, toProofIndex?: null, fromProofIndex?: null, attestIndex?: null): AttestationSubmittedEventFilter;
         "EpochEnded(uint256)"(epoch?: BigNumberish | null): EpochEndedEventFilter;
         EpochEnded(epoch?: BigNumberish | null): EpochEndedEventFilter;
         "IndexedEpochKeyProof(uint256,uint256,uint256,tuple)"(proofIndex?: BigNumberish | null, epoch?: BigNumberish | null, epochKey?: BigNumberish | null, proof?: null): IndexedEpochKeyProofEventFilter;
