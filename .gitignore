@@ -3,6 +3,7 @@ node_modules
 
 #Buidler files
 artifacts
+!/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json
 cache
 typechain
 !/build/typechain
