@@ -1714,9 +1714,9 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@unirep/circuits@git+https://github.com/Unirep/circuits.git":
+"@unirep/circuits@git+https://github.com/Unirep/circuits.git#alpha":
   version "1.0.4"
-  resolved "git+https://github.com/Unirep/circuits.git#8ad082168f986995083cfb4f1113794465fa5d86"
+  resolved "git+https://github.com/Unirep/circuits.git#fcaa4cc806152268496af9f0be9d1206e4cb16c5"
   dependencies:
     "@unirep/crypto" "git+https://github.com/Unirep/crypto.git"
     argparse "^2.0.1"
@@ -1725,12 +1725,12 @@
     snarkjs "^0.4.7"
     typescript "^4.4.2"
 
-"@unirep/contracts@git+https://github.com/Unirep/contracts.git":
+"@unirep/contracts@git+https://github.com/Unirep/contracts.git#alpha":
   version "1.0.6"
-  resolved "git+https://github.com/Unirep/contracts.git#6966bdc9874aab7215ffba2bfbcd3f56cc8f6752"
+  resolved "git+https://github.com/Unirep/contracts.git#74d5f302ba3ce21b839843ba80393c9edf9f2684"
   dependencies:
     "@openzeppelin/contracts" "^4.4.2"
-    "@unirep/circuits" "git+https://github.com/Unirep/circuits.git"
+    "@unirep/circuits" "git+https://github.com/Unirep/circuits.git#alpha"
     "@unirep/crypto" "git+https://github.com/Unirep/crypto.git"
     argparse "^2.0.1"
     ethers "^5.5.3"
@@ -1745,18 +1745,18 @@
     maci-crypto "^0.9.1"
     typescript "^4.4.2"
 
-"@unirep/unirep@git+https://github.com/Unirep/unirep.git":
+"@unirep/unirep@git+https://github.com/Unirep/unirep.git#alpha":
   version "1.0.0"
-  resolved "git+https://github.com/Unirep/unirep.git#60d7bad732b2b0580e6357b4cb290534dcb43297"
+  resolved "git+https://github.com/Unirep/unirep.git#1190d95bde29d7a0800ceaf65bae33b120f6fe3a"
   dependencies:
     "@typechain/ethers-v5" "^9.0.0"
     "@typechain/hardhat" "^4.0.0"
-    "@unirep/circuits" "git+https://github.com/Unirep/circuits.git"
-    "@unirep/contracts" "git+https://github.com/Unirep/contracts.git"
+    "@unirep/circuits" "git+https://github.com/Unirep/circuits.git#alpha"
+    "@unirep/contracts" "git+https://github.com/Unirep/contracts.git#alpha"
     "@unirep/crypto" "git+https://github.com/Unirep/crypto.git"
     argparse "^2.0.1"
     base64url "^3.0.1"
-    ethers "^5.4.6"
+    ethers "^5.5.3"
     typescript "^4.5.4"
 
 "@yarnpkg/lockfile@^1.1.0":
@@ -4509,42 +4509,6 @@ ethers@^5.0.1, ethers@^5.0.2:
     "@ethersproject/web" "5.2.0"
     "@ethersproject/wordlists" "5.2.0"
 
-ethers@^5.4.6, ethers@^5.5.3, ethers@^5.5.4:
-  version "5.5.4"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.5.4.tgz#e1155b73376a2f5da448e4a33351b57a885f4352"
-  integrity sha512-N9IAXsF8iKhgHIC6pquzRgPBJEzc9auw3JoRkaKe+y4Wl/LFBtDDunNe7YmdomontECAcC5APaAgWZBiu1kirw==
-  dependencies:
-    "@ethersproject/abi" "5.5.0"
-    "@ethersproject/abstract-provider" "5.5.1"
-    "@ethersproject/abstract-signer" "5.5.0"
-    "@ethersproject/address" "5.5.0"
-    "@ethersproject/base64" "5.5.0"
-    "@ethersproject/basex" "5.5.0"
-    "@ethersproject/bignumber" "5.5.0"
-    "@ethersproject/bytes" "5.5.0"
-    "@ethersproject/constants" "5.5.0"
-    "@ethersproject/contracts" "5.5.0"
-    "@ethersproject/hash" "5.5.0"
-    "@ethersproject/hdnode" "5.5.0"
-    "@ethersproject/json-wallets" "5.5.0"
-    "@ethersproject/keccak256" "5.5.0"
-    "@ethersproject/logger" "5.5.0"
-    "@ethersproject/networks" "5.5.2"
-    "@ethersproject/pbkdf2" "5.5.0"
-    "@ethersproject/properties" "5.5.0"
-    "@ethersproject/providers" "5.5.3"
-    "@ethersproject/random" "5.5.1"
-    "@ethersproject/rlp" "5.5.0"
-    "@ethersproject/sha2" "5.5.0"
-    "@ethersproject/signing-key" "5.5.0"
-    "@ethersproject/solidity" "5.5.0"
-    "@ethersproject/strings" "5.5.0"
-    "@ethersproject/transactions" "5.5.0"
-    "@ethersproject/units" "5.5.0"
-    "@ethersproject/wallet" "5.5.0"
-    "@ethersproject/web" "5.5.1"
-    "@ethersproject/wordlists" "5.5.0"
-
 ethers@^5.4.7:
   version "5.4.7"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.4.7.tgz#0fd491a5da7c9793de2d6058d76b41b1e7efba8f"
@@ -4580,6 +4544,42 @@ ethers@^5.4.7:
     "@ethersproject/wallet" "5.4.0"
     "@ethersproject/web" "5.4.0"
     "@ethersproject/wordlists" "5.4.0"
+
+ethers@^5.5.3, ethers@^5.5.4:
+  version "5.5.4"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.5.4.tgz#e1155b73376a2f5da448e4a33351b57a885f4352"
+  integrity sha512-N9IAXsF8iKhgHIC6pquzRgPBJEzc9auw3JoRkaKe+y4Wl/LFBtDDunNe7YmdomontECAcC5APaAgWZBiu1kirw==
+  dependencies:
+    "@ethersproject/abi" "5.5.0"
+    "@ethersproject/abstract-provider" "5.5.1"
+    "@ethersproject/abstract-signer" "5.5.0"
+    "@ethersproject/address" "5.5.0"
+    "@ethersproject/base64" "5.5.0"
+    "@ethersproject/basex" "5.5.0"
+    "@ethersproject/bignumber" "5.5.0"
+    "@ethersproject/bytes" "5.5.0"
+    "@ethersproject/constants" "5.5.0"
+    "@ethersproject/contracts" "5.5.0"
+    "@ethersproject/hash" "5.5.0"
+    "@ethersproject/hdnode" "5.5.0"
+    "@ethersproject/json-wallets" "5.5.0"
+    "@ethersproject/keccak256" "5.5.0"
+    "@ethersproject/logger" "5.5.0"
+    "@ethersproject/networks" "5.5.2"
+    "@ethersproject/pbkdf2" "5.5.0"
+    "@ethersproject/properties" "5.5.0"
+    "@ethersproject/providers" "5.5.3"
+    "@ethersproject/random" "5.5.1"
+    "@ethersproject/rlp" "5.5.0"
+    "@ethersproject/sha2" "5.5.0"
+    "@ethersproject/signing-key" "5.5.0"
+    "@ethersproject/solidity" "5.5.0"
+    "@ethersproject/strings" "5.5.0"
+    "@ethersproject/transactions" "5.5.0"
+    "@ethersproject/units" "5.5.0"
+    "@ethersproject/wallet" "5.5.0"
+    "@ethersproject/web" "5.5.1"
+    "@ethersproject/wordlists" "5.5.0"
 
 ethjs-unit@0.1.6:
   version "0.1.6"

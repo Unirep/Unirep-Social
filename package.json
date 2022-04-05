@@ -40,10 +40,10 @@
     "dependencies": {
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
-        "@unirep/circuits": "git+https://github.com/Unirep/circuits.git",
-        "@unirep/contracts": "git+https://github.com/Unirep/contracts.git",
+        "@unirep/circuits": "git+https://github.com/Unirep/circuits.git#alpha",
+        "@unirep/contracts": "git+https://github.com/Unirep/contracts.git#alpha",
         "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
-        "@unirep/unirep": "git+https://github.com/Unirep/unirep.git",
+        "@unirep/unirep": "git+https://github.com/Unirep/unirep.git#alpha",
         "argparse": "^2.0.1",
         "base64url": "^3.0.1",
         "dotenv": "^10.0.0",
