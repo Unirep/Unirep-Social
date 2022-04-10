@@ -1716,7 +1716,7 @@
 
 "@unirep/circuits@git+https://github.com/Unirep/circuits.git#alpha":
   version "1.0.4"
-  resolved "git+https://github.com/Unirep/circuits.git#2d1057768c6d167d19f7eb7ec8f7b52aa842019c"
+  resolved "git+https://github.com/Unirep/circuits.git#3197ea519719aad25c6afbdeaf4978fdd288f3cb"
   dependencies:
     "@unirep/crypto" "git+https://github.com/Unirep/crypto.git"
     argparse "^2.0.1"
@@ -1727,7 +1727,7 @@
 
 "@unirep/contracts@git+https://github.com/Unirep/contracts.git#alpha":
   version "1.0.6"
-  resolved "git+https://github.com/Unirep/contracts.git#74d5f302ba3ce21b839843ba80393c9edf9f2684"
+  resolved "git+https://github.com/Unirep/contracts.git#ec06021eb9eea96d84c98dae155d3bafdfea8e1f"
   dependencies:
     "@openzeppelin/contracts" "^4.4.2"
     "@unirep/circuits" "git+https://github.com/Unirep/circuits.git#alpha"
@@ -1747,7 +1747,7 @@
 
 "@unirep/unirep@git+https://github.com/Unirep/unirep.git#alpha":
   version "1.0.0"
-  resolved "git+https://github.com/Unirep/unirep.git#1190d95bde29d7a0800ceaf65bae33b120f6fe3a"
+  resolved "git+https://github.com/Unirep/unirep.git#c519e6ba67c031aa1583758806ab56c0072b4778"
   dependencies:
     "@typechain/ethers-v5" "^9.0.0"
     "@typechain/hardhat" "^4.0.0"
