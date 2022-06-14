@@ -6,7 +6,7 @@ const {
     circuitEpochTreeDepth,
 } = require('@unirep/circuits/config')
 
-const attestingFee = ethers.utils.parseEther('0')
+const attestingFee = ethers.utils.parseEther('0.000000000001')
 const numEpochKeyNoncePerEpoch = 3
 const numAttestationsPerProof = 5
 const epochLength = 15 * 60 // seconds
@@ -22,9 +22,9 @@ const maxAttesters = 2 ** circuitUserStateTreeDepth - 1
     const unirep = await deployUnirep(
         signer,
         {
-            globalStateTreeDepth: 5,
-            userStateTreeDepth: 5,
-            epochTreeDepth: 32,
+            globalStateTreeDepth,
+            userStateTreeDepth,
+            epochTreeDepth,
         },
         {
             attestingFee,
