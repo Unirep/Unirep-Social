@@ -1,7 +1,7 @@
-'use strict'
-Object.defineProperty(exports, '__esModule', { value: true })
-const core_1 = require('@unirep/core')
-const nanoid_1 = require('nanoid')
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = require("@unirep/core");
+const nanoid_1 = require("nanoid");
 const _schema = [
     {
         name: 'Vote',
@@ -140,18 +140,18 @@ const _schema = [
             },
         ],
     },
-]
+];
 exports.default = _schema
     .map((obj) => ({
-        ...obj,
-        primaryKey: obj.primaryKey || '_id',
-        rows: [
-            ...obj.rows,
-            {
-                name: '_id',
-                type: 'String',
-                default: () => nanoid_1.nanoid(),
-            },
-        ],
-    }))
-    .concat(core_1.schema)
+    ...obj,
+    primaryKey: obj.primaryKey || '_id',
+    rows: [
+        ...obj.rows,
+        {
+            name: '_id',
+            type: 'String',
+            default: () => nanoid_1.nanoid(),
+        },
+    ],
+}))
+    .concat(core_1.schema);
