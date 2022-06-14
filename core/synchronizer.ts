@@ -39,7 +39,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         prover: Prover,
         unirepContract: ethers.Contract,
         unirepSocialContract: ethers.Contract,
-        config: UnirepSocialConfig
+        config: UnirepSocialConfig = {
+          postRep: 5,
+          commentRep: 3,
+          airdropRep: 30,
+        }
     ) {
         super(db, prover, unirepContract as any)
         this.unirepSocialContract = unirepSocialContract
