@@ -4,7 +4,7 @@
     "description": "",
     "main": "build/core/index.js",
     "scripts": {
-        "build": "npx hardhat typechain && tsc && yarn lint --write",
+        "build": "npx hardhat typechain && tsc",
         "compile": "npx hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
@@ -25,6 +25,7 @@
     "devDependencies": {
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-waffle": "^2.0.1",
+        "@openzeppelin/contracts": "^4.6.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.0.4",
         "@types/node": "^14.14.7",
@@ -40,15 +41,17 @@
     "dependencies": {
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
-        "@unirep/circuits": "git+https://github.com/Unirep/circuits.git#alpha",
-        "@unirep/contracts": "git+https://github.com/Unirep/contracts.git#alpha",
-        "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
-        "@unirep/unirep": "git+https://github.com/Unirep/unirep.git#alpha",
+        "@unirep/circuits": "1.0.0-alpha-5",
+        "@unirep/contracts": "1.0.0-alpha-6",
+        "@unirep/core": "1.0.0-alpha-6",
+        "@unirep/crypto": "1.0.0-alpha-4",
+        "anondb": "^0.0.6",
         "argparse": "^2.0.1",
         "base64url": "^3.0.1",
         "dotenv": "^10.0.0",
         "ethers": "^5.5.4",
         "mongoose": "^5.12.10",
+        "nanoid": "3",
         "prettier": "^2.6.0",
         "typescript": "^4.0.5"
     },

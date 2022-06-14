@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import { Unirep } from "@unirep/contracts/contracts/Unirep.sol";
+import { Unirep } from "@unirep/contracts/Unirep.sol";
 
 contract UnirepSocial {
     using SafeMath for uint256;
