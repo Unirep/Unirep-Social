@@ -4,12 +4,12 @@
     "description": "",
     "main": "build/core/index.js",
     "scripts": {
-        "build": "npx hardhat typechain && tsc",
-        "compile": "npx hardhat compile",
+        "build": "hardhat typechain && tsc",
+        "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile test/*.ts",
+        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 hardhat test --no-compile test/*.ts",
         "lint": "prettier ."
     },
     "repository": {
@@ -23,16 +23,15 @@
     },
     "homepage": "https://github.com/Unirep/Unirep-Social#readme",
     "devDependencies": {
+        "@nomicfoundation/hardhat-chai-matchers": "^1.0.0-beta.2",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
-        "@nomiclabs/hardhat-waffle": "^2.0.1",
         "@openzeppelin/contracts": "^4.6.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.0.4",
         "@types/node": "^14.14.7",
         "bigint-conversion": "^2.1.12",
         "chai": "^4.2.0",
-        "ethereum-waffle": "^3.4.0",
-        "hardhat": "^2.6.4",
+        "hardhat": "^2.9.4",
         "shelljs": "^0.8.3",
         "ts-node": "^10.2.1",
         "typechain": "^7.0.1"

@@ -104,7 +104,10 @@ describe('Signup', function () {
         it('double sign up should fail', async () => {
             await expect(
                 unirepSocialContract.userSignUp(BigNumber.from(commitment))
-            ).to.be.revertedWith('Unirep: the user has already signed up')
+            ).to.be.revertedWithCustomError(
+                unirepContract,
+                'UserAlreadySignedUp'
+            )
         })
 
         it('sign up should fail if max capacity reached', async () => {
@@ -121,8 +124,9 @@ describe('Signup', function () {
                 unirepSocialContract.userSignUp(
                     BigNumber.from(_id.genIdentityCommitment())
                 )
-            ).to.be.revertedWith(
-                'Unirep: maximum number of user signups reached'
+            ).to.be.revertedWithCustomError(
+                unirepContract,
+                'ReachedMaximumNumberUserSignedUp'
             )
         })
     })

@@ -657,7 +657,7 @@ describe('Integration', function () {
                     )
                 let attestations_: IAttestation[] =
                     attestationsByEpochKeyEvent.map(
-                        (event: any) => event['args']['_attestation']
+                        (event: any) => event['args']['attestation']
                     )
 
                 let attestations: IAttestation[] =
@@ -910,7 +910,10 @@ describe('Integration', function () {
                     duplicatedProofInputs.USTProof,
                     duplicatedProofInputs.proofIndexes
                 )
-            ).to.be.revertedWith('Unirep: the proof has been submitted before')
+            ).to.be.revertedWithCustomError(
+                unirepContract,
+                'NullilierAlreadyUsed'
+            )
         })
     })
 })

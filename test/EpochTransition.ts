@@ -194,9 +194,9 @@ describe('Epoch Transition', function () {
     })
 
     it('premature epoch transition should fail', async () => {
-        await expect(unirepContract.beginEpochTransition()).to.be.revertedWith(
-            'Unirep: epoch not yet ended'
-        )
+        await expect(
+            unirepContract.beginEpochTransition()
+        ).to.be.revertedWithCustomError(unirepContract, 'EpochNotEndYet')
     })
 
     it('epoch transition should succeed', async () => {

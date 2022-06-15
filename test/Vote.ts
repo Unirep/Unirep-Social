@@ -281,7 +281,7 @@ describe('Vote', function () {
                     reputationProof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
                 )
-            ).to.be.revertedWith('Unirep: invalid proof index')
+            ).to.be.revertedWithCustomError(unirepContract, 'InvalidProofIndex')
         })
 
         it('submit upvote with both upvote and downvote value should fail', async () => {
