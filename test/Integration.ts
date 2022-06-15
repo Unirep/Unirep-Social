@@ -2,11 +2,7 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { expect } from 'chai'
-import {
-    genRandomSalt,
-    genIdentity,
-    genIdentityCommitment,
-} from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
@@ -16,16 +12,16 @@ import {
     computeProcessAttestationsProofHash,
     computeStartTransitionProofHash,
     deployUnirep,
+    IAttestation,
 } from '@unirep/contracts'
-import * as config from '@unirep/unirep'
+import * as config from '@unirep/circuits'
 import {
     UnirepState,
     UserState,
-    IAttestation,
-    genUserStateFromContract,
-    genUnirepStateFromContract,
+    genUserState,
+    genUnirepState,
     genEpochKey,
-} from '@unirep/unirep'
+} from '@unirep/core'
 
 import {
     findValidNonce,
@@ -41,6 +37,8 @@ import {
     defaultPostReputation,
 } from '../config/socialMedia'
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
+
+const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 
 describe('Integration', function () {
     this.timeout(500000)
@@ -75,18 +73,17 @@ describe('Integration', function () {
 
         _treeDepths = getTreeDepthsForTesting('circuit')
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
-            attestingFee: config.attestingFee,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
+            attestingFee: DEFAULT_ATTESTING_FEE,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = (await deployUnirep(
             <ethers.Wallet>accounts[0],
-            _treeDepths,
             _settings
-        )
+        )) as any
         unirepSocialContract = await deployUnirepSocial(
             <ethers.Wallet>accounts[0],
             unirepContract.address
@@ -98,8 +95,8 @@ describe('Integration', function () {
 
     describe('First epoch', () => {
         it('First user signs up', async () => {
-            const id = genIdentity()
-            const commitment = genIdentityCommitment(id)
+            const id = new ZkIdentity()
+            const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
 
@@ -109,7 +106,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -121,7 +118,7 @@ describe('Integration', function () {
             console.log(
                 '----------------------User State----------------------'
             )
-            console.log(users[firstUser].toJSON(4))
+            console.log(users[firstUser].toJSON())
             console.log(
                 '------------------------------------------------------'
             )
@@ -137,7 +134,7 @@ describe('Integration', function () {
         it('begin first epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send('evm_increaseTime', [
-                config.epochLength,
+                config.EPOCH_LENGTH,
             ])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
@@ -150,21 +147,21 @@ describe('Integration', function () {
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch, 'Current epoch should be 2').to.equal(2)
 
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await genUnirepState(
                 hardhatEthers.provider,
                 unirepContract.address
             )
             console.log(
                 '----------------------Unirep State----------------------'
             )
-            console.log(unirepState.toJSON(4))
+            console.log(unirepState.toJSON())
             console.log(
                 '------------------------------------------------------'
             )
         })
 
         it('First user transition from first epoch', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -277,8 +274,8 @@ describe('Integration', function () {
             ).to.equal(1)
         })
 
-        it('genUserStateFromContract should match', async () => {
-            const userStateFromContract = await genUserStateFromContract(
+        it('genUserState should match', async () => {
+            const userStateFromContract = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id
@@ -286,7 +283,7 @@ describe('Integration', function () {
             console.log(
                 '----------------------User State----------------------'
             )
-            console.log(userStateFromContract.toJSON(4))
+            console.log(userStateFromContract.toJSON())
             console.log(
                 '------------------------------------------------------'
             )
@@ -298,8 +295,8 @@ describe('Integration', function () {
         })
 
         it('Second user signs up', async () => {
-            const id = genIdentity()
-            const commitment = genIdentityCommitment(id)
+            const id = new ZkIdentity()
+            const commitment = id.genIdentityCommitment()
             userIds.push(id)
             userCommitments.push(commitment)
 
@@ -309,7 +306,7 @@ describe('Integration', function () {
             const receipt = await tx.wait()
             expect(receipt.status, 'User sign up failed').to.equal(1)
 
-            users[secondUser] = await genUserStateFromContract(
+            users[secondUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[secondUser]
@@ -321,7 +318,7 @@ describe('Integration', function () {
             console.log(
                 '----------------------User State----------------------'
             )
-            console.log(users[secondUser].toJSON(4))
+            console.log(users[secondUser].toJSON())
             console.log(
                 '------------------------------------------------------'
             )
@@ -349,7 +346,7 @@ describe('Integration', function () {
         })
 
         it('first user publish a post and generate epoch key', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -364,7 +361,7 @@ describe('Integration', function () {
             const minRep = defaultAirdroppedReputation
             const proveGraffiti = BigInt(0)
             const graffitiPreImage = genRandomSalt()
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -400,7 +397,7 @@ describe('Integration', function () {
             const tx = await unirepSocialContract.publishPost(
                 postText,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -430,7 +427,7 @@ describe('Integration', function () {
         })
 
         it('Second user upvote to first user', async () => {
-            users[secondUser] = await genUserStateFromContract(
+            users[secondUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[secondUser]
@@ -480,7 +477,7 @@ describe('Integration', function () {
                 firstUserEpochKey,
                 reputationProofIndex,
                 reputationProof,
-                { value: config.attestingFee.mul(2), gasLimit: 1000000 }
+                { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit vote failed').to.equal(1)
@@ -512,7 +509,7 @@ describe('Integration', function () {
         })
 
         it('first user leave a comment and generate epoch key', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -560,7 +557,7 @@ describe('Integration', function () {
                 postId,
                 commentText,
                 reputationProof,
-                { value: config.attestingFee, gasLimit: 1000000 }
+                { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -597,7 +594,7 @@ describe('Integration', function () {
 
             // submit epoch key
             let tx = await unirepSocialContract.airdrop(signUpProof, {
-                value: config.attestingFee,
+                value: DEFAULT_ATTESTING_FEE,
             })
             let receipt = await tx.wait()
             expect(receipt.status).equal(1)
@@ -616,7 +613,7 @@ describe('Integration', function () {
 
         it('Attestations gathered from events should match', async () => {
             // Gen Unirep State From Contract
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await genUnirepState(
                 hardhatEthers.provider,
                 unirepContract.address
             )
@@ -703,7 +700,7 @@ describe('Integration', function () {
         it('begin second epoch epoch transition', async () => {
             // Fast-forward epochLength of seconds
             await hardhatEthers.provider.send('evm_increaseTime', [
-                config.epochLength,
+                config.EPOCH_LENGTH,
             ])
             // Begin epoch transition
             let tx = await unirepContract.beginEpochTransition()
@@ -716,14 +713,14 @@ describe('Integration', function () {
             currentEpoch = await unirepContract.currentEpoch()
             expect(currentEpoch, 'Current epoch should be 3').to.equal(3)
 
-            unirepState = await genUnirepStateFromContract(
+            unirepState = await genUnirepState(
                 hardhatEthers.provider,
                 unirepContract.address
             )
             console.log(
                 '----------------------Unirep State----------------------'
             )
-            console.log(unirepState.toJSON(4))
+            console.log(unirepState.toJSON())
             console.log(
                 '------------------------------------------------------'
             )
@@ -732,7 +729,7 @@ describe('Integration', function () {
         })
 
         it('First user transition from second epoch', async () => {
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]
@@ -851,8 +848,8 @@ describe('Integration', function () {
             }
         })
 
-        it('genUserStateFromContract should match', async () => {
-            const userStateFromContract = await genUserStateFromContract(
+        it('genUserState should match', async () => {
+            const userStateFromContract = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 users[firstUser].id
@@ -860,7 +857,7 @@ describe('Integration', function () {
             console.log(
                 '----------------------User State----------------------'
             )
-            console.log(userStateFromContract.toJSON(4))
+            console.log(userStateFromContract.toJSON())
             console.log(
                 '------------------------------------------------------'
             )
@@ -877,7 +874,7 @@ describe('Integration', function () {
             const minRep = 25
             const epkNonce = 0
             const graffitiPreImage = genRandomSalt()
-            users[firstUser] = await genUserStateFromContract(
+            users[firstUser] = await genUserState(
                 hardhatEthers.provider,
                 unirepContract.address,
                 userIds[firstUser]

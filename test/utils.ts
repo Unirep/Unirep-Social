@@ -1,12 +1,15 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
-import Keyv from 'keyv'
 import * as crypto from '@unirep/crypto'
-import * as config from '@unirep/unirep'
-import { genReputationNullifier, UserState } from '@unirep/unirep'
+import * as config from '@unirep/circuits'
+import { genReputationNullifier, UserState } from '@unirep/core'
 import * as circuit from '@unirep/circuits'
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
 
 export type Field = BigNumberish
+
+const add0x = (str: string): string => {
+    return str.startsWith('0x') ? str : '0x' + str
+}
 
 class Attestation {
     public attesterId: BigNumber
@@ -92,16 +95,19 @@ class ReputationProof {
     constructor(_publicSignals: Field[], _proof: crypto.SnarkProof) {
         const formattedProof: any[] =
             circuit.formatProofForVerifierContract(_proof)
-        this.repNullifiers = _publicSignals.slice(0, config.maxReputationBudget)
-        this.epoch = _publicSignals[config.maxReputationBudget]
-        this.epochKey = _publicSignals[config.maxReputationBudget + 1]
-        this.globalStateTree = _publicSignals[config.maxReputationBudget + 2]
-        this.attesterId = _publicSignals[config.maxReputationBudget + 3]
+        this.repNullifiers = _publicSignals.slice(
+            0,
+            config.MAX_REPUTATION_BUDGET
+        )
+        this.epoch = _publicSignals[config.MAX_REPUTATION_BUDGET]
+        this.epochKey = _publicSignals[config.MAX_REPUTATION_BUDGET + 1]
+        this.globalStateTree = _publicSignals[config.MAX_REPUTATION_BUDGET + 2]
+        this.attesterId = _publicSignals[config.MAX_REPUTATION_BUDGET + 3]
         this.proveReputationAmount =
-            _publicSignals[config.maxReputationBudget + 4]
-        this.minRep = _publicSignals[config.maxReputationBudget + 5]
-        this.proveGraffiti = _publicSignals[config.maxReputationBudget + 6]
-        this.graffitiPreImage = _publicSignals[config.maxReputationBudget + 7]
+            _publicSignals[config.MAX_REPUTATION_BUDGET + 4]
+        this.minRep = _publicSignals[config.MAX_REPUTATION_BUDGET + 5]
+        this.proveGraffiti = _publicSignals[config.MAX_REPUTATION_BUDGET + 6]
+        this.graffitiPreImage = _publicSignals[config.MAX_REPUTATION_BUDGET + 7]
         this.proof = formattedProof
         this.publicSignals = _publicSignals
     }
@@ -121,9 +127,9 @@ class ReputationProof {
         // array length should be fixed
         const abiEncoder = ethers.utils.defaultAbiCoder.encode(
             [
-                `tuple(uint256[${config.maxReputationBudget}] repNullifiers,
+                `tuple(uint256[${config.MAX_REPUTATION_BUDGET}] repNullifiers,
                     uint256 epoch,
-                    uint256 epochKey, 
+                    uint256 epochKey,
                     uint256 globalStateTree,
                     uint256 attesterId,
                     uint256 proveReputationAmount,
@@ -196,26 +202,26 @@ class UserTransitionProof {
         this.epkNullifiers = []
         this.blindedUserStates = []
         this.blindedHashChains = []
-        for (let i = 0; i < config.numEpochKeyNoncePerEpoch; i++) {
+        for (let i = 0; i < config.NUM_EPOCH_KEY_NONCE_PER_EPOCH; i++) {
             this.epkNullifiers.push(_publicSignals[1 + i])
         }
         this.transitionFromEpoch =
-            _publicSignals[1 + config.numEpochKeyNoncePerEpoch]
+            _publicSignals[1 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH]
         this.blindedUserStates.push(
-            _publicSignals[2 + config.numEpochKeyNoncePerEpoch]
+            _publicSignals[2 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH]
         )
         this.blindedUserStates.push(
-            _publicSignals[3 + config.numEpochKeyNoncePerEpoch]
+            _publicSignals[3 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH]
         )
         this.fromGlobalStateTree =
-            _publicSignals[4 + config.numEpochKeyNoncePerEpoch]
-        for (let i = 0; i < config.numEpochKeyNoncePerEpoch; i++) {
+            _publicSignals[4 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH]
+        for (let i = 0; i < config.NUM_EPOCH_KEY_NONCE_PER_EPOCH; i++) {
             this.blindedHashChains.push(
-                _publicSignals[5 + config.numEpochKeyNoncePerEpoch + i]
+                _publicSignals[5 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH + i]
             )
         }
         this.fromEpochTree =
-            _publicSignals[5 + config.numEpochKeyNoncePerEpoch * 2]
+            _publicSignals[5 + config.NUM_EPOCH_KEY_NONCE_PER_EPOCH * 2]
         this.proof = formattedProof
         this.publicSignals = _publicSignals
     }
@@ -250,21 +256,21 @@ class UserTransitionProof {
 }
 
 const rmFuncSigHash = (abiEncoder: string) => {
-    return crypto.add0x(abiEncoder.slice(10))
+    return add0x(abiEncoder.slice(10))
 }
 
 const getTreeDepthsForTesting = (deployEnv: string = 'circuit') => {
     if (deployEnv === 'contract') {
         return {
-            userStateTreeDepth: config.userStateTreeDepth,
-            globalStateTreeDepth: config.globalStateTreeDepth,
-            epochTreeDepth: config.epochTreeDepth,
+            userStateTreeDepth: config.USER_STATE_TREE_DEPTH,
+            globalStateTreeDepth: config.GLOBAL_STATE_TREE_DEPTH,
+            epochTreeDepth: config.EPOCH_TREE_DEPTH,
         }
     } else if (deployEnv === 'circuit') {
         return {
-            userStateTreeDepth: config.circuitUserStateTreeDepth,
-            globalStateTreeDepth: config.circuitGlobalStateTreeDepth,
-            epochTreeDepth: config.circuitEpochTreeDepth,
+            userStateTreeDepth: config.USER_STATE_TREE_DEPTH,
+            globalStateTreeDepth: config.GLOBAL_STATE_TREE_DEPTH,
+            epochTreeDepth: config.EPOCH_TREE_DEPTH,
         }
     } else {
         throw new Error('Only contract and circuit testing env are supported')
@@ -272,7 +278,7 @@ const getTreeDepthsForTesting = (deployEnv: string = 'circuit') => {
 }
 
 const toCompleteHexString = (str: string, len?: number): string => {
-    str = crypto.add0x(str)
+    str = add0x(str)
     if (len) str = ethers.utils.hexZeroPad(str, len)
     return str
 }
@@ -283,22 +289,18 @@ const SMT_ONE_LEAF = crypto.hashLeftRight(BigInt(1), BigInt(0))
 const genNewSMT = async (
     treeDepth: number,
     defaultLeafHash: BigInt
-): Promise<crypto.SparseMerkleTreeImpl> => {
-    return crypto.SparseMerkleTreeImpl.create(
-        new Keyv(),
-        treeDepth,
-        defaultLeafHash
-    )
+): Promise<crypto.SparseMerkleTree> => {
+    return new crypto.SparseMerkleTree(treeDepth, defaultLeafHash)
 }
 
 const genNewEpochTree = async (
     deployEnv: string = 'contract'
-): Promise<crypto.SparseMerkleTreeImpl> => {
+): Promise<crypto.SparseMerkleTree> => {
     let _epochTreeDepth
     if (deployEnv === 'contract') {
-        _epochTreeDepth = config.epochTreeDepth
+        _epochTreeDepth = config.EPOCH_TREE_DEPTH
     } else if (deployEnv === 'circuit') {
-        _epochTreeDepth = config.circuitEpochTreeDepth
+        _epochTreeDepth = config.EPOCH_TREE_DEPTH
     } else {
         throw new Error('Only contract and circuit testing env are supported')
     }
@@ -315,18 +317,18 @@ const defaultUserStateLeaf = crypto.hash5([
 ])
 
 const computeEmptyUserStateRoot = (treeDepth: number): BigInt => {
-    const t = new crypto.IncrementalQuinTree(treeDepth, defaultUserStateLeaf, 2)
+    const t = new crypto.IncrementalMerkleTree(treeDepth)
     return t.root
 }
 
 const genNewUserStateTree = async (
     deployEnv: string = 'contract'
-): Promise<crypto.SparseMerkleTreeImpl> => {
+): Promise<crypto.SparseMerkleTree> => {
     let _userStateTreeDepth
     if (deployEnv === 'contract') {
-        _userStateTreeDepth = config.userStateTreeDepth
+        _userStateTreeDepth = config.USER_STATE_TREE_DEPTH
     } else if (deployEnv === 'circuit') {
-        _userStateTreeDepth = config.circuitUserStateTreeDepth
+        _userStateTreeDepth = config.USER_STATE_TREE_DEPTH
     } else {
         throw new Error('Only contract and circuit testing env are supported')
     }
@@ -357,7 +359,7 @@ const findValidNonce = (
         }
         nonce++
     }
-    for (let i = repNullifiersAmount; i < config.maxReputationBudget; i++) {
+    for (let i = repNullifiersAmount; i < config.MAX_REPUTATION_BUDGET; i++) {
         nonceList.push(BigInt(-1))
     }
     return nonceList

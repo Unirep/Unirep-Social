@@ -9,7 +9,7 @@
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile $(find test/ -name '*.ts')",
+        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 npx hardhat test --no-compile test/*.ts",
         "lint": "prettier ."
     },
     "repository": {
@@ -33,7 +33,6 @@
         "chai": "^4.2.0",
         "ethereum-waffle": "^3.4.0",
         "hardhat": "^2.6.4",
-        "keyv": "^4.0.3",
         "shelljs": "^0.8.3",
         "ts-node": "^10.2.1",
         "typechain": "^7.0.1"
