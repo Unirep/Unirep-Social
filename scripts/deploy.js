@@ -19,26 +19,18 @@ const maxAttesters = 2 ** circuitUserStateTreeDepth - 1
 
 ;(async () => {
     const [signer] = await ethers.getSigners()
-    const unirep = await deployUnirep(
-        signer,
-        {
-            globalStateTreeDepth,
-            userStateTreeDepth,
-            epochTreeDepth,
-        },
-        {
-            attestingFee,
-            numEpochKeyNoncePerEpoch,
-            numAttestationsPerProof,
-            epochLength,
-            globalStateTreeDepth,
-            userStateTreeDepth,
-            epochTreeDepth,
-            maxReputationBudget,
-            maxUsers,
-            maxAttesters,
-        }
-    )
+    const unirep = await deployUnirep(signer, {
+        attestingFee,
+        numEpochKeyNoncePerEpoch,
+        numAttestationsPerProof,
+        epochLength,
+        globalStateTreeDepth,
+        userStateTreeDepth,
+        epochTreeDepth,
+        maxReputationBudget,
+        maxUsers,
+        maxAttesters,
+    })
     const UnirepSocialF = new ethers.ContractFactory(
         UnirepSocial.abi,
         UnirepSocial.bytecode,
