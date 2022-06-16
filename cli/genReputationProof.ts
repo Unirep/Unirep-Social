@@ -1,12 +1,11 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { add0x, unSerialiseIdentity } from '@unirep/crypto'
-import { formatProofForVerifierContract } from '@unirep/circuits'
+import { add0x } from './utils'
 import {
-    genReputationNullifier,
-    genUserStateFromContract,
-    maxReputationBudget,
-} from '@unirep/unirep'
+    formatProofForVerifierContract,
+    MAX_REPUTATION_BUDGET,
+} from '@unirep/circuits'
+import { genReputationNullifier, genUserState } from '@unirep/core'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -18,9 +17,10 @@ import {
     defaultCommentReputation,
     defaultPostReputation,
 } from '../config/socialMedia'
-import { ReputationProof, Unirep } from '@unirep/contracts'
+import { ReputationProof, UnirepFactory } from '@unirep/contracts'
 import { UnirepSocialFactory } from '../core/utils'
 import { getProvider } from './utils'
+import { ZkIdentity } from '@unirep/crypto'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('genReputationProof', {
@@ -57,7 +57,7 @@ const configureSubparser = (subparsers: any) => {
 
     parser.add_argument('-v', '--vote-value', {
         type: 'int',
-        help: `The vote value the user wants to give, at least 1, at most ${maxReputationBudget}`,
+        help: `The vote value the user wants to give, at least 1, at most ${MAX_REPUTATION_BUDGET}`,
     })
 
     parser.add_argument('-mr', '--min-rep', {
@@ -92,7 +92,7 @@ const genReputationProof = async (args: any) => {
     const unirepContractAddr = await unirepSocialContract.unirep()
     const unirepContract = new ethers.Contract(
         unirepContractAddr,
-        Unirep.abi,
+        UnirepFactory.abi,
         provider
     )
 
@@ -108,7 +108,7 @@ const genReputationProof = async (args: any) => {
     }
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = unSerialiseIdentity(decodedIdentity)
+    const id = new ZkIdentity(2, decodedIdentity)
 
     // gen reputation proof
     let proveReputationAmount
@@ -121,11 +121,11 @@ const genReputationProof = async (args: any) => {
             console.error('Error: should provide a vote value')
             return
         } else if (
-            args.vote_value > maxReputationBudget ||
+            args.vote_value > MAX_REPUTATION_BUDGET ||
             args.vote_value < 1
         ) {
             console.error(
-                `Error: should provide a valid vote value, min: 1, max: ${maxReputationBudget}`
+                `Error: should provide a valid vote value, min: 1, max: ${MAX_REPUTATION_BUDGET}`
             )
             return
         }
@@ -146,10 +146,10 @@ const genReputationProof = async (args: any) => {
             ? BigInt(add0x(args.graffiti_preimage))
             : BigInt(0)
 
-    const userState = await genUserStateFromContract(
+    const userState = await genUserState(
         provider,
         unirepContract.address,
-        id
+        id as any // TODO
     )
     const nonceList: BigInt[] = []
     const rep = userState.getRepByAttester(attesterId)
@@ -185,7 +185,7 @@ const genReputationProof = async (args: any) => {
         }
     }
 
-    for (let i = proveReputationAmount; i < maxReputationBudget; i++) {
+    for (let i = proveReputationAmount; i < MAX_REPUTATION_BUDGET; i++) {
         nonceList.push(BigInt(-1))
     }
     const { publicSignals, proof, epochKey } =

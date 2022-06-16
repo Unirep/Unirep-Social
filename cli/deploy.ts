@@ -1,6 +1,6 @@
 // @ts-ignore
 import { ethers } from 'ethers'
-import * as config from '@unirep/unirep'
+import * as config from '@unirep/circuits'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import * as socialMediaConfig from '../config/socialMedia'
 import { deployUnirepSocial } from '../core/utils'
@@ -79,7 +79,7 @@ const deploy = async (args: any) => {
     // const _numEpochKeyNoncePerEpoch = (args.max_epoch_key_nonce != undefined) ? args.max_epoch_key_nonce : DEFAULT_MAX_EPOCH_KEY_NONCE
     const _numEpochKeyNoncePerEpoch = defaultConfig.DEFAULT_MAX_EPOCH_KEY_NONCE
 
-    const _maxReputationBudget = config.maxReputationBudget
+    const _maxReputationBudget = config.MAX_REPUTATION_BUDGET
 
     // Epoch length
     const _epochLength =
@@ -94,19 +94,17 @@ const deploy = async (args: any) => {
             : defaultConfig.DEFAULT_ATTESTING_FEE
 
     const UnirepSettings = {
-        maxUsers: config.maxUsers,
-        maxAttesters: config.maxAttesters,
+        maxUsers: config.MAX_USERS,
+        maxAttesters: config.MAX_ATTESTERS,
         numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
         maxReputationBudget: _maxReputationBudget,
         epochLength: _epochLength,
         attestingFee: _attestingFee,
+        userStateTreeDepth: config.USER_STATE_TREE_DEPTH,
+        globalStateTreeDepth: config.GLOBAL_STATE_TREE_DEPTH,
+        epochTreeDepth: config.EPOCH_TREE_DEPTH,
     }
 
-    const treeDepths = {
-        userStateTreeDepth: config.circuitUserStateTreeDepth,
-        globalStateTreeDepth: config.circuitGlobalStateTreeDepth,
-        epochTreeDepth: config.circuitEpochTreeDepth,
-    }
     const _postReputation =
         args.post_reputation != undefined
             ? args.post_reputation
@@ -146,11 +144,7 @@ const deploy = async (args: any) => {
 
     let unirepContract
     if (args.contract == null) {
-        unirepContract = await deployUnirep(
-            deployer.signer,
-            treeDepths,
-            UnirepSettings
-        )
+        unirepContract = await deployUnirep(deployer.signer, UnirepSettings)
     } else {
         // Unirep contract
         unirepContract = getUnirepContract(args.contract, provider)

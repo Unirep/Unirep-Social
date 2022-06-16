@@ -1,8 +1,8 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { unSerialiseIdentity } from '@unirep/crypto'
 import * as circuit from '@unirep/circuits'
-import { genUserStateFromContract } from '@unirep/unirep'
+import { genUserState } from '@unirep/core'
+import { ZkIdentity } from '@unirep/crypto'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -11,7 +11,7 @@ import {
     identityPrefix,
 } from './prefix'
 import { UnirepSocialFactory } from '../core/utils'
-import { Unirep } from '@unirep/contracts'
+import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {
@@ -65,7 +65,7 @@ const genEpochKeyAndProof = async (args: any) => {
     const unirepContractAddr = await unirepSocialContract.unirep()
     const unirepContract = new ethers.Contract(
         unirepContractAddr,
-        Unirep.abi,
+        UnirepFactory.abi,
         provider
     )
 
@@ -83,11 +83,11 @@ const genEpochKeyAndProof = async (args: any) => {
     // Gen epoch key proof
     const encodedIdentity = args.identity.slice(identityPrefix.length)
     const decodedIdentity = base64url.decode(encodedIdentity)
-    const id = unSerialiseIdentity(decodedIdentity)
-    const userState = await genUserStateFromContract(
+    const id = new ZkIdentity(2, decodedIdentity)
+    const userState = await genUserState(
         provider,
         unirepContract.address,
-        id
+        id as any // TODO
     )
     const { publicSignals, proof, epoch, epochKey } =
         await userState.genVerifyEpochKeyProof(epkNonce)

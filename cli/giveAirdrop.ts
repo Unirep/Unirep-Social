@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { Unirep } from '@unirep/contracts'
+import { UnirepFactory } from '@unirep/contracts'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
@@ -68,7 +68,7 @@ const giveAirdrop = async (args: any) => {
     const unirepContractAddr = await unirepSocialContract.unirep()
     const unirepContract = new ethers.Contract(
         unirepContractAddr,
-        Unirep.abi,
+        UnirepFactory.abi,
         provider
     )
     const attestingFee = await unirepContract.attestingFee()
