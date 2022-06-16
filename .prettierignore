@@ -1,5 +1,5 @@
 artifacts/
 cache/
 typechain/
-.github/
 build/
+*.md
