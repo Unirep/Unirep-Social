@@ -243,34 +243,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             }
         }
 
-        const repNullifiers = decodedData.proofRelated.repNullifiers
-            .map((n) => BigInt(n).toString())
-            .filter((n) => n !== '0')
-        const existingNullifier = await this._db.findOne('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: true,
-            },
-        })
-        if (existingNullifier) {
-            console.log(`comment duplicated nullifier`, repNullifiers)
-            return
-        }
-        // everything checks out, lets start mutating the db
-        db.delete('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: false,
-            },
-        })
-        db.create(
-            'Nullifier',
-            repNullifiers.map((nullifier) => ({
-                epoch: _epoch,
-                nullifier,
-            }))
-        )
-
         if (findComment) {
             db.update('Comment', {
                 where: {
@@ -403,34 +375,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 return
             }
         }
-
-        const repNullifiers = decodedData.proofRelated.repNullifiers
-            .map((n) => BigInt(n).toString())
-            .filter((n) => n !== '0')
-        const existingNullifier = await this._db.findOne('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: true,
-            },
-        })
-        if (existingNullifier) {
-            console.log(`post duplicated nullifier`, repNullifiers)
-            return
-        }
-        // everything checks out, lets start mutating the db
-        db.delete('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: false,
-            },
-        })
-        db.create(
-            'Nullifier',
-            repNullifiers.map((nullifier) => ({
-                epoch: _epoch,
-                nullifier,
-            }))
-        )
 
         if (findPost) {
             db.update('Post', {
@@ -598,33 +542,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             }
         }
 
-        const repNullifiers = decodedData.proofRelated.repNullifiers
-            .map((n) => BigInt(n).toString())
-            .filter((n) => n !== '0')
-        const existingNullifier = await this._db.findOne('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: true,
-            },
-        })
-        if (existingNullifier) {
-            console.log(`vote duplicated nullifier`, repNullifiers)
-            return
-        }
-        // everything checks out, lets start mutating the db
-        db.delete('Nullifier', {
-            where: {
-                nullifier: repNullifiers,
-                confirmed: false,
-            },
-        })
-        db.create(
-            'Nullifier',
-            repNullifiers.map((nullifier) => ({
-                epoch: _epoch,
-                nullifier,
-            }))
-        )
         const findVote = await this._db.findOne('Vote', {
             where: { transactionHash: voteId },
         })
