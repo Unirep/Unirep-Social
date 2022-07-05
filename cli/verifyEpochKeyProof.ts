@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genUnirepStateFromContract } from '@unirep/unirep'
-import { Unirep } from '@unirep/contracts'
+import { genUnirepState } from '@unirep/core'
+import { UnirepFactory } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -64,14 +64,11 @@ const verifyEpochKeyProof = async (args: any) => {
     const unirepContractAddr = await unirepSocialContract.unirep()
     const unirepContract = new ethers.Contract(
         unirepContractAddr,
-        Unirep.abi,
+        UnirepFactory.abi,
         provider
     )
 
-    const unirepState = await genUnirepStateFromContract(
-        provider,
-        unirepContract.address
-    )
+    const unirepState = await genUnirepState(provider, unirepContract.address)
 
     const decodedProof = base64url.decode(
         args.proof.slice(epkProofPrefix.length)

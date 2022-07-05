@@ -8,6 +8,10 @@ const getProvider = (url: string): ethers.providers.Provider => {
     return provider
 }
 
+export const add0x = (str: string): string => {
+    return str.startsWith('0x') ? str : '0x' + str
+}
+
 class JSONRPCDeployer {
     provider: ethers.providers.Provider
     signer: ethers.Signer

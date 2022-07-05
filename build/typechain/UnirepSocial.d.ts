@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare namespace UnirepObjs {
+export declare namespace UnirepTypes {
     type SignUpProofStruct = {
         epoch: BigNumberish;
         epochKey: BigNumberish;
@@ -109,25 +109,25 @@ export interface UnirepSocialInterface extends utils.Interface {
         "userSignUp(uint256)": FunctionFragment;
         "vote(uint256,uint256,uint256,uint256,(uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256[8]))": FunctionFragment;
     };
-    encodeFunctionData(functionFragment: "airdrop", values: [UnirepObjs.SignUpProofStruct]): string;
+    encodeFunctionData(functionFragment: "airdrop", values: [UnirepTypes.SignUpProofStruct]): string;
     encodeFunctionData(functionFragment: "airdroppedReputation", values?: undefined): string;
     encodeFunctionData(functionFragment: "attesterId", values?: undefined): string;
     encodeFunctionData(functionFragment: "commentReputation", values?: undefined): string;
     encodeFunctionData(functionFragment: "isEpochKeyGotAirdrop", values: [BigNumberish]): string;
-    encodeFunctionData(functionFragment: "leaveComment", values: [BigNumberish, string, UnirepObjs.ReputationProofStruct]): string;
+    encodeFunctionData(functionFragment: "leaveComment", values: [BigNumberish, string, UnirepTypes.ReputationProofStruct]): string;
     encodeFunctionData(functionFragment: "postReputation", values?: undefined): string;
     encodeFunctionData(functionFragment: "processAttestations", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
-    encodeFunctionData(functionFragment: "publishPost", values: [string, UnirepObjs.ReputationProofStruct]): string;
+    encodeFunctionData(functionFragment: "publishPost", values: [string, UnirepTypes.ReputationProofStruct]): string;
     encodeFunctionData(functionFragment: "startUserStateTransition", values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[]]): string;
     encodeFunctionData(functionFragment: "unirep", values?: undefined): string;
-    encodeFunctionData(functionFragment: "updateUserStateRoot", values: [UnirepObjs.UserTransitionProofStruct, BigNumberish[]]): string;
+    encodeFunctionData(functionFragment: "updateUserStateRoot", values: [UnirepTypes.UserTransitionProofStruct, BigNumberish[]]): string;
     encodeFunctionData(functionFragment: "userSignUp", values: [BigNumberish]): string;
     encodeFunctionData(functionFragment: "vote", values: [
         BigNumberish,
         BigNumberish,
         BigNumberish,
         BigNumberish,
-        UnirepObjs.ReputationProofStruct
+        UnirepTypes.ReputationProofStruct
     ]): string;
     decodeFunctionResult(functionFragment: "airdrop", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "airdroppedReputation", data: BytesLike): Result;
@@ -159,11 +159,11 @@ export interface UnirepSocialInterface extends utils.Interface {
 export declare type AirdropSubmittedEvent = TypedEvent<[
     BigNumber,
     BigNumber,
-    UnirepObjs.SignUpProofStructOutput
+    UnirepTypes.SignUpProofStructOutput
 ], {
     _epoch: BigNumber;
     _epochKey: BigNumber;
-    proofRelated: UnirepObjs.SignUpProofStructOutput;
+    proofRelated: UnirepTypes.SignUpProofStructOutput;
 }>;
 export declare type AirdropSubmittedEventFilter = TypedEventFilter<AirdropSubmittedEvent>;
 export declare type CommentSubmittedEvent = TypedEvent<[
@@ -171,25 +171,25 @@ export declare type CommentSubmittedEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     string,
-    UnirepObjs.ReputationProofStructOutput
+    UnirepTypes.ReputationProofStructOutput
 ], {
     _epoch: BigNumber;
     _postId: BigNumber;
     _epochKey: BigNumber;
     _commentContent: string;
-    proofRelated: UnirepObjs.ReputationProofStructOutput;
+    proofRelated: UnirepTypes.ReputationProofStructOutput;
 }>;
 export declare type CommentSubmittedEventFilter = TypedEventFilter<CommentSubmittedEvent>;
 export declare type PostSubmittedEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     string,
-    UnirepObjs.ReputationProofStructOutput
+    UnirepTypes.ReputationProofStructOutput
 ], {
     _epoch: BigNumber;
     _epochKey: BigNumber;
     _postContent: string;
-    proofRelated: UnirepObjs.ReputationProofStructOutput;
+    proofRelated: UnirepTypes.ReputationProofStructOutput;
 }>;
 export declare type PostSubmittedEventFilter = TypedEventFilter<PostSubmittedEvent>;
 export declare type UserSignedUpEvent = TypedEvent<[
@@ -207,7 +207,7 @@ export declare type VoteSubmittedEvent = TypedEvent<[
     BigNumber,
     BigNumber,
     BigNumber,
-    UnirepObjs.ReputationProofStructOutput
+    UnirepTypes.ReputationProofStructOutput
 ], {
     _epoch: BigNumber;
     _fromEpochKey: BigNumber;
@@ -215,7 +215,7 @@ export declare type VoteSubmittedEvent = TypedEvent<[
     upvoteValue: BigNumber;
     downvoteValue: BigNumber;
     toEpochKeyProofIndex: BigNumber;
-    proofRelated: UnirepObjs.ReputationProofStructOutput;
+    proofRelated: UnirepTypes.ReputationProofStructOutput;
 }>;
 export declare type VoteSubmittedEventFilter = TypedEventFilter<VoteSubmittedEvent>;
 export interface UnirepSocial extends BaseContract {
@@ -234,82 +234,82 @@ export interface UnirepSocial extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
-        airdrop(_signUpProofData: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdrop(_signUpProofData: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         airdroppedReputation(overrides?: CallOverrides): Promise<[BigNumber]>;
         attesterId(overrides?: CallOverrides): Promise<[BigNumber]>;
         commentReputation(overrides?: CallOverrides): Promise<[BigNumber]>;
         isEpochKeyGotAirdrop(arg0: BigNumberish, overrides?: CallOverrides): Promise<[boolean]>;
-        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         postReputation(overrides?: CallOverrides): Promise<[BigNumber]>;
         processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        publishPost(content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        publishPost(content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         unirep(overrides?: CallOverrides): Promise<[string]>;
-        updateUserStateRoot(userTransitionedData: UnirepObjs.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(userTransitionedData: UnirepTypes.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
     };
-    airdrop(_signUpProofData: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+    airdrop(_signUpProofData: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     airdroppedReputation(overrides?: CallOverrides): Promise<BigNumber>;
     attesterId(overrides?: CallOverrides): Promise<BigNumber>;
     commentReputation(overrides?: CallOverrides): Promise<BigNumber>;
     isEpochKeyGotAirdrop(arg0: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-    leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+    leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     postReputation(overrides?: CallOverrides): Promise<BigNumber>;
     processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    publishPost(content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+    publishPost(content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     unirep(overrides?: CallOverrides): Promise<string>;
-    updateUserStateRoot(userTransitionedData: UnirepObjs.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
+    updateUserStateRoot(userTransitionedData: UnirepTypes.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+    vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     callStatic: {
-        airdrop(_signUpProofData: UnirepObjs.SignUpProofStruct, overrides?: CallOverrides): Promise<void>;
+        airdrop(_signUpProofData: UnirepTypes.SignUpProofStruct, overrides?: CallOverrides): Promise<void>;
         airdroppedReputation(overrides?: CallOverrides): Promise<BigNumber>;
         attesterId(overrides?: CallOverrides): Promise<BigNumber>;
         commentReputation(overrides?: CallOverrides): Promise<BigNumber>;
         isEpochKeyGotAirdrop(arg0: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
+        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
         postReputation(overrides?: CallOverrides): Promise<BigNumber>;
         processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<void>;
-        publishPost(content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
+        publishPost(content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: CallOverrides): Promise<void>;
         unirep(overrides?: CallOverrides): Promise<string>;
-        updateUserStateRoot(userTransitionedData: UnirepObjs.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: CallOverrides): Promise<void>;
+        updateUserStateRoot(userTransitionedData: UnirepTypes.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: CallOverrides): Promise<void>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
+        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: CallOverrides): Promise<void>;
     };
     filters: {
         "AirdropSubmitted(uint256,uint256,tuple)"(_epoch?: BigNumberish | null, _epochKey?: BigNumberish | null, proofRelated?: null): AirdropSubmittedEventFilter;
@@ -324,66 +324,66 @@ export interface UnirepSocial extends BaseContract {
         VoteSubmitted(_epoch?: BigNumberish | null, _fromEpochKey?: BigNumberish | null, _toEpochKey?: BigNumberish | null, upvoteValue?: null, downvoteValue?: null, toEpochKeyProofIndex?: null, proofRelated?: null): VoteSubmittedEventFilter;
     };
     estimateGas: {
-        airdrop(_signUpProofData: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdrop(_signUpProofData: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         airdroppedReputation(overrides?: CallOverrides): Promise<BigNumber>;
         attesterId(overrides?: CallOverrides): Promise<BigNumber>;
         commentReputation(overrides?: CallOverrides): Promise<BigNumber>;
         isEpochKeyGotAirdrop(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         postReputation(overrides?: CallOverrides): Promise<BigNumber>;
         processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        publishPost(content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        publishPost(content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         unirep(overrides?: CallOverrides): Promise<BigNumber>;
-        updateUserStateRoot(userTransitionedData: UnirepObjs.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(userTransitionedData: UnirepTypes.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
     };
     populateTransaction: {
-        airdrop(_signUpProofData: UnirepObjs.SignUpProofStruct, overrides?: PayableOverrides & {
+        airdrop(_signUpProofData: UnirepTypes.SignUpProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         airdroppedReputation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         attesterId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         commentReputation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         isEpochKeyGotAirdrop(arg0: BigNumberish, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        leaveComment(postId: BigNumberish, content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         postReputation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         processAttestations(_outputBlindedUserState: BigNumberish, _outputBlindedHashChain: BigNumberish, _inputBlindedUserState: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        publishPost(content: string, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        publishPost(content: string, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         startUserStateTransition(_blindedUserState: BigNumberish, _blindedHashChain: BigNumberish, _GSTRoot: BigNumberish, _proof: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         unirep(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        updateUserStateRoot(userTransitionedData: UnirepObjs.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
+        updateUserStateRoot(userTransitionedData: UnirepTypes.UserTransitionProofStruct, proofIndexes: BigNumberish[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         userSignUp(_identityCommitment: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepObjs.ReputationProofStruct, overrides?: PayableOverrides & {
+        vote(upvoteValue: BigNumberish, downvoteValue: BigNumberish, toEpochKey: BigNumberish, toEpochKeyProofIndex: BigNumberish, _proofRelated: UnirepTypes.ReputationProofStruct, overrides?: PayableOverrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
     };

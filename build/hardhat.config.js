@@ -2,7 +2,7 @@
 Object.defineProperty(exports, '__esModule', { value: true })
 require('@typechain/hardhat')
 require('@nomiclabs/hardhat-ethers')
-require('@nomiclabs/hardhat-waffle')
+require('@nomicfoundation/hardhat-chai-matchers')
 const config = {
     defaultNetwork: 'hardhat',
     networks: {
@@ -21,7 +21,7 @@ const config = {
         },
     },
     solidity: {
-        version: '0.8.1',
+        version: '0.8.6',
         settings: {
             optimizer: { enabled: true, runs: 200 },
         },

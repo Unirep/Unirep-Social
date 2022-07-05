@@ -1,12 +1,8 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { ethers } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { expect } from 'chai'
-import {
-    genRandomSalt,
-    genIdentity,
-    genIdentityCommitment,
-} from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
 import {
     Circuit,
     formatProofForVerifierContract,
@@ -19,14 +15,10 @@ import {
     EpochKeyProof,
     getUnirepContract,
     UserTransitionProof,
-} from '@unirep/contracts'
-import * as config from '@unirep/unirep'
-import {
-    genEpochKey,
     Attestation,
-    genUserStateFromContract,
-    UserState,
-} from '@unirep/unirep'
+} from '@unirep/contracts'
+import * as config from '@unirep/circuits'
+import { genEpochKey, genUserState, UserState } from '@unirep/core'
 
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
 import { getTreeDepthsForTesting } from './utils'
@@ -54,30 +46,29 @@ describe('Epoch Transition', function () {
 
         const _treeDepths = getTreeDepthsForTesting('circuit')
         const _settings = {
-            maxUsers: config.maxUsers,
-            maxAttesters: config.maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
+            maxUsers: config.MAX_USERS,
+            maxAttesters: config.MAX_ATTESTERS,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
-        unirepContract = await deployUnirep(
+        unirepContract = (await deployUnirep(
             <ethers.Wallet>accounts[0],
-            _treeDepths,
             _settings
-        )
+        )) as any
         unirepSocialContract = await deployUnirepSocial(
             <ethers.Wallet>accounts[0],
             unirepContract.address
         )
 
         console.log('User sign up')
-        userId = genIdentity()
-        userCommitment = genIdentityCommitment(userId)
+        userId = new ZkIdentity()
+        userCommitment = userId.genIdentityCommitment()
         let tx = await unirepSocialContract.userSignUp(userCommitment)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        userState = await genUserStateFromContract(
+        userState = await genUserState(
             hardhatEthers.provider,
             unirepContract.address,
             userId
@@ -203,9 +194,9 @@ describe('Epoch Transition', function () {
     })
 
     it('premature epoch transition should fail', async () => {
-        await expect(unirepContract.beginEpochTransition()).to.be.revertedWith(
-            'Unirep: epoch not yet ended'
-        )
+        await expect(
+            unirepContract.beginEpochTransition()
+        ).to.be.revertedWithCustomError(unirepContract, 'EpochNotEndYet')
     })
 
     it('epoch transition should succeed', async () => {
@@ -214,7 +205,7 @@ describe('Epoch Transition', function () {
 
         // Fast-forward epochLength of seconds
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ])
         // Assert no epoch transition compensation is dispensed to volunteer
         expect(
@@ -249,7 +240,7 @@ describe('Epoch Transition', function () {
     })
 
     it('start user state transition should succeed', async () => {
-        const userState = await genUserStateFromContract(
+        const userState = await genUserState(
             hardhatEthers.provider,
             unirepContract.address,
             userId
@@ -403,7 +394,7 @@ describe('Epoch Transition', function () {
 
     it('user should successfully tranistion to the latest epoch', async () => {
         const currentEpoch = await unirepContract.currentEpoch()
-        const userState = await genUserStateFromContract(
+        const userState = await genUserState(
             hardhatEthers.provider,
             unirepContract.address,
             userId
@@ -416,7 +407,7 @@ describe('Epoch Transition', function () {
 
         // Fast-forward epochLength of seconds
         await hardhatEthers.provider.send('evm_increaseTime', [
-            config.epochLength,
+            config.EPOCH_LENGTH,
         ])
         // Begin epoch transition
         let tx = await unirepContract.beginEpochTransition()

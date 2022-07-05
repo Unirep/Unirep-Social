@@ -1,7 +1,7 @@
 import '@typechain/hardhat'
 import { HardhatUserConfig } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-waffle'
+import '@nomicfoundation/hardhat-chai-matchers'
 
 const config: HardhatUserConfig = {
     defaultNetwork: 'hardhat',
@@ -21,7 +21,7 @@ const config: HardhatUserConfig = {
         },
     },
     solidity: {
-        version: '0.8.1',
+        version: '0.8.6',
         settings: {
             optimizer: { enabled: true, runs: 200 },
         },

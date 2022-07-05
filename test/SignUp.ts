@@ -2,9 +2,9 @@
 import { ethers as hardhatEthers } from 'hardhat'
 import { BigNumber, ethers } from 'ethers'
 import { expect } from 'chai'
-import * as config from '@unirep/unirep'
+import * as config from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts'
-import { genIdentity, genIdentityCommitment } from '@unirep/crypto'
+import { ZkIdentity } from '@unirep/crypto'
 
 import { getTreeDepthsForTesting } from './utils'
 import {
@@ -13,6 +13,8 @@ import {
     defaultPostReputation,
 } from '../config/socialMedia'
 import { deployUnirepSocial, UnirepSocial } from '../core/utils'
+
+const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 
 describe('Signup', function () {
     this.timeout(1000000)
@@ -30,14 +32,13 @@ describe('Signup', function () {
         const _settings = {
             maxUsers: maxUsers,
             maxAttesters: maxAttesters,
-            numEpochKeyNoncePerEpoch: config.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: config.maxReputationBudget,
-            epochLength: config.epochLength,
-            attestingFee: config.attestingFee,
+            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            maxReputationBudget: config.MAX_REPUTATION_BUDGET,
+            epochLength: config.EPOCH_LENGTH,
+            attestingFee: DEFAULT_ATTESTING_FEE,
         }
         unirepContract = await deployUnirep(
             <ethers.Wallet>accounts[0],
-            _treeDepths,
             _settings
         )
         unirepSocialContract = await deployUnirepSocial(
@@ -48,21 +49,25 @@ describe('Signup', function () {
 
     it('should have the correct config value', async () => {
         const attestingFee_ = await unirepContract.attestingFee()
-        expect(config.attestingFee).equal(attestingFee_)
+        expect(DEFAULT_ATTESTING_FEE).equal(attestingFee_)
         const epochLength_ = await unirepContract.epochLength()
-        expect(config.epochLength).equal(epochLength_)
+        expect(config.EPOCH_LENGTH).equal(epochLength_)
         const numEpochKeyNoncePerEpoch_ =
             await unirepContract.numEpochKeyNoncePerEpoch()
-        expect(config.numEpochKeyNoncePerEpoch).equal(numEpochKeyNoncePerEpoch_)
+        expect(config.NUM_EPOCH_KEY_NONCE_PER_EPOCH).equal(
+            numEpochKeyNoncePerEpoch_
+        )
         const maxUsers_ = await unirepContract.maxUsers()
         expect(maxUsers).equal(maxUsers_)
 
         const treeDepths_ = await unirepContract.treeDepths()
-        expect(config.epochTreeDepth).equal(treeDepths_.epochTreeDepth)
-        expect(config.globalStateTreeDepth).equal(
+        expect(config.EPOCH_TREE_DEPTH).equal(treeDepths_.epochTreeDepth)
+        expect(config.GLOBAL_STATE_TREE_DEPTH).equal(
             treeDepths_.globalStateTreeDepth
         )
-        expect(config.userStateTreeDepth).equal(treeDepths_.userStateTreeDepth)
+        expect(config.USER_STATE_TREE_DEPTH).equal(
+            treeDepths_.userStateTreeDepth
+        )
 
         const postReputation_ = await unirepSocialContract.postReputation()
         expect(postReputation_).equal(defaultPostReputation)
@@ -81,8 +86,8 @@ describe('Signup', function () {
     })
 
     describe('User sign-ups', () => {
-        const id = genIdentity()
-        const commitment = genIdentityCommitment(id)
+        const id = new ZkIdentity()
+        const commitment = id.genIdentityCommitment()
 
         it('sign up should succeed', async () => {
             const tx = await unirepSocialContract.userSignUp(
@@ -99,23 +104,29 @@ describe('Signup', function () {
         it('double sign up should fail', async () => {
             await expect(
                 unirepSocialContract.userSignUp(BigNumber.from(commitment))
-            ).to.be.revertedWith('Unirep: the user has already signed up')
+            ).to.be.revertedWithCustomError(
+                unirepContract,
+                'UserAlreadySignedUp'
+            )
         })
 
         it('sign up should fail if max capacity reached', async () => {
             for (let i = 1; i < maxUsers; i++) {
+                const _id = new ZkIdentity()
                 let tx = await unirepSocialContract.userSignUp(
-                    BigNumber.from(genIdentityCommitment(genIdentity()))
+                    BigNumber.from(_id.genIdentityCommitment())
                 )
                 let receipt = await tx.wait()
                 expect(receipt.status).equal(1)
             }
+            const _id = new ZkIdentity()
             await expect(
                 unirepSocialContract.userSignUp(
-                    BigNumber.from(genIdentityCommitment(genIdentity()))
+                    BigNumber.from(_id.genIdentityCommitment())
                 )
-            ).to.be.revertedWith(
-                'Unirep: maximum number of user signups reached'
+            ).to.be.revertedWithCustomError(
+                unirepContract,
+                'ReachedMaximumNumberUserSignedUp'
             )
         })
     })
