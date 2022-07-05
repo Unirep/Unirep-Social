@@ -1,0 +1,16 @@
+.loading-btn {
+    @include myButton(
+        $height: 46px,
+        $radius: 8px,
+        $color: $white,
+        $block-color: $black,
+        $font-weight: 600,
+        $font-size: $title-sm
+    );
+    width: 100%;
+}
+
+.isLoading {
+    background-color: $grey-300;
+    cursor: wait;
+}

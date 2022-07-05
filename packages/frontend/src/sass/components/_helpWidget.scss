@@ -1,0 +1,29 @@
+.help-widget {
+    position: relative;
+
+    img {
+        margin-left: 8px;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .info {
+        padding: 8px;
+        border-radius: 4px;
+        background-color: $grey-800;
+        color: $white;
+        font-size: $text-xs;
+        line-height: 16px;
+
+        position: absolute;
+        bottom: 24px;
+        max-height: 164px;
+        min-height: 32px;
+        width: 200px;
+
+        @media (max-width: 600px) {
+            left: -60px;
+        }
+    }
+}

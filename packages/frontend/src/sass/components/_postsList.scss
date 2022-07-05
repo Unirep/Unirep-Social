@@ -1,0 +1,37 @@
+.post-list {
+    width: 100%;
+
+    .split-text {
+        width: 100%;
+        text-align: center;
+        margin: 20px auto;
+        color: $grey-800;
+    }
+
+    .load-more-button {
+        width: 100%;
+        margin: 25px 0px;
+        padding: 8px;
+        text-align: center;
+        background-color: $white;
+        cursor: pointer;
+        border: 1px solid $black;
+        border-radius: 8px;
+    }
+
+    .no-posts {
+        width: 100%;
+        margin-top: 50px;
+        text-align: center;
+
+        img {
+            width: 140px;
+            height: 140px;
+        }
+
+        p {
+            font-size: $text-xs;
+            color: $grey-700;
+        }
+    }
+}

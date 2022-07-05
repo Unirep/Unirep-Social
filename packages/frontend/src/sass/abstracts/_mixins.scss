@@ -1,0 +1,69 @@
+// widgets //
+@mixin myButton(
+    $width: 0,
+    $height: 0,
+    $radius: 0,
+    $border: 0,
+    $color: $main-font-color,
+    $block-color: $white,
+    $border-color: $white,
+    $margin-horizontal: 5px,
+    $font-size: $text-base,
+    $font-weight: 400,
+    $text-align: center
+) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    @if $width > 0 {
+        width: $width;
+    }
+    @if $height > 0 {
+        height: $height;
+    }
+    border-radius: $radius;
+    @if $border > 0 {
+        border: $border solid $border-color;
+    }
+
+    color: $color;
+    background-color: $block-color;
+
+    margin-left: $margin-horizontal;
+    margin-right: $margin-horizontal;
+
+    font-size: $font-size;
+    font-weight: $font-weight;
+    text-align: $text-align;
+    vertical-align: middle;
+    line-height: $height;
+
+    cursor: pointer;
+}
+
+@mixin popupBox(
+    $width,
+    $height: auto,
+    $block-color: #fff,
+    $border-width: 0,
+    $border-color: black
+) {
+    width: $width;
+    height: $height;
+    margin: 10% auto;
+    padding: 40px 48px;
+
+    background-color: $block-color;
+
+    @if $border-width > 0 {
+        border: $border-width solid $border-color;
+    }
+}
+
+@mixin disabled() {
+    background-color: $grey-400;
+    cursor: not-allowed;
+}
+// widgets//

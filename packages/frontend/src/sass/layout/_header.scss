@@ -1,0 +1,157 @@
+header {
+    z-index: 10;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 104px;
+    display: flex;
+    flex-direction: row;
+    text-align: left;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 104px;
+    font-weight: 700;
+    background-color: $background-color;
+    box-shadow: 0px 3px 2px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 600px) {
+        padding: 0px 16px;
+    }
+
+    .navLinks {
+        flex: 1;
+        text-transform: uppercase;
+        font-size: $text-lg;
+        font-weight: 700;
+
+        img {
+            height: 40px;
+        }
+
+        .link:link,
+        .link:visited {
+            padding: 5px 10px;
+            margin: 1rem;
+            color: $black;
+            text-decoration: none;
+            text-transform: uppercase;
+            border-bottom: 2px solid transparent;
+        }
+
+        .link:hover,
+        .link:active {
+            color: #757575;
+        }
+    }
+
+    .search-bar {
+        flex: 2;
+        padding-left: 8px;
+        width: 700px;
+        height: 32px;
+        line-height: 32px;
+        vertical-align: middle;
+        background-color: #fff;
+        border-radius: 20px;
+        border: 1px solid #bdbdbd;
+        display: flex;
+        flex-direction: row;
+
+        form {
+            flex: 15;
+
+            .search-icon {
+                flex: 1;
+            }
+
+            input {
+                outline: none;
+                border: none;
+                background-color: transparent;
+                width: 100%;
+                font-size: 12px;
+            }
+        }
+    }
+
+    .timer {
+        flex: 2;
+        margin: 0px auto;
+        text-align: center;
+        line-height: 32px;
+        font-size: 18px;
+    }
+
+    .navButtons {
+        flex: 1;
+        justify-content: flex-end;
+        align-items: center;
+        display: flex;
+        padding-right: 10px;
+
+        .navBtn {
+            cursor: pointer;
+            margin-left: 45px;
+            padding-bottom: 10px;
+            border-bottom: 4px solid $white;
+
+            img {
+                height: 30px;
+            }
+
+            @media (max-width: 600px) {
+                padding: 0px;
+            }
+        }
+
+        .chosen {
+            border-bottom: 4px solid $black;
+        }
+
+        .blackButton {
+            @include myButton(
+                186px,
+                46px,
+                $color: #fff,
+                $block-color: $black,
+                $radius: 8px
+            );
+        }
+
+        .whiteButton {
+            @include myButton(
+                83px,
+                46px,
+                $color: $black,
+                $radius: 8px,
+                $border: 2px,
+                $border-color: $black
+            );
+        }
+
+        #menu {
+            padding: 0px;
+        }
+
+        #new,
+        #user,
+        #login,
+        #join {
+            @media (max-width: 600px) {
+                display: none;
+            }
+        }
+
+        #rep {
+            cursor: pointer;
+
+            @media (min-width: 600px) {
+                display: none;
+            }
+        }
+
+        .disabled {
+            @include disabled;
+        }
+    }
+}

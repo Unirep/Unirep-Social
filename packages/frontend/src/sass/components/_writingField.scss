@@ -1,0 +1,198 @@
+@function rangeLongShadow($size, $color) {
+    $ret: -8px 0 0 $size $color;
+
+    @for $i from 9 through 262 {
+        $ret: $ret, -$i * 1px 0 0 $size $color;
+    }
+
+    @return $ret;
+}
+
+.writing-field {
+    width: 100%;
+    box-sizing: border-box;
+
+    input[type='text'] {
+        width: 100%;
+        height: 68px;
+        background-color: $grey-100;
+        border-radius: 8px;
+        border: 1px solid $grey-200;
+        outline: none;
+        padding: 16px;
+        margin-top: 32px;
+        margin-bottom: 16px;
+        font-size: $title-sm;
+        font-weight: 700;
+
+        &::-webkit-input-placeholder {
+            color: $grey-300;
+            font-size: $title-sm;
+            font-weight: 700;
+        }
+
+        &::-moz-placeholder {
+            color: $grey-300;
+            font-size: $title-sm;
+            font-weight: 700;
+        }
+    }
+
+    textarea {
+        width: 100%;
+        height: 251px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid $grey-200;
+        background-color: $grey-100;
+        color: $black;
+        font-size: $text-base;
+        line-height: 22px;
+        outline: none;
+    }
+
+    .info-row {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 40px;
+
+        .element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 32px;
+
+            .name {
+                color: $grey-700;
+                font-size: $text-sm;
+                font-weight: 600;
+                display: flex;
+                flex-direction: row;
+            }
+
+            .epks {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                margin-top: 16px;
+
+                .epk {
+                    @include myButton(
+                        $height: 32px,
+                        $font-size: $text-sm,
+                        $color: $black,
+                        $radius: 8px,
+                        $border: 1px,
+                        $border-color: $black,
+                        $margin-horizontal: 0px
+                    );
+                    margin-right: 8px;
+                    padding: 7px 16px;
+                }
+
+                .chosen {
+                    background-color: $black;
+                    color: $white;
+                }
+            }
+
+            .rep-chooser {
+                display: flex;
+                margin-top: 16px;
+                align-items: center;
+
+                input[type='range'] {
+                    appearance: none;
+                    display: block;
+                    flex-basis: 85%;
+                    height: 32px;
+                    background: none;
+                    margin: 0;
+                    padding: 0;
+                    outline: none;
+                    overflow: hidden;
+                    cursor: pointer;
+
+                    &::-webkit-slider-runnable-track {
+                        width: 100%;
+                        height: 8px;
+                        border-radius: 4px;
+                        border: 1px solid $grey-200;
+                        background: $white;
+                    }
+
+                    &::-webkit-slider-thumb {
+                        appearance: none;
+                        margin-top: -12px;
+                        width: 30px;
+                        height: 30px;
+                        background-image: url('../public/images/boost-fill.svg');
+                        background-size: 30px;
+                        box-shadow: rangeLongShadow(
+                            $size: -12px,
+                            $color: $grey-100
+                        );
+                    }
+
+                    &::-moz-range-track,
+                    &::-moz-range-progress {
+                        width: 100%;
+                        height: 8px;
+                        border-radius: 4px;
+                        border: 1px solid $grey-200;
+                        background: $white;
+                    }
+
+                    &::-moz-range-thumb {
+                        margin-top: -12px;
+                        width: 30px;
+                        height: 30px;
+                        background-image: url('../public/images/boost-fill.svg');
+                        background-size: 30px;
+                        box-shadow: rangeLongShadow(
+                            $size: -12px,
+                            $color: $grey-100
+                        );
+                    }
+                }
+
+                input[type='text'] {
+                    flex-basis: 15%;
+                    height: 32px;
+                    outline: none;
+                    background-color: $grey-100;
+                    border: 1px solid $grey-200;
+                    border-radius: 8px;
+                    color: $black;
+                    margin: 0px 16px;
+                    font-size: $text-base;
+                    font-weight: 400;
+                    text-align: center;
+                    padding: 0px;
+                }
+            }
+        }
+    }
+
+    .error {
+        color: $red;
+        font-size: $text-md;
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    .submit-btn {
+        width: 100%;
+        @include myButton(
+            $height: 58px,
+            $radius: 8px,
+            $block-color: $black,
+            $color: $white,
+            $font-weight: 700,
+            $font-size: $text-lg,
+            $margin-horizontal: 0px
+        );
+    }
+}

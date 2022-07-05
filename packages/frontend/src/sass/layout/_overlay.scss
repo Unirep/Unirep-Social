@@ -1,0 +1,232 @@
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+    z-index: 20;
+
+    display: flex;
+    flex-direction: row;
+
+    .blur-area {
+        flex: 9;
+        background: #fdfdfd;
+        opacity: 0.8;
+        backdrop-filter: blur(30px);
+
+        @media (max-width: 600px) {
+            display: none;
+        }
+    }
+
+    .black-area {
+        flex: 5;
+        height: 100%;
+        background-color: $black;
+        opacity: 1;
+        color: $white;
+        position: relative;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        .close-info {
+            flex: 2;
+            width: 100%;
+
+            img {
+                width: 48px;
+                height: 48px;
+                cursor: pointer;
+            }
+
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding: 24px;
+        }
+
+        .fixed-info {
+            width: 340px;
+            font-size: $title-xl;
+            font-weight: 700;
+            line-height: 62px;
+            margin-bottom: 40px;
+
+            flex: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+
+            a {
+                cursor: pointer;
+                text-decoration: none;
+                color: $white;
+
+                &:hover {
+                    color: $grey-200;
+                }
+            }
+        }
+
+        .dynamic-info {
+            width: 340px;
+            font-size: $title-sm;
+            font-weight: 600;
+            line-height: 28px;
+            margin-bottom: 56px;
+
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+
+            a,
+            p {
+                cursor: pointer;
+                text-decoration: none;
+                color: $white;
+                margin-bottom: 0px;
+
+                &:hover {
+                    color: $grey-200;
+                }
+            }
+        }
+    }
+
+    // .signBox {
+    //   position: relative;
+    //   display: flex;
+    //   flex-direction: column;
+    //   align-items: center;
+    //   @include popupBox(536px, $border-width: 1px);
+
+    //   .sign-title {
+    //     width: 100%;
+    //     text-align:left;
+    //     font-weight: 700;
+    //     font-size: 18px;
+    //   }
+
+    //   input {
+    //     width: 100%;
+    //     height: 32px;
+    //     margin: 0px auto 32px auto;
+    //     padding: 0px 16px 0px 16px;
+
+    //     border-radius: 4px;
+    //     border: 1px solid $grey-700;
+    //     background-color: $grey-400;
+    //     font-size: $text-base;
+    //   }
+
+    //   // .signup-with-twitter {
+    //   //   // @include myButton(300px, 45px, $block-color1:#1DA1F2, $radius:5px, $color:#fff, $font-size: $text-lg);
+    //   // }
+
+    //   .sign-message {
+    //     width: 440px;
+    //     line-height: 140%;
+    //     font-size: $text-sm;
+    //     margin: 25px auto;
+    //     font-weight: 400;
+    //   }
+
+    //   .sign-private-key {
+    //     width: 440px;
+    //     height: auto;
+    //     background-color: #F2F2F2;
+    //     border-radius: 4px;
+    //     border: 1px solid #CCD2E3;
+    //     font-size: $text-sm;
+    //     text-align: left;
+    //     word-wrap: break-word;
+    //     padding: 16px 10px;
+
+    //     .divider {
+    //       width: 100%;
+    //       border: 1px solid $grey-200;
+    //       margin: 10px auto;
+    //     }
+
+    //     .copy {
+    //       width: 100%;
+    //       color: $black;
+    //       font-size: $text-sm;
+    //       text-align: center;
+    //       cursor: pointer;
+
+    //       img {
+    //         width: 17px;
+    //         height: 18.5px;
+    //         margin-right: 11px;
+    //       }
+    //     }
+
+    //     .copied {
+    //       color: $grey-800;
+    //     }
+
+    //     textarea {
+    //       outline: none;
+    //       border: none;
+    //       background-color: transparent;
+    //       width: 416px;
+    //       height: 130px;
+    //     }
+    //   }
+
+    //   .long-box {
+    //     height: 196px;
+    //   }
+
+    //   .short-box {
+    //     height: 160px;
+    //   }
+
+    //   .divider-or {
+    //     width: 100%;
+    //     margin: 26px auto;
+    //     text-align: center;
+    //   }
+
+    //   .margin-box {
+    //     height: 26px;
+    //   }
+
+    //   .sign-error-message {
+    //     width: 440px;
+    //     font-size: $text-sm;
+    //     color: #EB5757;
+    //     margin: 12.5px 0px;
+
+    //     img {
+    //       width: 18px;
+    //       height: 18px;
+    //       margin-right: 11px;
+    //     }
+    //   }
+
+    //   .sign-button-purple {
+    //     // @include myButton($width: 440px, $height: 32px, $color: #fff, $block-color1: $grey-200, $radius: 20px);
+    //     box-shadow: 0px 3px 2px rgba(0, 0, 0, 0.1);
+    //     margin-bottom: 16px;
+    //   }
+
+    //   .sign-button-grey {
+    //     @include myButton($width: 440px, $height: 32px, $color: $grey-400, $block-color: $grey-700, $radius: 20px);
+    //     margin-bottom: 16px;
+    //   }
+
+    //   .sign-button-white {
+    //     @include myButton($width: 440px, $height: 32px, $block-color: $white, $radius: 20px, $color: $grey-800);
+    //     border: 1px solid black;
+    //     box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+    //   }
+    // }
+}

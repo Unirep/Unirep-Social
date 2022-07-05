@@ -1,0 +1,121 @@
+.progress-block {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: black;
+    z-index: 1000;
+    color: $white;
+}
+
+.progress-bar-container {
+    height: 18px;
+    border: 1px solid black;
+    font-size: $text-xxs;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.progress-bar {
+    flex: 100%;
+    background-color: black;
+
+    .progress-bar-fill {
+        height: 100%;
+        background-repeat: repeat;
+        background-size: 16px;
+        transition: width 0.2s linear;
+    }
+}
+
+.progress-bar-text {
+    flex: 80px;
+    margin-left: 4px;
+}
+
+.progress-info {
+    height: 48px;
+    width: 100%;
+    cursor: pointer;
+    padding: 0px 24px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    h4 {
+        font-size: $text-base;
+        font-weight: 700;
+        margin: 0px;
+    }
+
+    p {
+        font-size: $text-xs;
+        margin: 0px;
+    }
+
+    img {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.progress-list {
+    width: 100%;
+    max-height: 270px;
+    overflow-y: scroll;
+    background-color: black;
+    padding: 40px 0px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+
+    .list-item {
+        width: 80%;
+        padding: 18px 0px;
+        border-bottom: 1px solid $grey-700;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        p {
+            font-size: $text-xs;
+            font-weight: 600;
+            margin: 0px;
+        }
+
+        img {
+            width: 16px;
+            height: 16px;
+            margin: 0px 8px;
+        }
+
+        a {
+            text-decoration: none;
+            font-size: $text-xs;
+            color: white;
+            cursor: pointer;
+
+            &:hover {
+                color: $grey-200;
+            }
+        }
+
+        .cancel {
+            font-size: $text-xs;
+            font-weight: 400;
+            color: $grey-700;
+            cursor: pointer;
+
+            &:hover {
+                color: $grey-200;
+            }
+        }
+    }
+}

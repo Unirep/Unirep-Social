@@ -1,0 +1,61 @@
+{
+    "name": "@unirep-social/backend",
+    "version": "1.0.0",
+    "description": "",
+    "scripts": {
+        "postinstall": "sh scripts/loadKeys.sh",
+        "start": "nodemon src/app.ts",
+        "start:daemon": "ts-node src/app.ts",
+        "synct": "ts-node src/sync-test.ts",
+        "keys": "sh scripts/loadKeys.sh",
+        "build": "tsc",
+        "lint": "prettier .",
+        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 5m --verbose"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@ava/typescript": "2",
+        "@types/express": "^4.17.13",
+        "@types/node": "^16.4.6",
+        "@types/node-fetch": "^2.6.1",
+        "ava": "^3.15.0",
+        "ethers": "^5.5.4",
+        "get-port": "^5.1.1",
+        "node-fetch": "2",
+        "nodemon": "^2.0.12",
+        "prettier": "^2.6.0",
+        "ts-node": "^10.1.0",
+        "typescript": "^4.4.0"
+    },
+    "dependencies": {
+        "@unirep/circuits": "1.0.0-alpha-5",
+        "@unirep/contracts": "1.0.0-alpha-6",
+        "@unirep/core": "1.0.0-alpha-6",
+        "@unirep/crypto": "1.0.0-alpha-4",
+        "@unirep-social/core": "^1.0.0",
+        "anondb": "^0.0.6",
+        "cors": "^2.8.5",
+        "dotenv": "^10.0.0",
+        "express": "^4.17.1",
+        "global": "^4.4.0",
+        "nanoid": "^3.3.4",
+        "not-index": "^1.2.0",
+        "randomstring": "^1.2.1"
+    },
+    "ava": {
+        "typescript": {
+            "rewritePaths": {
+                "src/": "build/src/",
+                "test/": "build/test/"
+            },
+            "compile": "tsc"
+        }
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "singleQuote": true,
+        "semi": false
+    }
+}

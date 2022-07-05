@@ -1,0 +1,265 @@
+.post-block {
+    width: 100%;
+    background-color: $white;
+    border-radius: 8px;
+    border: 8px solid $grey-100;
+    display: block;
+    flex-direction: row;
+    margin: 24px 0px;
+
+    .block-header {
+        width: 100%;
+        padding: 24px 32px 8px 32px;
+        display: flex;
+        flex-direction: row;
+
+        .info {
+            margin-right: auto;
+            display: flex;
+            flex-wrap: wrap;
+            font-size: $text-xs;
+            color: $grey-700;
+
+            img {
+                width: 16px;
+                height: 16px;
+            }
+
+            .user {
+                margin-right: auto;
+                display: flex;
+                cursor: pointer;
+                position: relative;
+
+                .show-off-rep {
+                    position: absolute;
+                    display: inline-block;
+                    top: -35px;
+                    height: 30px;
+                    width: max-content;
+                    background-color: $grey-800;
+                    color: $white;
+                    border-radius: 4px;
+                    padding: 8px;
+                    font-size: $text-xxs;
+                }
+            }
+
+            .date {
+                margin-right: 8px;
+            }
+        }
+
+        .etherscan {
+            flex: 0 0 80px;
+            outline: none;
+            border: none;
+            font-size: $text-xs;
+            color: $grey-700;
+
+            &:hover {
+                color: $grey-400;
+            }
+
+            img {
+                width: 16px;
+                height: 16px;
+                margin-left: 4px;
+            }
+        }
+    }
+
+    .block-content {
+        width: 100%;
+        padding: 24px 24px 32px;
+        color: $black;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $grey-100;
+        }
+
+        .title {
+            font-size: $title-sm;
+            font-weight: 600;
+            margin-bottom: 16px;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .content {
+            font-size: $text-base;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+    }
+
+    .divider {
+        width: 100%;
+        height: 1px;
+        background-color: $grey-200;
+        margin: 0 auto;
+    }
+
+    .block-buttons {
+        display: flex;
+        flex-direction: row;
+        padding: 16px 24px;
+        justify-content: space-between;
+
+        .block-button {
+            @include myButton(
+                $height: 44px,
+                $radius: 4px,
+                $color: $grey-700,
+                $font-size: $text-sm
+            );
+            padding-left: 8px;
+            position: relative;
+            box-sizing: border-box;
+
+            display: flex;
+            justify-content: flex-start;
+            flex-basis: 20%;
+
+            &:hover {
+                background-color: $grey-100;
+            }
+
+            img {
+                width: 24px;
+                height: 24px;
+                margin-right: 8px;
+            }
+
+            .btn-name {
+                @media (max-width: 600px) {
+                    display: none;
+                }
+            }
+
+            .count {
+                font-weight: 600;
+                margin-right: 2px;
+            }
+
+            .reminder {
+                position: absolute;
+                top: -38px;
+                left: 0px;
+                width: max-content;
+                height: 30px;
+                padding: 8px;
+                background-color: $grey-800;
+                border-radius: 4px;
+                color: $white;
+                font-size: $text-xxs;
+                line-height: 14px;
+            }
+
+            .disabled {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 10;
+                background: rgba(253, 253, 253, 0.4);
+            }
+        }
+
+        .share {
+            flex-basis: 13%;
+        }
+    }
+
+    .comment {
+        padding: 16px 24px;
+
+        @media (max-width: 600px) {
+            padding: 16px 8px;
+        }
+
+        .comment-block {
+            margin: 16px 0px;
+
+            .alert {
+                background-color: $grey-200;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: row;
+                font-size: $text-base;
+                color: $black;
+                padding: 24px 16px;
+
+                img {
+                    width: 24px;
+                    height: 24px;
+                    margin-right: 8px;
+                }
+            }
+
+            textarea {
+                width: 100%;
+                height: 120px;
+                padding: 8px 16px;
+                color: $grey-400;
+                font-size: $text-base;
+                border-radius: 8px;
+                border: $grey-200 1px solid;
+                background-color: $grey-100;
+                outline: none;
+
+                &::-webkit-input-placeholder {
+                    color: $grey-300;
+                }
+
+                &::-moz-placeholder {
+                    color: $grey-300;
+                }
+            }
+        }
+
+        .comments-list {
+            @media (max-width: 600px) {
+                padding: 0px 8px;
+            }
+
+            .no-padding {
+                padding: 0;
+            }
+
+            .no-padding-horizontal {
+                padding-left: 0;
+                padding-right: 0;
+
+                &:hover {
+                    cursor: auto;
+                    background-color: $white;
+                }
+            }
+
+            .comment-block-header {
+                height: 32px;
+            }
+        }
+
+        .no-comments {
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            img {
+                width: 140px;
+                height: 140px;
+            }
+
+            p {
+                text-align: center;
+                font-size: $text-xs;
+                color: $grey-700;
+            }
+        }
+    }
+}

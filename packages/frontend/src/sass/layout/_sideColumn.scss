@@ -1,0 +1,235 @@
+.widget {
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.setting {
+    display: flex;
+    flex-direction: row;
+
+    img {
+        width: 28px;
+        margin-left: auto;
+        cursor: pointer;
+    }
+}
+
+.margin-top {
+    width: 100%;
+    height: 40px;
+}
+
+.default-widget {
+    height: 176px;
+    border-radius: 8px;
+    padding: 16px 24px;
+    background-color: $grey-100;
+
+    .default-widget-choice {
+        font-size: $text-sm;
+        color: $black;
+        cursor: pointer;
+        text-decoration: none;
+
+        &:hover {
+            color: $grey-400;
+        }
+    }
+
+    .choice-margin {
+        width: 100%;
+        height: 16px;
+    }
+}
+
+.user-info-widget {
+    border-radius: 8px;
+    border: 1px solid $grey-200;
+
+    .block-title {
+        font-size: $text-sm;
+        color: $grey-700;
+        display: flex;
+        flex-direction: row;
+        padding-bottom: 8px;
+    }
+
+    h3 {
+        font-size: $title-md;
+        font-weight: 600;
+        color: $black;
+
+        img {
+            width: 25px;
+            margin: 0px 8px;
+        }
+    }
+
+    .rep-info {
+        width: 100%;
+        padding: 32px 24px;
+    }
+
+    .ust-info {
+        width: 100%;
+        background-color: $grey-100;
+        padding: 16px 24px;
+
+        .margin {
+            height: 24px;
+        }
+
+        .epks {
+            display: flex;
+            flex-direction: row;
+
+            .epk {
+                background-color: $grey-200;
+                padding: 4px 8px;
+                border-radius: 8px;
+                font-size: $text-xs;
+                color: $grey-700;
+                margin-right: 8px;
+            }
+        }
+
+        .countdown {
+            font-size: $text-md;
+            font-weight: 600;
+            color: $grey-700;
+        }
+
+        .small {
+            font-size: $text-xs;
+        }
+    }
+}
+
+.custom-ui {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: fixed;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    top: 0px;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+
+    .custom-btn {
+        outline: none;
+        border: none;
+        padding: 16px;
+        border-radius: 4px;
+        background-color: $black;
+        color: $white;
+
+        &:hover {
+            background-color: $grey-700;
+        }
+    }
+}
+
+.reminder-widget {
+    border-radius: 8px;
+    border: 1px solid $grey-200;
+    padding: 24px;
+
+    h3 {
+        font-size: $title-sm;
+        font-weight: 600;
+        color: $black;
+    }
+
+    .divider {
+        width: 100%;
+        height: 1px;
+        background-color: $grey-200;
+        margin: 16px 0px;
+    }
+}
+
+.posts-widget {
+    border-radius: 8px;
+    border: 1px solid $grey-300;
+
+    h3 {
+        font-size: $title-sm;
+        font-weight: 600;
+        color: $grey-700;
+        margin: 24px;
+    }
+
+    .ranking-block {
+        width: 100%;
+        font-size: $text-base;
+        color: $grey-700;
+        padding: 24px;
+
+        &:hover {
+            background-color: $grey-100;
+            cursor: pointer;
+        }
+
+        .ranking-block-header {
+            width: 100%;
+            min-width: 0;
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 8px;
+
+            .ranking {
+                border-radius: 8px;
+                background-color: $grey-200;
+                font-size: $text-sm;
+                color: $grey-700;
+                padding: 13px 9px;
+                margin-right: auto;
+
+                img {
+                    width: 13px;
+                    margin-right: 11px;
+                }
+            }
+
+            .boost {
+                border-radius: 8px;
+                border: 1px solid $grey-300;
+                padding: 12px 20px;
+                font-size: $text-sm;
+                font-weight: 600;
+                color: $grey-700;
+            }
+        }
+
+        .ranking-block-content {
+            min-width: 0; // really important for flex if the content overflow!
+            width: 100%;
+            margin-top: 8px;
+            word-break: break-all;
+
+            p {
+                max-height: 54px;
+                overflow: hidden;
+            }
+        }
+    }
+
+    .underline {
+        border-bottom: 1px solid $grey-300;
+    }
+}
+
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    width: 288px;
+    height: 46px;
+    padding: 10px 16px;
+    background-color: $grey-200;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px 0px #0000001a;
+}

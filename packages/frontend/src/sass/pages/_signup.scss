@@ -1,0 +1,196 @@
+.signup-page {
+    position: fixed;
+    top: 0;
+    z-index: 15;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: $black;
+
+    .left-column {
+        flex: 3;
+        height: 100%;
+        background-color: $black;
+        position: relative;
+
+        @media (max-width: 600px) {
+            display: none;
+        }
+
+        img {
+            width: 50%;
+            position: absolute;
+            top: 30%;
+            left: 25%;
+        }
+    }
+
+    .right-column {
+        flex: 4;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        height: 100%;
+        background-color: $white;
+        position: relative;
+
+        .close {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 48px;
+            padding-right: 10%;
+
+            @media (max-width: 600px) {
+                padding: 48px 16px;
+                justify-content: space-between;
+            }
+
+            #close-icon {
+                width: 48px;
+                height: 48px;
+                cursor: pointer;
+            }
+
+            #unirep-icon {
+                height: 48px;
+
+                @media (min-width: 600px) {
+                    display: none;
+                }
+            }
+        }
+
+        .info {
+            color: $black;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            max-width: 500px;
+
+            .title {
+                font-size: $title-lg;
+                font-weight: 700;
+                line-height: 62px;
+                margin-bottom: 16px;
+            }
+
+            p {
+                font-size: $text-sm;
+            }
+
+            textarea {
+                background-color: $grey-100;
+                border-radius: 8px;
+                width: 100%;
+                height: 54px;
+                border: none;
+                outline: none;
+                resize: none;
+                padding: 16px;
+                margin-top: 40px;
+            }
+
+            .larger {
+                height: 184px;
+            }
+
+            .error {
+                font-size: $text-xs;
+                color: $red;
+            }
+
+            .main-btn {
+                width: 100%;
+                margin: 32px 0px 32px 0px;
+            }
+
+            .row-with-step {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+
+                .step {
+                    width: 56%;
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+
+                    .number {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 12px;
+                        background-color: $black;
+                        color: $white;
+                        font-weight: 700;
+                        font-size: $text-base;
+                        text-align: center;
+                    }
+
+                    .disabled {
+                        background-color: $grey-400;
+                        cursor: not-allowed;
+                    }
+
+                    .line {
+                        width: 73%;
+                        height: 2px;
+                        background-color: $black;
+                        margin: 0px 16px;
+                    }
+                }
+
+                .buttons {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: row;
+
+                    .half-btn {
+                        width: 48%;
+                        @include myButton(
+                            $height: 46px,
+                            $radius: 8px,
+                            $color: $white,
+                            $block-color: $black,
+                            $font-weight: 600,
+                            $font-size: $title-sm
+                        );
+                        margin: 32px 0px 32px 0px;
+                    }
+
+                    .disabled {
+                        background-color: $grey-400;
+                        cursor: not-allowed;
+                    }
+
+                    .margin {
+                        width: 4%;
+                    }
+                }
+            }
+
+            .added-info {
+                margin-top: 32px;
+                font-size: $text-sm;
+            }
+
+            a {
+                text-decoration: none;
+                color: $black;
+                font-weight: 600;
+                cursor: pointer;
+            }
+        }
+    }
+}
