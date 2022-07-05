@@ -1,10 +1,19 @@
 {
-  "name": "root",
-  "scripts": {
-    "bootstrap": "lerna bootstrap"
-  },
-  "private": true,
-  "devDependencies": {
-    "lerna": "^5.1.6"
-  }
+    "name": "root",
+    "scripts": {
+        "bootstrap": "lerna bootstrap",
+        "lint": "prettier ."
+    },
+    "private": true,
+    "devDependencies": {
+        "lerna": "^5.1.6"
+    },
+    "dependencies": {
+        "prettier": "^2.7.1"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "singleQuote": true,
+        "semi": false
+    }
 }

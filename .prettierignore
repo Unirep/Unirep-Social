@@ -1,0 +1,9 @@
+build/
+public/build/
+.github/
+dist/
+scripts/
+keys/
+*.md
+artifacts/
+typechain/
