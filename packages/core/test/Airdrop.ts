@@ -22,7 +22,7 @@ import {
     ReputationProof,
     UserTransitionProof,
 } from './utils'
-import { deployUnirepSocial, UnirepSocial } from '../core/utils'
+import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 import { defaultAirdroppedReputation } from '../config/socialMedia'
 
 describe('Airdrop', function () {

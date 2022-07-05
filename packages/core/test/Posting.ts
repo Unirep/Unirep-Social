@@ -18,7 +18,7 @@ import {
     defaultPostReputation,
     maxReputationBudget,
 } from '../config/socialMedia'
-import { deployUnirepSocial, UnirepSocial } from '../core/utils'
+import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 

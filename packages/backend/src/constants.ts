@@ -1,4 +1,4 @@
-import UnirepSocial from 'unirep-social/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
+import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
 import Unirep from '@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json'
 import { ethers } from 'ethers'
 import randomstring from 'randomstring'

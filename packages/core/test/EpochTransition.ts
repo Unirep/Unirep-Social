@@ -20,7 +20,7 @@ import {
 import * as config from '@unirep/circuits'
 import { genEpochKey, genUserState, UserState } from '@unirep/core'
 
-import { deployUnirepSocial, UnirepSocial } from '../core/utils'
+import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 import { getTreeDepthsForTesting } from './utils'
 
 describe('Epoch Transition', function () {

@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import UnirepSocial from 'unirep-social/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
+import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
 import { deployUnirep } from '@unirep/contracts'
 import express from 'express'
 import cors from 'cors'

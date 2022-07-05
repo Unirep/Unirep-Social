@@ -16,7 +16,7 @@ import {
     QueryType,
     LOAD_POST_COUNT,
 } from '../constants'
-import { ActionType } from '@unirep-social/social'
+import { ActionType } from '@unirep-social/core'
 
 export default (app: Express) => {
     app.get('/api/comment/:id', catchError(loadComment))
