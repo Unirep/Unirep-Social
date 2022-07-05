@@ -2,17 +2,10 @@ version: 2.1
 workflows:
     lint_and_test:
         jobs:
-            - build
             - lint
-            - core-test:
-                  requires:
-                      - build
-            - backend-test:
-                  requires:
-                      - build
-            - frontend-test:
-                  requires:
-                      - build
+            - core-test
+            - backend-test
+            - frontend-test
 
 # Just for reusing below
 step_defs:
@@ -27,32 +20,6 @@ step_defs:
           command: node -v | grep v14
 
 jobs:
-    build:
-        machine:
-            image: ubuntu-2204:2022.04.1
-        steps:
-            - checkout
-            - run: *node_version
-            - run: *check_version
-            - run:
-                  name: Install Packages
-                  command: yarn && yarn bootstrap
-            - run:
-                  name: Build
-                  command: yarn build
-            - persist_to_workspace:
-                  root: ~/project
-                  paths:
-                      - node_modules
-                      - packages/circuits/zksnarkBuild
-                      - packages/circuits/dist
-                      - packages/contracts/build
-                      - packages/contracts/cache
-                      - packages/contracts/typechain
-                      - packages/contracts/vbuild
-                      - packages/core/build
-                      - packages/core/cache
-                      - packages/crypto/build
     lint:
         machine:
             image: ubuntu-2204:2022.04.1
@@ -73,23 +40,31 @@ jobs:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
-            - attach_workspace:
-                  at: ~/project
             - run: *node_version
             - run: *check_version
+            - run:
+                  name: Install Packages
+                  command: yarn && yarn bootstrap --force-local
+            - run:
+                  name: Build
+                  command: yarn build
             - run:
                   name: Test
                   command: cd packages/core && yarn test
     backend-test:
-        resource_class: medium
+        resource_class: large
         machine:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
-            - attach_workspace:
-                  at: ~/project
             - run: *node_version
             - run: *check_version
+            - run:
+                  name: Install Packages
+                  command: yarn && yarn bootstrap --force-local
+            - run:
+                  name: Build
+                  command: yarn build
             - run:
                   name: Test
                   command: cd packages/backend && yarn test
@@ -99,10 +74,14 @@ jobs:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
-            - attach_workspace:
-                  at: ~/project
             - run: *node_version
             - run: *check_version
+            - run:
+                  name: Install Packages
+                  command: yarn && yarn bootstrap --force-local
+            - run:
+                  name: Build
+                  command: yarn build
             - run:
                   name: Test
                   command: cd packages/frontend && yarn test

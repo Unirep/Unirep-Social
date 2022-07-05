@@ -2,6 +2,7 @@
     "name": "root",
     "scripts": {
         "bootstrap": "lerna bootstrap",
+        "build": "lerna run build",
         "lint": "prettier ."
     },
     "private": true,
