@@ -30,7 +30,7 @@ jobs:
             - run: *check_version
             - run:
                   name: Install
-                  command: yarn && yarn bootstrap
+                  command: yarn
             - run:
                   name: Lint
                   command: yarn lint --check
