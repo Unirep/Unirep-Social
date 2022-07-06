@@ -5,7 +5,7 @@ import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { formatProofForSnarkjsVerification, genUnirepState } from '@unirep/core'
 import { UnirepFactory } from '@unirep/contracts'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'

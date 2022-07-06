@@ -9,7 +9,7 @@ import { genUserState } from '@unirep/core'
 import { ZkIdentity } from '@unirep/crypto'
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import {
     computeStartTransitionProofHash,
     UnirepFactory,

@@ -6,7 +6,7 @@ import { genUnirepState } from '@unirep/core'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { ReputationProof, UnirepFactory } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 
 const configureSubparser = (subparsers: any) => {

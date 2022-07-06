@@ -18,7 +18,7 @@ import {
     defaultPostReputation,
 } from '../config/socialMedia'
 import { ReputationProof, UnirepFactory } from '@unirep/contracts'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 import { ZkIdentity } from '@unirep/crypto'
 

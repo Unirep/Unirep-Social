@@ -4,7 +4,7 @@ import { add0x } from './utils'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityCommitmentPrefix } from './prefix'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 

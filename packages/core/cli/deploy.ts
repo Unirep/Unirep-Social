@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import * as config from '@unirep/circuits'
 import { deployUnirep, getUnirepContract } from '@unirep/contracts'
 import * as socialMediaConfig from '../config/socialMedia'
-import { deployUnirepSocial } from '../core/utils'
+import { deployUnirepSocial } from '../src/utils'
 import * as defaultConfig from './defaults'
 
 import {

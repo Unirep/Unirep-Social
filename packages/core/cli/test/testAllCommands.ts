@@ -12,7 +12,7 @@ import { exec } from './utils'
 
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
 import { getProvider } from '../utils'
-import { UnirepSocialFactory } from '../../core/utils'
+import { UnirepSocialFactory } from '../../src/utils'
 
 describe('test all CLI subcommands', function () {
     this.timeout(500000)
@@ -96,10 +96,10 @@ describe('test all CLI subcommands', function () {
 
             const unirepRegMatch = stdout
                 .trim()
-                .match(/Unirep: (0x[a-fA-F0-9]{40})/)
+                .match(/Unirep: (0x[a-fA-F0-9]{40})/) as any
             const socialRegMatch = stdout
                 .trim()
-                .match(/Unirep Social: (0x[a-fA-F0-9]{40})$/)
+                .match(/Unirep Social: (0x[a-fA-F0-9]{40})$/) as any
             const unirepAddress = unirepRegMatch[1]
             const unirepSocialAddress = socialRegMatch[1]
 
@@ -137,7 +137,7 @@ describe('test all CLI subcommands', function () {
 
             const idRegMatch = stdout
                 .trim()
-                .match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/)
+                .match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/) as any
             const encodedIdentity = idRegMatch[1]
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
@@ -146,7 +146,7 @@ describe('test all CLI subcommands', function () {
 
             const commitmentRegMatch = stdout
                 .trim()
-                .match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/)
+                .match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/) as any
             const encodedIdentityCommitment = commitmentRegMatch[1]
             const serializedIdentityCommitment = base64url.decode(
                 encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
@@ -169,7 +169,7 @@ describe('test all CLI subcommands', function () {
 
             const idRegMatch = stdout
                 .trim()
-                .match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/)
+                .match(/^(Unirep.identity.[a-zA-Z0-9\-\_]+)\n/) as any
             const encodedIdentity = idRegMatch[1]
             const serializedIdentity = base64url.decode(
                 encodedIdentity.slice(identityPrefix.length)
@@ -178,7 +178,7 @@ describe('test all CLI subcommands', function () {
 
             const commitmentRegMatch = stdout
                 .trim()
-                .match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/)
+                .match(/(Unirep.identityCommitment.[a-zA-Z0-9\-\_]+)$/) as any
             const encodedIdentityCommitment = commitmentRegMatch[1]
             const serializedIdentityCommitment = base64url.decode(
                 encodedIdentityCommitment.slice(identityCommitmentPrefix.length)
@@ -206,7 +206,9 @@ describe('test all CLI subcommands', function () {
             const { stdout, stderr } = exec(command)
             console.log(stdout.trim(), stderr.trim())
 
-            const signUpRegMatch = stdout.trim().match(/Sign up epoch: 1/)
+            const signUpRegMatch = stdout
+                .trim()
+                .match(/Sign up epoch: 1/) as any
             expect(signUpRegMatch).not.equal(null)
         })
 
@@ -221,7 +223,9 @@ describe('test all CLI subcommands', function () {
             const { stdout, stderr } = exec(command)
             console.log(stdout.trim(), stderr.trim())
 
-            const signUpRegMatch = stdout.trim().match(/Sign up epoch: 1/)
+            const signUpRegMatch = stdout
+                .trim()
+                .match(/Sign up epoch: 1/) as any
             expect(signUpRegMatch).not.equal(null)
         })
     })
@@ -240,15 +244,17 @@ describe('test all CLI subcommands', function () {
 
             const epkRegMatch = stdout
                 .trim()
-                .match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+                .match(
+                    /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+                ) as any
             epk = epkRegMatch[1]
             const epkProofRegMatch = stdout
                 .trim()
-                .match(/(Unirep.epk.proof.[a-zA-Z0-9\-\_]+)/)
+                .match(/(Unirep.epk.proof.[a-zA-Z0-9\-\_]+)/) as any
             epkProof = epkProofRegMatch[1]
             const epkPublicSignalsRegMatch = stdout
                 .trim()
-                .match(/(Unirep.epk.publicSignals.[a-zA-Z0-9\-\_]+)$/)
+                .match(/(Unirep.epk.publicSignals.[a-zA-Z0-9\-\_]+)$/) as any
             epkPublicSignals = epkPublicSignalsRegMatch[1]
         })
     })
@@ -267,7 +273,9 @@ describe('test all CLI subcommands', function () {
 
             const verifyRegMatch = stdout
                 .trim()
-                .match(/Verify epoch key proof with epoch key ([0-9]+) succeed/)
+                .match(
+                    /Verify epoch key proof with epoch key ([0-9]+) succeed/
+                ) as any
             expect(verifyRegMatch[1]).equals(epk)
             expect(verifyRegMatch).not.equal(null)
         })
@@ -288,15 +296,17 @@ describe('test all CLI subcommands', function () {
 
             const epkRegMatch = stdout
                 .trim()
-                .match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+                .match(
+                    /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+                ) as any
             epk = epkRegMatch[1]
 
             const userRepProofRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
+                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/) as any
             const publicSignalRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/) as any
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -320,13 +330,13 @@ describe('test all CLI subcommands', function () {
 
             const postRegMatch = stdout
                 .trim()
-                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(postRegMatch).not.equal(null)
             transactionHash = postRegMatch[0].split('Transaction hash: ')[1]
 
             const proofIndexRegMatch = stdout
                 .trim()
-                .match(/Proof index: ([0-9]+)/)
+                .match(/Proof index: ([0-9]+)/) as any
             proofIdx = proofIndexRegMatch[1]
         })
     })
@@ -347,7 +357,7 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(
                     /Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/
-                )
+                ) as any
             expect(verifyRegMatch).not.equal(null)
         })
     })
@@ -368,15 +378,17 @@ describe('test all CLI subcommands', function () {
 
             const epkRegMatch = stdout
                 .trim()
-                .match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+                .match(
+                    /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+                ) as any
             epk = epkRegMatch[1]
 
             const userRepProofRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
+                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/) as any
             const publicSignalRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/) as any
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -401,7 +413,7 @@ describe('test all CLI subcommands', function () {
 
             const commentRegMatch = stdout
                 .trim()
-                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(commentRegMatch).not.equal(null)
         })
     })
@@ -419,10 +431,10 @@ describe('test all CLI subcommands', function () {
 
             const airdropProofRegMatch = stdout
                 .trim()
-                .match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/)
+                .match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/) as any
             const publicSignalRegMatch = stdout
                 .trim()
-                .match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/)
+                .match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/) as any
             expect(airdropProofRegMatch).not.equal(null)
             airdropProof = airdropProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -445,7 +457,7 @@ describe('test all CLI subcommands', function () {
 
             const commentRegMatch = stdout
                 .trim()
-                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(commentRegMatch).not.equal(null)
         })
     })
@@ -466,15 +478,17 @@ describe('test all CLI subcommands', function () {
 
             const epkRegMatch = stdout
                 .trim()
-                .match(/Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/)
+                .match(
+                    /Epoch key of epoch 1 and nonce 0: ([a-fA-F0-9]+)/
+                ) as any
             expect(epkRegMatch).not.equal(null)
 
             const userRepProofRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/)
+                .match(/(Unirep.reputation.proof.[a-zA-Z0-9\-\_]+)/) as any
             const publicSignalRegMatch = stdout
                 .trim()
-                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/)
+                .match(/(Unirep.reputation.publicSignals.[a-zA-Z0-9]+)/) as any
             expect(userRepProofRegMatch).not.equal(null)
             userRepProof = userRepProofRegMatch[1]
             expect(publicSignalRegMatch).not.equal(null)
@@ -500,7 +514,7 @@ describe('test all CLI subcommands', function () {
 
             const txRegMatch = stdout
                 .trim()
-                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/)
+                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(txRegMatch).not.equal(null)
             transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
@@ -522,7 +536,7 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(
                     /Verify reputation proof of epoch key [a-zA-Z0-9 ]+ succeed/
-                )
+                ) as any
             expect(verifyRegMatch).not.equal(null)
         })
     })
@@ -539,7 +553,9 @@ describe('test all CLI subcommands', function () {
             const { stdout, stderr } = exec(command)
             console.log(stdout.trim(), stderr.trim())
 
-            const epochEndRegMatch = stdout.trim().match(/End of epoch: 1/)
+            const epochEndRegMatch = stdout
+                .trim()
+                .match(/End of epoch: 1/) as any
             expect(epochEndRegMatch).not.equal(null)
         })
     })
@@ -558,7 +574,7 @@ describe('test all CLI subcommands', function () {
 
             const userTransitionRegMatch = stdout
                 .trim()
-                .match(/User transitioned from epoch 1 to epoch 2/)
+                .match(/User transitioned from epoch 1 to epoch 2/) as any
             expect(userTransitionRegMatch).not.equal(null)
         })
 
@@ -575,7 +591,7 @@ describe('test all CLI subcommands', function () {
 
             const userTransitionRegMatch = stdout
                 .trim()
-                .match(/User transitioned from epoch 1 to epoch 2/)
+                .match(/User transitioned from epoch 1 to epoch 2/) as any
             expect(userTransitionRegMatch).not.equal(null)
         })
     })

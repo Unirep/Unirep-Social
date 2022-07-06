@@ -7,7 +7,7 @@ import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { defaultPostReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'

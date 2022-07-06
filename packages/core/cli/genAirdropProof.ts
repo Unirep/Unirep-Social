@@ -10,7 +10,7 @@ import {
     signUpProofPrefix,
     signUpPublicSignalsPrefix,
 } from './prefix'
-import { UnirepSocial, UnirepSocialFactory } from '../core/utils'
+import { UnirepSocial, UnirepSocialFactory } from '../src/utils'
 import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 

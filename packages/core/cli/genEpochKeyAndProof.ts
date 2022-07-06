@@ -10,7 +10,7 @@ import {
     epkPublicSignalsPrefix,
     identityPrefix,
 } from './prefix'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
 

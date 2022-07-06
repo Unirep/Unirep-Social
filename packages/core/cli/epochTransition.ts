@@ -1,5 +1,5 @@
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { ethers } from 'ethers'
 import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'

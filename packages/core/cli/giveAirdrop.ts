@@ -6,7 +6,7 @@ import { UnirepFactory } from '@unirep/contracts'
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { verifyAirdropProof } from './verifyAirdropProof'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'

@@ -6,7 +6,7 @@ import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
-import { UnirepSocialFactory } from '../core/utils'
+import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
 
 // TODO: use export package from '@unirep/unirep'
