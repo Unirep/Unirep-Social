@@ -9,7 +9,7 @@
         "lint": "prettier .",
         "build:worker": "webpack --config webpack.worker.js",
         "postinstall": "link-module-alias && yarn copyCircuits",
-        "copyCircuits": "cp ./node_modules/@unirep/circuits/build/* ./public/build",
+        "copyCircuits": "node scripts/copy_circuits",
         "test": "jest --config ./jest.config.js"
     },
     "_moduleAliases": {
