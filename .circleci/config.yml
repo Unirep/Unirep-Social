@@ -4,6 +4,7 @@ workflows:
         jobs:
             - lint
             - core-test
+            - core-cli-test
             - backend-test
             - frontend-test
 
@@ -51,6 +52,23 @@ jobs:
             - run:
                   name: Test
                   command: cd packages/core && yarn test
+    core-cli-test:
+        resource_class: large
+        machine:
+            image: ubuntu-2204:2022.04.1
+        steps:
+            - checkout
+            - run: *node_version
+            - run: *check_version
+            - run:
+                  name: Install Packages
+                  command: yarn && yarn bootstrap --force-local
+            - run:
+                  name: Build
+                  command: yarn build
+            - run:
+                  name: Test
+                  command: cd packages/core && yarn test-cli
     backend-test:
         resource_class: large
         machine:
