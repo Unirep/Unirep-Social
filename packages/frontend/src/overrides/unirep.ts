@@ -11,8 +11,7 @@ import {
 import {
     stringifyBigInts,
     unstringifyBigInts,
-    unSerialiseIdentity,
-    serialiseIdentity,
+    ZkIdentity,
 } from '@unirep/crypto'
 
 // TODO: merge this into the unirep package
@@ -188,7 +187,7 @@ export class UserState extends _UserState {
         }
         const userState = new this(
             unirepState,
-            unSerialiseIdentity(identity),
+            new ZkIdentity(2, identity),
             _userState.hasSignedUp,
             _userState.latestTransitionedEpoch,
             _userState.latestGSTLeafIndex,

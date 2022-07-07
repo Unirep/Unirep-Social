@@ -1,4 +1,4 @@
-import { genIdentityCommitment, unSerialiseIdentity } from '@unirep/crypto'
+import { ZkIdentity } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/unirep'
 import * as config from './config'
 import { Record, Post, DataType, Vote, Comment, QueryType } from './constants'
@@ -11,8 +11,8 @@ export const shortenEpochKey = (epk: string) => {
 
 const decodeIdentity = (identity: string) => {
     try {
-        const id = unSerialiseIdentity(identity)
-        const commitment = genIdentityCommitment(id)
+        const id = new ZkIdentity(2, identity)
+        const commitment = id.genIdentityCommitment()
         return { id, commitment, identityNullifier: id.identityNullifier }
     } catch (e) {
         console.log('Incorrect Identity format\n', e)

@@ -2,13 +2,7 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
-import {
-    genIdentity,
-    genIdentityCommitment,
-    serialiseIdentity,
-    unSerialiseIdentity,
-    Identity,
-} from '@unirep/crypto'
+import { ZkIdentity } from '@unirep/crypto'
 import { UnirepFactory } from '@unirep/unirep-social'
 import { makeURL } from '../utils'
 import { genEpochKey } from '@unirep/unirep'
@@ -22,7 +16,7 @@ import UnirepContext from './Unirep'
 import { Synchronizer } from './Synchronizer'
 
 export class User extends Synchronizer {
-    id?: Identity
+    id?: ZkIdentity
     allEpks = [] as string[]
     currentEpoch = 0
     reputation = 30
@@ -69,7 +63,7 @@ export class User extends Synchronizer {
         const storedState = window.localStorage.getItem('user')
         if (storedState) {
             const data = JSON.parse(storedState)
-            const id = unSerialiseIdentity(data.id)
+            const id = new ZkIdentity(2, data.id)
             const userState = UserState.fromJSON(data.id, data.userState)
             Object.assign(this, {
                 ...data,
@@ -128,7 +122,7 @@ export class User extends Synchronizer {
 
     get identity() {
         if (!this.id) return undefined
-        const serializedIdentity = serialiseIdentity(this.id)
+        const serializedIdentity = this.id.serializeIdentity()
         return serializedIdentity
     }
 
@@ -137,7 +131,7 @@ export class User extends Synchronizer {
         return this.currentEpoch > this.userState.latestTransitionedEpoch
     }
 
-    setIdentity(identity: string | Identity) {
+    setIdentity(identity: string | ZkIdentity) {
         if (this.userState) {
             throw new Error('Identity already set, change is not supported')
         }
@@ -145,7 +139,7 @@ export class User extends Synchronizer {
             throw new Error('Unirep state is not initialized')
         }
         if (typeof identity === 'string') {
-            this.id = unSerialiseIdentity(identity)
+            this.id = new ZkIdentity(2, identity)
         } else {
             this.id = identity
         }
@@ -261,8 +255,8 @@ export class User extends Synchronizer {
     private async _hasSignedUp(identity: string) {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
-        const id = unSerialiseIdentity(identity)
-        const commitment = genIdentityCommitment(id)
+        const id = new ZkIdentity(2, identity)
+        const commitment = id.genIdentityCommitment()
         return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
 
@@ -286,15 +280,16 @@ export class User extends Synchronizer {
 
         if (!this.unirepState) throw new Error('Unirep state not initialized')
 
-        const id = genIdentity()
+        const id = new ZkIdentity()
         this.setIdentity(id)
         if (!this.id) throw new Error('Iden is not set')
 
-        const commitment = genIdentityCommitment(this.id)
+        const commitment = id
+            .genIdentityCommitment()
             .toString(16)
             .padStart(64, '0')
 
-        const serializedIdentity = serialiseIdentity(this.id)
+        const serializedIdentity = id.serializeIdentity()
         const epk1 = this.getEpochKey(
             0,
             (this.id as any).identityNullifier,

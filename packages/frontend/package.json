@@ -22,7 +22,7 @@
         "@types/react": "^17.0.15",
         "@types/react-dom": "^17.0.9",
         "@unirep/circuits": "git+https://github.com/Unirep/circuits.git#alpha",
-        "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
+        "@unirep/crypto": "1.0.0-alpha-4",
         "@unirep/unirep": "git+https://github.com/Unirep/unirep.git#alpha",
         "@unirep/unirep-social": "git+https://github.com/Unirep/unirep-social.git#alpha",
         "babel-preset-env": "^1.7.0",
