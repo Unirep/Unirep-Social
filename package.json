@@ -1,6 +1,6 @@
 {
     "name": "root",
-    "license": "GPL-3.0-or-later",
+    "license": "MIT",
     "scripts": {
         "bootstrap": "lerna bootstrap",
         "build": "lerna run build",
