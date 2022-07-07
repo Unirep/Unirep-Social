@@ -7,6 +7,7 @@ import UserContext from '../../context/User'
 import PostContext from '../../context/Post'
 
 import HelpWidget from '../helpWidget/helpWidget'
+import TextEditor from '../textEditor/textEditor'
 import { DataType, InfoType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
 
@@ -70,6 +71,12 @@ const WritingField = (props: Props) => {
 
     const handleRepInput = (event: any) => {
         setReputation(+event.target.value)
+    }
+
+    // test function for text-editor 
+    const handleTextEditorInput = (text: string) => {
+        setContent(text)
+        postContext.setDraft(props.type, title, text)
     }
 
     const submit = () => {
@@ -158,6 +165,11 @@ const WritingField = (props: Props) => {
             ) : (
                 <div></div>
             )}
+
+            <TextEditor 
+                content={content}
+                setContent={handleTextEditorInput}
+            />
         </div>
     )
 }
