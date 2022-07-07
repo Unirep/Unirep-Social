@@ -24,7 +24,7 @@
         "@unirep/circuits": "1.0.0-alpha-5",
         "@unirep/crypto": "1.0.0-alpha-4",
         "@unirep/unirep": "git+https://github.com/Unirep/unirep.git#alpha",
-        "@unirep/unirep-social": "git+https://github.com/Unirep/unirep-social.git#alpha",
+        "@unirep-social/core": "^1.0.0",
         "babel-preset-env": "^1.7.0",
         "bootstrap": "^5.0.2",
         "dateformat": "^4.5.1",

@@ -3,7 +3,6 @@ import { makeObservable, observable, computed } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
 import { ZkIdentity } from '@unirep/crypto'
-import { UnirepFactory } from '@unirep/unirep-social'
 import { makeURL } from '../utils'
 import { genEpochKey } from '@unirep/unirep'
 import { UnirepState, UserState } from '../overrides/unirep'
@@ -106,11 +105,9 @@ export class User extends Synchronizer {
 
     async loadCurrentEpoch() {
         await this.unirepConfig.loadingPromise
-        const unirepContract = UnirepFactory.connect(
-            this.unirepConfig.unirepAddress,
-            config.DEFAULT_ETH_PROVIDER
+        this.currentEpoch = Number(
+            await this.unirepConfig.unirep.currentEpoch()
         )
-        this.currentEpoch = Number(await unirepContract.currentEpoch())
         return this.currentEpoch
     }
 
