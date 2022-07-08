@@ -1,5 +1,5 @@
-import { ZkIdentity } from '@unirep/crypto'
-import { genEpochKey } from '@unirep/unirep'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
+import { genEpochKey } from '@unirep/core'
 import * as config from './config'
 import { Record, Post, DataType, Vote, Comment, QueryType } from './constants'
 import UnirepContext from './context/Unirep'
@@ -11,7 +11,7 @@ export const shortenEpochKey = (epk: string) => {
 
 const decodeIdentity = (identity: string) => {
     try {
-        const id = new ZkIdentity(2, identity)
+        const id = new ZkIdentity(Strategy.SERIALIZED, identity)
         const commitment = id.genIdentityCommitment()
         return { id, commitment, identityNullifier: id.identityNullifier }
     } catch (e) {

@@ -2,19 +2,19 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
-import { ZkIdentity } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
+import { Attestation } from '@unirep/contracts'
 import { makeURL } from '../utils'
-import { genEpochKey } from '@unirep/unirep'
-import { UnirepState, UserState } from '../overrides/unirep'
+import { genEpochKey, UserState, schema } from '@unirep/core'
 import {
     formatProofForVerifierContract,
     formatProofForSnarkjsVerification,
-    verifyProof,
 } from '@unirep/circuits'
+import prover from './prover'
 import UnirepContext from './Unirep'
-import { Synchronizer } from './Synchronizer'
+import { IndexedDBConnector } from 'anondb/web'
 
-export class User extends Synchronizer {
+export class User {
     id?: ZkIdentity
     allEpks = [] as string[]
     currentEpoch = 0
@@ -22,22 +22,26 @@ export class User extends Synchronizer {
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
     loadingPromise
+    userState?: UserState
+
+    syncPercent: any
+    startBlock: any
+    latestBlock: any
+    latestProcessedBlock: any
+    isInitialSyncing: any
 
     constructor() {
-        super()
         makeObservable(this, {
             currentEpoch: observable,
             reputation: observable,
             spent: observable,
-            unirepState: observable,
-            userState: observable,
             currentEpochKeys: computed,
             allEpks: observable,
-            syncPercent: computed,
-            startBlock: observable,
-            latestBlock: observable,
-            latestProcessedBlock: observable,
-            isInitialSyncing: observable,
+            // syncPercent: computed,
+            // startBlock: observable,
+            // latestBlock: observable,
+            // latestProcessedBlock: observable,
+            // isInitialSyncing: observable,
             id: observable,
         })
         if (typeof window !== 'undefined') {
@@ -52,32 +56,25 @@ export class User extends Synchronizer {
     }
 
     get isSynced() {
-        return this.currentEpoch === this.unirepState?.currentEpoch
+        return false
+        // return this.currentEpoch === this.userState?.currentEpoch
     }
 
     // must be called in browser, not in SSR
     async load() {
-        await super.load() // loads the unirep state
-        if (!this.unirepState) throw new Error('Unirep state not initialized')
-        const storedState = window.localStorage.getItem('user')
-        if (storedState) {
-            const data = JSON.parse(storedState)
-            const id = new ZkIdentity(2, data.id)
-            const userState = UserState.fromJSON(data.id, data.userState)
-            Object.assign(this, {
-                ...data,
-                id,
-                userState,
-                unirepState: userState.getUnirepState(),
-            })
+        await this.unirepConfig.loadingPromise
+        const storedIdentity = window.localStorage.getItem('identity')
+        if (storedIdentity) {
+            const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
+            await this.setIdentity(id)
             await this.calculateAllEpks()
         }
         if (this.id) {
-            this.startDaemon()
-            this.waitForSync().then(() => {
-                this.loadReputation()
-                this.save()
-            })
+            // this.startDaemon()
+            // this.waitForSync().then(() => {
+            //     this.loadReputation()
+            //     this.save()
+            // })
         }
 
         // start listening for new epochs
@@ -89,18 +86,9 @@ export class User extends Synchronizer {
     }
 
     save() {
-        super.save()
-        // save user state
-        const data = {
-            userState: this.userState,
-            id: this.identity,
-            currentEpoch: this.currentEpoch,
-            spent: this.spent,
+        if (this.id) {
+            window.localStorage.setItem('identity', this.id.serializeIdentity())
         }
-        if (typeof this.userState?.toJSON(0) === 'string') {
-            throw new Error('Invalid user state toJSON return value')
-        }
-        window.localStorage.setItem('user', JSON.stringify(data))
     }
 
     async loadCurrentEpoch() {
@@ -125,22 +113,36 @@ export class User extends Synchronizer {
 
     get needsUST() {
         if (!this.userState) return false
-        return this.currentEpoch > this.userState.latestTransitionedEpoch
+        return false
+        // return this.currentEpoch > (await this.userState.latestTransitionedEpoch())
     }
 
-    setIdentity(identity: string | ZkIdentity) {
+    async setIdentity(identity: string | ZkIdentity) {
         if (this.userState) {
             throw new Error('Identity already set, change is not supported')
         }
-        if (!this.unirepState) {
-            throw new Error('Unirep state is not initialized')
-        }
         if (typeof identity === 'string') {
-            this.id = new ZkIdentity(2, identity)
+            this.id = new ZkIdentity(Strategy.SERIALIZED, identity)
         } else {
             this.id = identity
         }
-        this.userState = new UserState(this.unirepState, this.id)
+        const db = await IndexedDBConnector.create(schema, 1)
+        this.userState = new UserState(
+            db,
+            prover as any,
+            this.unirepConfig.unirep,
+            this.id
+        )
+        const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
+            .topics as string[]
+        const [AttestationSubmitted] =
+            this.unirepConfig.unirep.filters.AttestationSubmitted()
+                .topics as string[]
+        this.userState.on(EpochEnded, this.epochEnded.bind(this))
+        this.userState.on(
+            AttestationSubmitted,
+            this.attestationSubmitted.bind(this)
+        )
     }
 
     async calculateAllEpks() {
@@ -189,7 +191,7 @@ export class User extends Synchronizer {
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
-        const rep = this.userState.getRepByAttester(
+        const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
         this.reputation = Number(rep.posRep) - Number(rep.negRep)
@@ -211,7 +213,7 @@ export class User extends Synchronizer {
 
         const epk = genEpochKey(
             this.id.identityNullifier,
-            this.userState.getUnirepStateCurrentEpoch(),
+            await this.userState.getUnirepStateCurrentEpoch(),
             0
         )
         const gotAirdrop = await unirepSocial.isEpochKeyGotAirdrop(epk)
@@ -234,9 +236,9 @@ export class User extends Synchronizer {
             method: 'POST',
         })
         const { error, transaction } = await r.json()
-        const { blockNumber } =
-            await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
-        await this.waitForSync(blockNumber)
+        // const { blockNumber } =
+        //     await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
+        await this.userState.waitForSync(/*blockNumber*/)
         await this.loadReputation()
         return { error, transaction }
     }
@@ -252,7 +254,7 @@ export class User extends Synchronizer {
     private async _hasSignedUp(identity: string) {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
-        const id = new ZkIdentity(2, identity)
+        const id = new ZkIdentity(Strategy.SERIALIZED, identity)
         const commitment = id.genIdentityCommitment()
         return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
@@ -264,21 +266,8 @@ export class User extends Synchronizer {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
 
-        this.unirepState = new UnirepState({
-            globalStateTreeDepth: this.unirepConfig.globalStateTreeDepth,
-            userStateTreeDepth: this.unirepConfig.userStateTreeDepth,
-            epochTreeDepth: this.unirepConfig.epochTreeDepth,
-            attestingFee: this.unirepConfig.attestingFee,
-            epochLength: this.unirepConfig.epochLength,
-            numEpochKeyNoncePerEpoch:
-                this.unirepConfig.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: this.unirepConfig.maxReputationBudget,
-        })
-
-        if (!this.unirepState) throw new Error('Unirep state not initialized')
-
         const id = new ZkIdentity()
-        this.setIdentity(id)
+        await this.setIdentity(id)
         if (!this.id) throw new Error('Iden is not set')
 
         const commitment = id
@@ -306,12 +295,12 @@ export class User extends Synchronizer {
             this.userState = undefined
             throw error
         }
-        const { blockNumber } =
-            await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
-        this.initialSyncFinalBlock = blockNumber
+        // const { blockNumber } =
+        //     await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
+        // this.initialSyncFinalBlock = blockNumber
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
-        this.startDaemon()
+        await this.userState?.start()
         return {
             i: serializedIdentity,
             c: commitment,
@@ -325,23 +314,13 @@ export class User extends Synchronizer {
         const hasSignedUp = await this._hasSignedUp(idInput)
         if (!hasSignedUp) return false
 
-        this.unirepState = new UnirepState({
-            globalStateTreeDepth: this.unirepConfig.globalStateTreeDepth,
-            userStateTreeDepth: this.unirepConfig.userStateTreeDepth,
-            epochTreeDepth: this.unirepConfig.epochTreeDepth,
-            attestingFee: this.unirepConfig.attestingFee,
-            epochLength: this.unirepConfig.epochLength,
-            numEpochKeyNoncePerEpoch:
-                this.unirepConfig.numEpochKeyNoncePerEpoch,
-            maxReputationBudget: this.unirepConfig.maxReputationBudget,
-        })
-
-        if (!this.unirepState) throw new Error('Unirep state not initialized')
-
-        this.setIdentity(idInput)
+        await this.setIdentity(idInput)
         await this.calculateAllEpks()
-        this.startDaemon()
-        this.waitForSync().then(() => {
+        if (!this.userState) {
+            throw new Error('User state is not set')
+        }
+        await this.userState.start()
+        this.userState.waitForSync().then(() => {
             this.loadReputation()
             this.save()
         })
@@ -350,16 +329,13 @@ export class User extends Synchronizer {
 
     async logout() {
         console.log('log out')
-        if (this.daemonRunning) {
-            this.daemonRunning = false
-            await this.daemonPromise
+        if (this.userState) {
+            await this.userState.stop()
         }
         this.id = undefined
         this.allEpks = [] as string[]
         this.reputation = 0
         this.spent = 0
-
-        this.init()
         this.save()
     }
 
@@ -437,24 +413,28 @@ export class User extends Synchronizer {
     }
 
     async attestationSubmitted(event: any) {
-        const result = await super.attestationSubmitted(event)
-        if (!result) return
-        const {
-            // epoch,
-            epochKey,
-            spentAmount,
-        } = result
+        const epochKey = ethers.BigNumber.from(event.topics[2])
+        const decodedData = this.unirepConfig.unirep.interface.decodeEventLog(
+            'AttestationSubmitted',
+            event.data
+        )
+        const attestation = new Attestation(
+            BigInt(decodedData._attestation.attesterId),
+            BigInt(decodedData._attestation.posRep),
+            BigInt(decodedData._attestation.negRep),
+            BigInt(decodedData._attestation.graffiti),
+            BigInt(decodedData._attestation.signUp)
+        )
         const normalizedEpk = epochKey
             .toHexString()
             .replace('0x', '')
             .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
         if (this.currentEpochKeys.indexOf(normalizedEpk) !== -1) {
-            this.spent += Number(spentAmount)
+            this.spent += Number(attestation.negRep)
         }
     }
 
     async epochEnded(event: any) {
-        await super.epochEnded(event)
         await this.loadReputation()
         await this.calculateAllEpks()
         this.spent = 0

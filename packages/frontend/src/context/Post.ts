@@ -182,7 +182,7 @@ export class Data {
                 })
 
                 console.log('before userContext wait for sync')
-                await userContext.waitForSync()
+                await userContext.userState?.waitForSync()
                 console.log('sync complete')
 
                 await userContext.calculateAllEpks()
