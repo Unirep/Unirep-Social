@@ -779,32 +779,32 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@unirep/circuits@1.0.0-alpha-5":
-  version "1.0.0-alpha-5"
-  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-5.tgz#ada4aee2260cdc9b9fbbe267470dfc4c51dd1c6f"
-  integrity sha512-Yab6DwefBbR5hVTfaNnuTAJ/QPm64o7feyK4pWrAddT3XnNqS8lBKWI3fQmSpyMZ+BQM8ckJSJfE5jeOltX0Ng==
+"@unirep/circuits@1.0.0-alpha-6":
+  version "1.0.0-alpha-6"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-6.tgz#807b65345af519f1bc0cf0bdfcaffe465a66aa40"
+  integrity sha512-Fe4iKP9p+n1lthEpplMFDxD8kXbq+++BuhDjB1oOj0PRcogibeoxvp+VbrqXA1Sg+zUznv7vh96TJZhTm6DZsA==
   dependencies:
     "@unirep/crypto" "1.0.0-alpha-4"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-6":
-  version "1.0.0-alpha-6"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-6.tgz#4fb865b53e06cfbaab301f9125f7bf19ca70e7c7"
-  integrity sha512-BPFgVXjEUhWLdYoyEs0OTdv+0S8LK32BbJiPSdHr3AMbKCjQaSkiO1KEU/GO8V9MB12xmeGIkPICGoTz2bfbGA==
+"@unirep/contracts@1.0.0-alpha-7":
+  version "1.0.0-alpha-7"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-7.tgz#f2a4f042ecf42a00efb88e0612823a48ef214122"
+  integrity sha512-UGSS3L1xXXwUj8uDHfFuRxOibnycEUlvAtoc6Ey3xuLGrydDKoH5Kc/XxspeZ62AjbAkFd4dUu7T/Muaoqs//A==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-5"
+    "@unirep/circuits" "1.0.0-alpha-6"
     "@unirep/crypto" "1.0.0-alpha-4"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-6":
-  version "1.0.0-alpha-6"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-6.tgz#f7f3de83430d48d03720f8be79fe0058081d57ef"
-  integrity sha512-YnRZuUtqGPQKxZf7mwOc47ACAvYzaKTFhzOwwu0JChXHShaWg7TD2+RPOv43LpSegHBJnwEP42Bdo6qejRXwyw==
+"@unirep/core@1.0.0-alpha-7":
+  version "1.0.0-alpha-7"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-7.tgz#7fa6097f676afd64c5ac1b53392ef7f070b58e5e"
+  integrity sha512-9UG+dYqUVRBWN2yO51TAbJaBnfla/DlCA4pyzF6BbjCYN19QwIIwhkZwVIzNePlZUF2JswJK4//H9cDHk6uwJQ==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-5"
-    "@unirep/contracts" "1.0.0-alpha-6"
+    "@unirep/circuits" "1.0.0-alpha-6"
+    "@unirep/contracts" "1.0.0-alpha-7"
     "@unirep/crypto" "1.0.0-alpha-4"
-    anondb "^0.0.6"
+    anondb "^0.0.8"
     ethers "^5.6.8"
     nanoid "3"
 
@@ -922,6 +922,19 @@ anondb@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.6.tgz#e25ab2c32b9a0cbb328bf7cb852ae38e0421309f"
   integrity sha512-4b2irkLi5wGZcnGI+AprYY4LvZfzwbCIBEpLGleUlA/JLxUiyLe+opbjRgGlcG6Wn4C1JmON0Nx0LPkbpMA/Wg==
+  dependencies:
+    async-lock "^1.2.11"
+    idb "^6.0.0"
+    nanoid "^3.1.30"
+    pg "^8.5.1"
+    sql.js "^1.5.0"
+    sqlite "^4.0.19"
+    sqlite3 "^5.0.2"
+
+anondb@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.8.tgz#98995803be4816fa90cbd413bd758b273ff039b0"
+  integrity sha512-SpibKccgOPFagkt+Z3hsxaD+ykttnvgk+p1Hb/y5wOIQa4vdkNDhN7EEWSDdRu2Y/kz4NPTHC3C3VNZrGd+I7w==
   dependencies:
     async-lock "^1.2.11"
     idb "^6.0.0"
@@ -4314,6 +4327,11 @@ parseurl@~1.3.3:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.3.tgz#9da19e7bee8d12dff0513ed5b76957793bc2e8d4"
   integrity sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==
+
+path-browserify@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/path-browserify/-/path-browserify-1.0.1.tgz#d98454a9c3753d5790860f16f68867b9e46be1fd"
+  integrity sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==
 
 path-exists@^3.0.0:
   version "3.0.0"

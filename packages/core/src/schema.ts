@@ -95,14 +95,6 @@ const _schema = [
         ],
     },
     {
-        name: 'UserSignUp',
-        rows: [
-            ['transactionHash', 'String'],
-            ['commitment', 'String'],
-            ['epoch', 'Int'],
-        ],
-    },
-    {
         name: 'EpkRecord',
         rows: [
             {
