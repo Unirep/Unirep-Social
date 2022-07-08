@@ -1,8 +1,12 @@
 import { DB, TransactionDB } from 'anondb'
 import { ethers } from 'ethers'
-import { Circuit, formatProofForSnarkjsVerification } from '@unirep/circuits'
+import {
+    Circuit,
+    formatProofForSnarkjsVerification,
+    Prover,
+} from '@unirep/circuits'
 import { stringifyBigInts, unstringifyBigInts } from '@unirep/crypto'
-import { Synchronizer, Prover } from '@unirep/core'
+import { Synchronizer } from '@unirep/core'
 
 const encodeBigIntArray = (arr: BigInt[]): string => {
     return JSON.stringify(stringifyBigInts(arr))
@@ -53,7 +57,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
     async loadNewEvents(fromBlock, toBlock) {
         return (
             (await Promise.all([
-                super.loadNewEvents(fromBlock, toBlock),
+                this.unirepContract.queryFilter(
+                    this.unirepFilter,
+                    fromBlock,
+                    toBlock
+                ),
                 this.unirepSocialContract.queryFilter(
                     this.unirepSocialFilter,
                     fromBlock,
