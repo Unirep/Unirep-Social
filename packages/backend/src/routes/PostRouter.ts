@@ -74,14 +74,14 @@ async function loadPosts(req, res) {
 
     const posts = await req.db.findMany('Post', {
         where: {
-            epochKey: epks.length ? epks : undefined,
+            epochKey: Array.isArray(epks.length) ? epks : null,
         },
         orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-            commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            // createdAt: query === QueryType.New ? 'desc' : undefined,
+            // posRep: query === QueryType.Boost ? 'desc' : undefined,
+            // negRep: query === QueryType.Squash ? 'desc' : undefined,
+            // totalRep: query === QueryType.Rep ? 'desc' : undefined,
+            // commentCount: query === QueryType.Comments ? 'desc' : undefined,
         },
         limit: LOAD_POST_COUNT,
     })

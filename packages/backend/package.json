@@ -29,9 +29,9 @@
         "typescript": "^4.4.0"
     },
     "dependencies": {
-        "@unirep/circuits": "1.0.0-alpha-5",
+        "@unirep/circuits": "1.0.0-alpha-6",
         "@unirep/contracts": "1.0.0-alpha-6",
-        "@unirep/core": "1.0.0-alpha-6",
+        "@unirep/core": "1.0.0-alpha-9",
         "@unirep/crypto": "1.0.0-alpha-4",
         "@unirep-social/core": "^1.0.0",
         "anondb": "^0.0.6",
