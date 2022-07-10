@@ -2,7 +2,8 @@ import { Express } from 'express'
 import catchError from '../catchError'
 import {
     UserTransitionProof,
-    computeStartTransitionProofHash,
+    StartTransitionProof,
+    ProcessAttestationsProof,
 } from '@unirep/contracts'
 import { ethers } from 'ethers'
 import {
@@ -43,8 +44,13 @@ async function userStateTransition(req, res) {
     }
 
     // submit user state transition proofs
-    const { blindedUserState, blindedHashChain, globalStateTreeRoot, proof } =
-        results.startTransitionProof
+    const {
+        blindedUserState,
+        blindedHashChain,
+        globalStateTreeRoot,
+        proof,
+        publicSignals,
+    } = results.startTransitionProof
     {
         const calldata = unirepSocialContract.interface.encodeFunctionData(
             'startUserStateTransition',
@@ -89,28 +95,17 @@ async function userStateTransition(req, res) {
 
     const proofIndexes: number[] = []
     {
-        const proofNullifier = computeStartTransitionProofHash(
-            blindedUserState,
-            blindedHashChain,
-            globalStateTreeRoot,
-            formatProofForVerifierContract(proof)
-        )
+        const _proof = new StartTransitionProof(publicSignals, proof)
+        const proofNullifier = _proof.hash()
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
     }
     for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const {
-            outputBlindedUserState,
-            outputBlindedHashChain,
-            inputBlindedUserState,
-            proof,
-        } = results.processAttestationProofs[i]
-        const proofNullifier = computeStartTransitionProofHash(
-            outputBlindedUserState,
-            outputBlindedHashChain,
-            inputBlindedUserState,
-            formatProofForVerifierContract(proof)
+        const _proof = new ProcessAttestationsProof(
+            results.processAttestationProofs[i].publicSignals,
+            results.processAttestationProofs[i].proof
         )
+        const proofNullifier = _proof.hash()
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
     }

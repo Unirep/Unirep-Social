@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import UnirepSocial from '@unirep-social/core/abi/UnirepSocial.json'
-import Unirep from '@unirep/contracts/artifacts/contracts/Unirep.sol/Unirep.json'
+import Unirep from '@unirep/contracts/abi/Unirep.json'
 
 const EXPLORER_URL = 'https://kovan-optimistic.etherscan.io'
 

@@ -29,6 +29,7 @@
         "bootstrap": "^5.0.2",
         "dateformat": "^4.5.1",
         "ethers": "^5.5.4",
+        "events": "^3.3.0",
         "identity-obj-proxy": "^3.0.0",
         "jest-environment-jsdom": "^28.1.2",
         "keyv": "4.1.1",

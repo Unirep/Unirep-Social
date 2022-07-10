@@ -230,7 +230,7 @@ export class User {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                proof: formatProofForVerifierContract(proof),
+                proof,
                 publicSignals,
             }),
             method: 'POST',
@@ -369,17 +369,16 @@ export class User {
         const proveGraffiti = BigInt(0)
         const graffitiPreImage = BigInt(0)
         if (!this.userState) throw new Error('User state not initialized')
-        const results = await this.userState.genProveReputationProof(
-            BigInt(this.unirepConfig.attesterId),
-            epkNonce,
-            minRep,
-            proveGraffiti,
-            graffitiPreImage,
-            nonceList
-        )
+        const { proof, publicSignals } =
+            await this.userState.genProveReputationProof(
+                BigInt(this.unirepConfig.attesterId),
+                epkNonce,
+                minRep,
+                proveGraffiti,
+                graffitiPreImage,
+                nonceList
+            )
 
-        const proof = formatProofForVerifierContract(results.proof)
-        const publicSignals = results.publicSignals
         this.save()
         return { epk, proof, publicSignals, currentEpoch }
     }
