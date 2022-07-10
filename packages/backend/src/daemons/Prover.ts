@@ -12,4 +12,9 @@ export class Prover {
         const vkey = require(vkeypath)
         return snarkjs.groth16.verify(vkey, signals, proof)
     }
+
+    static async genProofAndPublicSignals(): Promise<any> {
+        // no need for attester to generate proofs
+        throw new Error('Not implemented')
+    }
 }
