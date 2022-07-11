@@ -13,7 +13,7 @@ test('helpWidget conditionally renders to the page', () => {
     // Assert
     waitFor(() =>
         expect(
-            screen.getByText(/select a persona to post this/i)
+            screen.findByText(/select a persona to post this/i)
         ).not.toBeInTheDocument()
     )
     userEvent.click(imageElement)
