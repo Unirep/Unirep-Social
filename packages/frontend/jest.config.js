@@ -1,4 +1,4 @@
-const ignores = ['/node_modules/', './node_modules/nanoid/index.js', "node_modules/(?!(randomFillSync)/)"];
+const ignores = ['/node_modules/', '<rootDir>/src/__tests__/__mocks__'];
 
 module.exports = {
     preset: 'ts-jest', 
@@ -13,26 +13,18 @@ module.exports = {
     transform: {
         '^.+\\.(ts|tsx)?$': 'ts-jest',
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+\\.(gif|svg|ico)$': '<rootDir>/svgTransform.js',
+        '^.+\\.(gif|svg|ico|url)$': '<rootDir>/svgTransform.js',
     },
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
     moduleFileExtensions: ['tsx', 'js', 'ts'],
     moduleNameMapper: {
-        "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-        '^(\\.{1,2}/.*)\\.js$': '$1',
+        "\\.(css|less|scss|sass|ico|url)$": "identity-obj-proxy",
+        '\\.(png|jpg|webp|ttf|woff|woff2|svg|mp4|url)$': '<rootDir>/src/__mocks__/fileMock.js'
       },
     clearMocks: true,
-    // collectCoverage: true, // todo
-    // coverageDirectory: "coverage",  // todo
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect', './src/tests/setup.js'],
     resolver: 'jest-webpack-resolver',
-    // extensionsToTreatAsEsm: ['.tsx', '.ts', '.jsx'],
-    // globals: {
-    //     'ts-jest': {
-    //     useESM: true,
-    //     },
-    // },
+    // collectCoverage: true, // todo
+    // coverageDirectory: "coverage",  // todo
 }
-
-// run `yarn node --experimental-vm-modules $(yarn bin jest)` to run all tests
