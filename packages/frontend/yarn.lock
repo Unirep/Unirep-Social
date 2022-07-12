@@ -2190,22 +2190,22 @@
     "@unirep/crypto" "1.0.0-alpha-4"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-8":
-  version "1.0.0-alpha-8"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-8.tgz#1bcb8c6544aad3cbf025639c7eca849926dd669d"
-  integrity sha512-Tw03LbDBNpJKqxFu5uKCaSnNtWBD83jQ7P/lEeW/ZtOiWBYEh689pGOvj0SHr/Rw+mnF7NfX9TN2xkV2Q/4GUQ==
+"@unirep/contracts@1.0.0-alpha-9":
+  version "1.0.0-alpha-9"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-9.tgz#1ac3ecec1e84eb646a6b03ca18df42b33548b42e"
+  integrity sha512-ujKTx+TfhDJsGV/3dsInDIHmpEPixzGrqRqVzaMe3OCHTCsJohUiTgE6SBKYzEjpZqxIPlKJqcdFDFUslA2Rvg==
   dependencies:
     "@unirep/circuits" "1.0.0-alpha-7"
     "@unirep/crypto" "1.0.0-alpha-4"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-10":
-  version "1.0.0-alpha-10"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-10.tgz#1a99f0767ecb37b9e9687383b8eb447eaa79ba3f"
-  integrity sha512-54+WMoKsqc2lQWGTBGGdCqoPjm7K5gR/5FwN0BvXOKkFCb1lNKLrQGJLSGugdjHarWfsFjlTb4PBd3dBV2MJww==
+"@unirep/core@1.0.0-alpha-11":
+  version "1.0.0-alpha-11"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-11.tgz#178de45f2698ed76095069c539014425de728a39"
+  integrity sha512-dmQnUtIZVkpjkSyiRm9tkNSTTaaOzTC3aZeYM9CEFJNmbO0Q2PVDzrFF0PSK8Sh5iIAmZ/06zh5r7s56wcXj2w==
   dependencies:
     "@unirep/circuits" "1.0.0-alpha-7"
-    "@unirep/contracts" "1.0.0-alpha-8"
+    "@unirep/contracts" "1.0.0-alpha-9"
     "@unirep/crypto" "1.0.0-alpha-4"
     anondb "^0.0.10"
     ethers "^5.6.8"
