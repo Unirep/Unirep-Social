@@ -70,11 +70,11 @@ async function loadPosts(req, res) {
     const query = req.query.query.toString()
     // TODO: deal with this when there's an offset arg
     // const lastRead = req.query.lastRead || 0
-    const epks = req.query.epks ? req.query.epks.split('_') : []
+    const epks = req.query.epks ? req.query.epks.split('_') : null
 
     const posts = await req.db.findMany('Post', {
         where: {
-            epochKey: Array.isArray(epks.length) ? epks : null,
+            epochKey: epks,
         },
         orderBy: {
             createdAt: query === QueryType.New ? 'desc' : undefined,
