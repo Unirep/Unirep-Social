@@ -110,10 +110,15 @@ async function createComment(req, res) {
         return
     }
 
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
-        [req.body.postId, req.body.content, reputationProof]
+        [
+            req.body.postId,
+            req.body.content,
+            reputationProof.publicSignals,
+            reputationProof.proof,
+        ]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

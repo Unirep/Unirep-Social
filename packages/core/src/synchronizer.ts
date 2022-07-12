@@ -7,6 +7,7 @@ import {
 } from '@unirep/circuits'
 import { stringifyBigInts, unstringifyBigInts } from '@unirep/crypto'
 import { Synchronizer } from '@unirep/core'
+import { ReputationProof, SignUpProof } from '@unirep/contracts'
 
 const encodeBigIntArray = (arr: BigInt[]): string => {
     return JSON.stringify(stringifyBigInts(arr))
@@ -123,13 +124,13 @@ export class UnirepSocialSynchronizer extends Synchronizer {
     }
 
     async socialUserSignedUp(event, db) {
-        const _epoch = Number(event.topics[1])
-        const _commitment = BigInt(event.topics[2]).toString()
-        db.create('UserSignUp', {
-            transactionHash: event.transactionHash,
-            commitment: _commitment,
-            epoch: _epoch,
-        })
+        // const _epoch = Number(event.topics[1])
+        // const _commitment = BigInt(event.topics[2]).toString()
+        // db.create('UserSignUp', {
+        //     transactionHash: event.transactionHash,
+        //     commitment: _commitment,
+        //     epoch: _epoch,
+        // })
     }
 
     private async verifyAttestationProof(
@@ -211,17 +212,18 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const postId = event.topics[2]
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[3]).toString(16)
-        const _minRep = Number(decodedData.proofRelated.minRep._hex)
         const findComment = await this._db.findOne('Comment', {
             where: {
                 transactionHash: commentId,
             },
         })
 
-        const reputationProof = decodedData.proofRelated
-        const proofNullifier = await this.unirepContract.hashReputationProof(
-            reputationProof
+        const repProof = new ReputationProof(
+            decodedData.publicSignals,
+            decodedData.proof
         )
+        const _minRep = Number(repProof.minRep)
+        const proofNullifier = repProof.hash()
         const proofIndex = Number(
             await this.unirepContract.getProofIndex(proofNullifier)
         )
@@ -346,10 +348,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'PostSubmitted',
             event.data
         )
-        const reputationProof = decodedData.proofRelated
-        const proofNullifier = await this.unirepContract.hashReputationProof(
-            reputationProof
+        const repProof = new ReputationProof(
+            decodedData.publicSignals,
+            decodedData.proof
         )
+        const proofNullifier = repProof.hash()
         const proofIndex = Number(
             await this.unirepContract.getProofIndex(proofNullifier)
         )
@@ -357,7 +360,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _transactionHash = event.transactionHash
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[2]).toString(16)
-        const _minRep = Number(decodedData.proofRelated.minRep._hex)
+        const _minRep = Number(repProof.minRep)
 
         const findValidProof = await this._db.findOne('Proof', {
             where: {
@@ -492,10 +495,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _posRep = Number(decodedData.upvoteValue._hex)
         const _negRep = Number(decodedData.downvoteValue._hex)
 
-        const reputationProof = decodedData.proofRelated
-        const proofNullifier = await this.unirepContract.hashReputationProof(
-            reputationProof
+        const repProof = new ReputationProof(
+            decodedData.publicSignals,
+            decodedData.proof
         )
+        const proofNullifier = repProof.hash()
         const fromProofIndex = Number(
             await this.unirepContract.getProofIndex(proofNullifier)
         )
@@ -686,11 +690,12 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _transactionHash = event.transactionHash
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[2]).toString(16)
-        const signUpProof = decodedData.proofRelated
 
-        const proofNullifier = await this.unirepContract.hashSignUpProof(
-            signUpProof
+        const _signUpProof = new SignUpProof(
+            decodedData.publicSignals,
+            decodedData.proof
         )
+        const proofNullifier = _signUpProof.hash()
         const proofIndex = Number(
             await this.unirepContract.getProofIndex(proofNullifier)
         )

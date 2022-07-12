@@ -126,7 +126,7 @@ async function createPost(req, res) {
         return
     }
 
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
 
     const { title, content } = req.body
 
@@ -136,7 +136,8 @@ async function createPost(req, res) {
             title !== undefined && title.length > 0
                 ? `${titlePrefix}${title}${titlePostfix}${content}`
                 : content,
-            reputationProof,
+            reputationProof.publicSignals,
+            reputationProof.proof,
         ]
     )
     const hash = await TransactionManager.queueTransaction(
@@ -150,7 +151,7 @@ async function createPost(req, res) {
     const post = await req.db.create('Post', {
         content,
         title,
-        epochKey: epochKey,
+        epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,
         minRep: Number(minRep),

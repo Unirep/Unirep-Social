@@ -1,5 +1,4 @@
 import fetch from 'node-fetch'
-import { Circuit, formatProofForVerifierContract } from '@unirep/circuits'
 import { defaultProver } from '@unirep/circuits/provers/defaultProver'
 import { ZkIdentity } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
