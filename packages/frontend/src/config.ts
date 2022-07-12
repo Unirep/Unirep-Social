@@ -19,8 +19,8 @@ const DEFAULT_ETH_PROVIDER = DEFAULT_ETH_PROVIDER_URL.startsWith('http')
     : new ethers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER_URL)
 // const DEFAULT_ETH_PROVIDER = 'http://18.188.136.227'
 
-const UNIREP_SOCIAL_ABI = UnirepSocial.abi
-const UNIREP_ABI = Unirep.abi
+const UNIREP_SOCIAL_ABI = UnirepSocial
+const UNIREP_ABI = Unirep
 
 const ABOUT_URL = 'https://about.unirep.social'
 const LOAD_POST_COUNT = 10

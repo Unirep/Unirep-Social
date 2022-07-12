@@ -1,11 +1,31 @@
 import fetch from 'node-fetch'
-import {
-    Circuit,
-    formatProofForVerifierContract,
-    verifyProof,
-} from '@unirep/circuits'
+import { Circuit, formatProofForVerifierContract } from '@unirep/circuits'
+import { defaultProver } from '@unirep/circuits/provers/defaultProver'
 import { ZkIdentity } from '@unirep/crypto'
-import { genEpochKey, genUserState } from '@unirep/core'
+import { genEpochKey } from '@unirep/core'
+import { schema, UserState } from '@unirep/core'
+import { getUnirepContract } from '@unirep/contracts'
+import { DB, SQLiteConnector } from 'anondb/node'
+import { ethers } from 'ethers'
+
+export const genUserState = async (
+    provider: ethers.providers.Provider,
+    address: string,
+    userIdentity: ZkIdentity,
+    _db?: DB
+) => {
+    const unirepContract = getUnirepContract(address, provider)
+    let db: DB = _db ?? (await SQLiteConnector.create(schema, ':memory:'))
+    const userState = new UserState(
+        db,
+        defaultProver,
+        unirepContract,
+        userIdentity
+    )
+    await userState.start()
+    await userState.waitForSync()
+    return userState
+}
 
 export const getInvitationCode = async (t) => {
     const r = await fetch(`${t.context.url}/api/genInvitationCode?code=ffff`)
@@ -61,14 +81,8 @@ export const airdrop = async (t, iden) => {
         t.context.unirep.address,
         iden
     )
-    const { proof, publicSignals } = await userState.genUserSignUpProof(
-        t.context.attesterId
-    )
-    const isValid = await verifyProof(
-        Circuit.proveUserSignUp,
-        proof,
-        publicSignals
-    )
+    const signUpProof = await userState.genUserSignUpProof(t.context.attesterId)
+    const isValid = await signUpProof.verify()
     t.true(isValid)
 
     const r = await fetch(`${t.context.url}/api/airdrop`, {
@@ -77,8 +91,8 @@ export const airdrop = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            proof,
-            publicSignals,
+            proof: signUpProof.proof,
+            publicSignals: signUpProof.publicSignals,
         }),
     })
     const data = await r.json()
@@ -149,7 +163,7 @@ const genReputationProof = async (t, iden, proveAmount) => {
     ) {
         nonceList.push(BigInt(-1))
     }
-    const { proof, publicSignals } = await userState.genProveReputationProof(
+    const repProof = await userState.genProveReputationProof(
         t.context.attesterId,
         epkNonce,
         proveAmount,
@@ -157,17 +171,13 @@ const genReputationProof = async (t, iden, proveAmount) => {
         BigInt(0),
         nonceList
     )
-    const isValid = await verifyProof(
-        Circuit.proveReputation,
-        proof,
-        publicSignals
-    )
+    const isValid = await repProof.verify()
     t.true(isValid)
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
     return {
-        proof: formatProofForVerifierContract(proof),
-        publicSignals,
+        proof: repProof.proof,
+        publicSignals: repProof.publicSignals,
         blockNumber,
     }
 }

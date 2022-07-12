@@ -2182,32 +2182,32 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@unirep/circuits@1.0.0-alpha-6":
-  version "1.0.0-alpha-6"
-  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-6.tgz#807b65345af519f1bc0cf0bdfcaffe465a66aa40"
-  integrity sha512-Fe4iKP9p+n1lthEpplMFDxD8kXbq+++BuhDjB1oOj0PRcogibeoxvp+VbrqXA1Sg+zUznv7vh96TJZhTm6DZsA==
+"@unirep/circuits@1.0.0-alpha-7":
+  version "1.0.0-alpha-7"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-7.tgz#f15b57fbd392e5e6179ada20a731740f77318ee6"
+  integrity sha512-j4m+bSqYVF8mwwLK6sLR2S8kg/u8GviDVEXuYtW4gcCsOi9++ks5IVyeeo2SzPBPd0plaHsRjtQ3lCbiAK5qSA==
   dependencies:
     "@unirep/crypto" "1.0.0-alpha-4"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-7":
-  version "1.0.0-alpha-7"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-7.tgz#f2a4f042ecf42a00efb88e0612823a48ef214122"
-  integrity sha512-UGSS3L1xXXwUj8uDHfFuRxOibnycEUlvAtoc6Ey3xuLGrydDKoH5Kc/XxspeZ62AjbAkFd4dUu7T/Muaoqs//A==
+"@unirep/contracts@1.0.0-alpha-8":
+  version "1.0.0-alpha-8"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-8.tgz#1bcb8c6544aad3cbf025639c7eca849926dd669d"
+  integrity sha512-Tw03LbDBNpJKqxFu5uKCaSnNtWBD83jQ7P/lEeW/ZtOiWBYEh689pGOvj0SHr/Rw+mnF7NfX9TN2xkV2Q/4GUQ==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-6"
+    "@unirep/circuits" "1.0.0-alpha-7"
     "@unirep/crypto" "1.0.0-alpha-4"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-9":
-  version "1.0.0-alpha-9"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-9.tgz#06068e0f35666b59d7e5dafda01655f2195031f4"
-  integrity sha512-N4uxpyIlbWK0UtL9j9utndiKZDidykMo5Hf5cKgyIGNwhWlerNh9kS/0FdOEa6yUtQhUWrnWm4y6WU64L7BIkg==
+"@unirep/core@1.0.0-alpha-10":
+  version "1.0.0-alpha-10"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-10.tgz#1a99f0767ecb37b9e9687383b8eb447eaa79ba3f"
+  integrity sha512-54+WMoKsqc2lQWGTBGGdCqoPjm7K5gR/5FwN0BvXOKkFCb1lNKLrQGJLSGugdjHarWfsFjlTb4PBd3dBV2MJww==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-6"
-    "@unirep/contracts" "1.0.0-alpha-7"
+    "@unirep/circuits" "1.0.0-alpha-7"
+    "@unirep/contracts" "1.0.0-alpha-8"
     "@unirep/crypto" "1.0.0-alpha-4"
-    anondb "^0.0.8"
+    anondb "^0.0.10"
     ethers "^5.6.8"
     nanoid "3"
 
@@ -2492,10 +2492,10 @@ amdefine@>=0.0.4:
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
   integrity sha512-S2Hw0TtNkMJhIabBwIojKL9YHO5T0n5eNqWJ7Lrlel/zDbftQpxpapi8tZs3X1HWa+u+QeydGmzzNU0m09+Rcg==
 
-anondb@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.8.tgz#98995803be4816fa90cbd413bd758b273ff039b0"
-  integrity sha512-SpibKccgOPFagkt+Z3hsxaD+ykttnvgk+p1Hb/y5wOIQa4vdkNDhN7EEWSDdRu2Y/kz4NPTHC3C3VNZrGd+I7w==
+anondb@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.10.tgz#6e9dfa5fb1de33e1a2ef7ae52650fd651f0a47b8"
+  integrity sha512-k6IDehijplQsBZZ2+NbGyXWGNTyyLJ8YhUBWrb7agTnvaugYr4mwYYE6KF4tQ7RL7xeCTJz1dC3bO+6lsgX4Hw==
   dependencies:
     async-lock "^1.2.11"
     idb "^6.0.0"
@@ -3366,9 +3366,9 @@ blake2b-wasm@^2.4.0:
     b4a "^1.0.1"
     nanoassert "^2.0.0"
 
-"blake2b-wasm@git+https://github.com/jbaylina/blake2b-wasm.git":
+"blake2b-wasm@https://github.com/jbaylina/blake2b-wasm.git":
   version "2.1.0"
-  resolved "git+https://github.com/jbaylina/blake2b-wasm.git#0d5f024b212429c7f50a7f533aa3a2406b5b42b3"
+  resolved "https://github.com/jbaylina/blake2b-wasm.git#0d5f024b212429c7f50a7f533aa3a2406b5b42b3"
   dependencies:
     nanoassert "^1.0.0"
 
