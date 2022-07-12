@@ -30,8 +30,6 @@ module.exports = {
             stream: require.resolve('stream-browserify'),
             os: require.resolve('os-browserify/browser'),
             events: require.resolve('events/'),
-            fs: false,
-            dotenv: false,
         },
     },
     module: {
