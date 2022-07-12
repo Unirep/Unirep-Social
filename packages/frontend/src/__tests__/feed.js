@@ -21,7 +21,7 @@ test('calls callback correctly with jest mock function with "new" arg', () => {
     
     // click on one option
     userEvent.click(screen.getByText(/new/i))
-    
+
     // check that the callback was called
     expect(setFeedChoiceMock).toHaveBeenCalledWith('new')
 })

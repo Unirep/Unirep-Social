@@ -25,6 +25,8 @@ module.exports = {
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect', './src/tests/setup.js'],
     resolver: 'jest-webpack-resolver',
+    testEnvironment: 'jsdom',
+    setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect'],
     // collectCoverage: true, // todo
     // coverageDirectory: "coverage",  // todo
 }
