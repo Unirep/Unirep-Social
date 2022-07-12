@@ -1,16 +1,13 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import { genUnirepState } from '@unirep/core'
-import { UnirepFactory } from '@unirep/contracts'
+import { UnirepFactory, EpochKeyProof } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import { epkProofPrefix, epkPublicSignalsPrefix } from './prefix'
 import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { EpochKeyProof } from '../test/utils'
+import { genUnirepState } from './test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('verifyEpochKeyProof', {
@@ -82,7 +79,7 @@ const verifyEpochKeyProof = async (args: any) => {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const currentEpoch = unirepState.currentEpoch
+    const currentEpoch = await unirepState.getUnirepStateCurrentEpoch()
     const epk = epochKeyProof.epochKey
     const inputEpoch = Number(epochKeyProof.epoch)
     const GSTRoot = epochKeyProof.globalStateTree.toString()
@@ -96,7 +93,10 @@ const verifyEpochKeyProof = async (args: any) => {
     }
 
     // Check if Global state tree root exists
-    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, inputEpoch)
+    const isGSTRootExisted = await unirepState.GSTRootExists(
+        GSTRoot,
+        inputEpoch
+    )
     if (!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
@@ -104,7 +104,8 @@ const verifyEpochKeyProof = async (args: any) => {
 
     // Verify the proof on-chain
     const isProofValid = await unirepContract.verifyEpochKeyValidity(
-        epochKeyProof
+        epochKeyProof.publicSignals,
+        epochKeyProof.proof
     )
     if (!isProofValid) {
         console.error('Error: invalid epoch key proof')

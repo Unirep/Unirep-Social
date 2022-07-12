@@ -5,7 +5,8 @@ import {
     formatProofForVerifierContract,
     MAX_REPUTATION_BUDGET,
 } from '@unirep/circuits'
-import { genReputationNullifier, genUserState } from '@unirep/core'
+import { genReputationNullifier } from '@unirep/core'
+import { genUserState } from './test/utils'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
 import {
@@ -98,8 +99,7 @@ const genReputationProof = async (args: any) => {
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
-    const numEpochKeyNoncePerEpoch =
-        await unirepContract.numEpochKeyNoncePerEpoch()
+    const { numEpochKeyNoncePerEpoch } = await unirepContract.config()
     if (epkNonce >= numEpochKeyNoncePerEpoch) {
         console.error(
             'Error: epoch key nonce must be less than max epoch key nonce'
@@ -152,8 +152,8 @@ const genReputationProof = async (args: any) => {
         id as any // TODO
     )
     const nonceList: BigInt[] = []
-    const rep = userState.getRepByAttester(attesterId)
-    const epoch = userState.getUnirepStateCurrentEpoch()
+    const rep = await userState.getRepByAttester(attesterId)
+    const epoch = await userState.getUnirepStateCurrentEpoch()
     let nonceStarter: number = -1
     if (proveReputationAmount > 0) {
         // find valid nonce starter
@@ -164,7 +164,7 @@ const genReputationProof = async (args: any) => {
                 n,
                 attesterId
             )
-            if (!userState.nullifierExist(reputationNullifier)) {
+            if (!(await userState.nullifierExist(reputationNullifier))) {
                 nonceStarter = n
                 break
             }
@@ -188,16 +188,14 @@ const genReputationProof = async (args: any) => {
     for (let i = proveReputationAmount; i < MAX_REPUTATION_BUDGET; i++) {
         nonceList.push(BigInt(-1))
     }
-    const { publicSignals, proof, epochKey } =
-        await userState.genProveReputationProof(
-            attesterId,
-            epkNonce,
-            minRep,
-            proveGraffiti,
-            graffitiPreImage,
-            nonceList
-        )
-    const reputationProof = new ReputationProof(publicSignals, proof)
+    const reputationProof = await userState.genProveReputationProof(
+        attesterId,
+        epkNonce,
+        minRep,
+        proveGraffiti,
+        graffitiPreImage,
+        nonceList
+    )
 
     // TODO: Not sure if this validation is necessary
     const isValid = await reputationProof.verify()
@@ -210,11 +208,12 @@ const genReputationProof = async (args: any) => {
         console.log(`Prove minimum reputation: ${minRep}`)
     }
 
-    const formattedProof = formatProofForVerifierContract(proof)
-    const encodedProof = base64url.encode(JSON.stringify(formattedProof))
-    const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
+    const encodedProof = base64url.encode(JSON.stringify(reputationProof.proof))
+    const encodedPublicSignals = base64url.encode(
+        JSON.stringify(reputationProof.publicSignals)
+    )
     console.log(
-        `Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${epochKey}`
+        `Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${reputationProof.epochKey}`
     )
     console.log(reputationProofPrefix + encodedProof)
     console.log(reputationPublicSignalsPrefix + encodedPublicSignals)
