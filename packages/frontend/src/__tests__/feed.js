@@ -18,7 +18,7 @@ test('calls callback correctly with jest mock function with "new" arg', () => {
     render(<Feed feedChoice={'new'} setFeedChoice={setFeedChoiceMock('new')} />)
     // click on whatever makes the drop down open
     userEvent.click(screen.getByText(/new/i))
-    
+
     // click on one option
     userEvent.click(screen.getByText(/new/i))
 

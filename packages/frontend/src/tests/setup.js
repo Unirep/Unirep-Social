@@ -1,2 +1,2 @@
 // mock worker API
-Object.defineProperty(window, 'Worker', { value: 'worker' });
+Object.defineProperty(window, 'Worker', { value: 'worker' })

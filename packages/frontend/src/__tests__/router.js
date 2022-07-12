@@ -6,8 +6,7 @@ import AppRouter from '../router'
 // process.on('unhandledRejection', (reason, promise) => {
 //   console.log('unhandledRejection', reason, promise);
 // });
-  
 
 test('Renders AppRouter', () => {
-  render(<AppRouter />)
+    render(<AppRouter />)
 })

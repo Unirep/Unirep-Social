@@ -1,6 +1,6 @@
 // currently working on wrapper (if needed for future tests)
 import React, { FC, ReactElement } from 'react'
-import {render, RenderOptions} from '@testing-library/react'
+import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter, Switch, Route, Redirect } from 'react-router-dom'
 import { useState } from 'react'
 
@@ -20,38 +20,36 @@ import * as Constants from '../constants'
 // import { WebContext } from '../context/WebContext'
 
 import Favicon from 'react-favicon'
-<Favicon url={"string"} />
+;<Favicon url={'string'} />
 
 const AllTheProviders: FC<{ children: React.ReactNode }> = ({ children }) => {
-
     const [adminCode, setAdminCode] = useLocalStorage('admin', '')
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [page, setPage] = useState(Constants.Page.Home)
-    
 
     return (
-    // <BrowserRouter> 
-    //         <WebContext.Provider
-    //                 value={{
-    //                     isMenuOpen,
-    //                     setIsMenuOpen,
-    //                     page,
-    //                     setPage,
-    //                     adminCode,
-    //                     setAdminCode,
-    //             }}
-    //         >
-    //             {children}
-    //         </WebContext.Provider >
-    // </BrowserRouter>
-    <Favicon url={"string" } />
-  )
+        // <BrowserRouter>
+        //         <WebContext.Provider
+        //                 value={{
+        //                     isMenuOpen,
+        //                     setIsMenuOpen,
+        //                     page,
+        //                     setPage,
+        //                     adminCode,
+        //                     setAdminCode,
+        //             }}
+        //         >
+        //             {children}
+        //         </WebContext.Provider >
+        // </BrowserRouter>
+        <Favicon url={'string'} />
+    )
 }
 
 const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>,
-) => render(ui, {wrapper: AllTheProviders, ...options})
+    ui: ReactElement,
+    options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: AllTheProviders, ...options })
 
 export * from '@testing-library/react'
-export {customRender as render}
+export { customRender as render }
