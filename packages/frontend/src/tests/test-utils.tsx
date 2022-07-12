@@ -20,7 +20,7 @@ import * as Constants from '../constants'
 // import { WebContext } from '../context/WebContext'
 
 import Favicon from 'react-favicon'
-;<Favicon url={'string'} />
+const Favicon_ = Favicon as any
 
 const AllTheProviders: FC<{ children: React.ReactNode }> = ({ children }) => {
     const [adminCode, setAdminCode] = useLocalStorage('admin', '')
@@ -42,7 +42,7 @@ const AllTheProviders: FC<{ children: React.ReactNode }> = ({ children }) => {
         //             {children}
         //         </WebContext.Provider >
         // </BrowserRouter>
-        <Favicon url={'string'} />
+        <Favicon_ url={'string'} />
     )
 }
 
