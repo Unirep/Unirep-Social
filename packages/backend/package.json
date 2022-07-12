@@ -27,7 +27,7 @@
     "dependencies": {
         "@unirep/circuits": "1.0.0-alpha-7",
         "@unirep/contracts": "1.0.0-alpha-9",
-        "@unirep/core": "1.0.0-alpha-11",
+        "@unirep/core": "1.0.0-alpha-12",
         "@unirep/crypto": "1.0.0-alpha-4",
         "@unirep-social/core": "^1.0.0",
         "anondb": "^0.0.10",

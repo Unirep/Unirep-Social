@@ -650,10 +650,10 @@
     "@unirep/crypto" "1.0.0-alpha-4"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-11":
-  version "1.0.0-alpha-11"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-11.tgz#178de45f2698ed76095069c539014425de728a39"
-  integrity sha512-dmQnUtIZVkpjkSyiRm9tkNSTTaaOzTC3aZeYM9CEFJNmbO0Q2PVDzrFF0PSK8Sh5iIAmZ/06zh5r7s56wcXj2w==
+"@unirep/core@1.0.0-alpha-12":
+  version "1.0.0-alpha-12"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-12.tgz#3902828979fac7ef205c947ab10f03be2f890281"
+  integrity sha512-zxdDvyFKYSidrNGm6tQpyqyXxyKxUL4UJdBbZ+xp1ExEo6stYsEnHTJ6f//hzSxra7HpxqLB3AeCZFiMVdsI3A==
   dependencies:
     "@unirep/circuits" "1.0.0-alpha-7"
     "@unirep/contracts" "1.0.0-alpha-9"
