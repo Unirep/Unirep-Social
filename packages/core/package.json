@@ -4,8 +4,8 @@
     "description": "",
     "main": "build/src/index.js",
     "scripts": {
-        "build": "hardhat typechain && tsc && yarn copyAbi",
-        "copyAbi": "node scripts/abi",
+        "build": "hardhat typechain && tsc && yarn abi",
+        "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
