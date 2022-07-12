@@ -1,19 +1,12 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import React, { Provider } from 'react'
-import { Router } from 'react-router-dom'
-import { createMemoryHistory } from 'history'
-// import AppRouter from '../router'
-// import 'jsdom-worker' - removed this package but may reinstall later.
+import { render, userEvent, screen } from '../tests/test-utils'
+import AppRouter from '../router'
 
-// todo: fix ReferenceError: Worker is not defined
+// Is there a better solution than this?:  https://github.com/facebook/jest/issues/10784#:~:text=NODE_OPTIONS%3D%2D%2Dunhandled%2Drejections%3Dwarn%20yarn%20test
 
-test.skip('AppRouter renders all routes and I can navigate to those pages', () => {
-    render(
-        <Provider>
-            <Router history={createMemoryHistory()}>
-                <AppRouter />
-            </Router>
-        </Provider>
-    )
+// process.on('unhandledRejection', (reason, promise) => {
+//   console.log('unhandledRejection', reason, promise);
+// });
+  
+test('Renders AppRouter', () => {
+  render(<AppRouter />)
 })
