@@ -10,7 +10,7 @@
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 hardhat test --no-compile test/*.ts",
+        "scriptsTest": "hardhat test --parallel test/*.ts",
         "lint": "prettier ."
     },
     "repository": {
