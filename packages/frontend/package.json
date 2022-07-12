@@ -94,10 +94,5 @@
     },
     "jestWebpackResolver": {
         "webpackConfig": "./webpack.config.js"
-    },
-    "prettier": {
-        "tabWidth": 4,
-        "singleQuote": true,
-        "semi": false
     }
 }

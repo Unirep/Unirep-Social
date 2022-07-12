@@ -4,13 +4,12 @@
     "description": "",
     "scripts": {
         "postinstall": "sh scripts/loadKeys.sh",
-        "start": "nodemon src/app.ts",
-        "start:daemon": "ts-node src/app.ts",
+        "start": "ts-node src/app.ts",
         "synct": "ts-node src/sync-test.ts",
         "keys": "sh scripts/loadKeys.sh",
         "build": "tsc",
         "lint": "prettier .",
-        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 5m --verbose"
+        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose"
     },
     "keywords": [],
     "author": "",
@@ -23,7 +22,6 @@
         "ethers": "^5.5.4",
         "get-port": "^5.1.1",
         "node-fetch": "2",
-        "nodemon": "^2.0.12",
         "prettier": "^2.6.0",
         "ts-node": "^10.1.0",
         "typescript": "^4.4.0"
@@ -51,10 +49,5 @@
             },
             "compile": "tsc"
         }
-    },
-    "prettier": {
-        "tabWidth": 4,
-        "singleQuote": true,
-        "semi": false
     }
 }

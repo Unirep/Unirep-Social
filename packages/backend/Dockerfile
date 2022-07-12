@@ -8,4 +8,4 @@ WORKDIR /src
 
 RUN yarn && yarn keys
 
-CMD ["yarn", "start:daemon"]
+CMD ["yarn", "start"]
