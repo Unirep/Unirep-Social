@@ -17,39 +17,10 @@ import * as Constants from '../constants'
 // import FeedbackPage from '../pages/feedbackPage/feedbackPage'
 // import AdminPage from '../pages/adminPage/adminPage'
 // import SettingPage from '../pages/settingPage/settingPage'
-// import { WebContext } from '../context/WebContext'
+import { WebContext } from '../context/WebContext'
 
 import Favicon from 'react-favicon'
 const Favicon_ = Favicon as any
 
-const AllTheProviders: FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [adminCode, setAdminCode] = useLocalStorage('admin', '')
-    const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [page, setPage] = useState(Constants.Page.Home)
-
-    return (
-        // <BrowserRouter>
-        //         <WebContext.Provider
-        //                 value={{
-        //                     isMenuOpen,
-        //                     setIsMenuOpen,
-        //                     page,
-        //                     setPage,
-        //                     adminCode,
-        //                     setAdminCode,
-        //             }}
-        //         >
-        //             {children}
-        //         </WebContext.Provider >
-        // </BrowserRouter>
-        <Favicon_ url={'string'} />
-    )
-}
-
-const customRender = (
-    ui: ReactElement,
-    options?: Omit<RenderOptions, 'wrapper'>
-) => render(ui, { wrapper: AllTheProviders, ...options })
 
 export * from '@testing-library/react'
-export { customRender as render }

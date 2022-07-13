@@ -9,15 +9,14 @@ module.exports = {
     transform: {
         '^.+\\.(ts|tsx)?$': 'ts-jest',
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+\\.(gif|svg|ico|url)$': '<rootDir>/svgTransform.js',
+        '^.+\\.(gif|svg|ico|url|require)$': '<rootDir>/svgTransform.js',
     },
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
     moduleFileExtensions: ['tsx', 'js', 'ts'],
     moduleNameMapper: {
-        '\\.(css|less|scss|sass|ico|url)$': 'identity-obj-proxy',
-        '\\.(png|jpg|webp|ttf|woff|woff2|svg|mp4|url)$':
-            '<rootDir>/src/__mocks__/fileMock.js',
-    },
+        "\\.(css|less|scss|sass)$": "identity-obj-proxy",
+        '\\.(png|jpg|webp|ttf|woff|woff2|svg|mp4|url)$': '<rootDir>/src/__mocks__/fileMock.js',
+      },
     clearMocks: true,
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: [
@@ -26,7 +25,6 @@ module.exports = {
     ],
     resolver: 'jest-webpack-resolver',
     testEnvironment: 'jsdom',
-    setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect'],
     // collectCoverage: true, // todo
     // coverageDirectory: "coverage",  // todo
 }
