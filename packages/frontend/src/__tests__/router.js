@@ -1,12 +1,7 @@
-import {
-    render,
-    screen,
-    getByRole,
-    waitFor,
-} from '@testing-library/react'
+import { render, screen, getByRole, waitFor } from '@testing-library/react'
 import AppRouter from '../router'
 import userEvent from '@testing-library/user-event'
-import {BrowserRouter, MemoryRouter} from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 
 // Is there a better solution to teh fetch error than this?:  https://github.com/facebook/jest/issues/10784#:~:text=NODE_OPTIONS%3D%2D%2Dunhandled%2Drejections%3Dwarn%20yarn%20test
 
@@ -40,14 +35,42 @@ test('AppRouter component renders correct text', () => {
 })
 
 // using createMemoryHistory is no longer recommended
-    // instead, use window.history.pushState({}, 'page', '/') to update url to route
-    // then render the regular router with BrowserRouter
-test('AppRouter should navigate to page', () => {
+// instead, use window.history.pushState({}, 'page', '/') to update url to intended route
+// then render the regular router with BrowserRouter
+test('AppRouter should navigate to /signup', async () => {
+    window.history.pushState({}, '', '/signup')
     render(
         <BrowserRouter>
             <AppRouter />
         </BrowserRouter>
     )
-    window.history.pushState({}, '', '/signin')
-    screen.debug()
+
+    expect(screen.getByText(/join us/i)).toBeInTheDocument()
+    expect(screen.getByText(/request here/i)).toBeInTheDocument()
+})
+
+test('AppRouter should navigate to /login', () => {
+    window.history.pushState({}, '', '/login')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+    expect(
+        screen.getByText(
+            /To enter the app, please use the private key you got when you signed up./i
+        )
+    ).toBeInTheDocument()
+})
+
+test('AppRouter should navigate to /admin', () => {
+    window.history.pushState({}, '', '/admin')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+    expect(screen.getByRole('heading', {
+        name: /admin login/i
+      })).toBeInTheDocument()
 })
