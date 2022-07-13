@@ -8,7 +8,9 @@ type Props = {
 
 enum TextStyle {
     Bold,
-    Italic
+    Italic,
+    Highlight,
+    List
 }
 
 const markdown = new MarkdownIt({
@@ -25,20 +27,44 @@ const TextEditor = ({ content, setContent }: Props) => {
         setContent(event.target.value)
     }
 
+    const addListItem = (previousText: string, text: string, start: number, end: number) : string => {
+        const listIndex = text.indexOf('\n')
+        console.log('start: ' + start, 'end: ' + end, 'listIndex: ' + listIndex, 'previousText: ' + previousText, 'text: ' + text)
+        if (end === 0) {
+            return previousText + text
+        }
+        if (listIndex === -1 || listIndex > end) {
+            return previousText + '* ' + text
+        } 
+        if (listIndex < start) {
+            return addListItem(previousText + text.substring(0, listIndex+1), text.substring(listIndex+1), Math.max(start - listIndex - 1, 0), Math.max(end - listIndex - 1, 0))
+        }
+        return addListItem(previousText + '* ' + text.substring(0, listIndex+1), text.substring(listIndex+1), Math.max(start - listIndex - 1, 0), Math.max(end - listIndex - 1, 0))
+    } 
+
     const addStyle = (style: TextStyle) => {
         const sel = document.getElementById('myTextArea') as HTMLTextAreaElement
         const start = sel.selectionStart
         const end = sel.selectionEnd
+        
         console.log('selection start from ', start, ' to ', end)
 
         if (content) {
+            let newContent: string = content
             if (style === TextStyle.Italic) {
-                const newContent = content.substring(0, start) + '*' + content.substring(start, end) + '*' + content.substring(end)
-                setContent(newContent)
+                newContent = content.substring(0, start) + '*' + content.substring(start, end) + '*' + content.substring(end)
             } else if (style === TextStyle.Bold) {
-                const newContent = content.substring(0, start) + '**' + content.substring(start, end) + '**' + content.substring(end)
-                setContent(newContent)
+                newContent = content.substring(0, start) + '**' + content.substring(start, end) + '**' + content.substring(end)
+            } else if (style === TextStyle.Highlight) {
+                if (content[start-1] === ' ' && content[start-2] === '#' && content[end] === ' ' && content[end+1] === '#') {
+                    newContent = content.substring(0, start-1) + '#' + content.substring(start-1, end+1) + '#' + content.substring(end+1)
+                } else {
+                    newContent = content.substring(0, start) + '# ' + content.substring(start, end) + ' #' + content.substring(end)
+                }
+            } else if (style === TextStyle.List) {
+                newContent = addListItem('', content, start, end)
             }
+            setContent(newContent)
         }
     }
 
@@ -54,8 +80,10 @@ const TextEditor = ({ content, setContent }: Props) => {
             ) : (
                 <div>
                     <div className="buttons">
-                        <button onClick={() => addStyle(TextStyle.Bold)}>Bold</button>
-                        <button onClick={() => addStyle(TextStyle.Italic)}>Italic</button>
+                        <button onClick={() => addStyle(TextStyle.Bold)}>B</button>
+                        <button onClick={() => addStyle(TextStyle.Italic)}>I</button>
+                        <button onClick={() => addStyle(TextStyle.Highlight)}>H</button>
+                        <button onClick={() => addStyle(TextStyle.List)}>List</button>
                     </div>
                     <textarea id="myTextArea" onChange={handleContentInput} value={content ?? ''} />
                 </div>
