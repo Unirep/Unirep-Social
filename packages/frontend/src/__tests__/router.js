@@ -81,6 +81,24 @@ test('AppRouter should navigate to /login', () => {
     ).toBeInTheDocument()
 })
 
+test('AppRouter should navigate to /user ', () => {
+    window.history.pushState({}, '', '/user')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+})
+
+test('AppRouter should navigate to /post ', () => {
+    window.history.pushState({}, '', '/post')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+})
+
 test('AppRouter should navigate to /admin', () => {
     window.history.pushState({}, '', '/admin')
     render(
@@ -102,15 +120,22 @@ test('AppRouter should navigate to /new', () => {
     )
 })
 
-// Why is setting route displaying the home page?
+test('AppRouter should navigate to /setting', () => {
+    window.history.pushState({}, '', '/setting')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+})
 
-// test('AppRouter should navigate to /setting', () => {
-//     window.history.pushState({}, '', '/setting')
-//     render(
-//         <BrowserRouter>
-//             <AppRouter />
-//         </BrowserRouter>
-//     )
-
-//     screen.debug()
-// })
+test('AppRouter should be redirected if navigating to route that does not exist', () => {
+    window.history.pushState({}, '', '/loremipsum')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+    // checks if we are redirected to the home page
+    expect(screen.getByText(/You must join or login to create post/i)).toBeInTheDocument()
+})
