@@ -5,6 +5,24 @@ import { BrowserRouter } from 'react-router-dom'
 
 // Is there a better solution to teh fetch error than this?:  https://github.com/facebook/jest/issues/10784#:~:text=NODE_OPTIONS%3D%2D%2Dunhandled%2Drejections%3Dwarn%20yarn%20test
 
+// mock needed for history and location hooks
+const mockHistoryPush = jest.fn();
+
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useHistory: () => ({
+        push: mockHistoryPush,
+    }),
+    useLocation: () => ({
+        state: {
+            test: {
+                test: "test",
+            }
+        }
+    })
+}));
+
+
 test('AppRouter component renders correct text', () => {
     render(<AppRouter />)
     expect(screen.getByText(/sign in/i)).toBeInTheDocument()
@@ -74,3 +92,25 @@ test('AppRouter should navigate to /admin', () => {
         name: /admin login/i
       })).toBeInTheDocument()
 })
+
+test('AppRouter should navigate to /new', () => {
+    window.history.pushState({}, '', '/new')
+    render(
+        <BrowserRouter>
+            <AppRouter />
+        </BrowserRouter>
+    )
+})
+
+// Why is setting route displaying the home page?
+
+// test('AppRouter should navigate to /setting', () => {
+//     window.history.pushState({}, '', '/setting')
+//     render(
+//         <BrowserRouter>
+//             <AppRouter />
+//         </BrowserRouter>
+//     )
+
+//     screen.debug()
+// })
