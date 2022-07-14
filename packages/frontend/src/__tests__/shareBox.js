@@ -13,10 +13,7 @@ test('render proper text to the screen', () => {
 
 test('ShareBox component renders props properly', () => {
     render(<ShareBox url="url" closeBox={closeBoxMock} />)
-    screen.debug()
     expect(screen.getByText(/url/i)).toBeInTheDocument()
 
     waitFor(userEvent.click(screen.getByText(/url/i)))
-    // expect(closeBoxMock).toHaveBeenCalled()
-    screen.debug()
 })
