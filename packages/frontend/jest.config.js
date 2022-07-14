@@ -27,4 +27,5 @@ module.exports = {
     testEnvironment: 'jsdom',
     // collectCoverage: true, // todo
     // coverageDirectory: "coverage",  // todo
+    collectCoverageFrom: ['src/**/*.{ts,tsx}','!src/tests/test-utils.tsx'],
 }

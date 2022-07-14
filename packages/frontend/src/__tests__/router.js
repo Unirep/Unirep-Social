@@ -1,12 +1,11 @@
-import { render, screen, getByRole, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import AppRouter from '../router'
-import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 
 // Is there a better solution to teh fetch error than this?:  https://github.com/facebook/jest/issues/10784#:~:text=NODE_OPTIONS%3D%2D%2Dunhandled%2Drejections%3Dwarn%20yarn%20test
 
 // mock needed for history and location hooks
-const mockHistoryPush = jest.fn();
+const mockHistoryPush = jest.fn()
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -16,12 +15,11 @@ jest.mock('react-router-dom', () => ({
     useLocation: () => ({
         state: {
             test: {
-                test: "test",
-            }
-        }
-    })
-}));
-
+                test: 'test',
+            },
+        },
+    }),
+}))
 
 test('AppRouter component renders correct text', () => {
     render(<AppRouter />)
@@ -55,6 +53,7 @@ test('AppRouter component renders correct text', () => {
 // using createMemoryHistory is no longer recommended
 // instead, use window.history.pushState({}, 'page', '/') to update url to intended route
 // then render the regular router with BrowserRouter
+
 test('AppRouter should navigate to /signup', async () => {
     window.history.pushState({}, '', '/signup')
     render(
@@ -97,6 +96,9 @@ test('AppRouter should navigate to /post ', () => {
             <AppRouter />
         </BrowserRouter>
     )
+    expect(
+        screen.getByText(/you must join or login to create post/i)
+    ).toBeInTheDocument()
 })
 
 test('AppRouter should navigate to /admin', () => {
@@ -106,9 +108,11 @@ test('AppRouter should navigate to /admin', () => {
             <AppRouter />
         </BrowserRouter>
     )
-    expect(screen.getByRole('heading', {
-        name: /admin login/i
-      })).toBeInTheDocument()
+    expect(
+        screen.getByRole('heading', {
+            name: /admin login/i,
+        })
+    ).toBeInTheDocument()
 })
 
 test('AppRouter should navigate to /new', () => {
@@ -118,6 +122,7 @@ test('AppRouter should navigate to /new', () => {
             <AppRouter />
         </BrowserRouter>
     )
+    expect(screen.getByText(/My Rep display/i)).toBeInTheDocument()
 })
 
 test('AppRouter should navigate to /setting', () => {
@@ -127,6 +132,11 @@ test('AppRouter should navigate to /setting', () => {
             <AppRouter />
         </BrowserRouter>
     )
+    expect(
+        screen.getByText(
+            /unirep social uses semaphore technology to generate the private key. it's a super dope string and it's very important for you to store it safely. this key will be used to regain access to your rep points./i
+        )
+    ).toBeInTheDocument()
 })
 
 test('AppRouter should be redirected if navigating to route that does not exist', () => {
@@ -137,5 +147,7 @@ test('AppRouter should be redirected if navigating to route that does not exist'
         </BrowserRouter>
     )
     // checks if we are redirected to the home page
-    expect(screen.getByText(/You must join or login to create post/i)).toBeInTheDocument()
+    expect(
+        screen.getByText(/You must join or login to create post/i)
+    ).toBeInTheDocument()
 })
