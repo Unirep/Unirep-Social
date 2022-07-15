@@ -14,9 +14,10 @@ module.exports = {
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
     moduleFileExtensions: ['tsx', 'js', 'ts'],
     moduleNameMapper: {
-        "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-        '\\.(png|jpg|webp|ttf|woff|woff2|svg|mp4|url)$': '<rootDir>/src/__mocks__/fileMock.js',
-      },
+        '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+        '\\.(png|jpg|webp|ttf|woff|woff2|svg|mp4)$':
+            '<rootDir>/src/__mocks__/fileMock.js',
+    },
     clearMocks: true,
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: [
@@ -25,7 +26,5 @@ module.exports = {
     ],
     resolver: 'jest-webpack-resolver',
     testEnvironment: 'jsdom',
-    // collectCoverage: true, // todo
-    // coverageDirectory: "coverage",  // todo
-    collectCoverageFrom: ['src/**/*.{ts,tsx}','!src/tests/test-utils.tsx'],
+    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/tests/test-utils.tsx'],
 }

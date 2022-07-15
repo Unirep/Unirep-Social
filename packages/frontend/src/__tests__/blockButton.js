@@ -48,5 +48,3 @@ test('should render BlockButton share button correctly', () => {
     // Check if share button is rendered
     expect(document.getElementsByClassName('block-button-share')).toBeTruthy()
 })
-
-
