@@ -2505,6 +2505,19 @@ anondb@^0.0.10:
     sqlite "^4.0.19"
     sqlite3 "^5.0.2"
 
+anondb@^0.0.11:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.11.tgz#3ecbdd953648e2b93b5d906d2f53e67760f2ab53"
+  integrity sha512-u55KAs/oKOnZNt9Ll1aPDMDqr5YON2CbVgScBvB0/J+WKn8zJ5RVJYcuQaFxjHTZS2tFgVrfsssNmGPdxAq2Xw==
+  dependencies:
+    async-lock "^1.2.11"
+    idb "^6.0.0"
+    nanoid "^3.1.30"
+    pg "^8.5.1"
+    sql.js "^1.5.0"
+    sqlite "^4.0.19"
+    sqlite3 "^5.0.2"
+
 ansi-escapes@^4.2.1:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/ansi-escapes/-/ansi-escapes-4.3.2.tgz#6b2291d1db7d98b6521d5f1efa42d0f3a9feb65e"

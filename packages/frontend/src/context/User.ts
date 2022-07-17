@@ -6,10 +6,6 @@ import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { Attestation } from '@unirep/contracts'
 import { makeURL } from '../utils'
 import { genEpochKey, UserState, schema } from '@unirep/core'
-import {
-    formatProofForVerifierContract,
-    formatProofForSnarkjsVerification,
-} from '@unirep/circuits'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'

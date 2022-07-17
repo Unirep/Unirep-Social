@@ -41,11 +41,12 @@ class EpochManager {
     }
 
     private async _nextTransition() {
+        await unirepConfig.loadingPromise
         const [lastTransition, epochLength] = await Promise.all([
             unirepConfig.unirep.latestEpochTransitionTime(),
-            unirepConfig.unirep.epochLength(),
+            unirepConfig.epochLength,
         ])
-        return (lastTransition.toNumber() + epochLength.toNumber()) * 1000
+        return (lastTransition.toNumber() + epochLength) * 1000
     }
 
     private async tryTransition() {
