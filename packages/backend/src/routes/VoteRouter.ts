@@ -43,8 +43,8 @@ async function vote(req, res) {
 
     const { dataId } = req.body
     const [post, comment] = await Promise.all([
-        req.db.findOne('Post', { where: { transactionHash: dataId } }),
-        req.db.findOne('Comment', { where: { transactionHash: dataId } }),
+        req.db.findOne('Post', { where: { _id: dataId } }),
+        req.db.findOne('Comment', { where: { _id: dataId } }),
     ])
     if (post && comment) {
         res.status(500).json({

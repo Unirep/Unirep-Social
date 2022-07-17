@@ -650,15 +650,15 @@
     "@unirep/crypto" "1.0.0-alpha-4"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-12":
-  version "1.0.0-alpha-12"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-12.tgz#3902828979fac7ef205c947ab10f03be2f890281"
-  integrity sha512-zxdDvyFKYSidrNGm6tQpyqyXxyKxUL4UJdBbZ+xp1ExEo6stYsEnHTJ6f//hzSxra7HpxqLB3AeCZFiMVdsI3A==
+"@unirep/core@1.0.0-alpha-13":
+  version "1.0.0-alpha-13"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-13.tgz#06a5ad64ddfeaeb09981518f2dd138e26067f170"
+  integrity sha512-YunI1DM4TbWl92x/mB8wzby3GxD/xIUCM6OzBqRVI4lxN0ppDwp0xBvj9bL05UoUX1cLhdYkhatu3OtFzGmm1Q==
   dependencies:
     "@unirep/circuits" "1.0.0-alpha-7"
     "@unirep/contracts" "1.0.0-alpha-9"
     "@unirep/crypto" "1.0.0-alpha-4"
-    anondb "^0.0.10"
+    anondb "^0.0.12"
     ethers "^5.6.8"
     nanoid "3"
 
@@ -738,10 +738,10 @@ ajv@^6.12.3:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-anondb@^0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.10.tgz#6e9dfa5fb1de33e1a2ef7ae52650fd651f0a47b8"
-  integrity sha512-k6IDehijplQsBZZ2+NbGyXWGNTyyLJ8YhUBWrb7agTnvaugYr4mwYYE6KF4tQ7RL7xeCTJz1dC3bO+6lsgX4Hw==
+anondb@^0.0.12:
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.12.tgz#e7bea4ee6e05a1e51093b140d97a5189d9b08515"
+  integrity sha512-sI5uKLbF8br4XHeot2mgZOXubdWAfYyMB4jscI0yxh5nBoeVPwjoTz5zMpbYC9wFraqbJ4divKfZBq8VLzvGpA==
   dependencies:
     async-lock "^1.2.11"
     idb "^6.0.0"

@@ -42,7 +42,7 @@ export interface Comment {
     downvote: number
     epoch_key: string
     username: string
-    post_time: number
+    createdAt: number
     reputation: number
     current_epoch: number
     proofIndex: number
@@ -57,7 +57,7 @@ export interface Post {
     downvote: number
     epoch_key: string
     username: string
-    post_time: number
+    createdAt: number
     reputation: number
     commentCount: number
     current_epoch: number

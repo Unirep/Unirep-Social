@@ -51,7 +51,7 @@ async function loadVotesByPostId(req, res) {
 async function loadPostById(req, res) {
     const post = await req.db.findOne('Post', {
         where: {
-            transactionHash: req.params.id,
+            _id: req.params.id,
         },
     })
     res.json(post)
@@ -70,7 +70,7 @@ async function loadPosts(req, res) {
     const query = req.query.query.toString()
     // TODO: deal with this when there's an offset arg
     // const lastRead = req.query.lastRead || 0
-    const epks = req.query.epks ? req.query.epks.split('_') : null
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
 
     const posts = await req.db.findMany('Post', {
         where: {

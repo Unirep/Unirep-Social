@@ -80,15 +80,16 @@ export class UnirepConfig {
         //     uint256 maxAttesters;
         // }
 
-        this.globalStateTreeDepth = +config[0].toString()
-        this.userStateTreeDepth = +config[1].toString()
-        this.epochTreeDepth = +config[2].toString()
-        this.numEpochKeyNoncePerEpoch = +config[3].toString()
-        this.maxReputationBudget = +config[4].toString()
+        this.globalStateTreeDepth = +config.globalStateTreeDepth
+        this.userStateTreeDepth = +config.userStateTreeDepth
+        this.epochTreeDepth = +config.epochTreeDepth
+        this.numEpochKeyNoncePerEpoch =
+            config.numEpochKeyNoncePerEpoch.toNumber()
+        this.maxReputationBudget = config.maxReputationBudget.toNumber()
         //
-        this.epochLength = +config[6].toString()
-        this.attestingFee = +config[7].toString()
-        this.maxUsers = +config[8].toString()
+        this.epochLength = config.epochLength.toNumber()
+        this.attestingFee = config.attestingFee.toNumber()
+        this.maxUsers = config.maxUsers.toNumber()
         this.loaded = true
     }
 

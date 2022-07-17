@@ -28,6 +28,7 @@ export class User {
 
     constructor() {
         makeObservable(this, {
+            userState: observable,
             currentEpoch: observable,
             reputation: observable,
             spent: observable,
@@ -64,13 +65,10 @@ export class User {
             const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
             await this.setIdentity(id)
             await this.calculateAllEpks()
-        }
-        if (this.id) {
-            // this.startDaemon()
-            // this.waitForSync().then(() => {
-            //     this.loadReputation()
-            //     this.save()
-            // })
+            await this.userState?.start()
+            this.userState?.waitForSync().then(() => {
+                this.loadReputation()
+            })
         }
 
         // start listening for new epochs
@@ -232,9 +230,9 @@ export class User {
             method: 'POST',
         })
         const { error, transaction } = await r.json()
-        // const { blockNumber } =
-        //     await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
-        await this.userState.waitForSync(/*blockNumber*/)
+        const { blockNumber } =
+            await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
+        await this.userState.waitForSync(blockNumber)
         await this.loadReputation()
         return { error, transaction }
     }
@@ -265,6 +263,7 @@ export class User {
         const id = new ZkIdentity()
         await this.setIdentity(id)
         if (!this.id) throw new Error('Iden is not set')
+        this.save()
 
         const commitment = id
             .genIdentityCommitment()
@@ -291,8 +290,8 @@ export class User {
             this.userState = undefined
             throw error
         }
-        // const { blockNumber } =
-        //     await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
+        const { blockNumber } =
+            await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)
         // this.initialSyncFinalBlock = blockNumber
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
@@ -301,6 +300,7 @@ export class User {
             i: serializedIdentity,
             c: commitment,
             epoch,
+            blockNumber,
         }
 
         // return await this.updateUser(epoch)
@@ -414,11 +414,11 @@ export class User {
             event.data
         )
         const attestation = new Attestation(
-            BigInt(decodedData._attestation.attesterId),
-            BigInt(decodedData._attestation.posRep),
-            BigInt(decodedData._attestation.negRep),
-            BigInt(decodedData._attestation.graffiti),
-            BigInt(decodedData._attestation.signUp)
+            BigInt(decodedData.attestation.attesterId),
+            BigInt(decodedData.attestation.posRep),
+            BigInt(decodedData.attestation.negRep),
+            BigInt(decodedData.attestation.graffiti),
+            BigInt(decodedData.attestation.signUp)
         )
         const normalizedEpk = epochKey
             .toHexString()

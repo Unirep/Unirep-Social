@@ -53,8 +53,12 @@ const getEpochKeys = (identity: string, epoch: number) => {
     return epks
 }
 
-export const makeURL = (action: string, data: any = {}) => {
+export const makeURL = (_action: string, data: any = {}) => {
     const params = new URLSearchParams(data)
+    let action = _action
+    if (_action.startsWith('/')) {
+        action = _action.slice(1)
+    }
     return `${config.SERVER}/api/${action}?${params}`
 }
 
@@ -115,7 +119,7 @@ export const getRecords = async (epks: string[], identity: string) => {
 export const convertDataToComment = (data: any) => {
     const comment = {
         type: DataType.Comment,
-        id: data.transactionHash,
+        id: data._id,
         post_id: data.postId,
         content: data.content,
         // votes,
@@ -123,7 +127,7 @@ export const convertDataToComment = (data: any) => {
         downvote: data.negRep,
         epoch_key: data.epochKey,
         username: '',
-        post_time: Date.parse(data.created_at),
+        createdAt: data.createdAt,
         reputation: data.minRep,
         current_epoch: data.epoch,
         proofIndex: data.proofIndex,
@@ -135,7 +139,7 @@ export const convertDataToComment = (data: any) => {
 export const convertDataToPost = (data: any) => {
     const post: Post = {
         type: DataType.Post,
-        id: data.transactionHash,
+        id: data._id,
         title: data.title,
         content: data.content,
         // votes,
@@ -143,7 +147,7 @@ export const convertDataToPost = (data: any) => {
         downvote: data.negRep,
         epoch_key: data.epochKey,
         username: '',
-        post_time: Date.parse(data.created_at),
+        createdAt: data.createdAt,
         reputation: data.minRep,
         commentCount: data.commentCount,
         current_epoch: data.epoch,
