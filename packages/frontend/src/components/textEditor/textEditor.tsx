@@ -139,6 +139,25 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         }
     }
 
+    const insertImage = () => {
+        const urlComponent = document.getElementById(
+            'insert-image-url'
+        ) as HTMLInputElement
+        const url = urlComponent.value
+        if (content) {
+            const sel = document.getElementById(
+                'myTextArea'
+            ) as HTMLTextAreaElement
+            const cursor = sel.selectionStart
+            const newContent =
+                content.substring(0, cursor) +
+                `![](${url})` +
+                content.substring(cursor)
+            setContent(newContent)
+            urlComponent.value = ''
+        }
+    }
+
     return (
         <div>
             <div>
@@ -162,6 +181,14 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     <button onClick={() => addStyle(TextStyle.List)}>
                         List
                     </button>
+                    <label className="insert-image">
+                        <input
+                            id="insert-image-url"
+                            type="text"
+                            placeholder="paste your image url here"
+                        />
+                        <button onClick={insertImage}>Insert Image</button>
+                    </label>
                 </div>
                 {autoFocus ? (
                     <textarea
