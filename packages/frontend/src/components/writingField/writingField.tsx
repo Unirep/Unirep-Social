@@ -73,7 +73,7 @@ const WritingField = (props: Props) => {
         setReputation(+event.target.value)
     }
 
-    // test function for text-editor 
+    // test function for text-editor
     const handleTextEditorInput = (text: string) => {
         setContent(text)
         postContext.setDraft(props.type, title, text)
@@ -104,12 +104,15 @@ const WritingField = (props: Props) => {
                 <div></div>
             )}
             {props.type === DataType.Post ? (
-                <textarea onChange={handleContentInput} value={content} />
+                <TextEditor
+                    content={content}
+                    setContent={handleTextEditorInput}
+                />
             ) : (
-                <textarea
-                    autoFocus
-                    onChange={handleContentInput}
-                    value={content}
+                <TextEditor
+                    content={content}
+                    setContent={handleTextEditorInput}
+                    autoFocus={true}
                 />
             )}
             <div className="info-row">
@@ -165,11 +168,6 @@ const WritingField = (props: Props) => {
             ) : (
                 <div></div>
             )}
-
-            <TextEditor 
-                content={content}
-                setContent={handleTextEditorInput}
-            />
         </div>
     )
 }
