@@ -12,6 +12,7 @@ module.exports = {
         '^.+\\.(gif|svg|ico|url|require)$': '<rootDir>/svgTransform.js',
     },
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
+    testPathIgnorePatterns: ['/__utils__/'],
     moduleFileExtensions: ['tsx', 'js', 'ts'],
     moduleNameMapper: {
         '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
@@ -22,9 +23,9 @@ module.exports = {
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: [
         '@testing-library/jest-dom/extend-expect',
-        './src/tests/setup.js',
+        './src/__tests__/__utils__/setup.js',
     ],
     resolver: 'jest-webpack-resolver',
     testEnvironment: 'jsdom',
-    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/tests/test-utils.tsx'],
+    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/tests'],
 }
