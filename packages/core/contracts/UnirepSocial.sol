@@ -32,6 +32,11 @@ contract UnirepSocial {
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
 
+    // epoch number to epoch key to amount spent
+    mapping(uint256 => mapping(uint256 => uint256)) public subsidies;
+
+    uint256 immutable public epkSubsidy;
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -77,7 +82,8 @@ contract UnirepSocial {
         Unirep _unirepContract,
         uint256 _postReputation,
         uint256 _commentReputation,
-        uint256 _airdroppedReputation
+        uint256 _airdroppedReputation,
+        uint256 _epkSubsidy
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
@@ -92,6 +98,7 @@ contract UnirepSocial {
         postReputation = _postReputation;
         commentReputation = _commentReputation;
         airdroppedReputation = _airdroppedReputation;
+        epkSubsidy = _epkSubsidy;
     }
 
     /*
@@ -109,26 +116,22 @@ contract UnirepSocial {
     }
 
     /*
-     * Give a user sign up flag if user has already signed up in Unirep but not Unirep Social
-     * @param _signUpProofData A sign up proof indicates that the user has not signed up in Unirep Social
+     * Try to spend subsidy for an epoch key in an epoch
+     * @param epoch The epoch the subsidy belongs to
+     * @param epochKey The epoch key that receives the subsidy
+     * @param amount The amount requesting to be spent
      */
-    // function userSignUpWithProof(Unirep.SignUpProofRelated memory _signUpProofData) external payable {
-    //     require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
-    //     require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-    //     require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
-
-    //     // Submit airdrop
-    //     unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
-
-    //     // Set the epoch key has been airdropped
-    //     isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
-
-    //     emit AirdropSubmitted(
-    //         unirep.currentEpoch(),
-    //         _signUpProofData.epochKey,
-    //         _signUpProofData
-    //     );
-    // }
+    function trySpendSubsidy(
+      uint256 epoch,
+      uint256 epochKey,
+      uint256 amount
+    ) private {
+        uint256 spentSubsidy = subsidies[epoch][epochKey];
+        assert(spentSubsidy <= epkSubsidy);
+        uint256 remainingSubsidy = epkSubsidy - spentSubsidy;
+        require(amount <= remainingSubsidy, 'Unirep Social: requesting too much subsidy');
+        subsidies[epoch][epochKey] += amount;
+    }
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
@@ -141,15 +144,21 @@ contract UnirepSocial {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        require(publicSignals[maxReputationBudget + 4] == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        uint256 epoch = publicSignals[maxReputationBudget];
+        uint256 epochKey = publicSignals[maxReputationBudget + 1];
+        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+        require(proofSpendAmount <= postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
+        uint256 requestedSubsidy = postReputation - proofSpendAmount;
+        trySpendSubsidy(epoch, epochKey, requestedSubsidy);
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
-            publicSignals[maxReputationBudget + 1], // epoch key
+            epochKey,
             content,
             publicSignals,
             proof
@@ -169,8 +178,14 @@ contract UnirepSocial {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        uint256 epoch = publicSignals[maxReputationBudget];
+        uint256 epochKey = publicSignals[maxReputationBudget + 1];
+        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+        require(proofSpendAmount <= commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
+        uint256 requestedSubsidy = commentReputation - proofSpendAmount;
+        trySpendSubsidy(epoch, epochKey, requestedSubsidy);
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
@@ -178,7 +193,7 @@ contract UnirepSocial {
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
-            publicSignals[maxReputationBudget + 1], // epoch key
+            epochKey, // epoch key
             content,
             publicSignals,
             proof
@@ -205,8 +220,16 @@ contract UnirepSocial {
         uint256 voteValue = upvoteValue + downvoteValue;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
-        require(publicSignals[maxReputationBudget + 4] == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        {
+            uint256 epoch = publicSignals[maxReputationBudget];
+            uint256 epochKey = publicSignals[maxReputationBudget + 1];
+            uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+            require(proofSpendAmount <= voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
+            uint256 requestedSubsidy = voteValue - proofSpendAmount;
+            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        }
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
@@ -234,33 +257,6 @@ contract UnirepSocial {
             upvoteValue,
             downvoteValue,
             toEpochKeyProofIndex,
-            publicSignals,
-            proof
-        );
-    }
-
-    /*
-     * Give a user airdrop if user has already signed up in Unirep Social
-     * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
-     */
-    function airdrop(
-        uint256[] memory publicSignals,
-        uint256[8] memory proof
-    ) external payable {
-        require(isEpochKeyGotAirdrop[publicSignals[1]] == false, "Unirep Social: the epoch key has been airdropped");
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(publicSignals[4] == 1, "Unirep Social: user should have signed up in Unirep Social before");
-
-        // Submit airdrop
-        (,,,,,,,uint attestingFee,,) = unirep.config();
-        unirep.airdropEpochKey{value: attestingFee}(publicSignals, proof);
-
-        // Set the epoch key has been airdropped
-        isEpochKeyGotAirdrop[publicSignals[1]] = true;
-
-        emit AirdropSubmitted(
-            unirep.currentEpoch(),
-            publicSignals[1], // epoch key
             publicSignals,
             proof
         );

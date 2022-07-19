@@ -4,6 +4,7 @@ import {
     defaultAirdroppedReputation,
     defaultCommentReputation,
     defaultPostReputation,
+    defaultEpkSubsidy,
 } from '../config/socialMedia'
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
 import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
@@ -19,16 +20,21 @@ const deployUnirepSocial = async (
 ): Promise<UnirepSocial> => {
     console.log('Deploying Unirep Social')
 
-    const _defaultAirdroppedRep = defaultAirdroppedReputation
-    const _postReputation = defaultPostReputation
-    const _commentReputation = defaultCommentReputation
+    const settings = {
+        airdropReputation: defaultAirdroppedReputation,
+        postReputation: defaultPostReputation,
+        commentReputation: defaultCommentReputation,
+        epkSubsidy: defaultEpkSubsidy,
+        ..._settings,
+    }
 
     const f = new UnirepSocialFactory(deployer)
     const c = await f.deploy(
         UnirepAddr,
-        _postReputation,
-        _commentReputation,
-        _defaultAirdroppedRep,
+        settings.postReputation,
+        settings.commentReputation,
+        settings.airdropReputation,
+        settings.epkSubsidy,
         {
             gasLimit: 9000000,
         }

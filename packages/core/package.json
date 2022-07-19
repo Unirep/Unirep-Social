@@ -8,9 +8,8 @@
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
-        "test": "yarn scriptsTest",
-        "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "hardhat test --parallel test/*.ts"
+        "test": "hardhat test --parallel test/*.ts",
+        "deploy": "hardhat run scripts/deploy.js"
     },
     "repository": {
         "type": "git",
