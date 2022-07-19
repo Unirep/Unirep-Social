@@ -9,6 +9,7 @@ import { deployUnirepSocial } from '../src/utils'
 import * as config from '@unirep/circuits'
 
 describe('Subsidy', function () {
+    this.timeout(1000000)
     let unirepContract, unirepSocialContract
     const attestingFee = ethers.utils.parseEther('0.001')
 
