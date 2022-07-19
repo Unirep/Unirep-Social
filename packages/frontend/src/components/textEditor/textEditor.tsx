@@ -10,7 +10,6 @@ type Props = {
 enum TextStyle {
     Bold,
     Italic,
-    Highlight,
     Strike,
     Code,
     Quote,
@@ -38,13 +37,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         end: number
     ): string => {
         const listIndex = text.indexOf('\n')
-        console.log(
-            'start: ' + start,
-            'end: ' + end,
-            'listIndex: ' + listIndex,
-            'previousText: ' + previousText,
-            'text: ' + text
-        )
+
         if (end === 0) {
             return previousText + text
         }
@@ -68,75 +61,54 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     }
 
     const addStyle = (style: TextStyle) => {
-        const sel = document.getElementById('myTextArea') as HTMLTextAreaElement
+        const sel = document.getElementById(
+            'inputTextArea'
+        ) as HTMLTextAreaElement
         const start = sel.selectionStart
         const end = sel.selectionEnd
 
-        console.log('selection start from ', start, ' to ', end)
+        if (!content) return
 
-        if (content) {
-            let newContent: string = content
-            if (style === TextStyle.Italic) {
-                newContent =
-                    content.substring(0, start) +
-                    '*' +
-                    content.substring(start, end) +
-                    '*' +
-                    content.substring(end)
-            } else if (style === TextStyle.Bold) {
-                newContent =
-                    content.substring(0, start) +
-                    '**' +
-                    content.substring(start, end) +
-                    '**' +
-                    content.substring(end)
-            } else if (style === TextStyle.Highlight) {
-                if (
-                    content[start - 1] === ' ' &&
-                    content[start - 2] === '#' &&
-                    content[end] === ' ' &&
-                    content[end + 1] === '#'
-                ) {
-                    newContent =
-                        content.substring(0, start - 1) +
-                        '#' +
-                        content.substring(start - 1, end + 1) +
-                        '#' +
-                        content.substring(end + 1)
-                } else {
-                    newContent =
-                        content.substring(0, start) +
-                        '# ' +
-                        content.substring(start, end) +
-                        ' #' +
-                        content.substring(end)
-                }
-            } else if (style === TextStyle.Strike) {
-                newContent =
-                    content.substring(0, start) +
-                    '~~' +
-                    content.substring(start, end) +
-                    '~~' +
-                    content.substring(end)
-            } else if (style === TextStyle.Code) {
-                newContent =
-                    content.substring(0, start) +
-                    '`' +
-                    content.substring(start, end) +
-                    '`' +
-                    content.substring(end)
-            } else if (style === TextStyle.Quote) {
-                newContent =
-                    content.substring(0, start) +
-                    '> ' +
-                    content.substring(start, end) +
-                    '\n' +
-                    content.substring(end)
-            } else if (style === TextStyle.List) {
-                newContent = addListItem('', content, start, end)
-            }
-            setContent(newContent)
+        let newContent: string = content
+        if (style === TextStyle.Italic) {
+            newContent =
+                content.substring(0, start) +
+                '*' +
+                content.substring(start, end) +
+                '*' +
+                content.substring(end)
+        } else if (style === TextStyle.Bold) {
+            newContent =
+                content.substring(0, start) +
+                '**' +
+                content.substring(start, end) +
+                '**' +
+                content.substring(end)
+        } else if (style === TextStyle.Strike) {
+            newContent =
+                content.substring(0, start) +
+                '~~' +
+                content.substring(start, end) +
+                '~~' +
+                content.substring(end)
+        } else if (style === TextStyle.Code) {
+            newContent =
+                content.substring(0, start) +
+                '`' +
+                content.substring(start, end) +
+                '`' +
+                content.substring(end)
+        } else if (style === TextStyle.Quote) {
+            newContent =
+                content.substring(0, start) +
+                '> ' +
+                content.substring(start, end) +
+                '\n' +
+                content.substring(end)
+        } else if (style === TextStyle.List) {
+            newContent = addListItem('', content, start, end)
         }
+        setContent(newContent)
     }
 
     const insertImage = () => {
@@ -169,9 +141,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     <button onClick={() => addStyle(TextStyle.Strike)}>
                         S
                     </button>
-                    <button onClick={() => addStyle(TextStyle.Highlight)}>
-                        H
-                    </button>
                     <button onClick={() => addStyle(TextStyle.Code)}>
                         Code
                     </button>
@@ -199,7 +168,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     />
                 ) : (
                     <textarea
-                        id="myTextArea"
+                        id="inputTextArea"
                         onChange={handleContentInput}
                         value={content ?? ''}
                     />
