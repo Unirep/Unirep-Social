@@ -32,3 +32,8 @@ ln -s $1/packages/core/build $(pwd)/packages/core/node_modules/@unirep/core
 ln -s $1/packages/contracts/build $(pwd)/packages/core/node_modules/@unirep/contracts
 ln -s $1/packages/crypto/build $(pwd)/packages/core/node_modules/@unirep/crypto
 ln -s $1/packages/circuits/dist $(pwd)/packages/core/node_modules/@unirep/circuits
+
+rm -rf packages/circuits/node_modules/@unirep/crypto
+rm -rf packages/circuits/node_modules/@unirep/circuits
+ln -s $1/packages/crypto/build $(pwd)/packages/circuits/node_modules/@unirep/crypto
+ln -s $1/packages/circuits/dist $(pwd)/packages/circuits/node_modules/@unirep/circuits

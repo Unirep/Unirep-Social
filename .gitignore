@@ -1,6 +1,8 @@
 node_modules
 .DS_Store
 
+zksnarkBuild
+
 #Buidler files
 artifacts
 cache

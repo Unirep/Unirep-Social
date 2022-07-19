@@ -35,12 +35,15 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
     )
     const postReputation = 5
     const commentReputation = 3
-    const airdrop = 30
+    const airdrop = 0
+    const epkSubsidy = 10
     const unirepSocial = await UnirepSocialF.deploy(
         unirep.address,
+        '0x0000000000000000000000000000000000000000',
         postReputation,
         commentReputation,
-        airdrop
+        airdrop,
+        epkSubsidy
     )
     await unirepSocial.deployed()
     console.log(`Unirep address: ${unirep.address}`)

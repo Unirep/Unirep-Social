@@ -14,23 +14,26 @@ export class User {
     id?: ZkIdentity
     allEpks = [] as string[]
     currentEpoch = 0
-    reputation = 30
+    reputation = 0
+    subsidyReputation = 0
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: UserState
 
+    syncStartBlock: any
     latestProcessedBlock: any
     isInitialSyncing = true
     initialSyncFinalBlock = Infinity
-    syncStartBlock: any
 
     constructor() {
         makeObservable(this, {
             userState: observable,
             currentEpoch: observable,
             reputation: observable,
+            netReputation: computed,
+            subsidyReputation: observable,
             spent: observable,
             currentEpochKeys: computed,
             allEpks: observable,
@@ -46,6 +49,10 @@ export class User {
         } else {
             this.loadingPromise = Promise.resolve()
         }
+    }
+
+    get spendableReputation() {
+        return this.reputation - this.spent + this.subsidyReputation
     }
 
     get netReputation() {
@@ -222,6 +229,22 @@ export class User {
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
+        const { number: currentEpoch } =
+            await this.userState?.loadCurrentEpoch()
+        const epkSubsidy = 10
+        const subsidyBalance = (
+            await Promise.all(
+                this.currentEpochKeys.map((epk) => {
+                    return this.unirepConfig.unirepSocial.subsidies(
+                        currentEpoch,
+                        ethers.BigNumber.from(`0x${epk}`)
+                    )
+                })
+            )
+        ).reduce((acc, val) => {
+            return acc + (epkSubsidy - val.toNumber())
+        }, 0)
+        this.subsidyReputation = subsidyBalance
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )

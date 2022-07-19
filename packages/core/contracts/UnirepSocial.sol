@@ -6,11 +6,14 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import { Unirep } from "@unirep/contracts/Unirep.sol";
+import { IVerifier } from "@unirep/contracts/interfaces/IVerifier.sol";
+import { zkSNARKHelper } from '@unirep/contracts/libraries/zkSNARKHelper.sol';
 
-contract UnirepSocial {
+contract UnirepSocial is zkSNARKHelper {
     using SafeMath for uint256;
 
     Unirep public unirep;
+    IVerifier internal negativeReputationVerifier;
 
     // Before Unirep integrates with InterRep
     // We use an admin to controll user sign up
@@ -31,6 +34,11 @@ contract UnirepSocial {
     // A mapping between user’s epoch key and if they request airdrop in the current epoch;
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
+
+    // epoch number to epoch key to amount spent
+    mapping(uint256 => mapping(uint256 => uint256)) public subsidies;
+
+    uint256 immutable public epkSubsidy;
 
     // help Unirep Social track event
     event UserSignedUp(
@@ -69,12 +77,15 @@ contract UnirepSocial {
 
     constructor(
         Unirep _unirepContract,
+        IVerifier _negativeReputationVerifier,
         uint256 _postReputation,
         uint256 _commentReputation,
-        uint256 _airdroppedReputation
+        uint256 _airdroppedReputation,
+        uint256 _epkSubsidy
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
+        negativeReputationVerifier = _negativeReputationVerifier;
         // Set admin user
         admin = msg.sender;
 
@@ -85,6 +96,7 @@ contract UnirepSocial {
         postReputation = _postReputation;
         commentReputation = _commentReputation;
         airdroppedReputation = _airdroppedReputation;
+        epkSubsidy = _epkSubsidy;
     }
 
     /*
@@ -102,6 +114,67 @@ contract UnirepSocial {
     }
 
     /*
+     * Try to spend subsidy for an epoch key in an epoch
+     * @param epoch The epoch the subsidy belongs to
+     * @param epochKey The epoch key that receives the subsidy
+     * @param amount The amount requesting to be spent
+     */
+    function trySpendSubsidy(
+      uint256 epoch,
+      uint256 epochKey,
+      uint256 amount
+    ) private {
+        uint256 spentSubsidy = subsidies[epoch][epochKey];
+        assert(spentSubsidy <= epkSubsidy);
+        uint256 remainingSubsidy = epkSubsidy - spentSubsidy;
+        require(amount <= remainingSubsidy, 'Unirep Social: requesting too much subsidy');
+        require(epoch == unirep.currentEpoch(), 'Unirep Social: wrong epoch');
+        subsidies[epoch][epochKey] += amount;
+    }
+
+    /**
+     * Accepts a negative reputation proof
+     **/
+    function getSubsidyAirdrop(
+      uint256[] memory publicSignals,
+      uint256[8] memory proof
+    ) public {
+        (,,,uint numEpochKeyNoncePerEpoch,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        require(publicSignals[numEpochKeyNoncePerEpoch + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        // verify the proof
+        require(isValidSignals(publicSignals));
+        require(negativeReputationVerifier.verifyProof(proof, publicSignals));
+
+        // update the stored subsidy balances
+        uint maxSubsidy = numEpochKeyNoncePerEpoch * epkSubsidy;
+        uint requestedSubsidy = publicSignals[numEpochKeyNoncePerEpoch + 1];
+        uint receivedSubsidy = maxSubsidy < requestedSubsidy ? maxSubsidy : requestedSubsidy;
+        uint totalSpent = 0;
+        uint epoch = publicSignals[numEpochKeyNoncePerEpoch + 2];
+        // spend from each epoch key until we get to receivedSubsidy
+        for (uint x = 0; x < numEpochKeyNoncePerEpoch; x++) {
+            uint remaining = receivedSubsidy - totalSpent;
+            if (remaining == 0) break;
+            uint spend = epkSubsidy > remaining ? remaining : epkSubsidy;
+            trySpendSubsidy(epoch, publicSignals[x], spend);
+            totalSpent += spend;
+        }
+        require(unirep.globalStateTreeRoots(epoch, publicSignals[numEpochKeyNoncePerEpoch]), "Unirep Social: GST root does not exist in epoch");
+
+        // Submit attestation to receiver's first epoch key
+        Unirep.Attestation memory attestation;
+        attestation.attesterId = attesterId;
+        attestation.posRep = receivedSubsidy;
+        attestation.negRep = 0;
+        // TODO: waiting on PR
+        unirep.submitAttestation{value: attestingFee}(
+            attestation,
+            publicSignals[0] // first epoch key
+        );
+    }
+
+    /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
      * @param content The text content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
@@ -112,15 +185,23 @@ contract UnirepSocial {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        require(publicSignals[maxReputationBudget + 4] == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        uint256 epoch = publicSignals[maxReputationBudget + 2];
+        uint256 epochKey = publicSignals[0];
+        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+        require(proofSpendAmount <= postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
+        uint256 requestedSubsidy = postReputation - proofSpendAmount;
+        if (requestedSubsidy > 0) {
+            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        }
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
-            publicSignals[0], // epoch key
+            epochKey,
             content,
             publicSignals[maxReputationBudget + 5] // min rep
         );
@@ -139,8 +220,16 @@ contract UnirepSocial {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        uint256 epoch = publicSignals[maxReputationBudget + 2];
+        uint256 epochKey = publicSignals[0];
+        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+        require(proofSpendAmount <= commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
+        uint256 requestedSubsidy = commentReputation - proofSpendAmount;
+        if (requestedSubsidy > 0) {
+            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        }
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
@@ -148,7 +237,7 @@ contract UnirepSocial {
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
-            publicSignals[0], // epoch key
+            epochKey, // epoch key
             content,
             publicSignals[maxReputationBudget + 5] // min rep
         );
@@ -173,9 +262,18 @@ contract UnirepSocial {
         uint256 voteValue = upvoteValue + downvoteValue;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
-        require(publicSignals[maxReputationBudget + 4] == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
+        {
+            uint256 epoch = publicSignals[maxReputationBudget + 2];
+            uint256 epochKey = publicSignals[0];
+            uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
+            require(proofSpendAmount <= voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
+            uint256 requestedSubsidy = voteValue - proofSpendAmount;
+            if (requestedSubsidy > 0) {
+                trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+            }
+        }
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
