@@ -151,7 +151,10 @@ contract UnirepSocial {
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount <= postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         uint256 requestedSubsidy = postReputation - proofSpendAmount;
-        trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        if (requestedSubsidy > 0) {
+            require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
+            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        }
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
@@ -185,7 +188,10 @@ contract UnirepSocial {
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount <= commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         uint256 requestedSubsidy = commentReputation - proofSpendAmount;
-        trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        if (requestedSubsidy > 0) {
+            require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
+            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+        }
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
@@ -228,7 +234,10 @@ contract UnirepSocial {
             uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
             require(proofSpendAmount <= voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
             uint256 requestedSubsidy = voteValue - proofSpendAmount;
-            trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+            if (requestedSubsidy > 0) {
+                require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
+                trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+            }
         }
 
         // Spend reputation
