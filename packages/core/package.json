@@ -4,13 +4,13 @@
     "description": "",
     "main": "build/src/index.js",
     "scripts": {
-        "build": "hardhat typechain && tsc",
+        "build": "hardhat typechain && tsc && yarn abi",
+        "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
         "test": "yarn scriptsTest",
         "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "NODE_OPTIONS=--max-old-space-size=4096 hardhat test --no-compile test/*.ts",
-        "lint": "prettier ."
+        "scriptsTest": "hardhat test --parallel test/*.ts"
     },
     "repository": {
         "type": "git",
@@ -23,13 +23,12 @@
     },
     "homepage": "https://github.com/Unirep/Unirep-Social#readme",
     "devDependencies": {
-        "@nomicfoundation/hardhat-chai-matchers": "^1.0.0-beta.2",
+        "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@openzeppelin/contracts": "^4.6.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.0.4",
         "@types/node": "^14.14.7",
-        "@types/sinon-chai": "^3.2.8",
         "bigint-conversion": "^2.1.12",
         "chai": "^4.2.0",
         "hardhat": "^2.9.4",
@@ -40,22 +39,17 @@
     "dependencies": {
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
-        "@unirep/circuits": "1.0.0-alpha-5",
-        "@unirep/contracts": "1.0.0-alpha-6",
-        "@unirep/core": "1.0.0-alpha-6",
+        "@unirep/circuits": "1.0.0-alpha-7",
+        "@unirep/contracts": "1.0.0-alpha-9",
+        "@unirep/core": "1.0.0-alpha-13",
         "@unirep/crypto": "1.0.0-alpha-4",
-        "anondb": "^0.0.6",
+        "anondb": "^0.0.12",
         "argparse": "^2.0.1",
         "base64url": "^3.0.1",
         "dotenv": "^10.0.0",
         "ethers": "^5.5.4",
         "nanoid": "3",
-        "prettier": "^2.6.0",
+        "path-browserify": "^1.0.1",
         "typescript": "^4.0.5"
-    },
-    "prettier": {
-        "tabWidth": 4,
-        "singleQuote": true,
-        "semi": false
     }
 }

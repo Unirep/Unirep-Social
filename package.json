@@ -4,6 +4,7 @@
     "scripts": {
         "bootstrap": "lerna bootstrap",
         "build": "lerna run build",
+        "linkUnirep": "sh scripts/linkUnirep.sh",
         "lint": "prettier ."
     },
     "private": true,

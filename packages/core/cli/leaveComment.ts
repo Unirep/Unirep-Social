@@ -1,7 +1,7 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepFactory } from '@unirep/contracts'
+import { UnirepFactory, ReputationProof } from '@unirep/contracts'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
@@ -9,9 +9,6 @@ import { defaultCommentReputation } from '../config/socialMedia'
 import { verifyReputationProof } from './verifyReputationProof'
 import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { ReputationProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('leaveComment', { add_help: true })
@@ -77,7 +74,7 @@ const leaveComment = async (args: any) => {
         UnirepFactory.abi,
         provider
     )
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
 
     // Parse Inputs
     const decodedProof = base64url.decode(
@@ -120,9 +117,15 @@ const leaveComment = async (args: any) => {
     try {
         tx = await unirepSocialContract
             .connect(wallet)
-            .leaveComment(args.post_id, args.text, reputationProof, {
-                value: attestingFee,
-            })
+            .leaveComment(
+                args.post_id,
+                args.text,
+                reputationProof.publicSignals,
+                reputationProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
     } catch (error) {
         console.log('Transaction Error', error)
         return

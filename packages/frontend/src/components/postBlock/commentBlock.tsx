@@ -28,7 +28,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
     const comment = postContext.commentsById[commentId]
     const commentHtml = markdown.render(comment.content)
     const unirepConfig = useContext(UnirepContext)
-    const date = dateformat(new Date(comment.post_time), 'dd/mm/yyyy hh:MM TT')
+    const date = dateformat(new Date(comment.createdAt), 'dd/mm/yyyy hh:MM TT')
     const history = useHistory()
     const [isEpkHovered, setEpkHovered] = useState<boolean>(false)
 

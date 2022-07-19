@@ -2,14 +2,12 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { formatProofForSnarkjsVerification, genUnirepState } from '@unirep/core'
-import { UnirepFactory } from '@unirep/contracts'
+import { formatProofForSnarkjsVerification } from '@unirep/core'
+import { UnirepFactory, SignUpProof } from '@unirep/contracts'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { SignUpProof } from '../test/utils'
+import { genUnirepState } from './test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('verifyAirdropProof', {
@@ -95,7 +93,7 @@ const verifyAirdropProof = async (args: any) => {
     const attesterId = signUpProof.attesterId
 
     // Check if Global state tree root exists
-    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
+    const isGSTRootExisted = await unirepState.GSTRootExists(GSTRoot, epoch)
     if (!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
@@ -117,7 +115,10 @@ const verifyAirdropProof = async (args: any) => {
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepContract.verifyUserSignUp(signUpProof)
+    const isProofValid = await unirepContract.verifyUserSignUp(
+        signUpProof.publicSignals,
+        signUpProof.proof
+    )
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
         return

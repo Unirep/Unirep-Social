@@ -1,7 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 
-const keyDir = path.join(__dirname, '../node_modules/@unirep/circuits/build')
+const keyDir = path.join(
+    __dirname,
+    '../node_modules/@unirep/circuits/zksnarkBuild'
+)
 const destDir = path.join(__dirname, '../public/build')
 
 if (fs.existsSync(destDir)) {

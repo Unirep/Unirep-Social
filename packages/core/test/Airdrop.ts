@@ -3,25 +3,12 @@ import { ethers as hardhatEthers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber, ethers } from 'ethers'
 import { ZkIdentity } from '@unirep/crypto'
-import {
-    verifyProof,
-    formatProofForVerifierContract,
-    Circuit,
-} from '@unirep/circuits'
-import {
-    computeProcessAttestationsProofHash,
-    computeStartTransitionProofHash,
-    deployUnirep,
-} from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts'
+import { genUserState } from './utils'
 import * as config from '@unirep/circuits'
-import { genUserState, UserState } from '@unirep/core'
+import { UserState } from '@unirep/core'
 
-import {
-    getTreeDepthsForTesting,
-    SignUpProof,
-    ReputationProof,
-    UserTransitionProof,
-} from './utils'
+import { getTreeDepthsForTesting } from './utils'
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 import { defaultAirdroppedReputation } from '../config/socialMedia'
 
@@ -94,51 +81,55 @@ describe('Airdrop', function () {
             unirepContract.address,
             iden
         )
-        const { proof, publicSignals } =
-            await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                defaultAirdroppedReputation
-            )
-        const reputationProof = new ReputationProof(publicSignals, proof)
+        const reputationProof = await userState.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            defaultAirdroppedReputation
+        )
         const isValid = await reputationProof.verify()
         expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
     })
 
     it('user can get airdrop positive reputation through calling airdrop function in Unirep Social', async () => {
-        const { proof, publicSignals } = await userState.genUserSignUpProof(
-            attesterId
-        )
-        const signUpProof = new SignUpProof(publicSignals, proof)
+        const signUpProof = await userState.genUserSignUpProof(attesterId)
         duplicatedProof = signUpProof
 
         const isSignUpProofValid = await signUpProof.verify()
         expect(isSignUpProofValid, 'Sign up proof is not valid').to.be.true
 
         // submit epoch key
-        let tx = await unirepSocialContract.airdrop(signUpProof, {
-            value: attestingFee,
-        })
+        let tx = await unirepSocialContract.airdrop(
+            signUpProof.publicSignals,
+            signUpProof.proof,
+            {
+                value: attestingFee,
+            }
+        )
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
     })
 
     it('submit a duplicated airdrop proof should fail', async () => {
         await expect(
-            unirepSocialContract.airdrop(duplicatedProof, {
-                value: attestingFee,
-            })
+            unirepSocialContract.airdrop(
+                duplicatedProof.publicSignals,
+                duplicatedProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
         ).to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
     })
 
     it('submit an epoch key twice should fail (different proof)', async () => {
-        const { proof, publicSignals } = await userState.genUserSignUpProof(
-            attesterId
-        )
-        const signUpProof = new SignUpProof(publicSignals, proof)
+        const signUpProof = await userState.genUserSignUpProof(attesterId)
         expect(signUpProof.proof[0]).not.equal(duplicatedProof.proof[0])
         await expect(
-            unirepSocialContract.airdrop(signUpProof, { value: attestingFee })
+            unirepSocialContract.airdrop(
+                signUpProof.publicSignals,
+                signUpProof.proof,
+                { value: attestingFee }
+            )
         ).to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
     })
 
@@ -162,83 +153,57 @@ describe('Airdrop', function () {
             finalTransitionProof,
         } = await userState.genUserStateTransitionProofs()
 
-        let isValid = await verifyProof(
-            Circuit.startTransition,
-            startTransitionProof.proof,
-            startTransitionProof.publicSignals
-        )
-        expect(isValid, 'Verify start transition circuit off-chain failed').to
-            .be.true
+        expect(
+            await startTransitionProof.verify(),
+            'Verify start transition circuit off-chain failed'
+        ).to.be.true
 
         // Verify start transition proof on-chain
-        let isProofValid = await unirepContract.verifyStartTransitionProof(
-            startTransitionProof.blindedUserState,
-            startTransitionProof.blindedHashChain,
-            startTransitionProof.globalStateTreeRoot,
-            formatProofForVerifierContract(startTransitionProof.proof)
-        )
-        expect(isProofValid, 'Verify start transition circuit on-chain failed')
-            .to.be.true
+        {
+            const isProofValid =
+                await unirepContract.verifyStartTransitionProof(
+                    startTransitionProof.publicSignals,
+                    startTransitionProof.proof
+                )
+            expect(
+                isProofValid,
+                'Verify start transition circuit on-chain failed'
+            ).to.be.true
+        }
 
-        const blindedUserState = startTransitionProof.blindedUserState
-        const blindedHashChain = startTransitionProof.blindedHashChain
-        const GSTreeRoot = startTransitionProof.globalStateTreeRoot
-        const _proof = formatProofForVerifierContract(
-            startTransitionProof.proof
-        )
+        {
+            const receipt = await unirepContract
+                .startUserStateTransition(
+                    startTransitionProof.publicSignals,
+                    startTransitionProof.proof
+                )
+                .then((t) => t.wait())
+            expect(
+                receipt.status,
+                'Submit user state transition proof failed'
+            ).to.equal(1)
+            console.log(
+                'Gas cost of submit a start transition proof:',
+                receipt.gasUsed.toString()
+            )
+        }
 
-        tx = await unirepContract.startUserStateTransition(
-            blindedUserState,
-            blindedHashChain,
-            GSTreeRoot,
-            _proof
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a start transition proof:',
-            receipt.gasUsed.toString()
-        )
-
-        let proofNullifier = computeStartTransitionProofHash(
-            blindedUserState,
-            blindedHashChain,
-            GSTreeRoot,
-            _proof
-        )
-        let proofIndex = await unirepContract.getProofIndex(proofNullifier)
+        const proofNullifier = startTransitionProof.hash()
+        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(BigNumber.from(proofIndex))
 
         for (let i = 0; i < processAttestationProofs.length; i++) {
-            const isValid = await verifyProof(
-                Circuit.processAttestations,
-                processAttestationProofs[i].proof,
-                processAttestationProofs[i].publicSignals
-            )
+            const isValid = await processAttestationProofs[i].verify()
             expect(
                 isValid,
                 'Verify process attestations circuit off-chain failed'
             ).to.be.true
 
-            const outputBlindedUserState =
-                processAttestationProofs[i].outputBlindedUserState
-            const outputBlindedHashChain =
-                processAttestationProofs[i].outputBlindedHashChain
-            const inputBlindedUserState =
-                processAttestationProofs[i].inputBlindedUserState
-
             // Verify processAttestations proof on-chain
             const isProofValid =
                 await unirepContract.verifyProcessAttestationProof(
-                    outputBlindedUserState,
-                    outputBlindedHashChain,
-                    inputBlindedUserState,
-                    formatProofForVerifierContract(
-                        processAttestationProofs[i].proof
-                    )
+                    processAttestationProofs[i].publicSignals,
+                    processAttestationProofs[i].proof
                 )
             expect(
                 isProofValid,
@@ -246,12 +211,8 @@ describe('Airdrop', function () {
             ).to.be.true
 
             const tx = await unirepSocialContract.processAttestations(
-                outputBlindedUserState,
-                outputBlindedHashChain,
-                inputBlindedUserState,
-                formatProofForVerifierContract(
-                    processAttestationProofs[i].proof
-                )
+                processAttestationProofs[i].publicSignals,
+                processAttestationProofs[i].proof
             )
             const receipt = await tx.wait()
             expect(
@@ -263,74 +224,74 @@ describe('Airdrop', function () {
                 receipt.gasUsed.toString()
             )
 
-            const proofNullifier = computeProcessAttestationsProofHash(
-                outputBlindedUserState,
-                outputBlindedHashChain,
-                inputBlindedUserState,
-                formatProofForVerifierContract(
-                    processAttestationProofs[i].proof
-                )
-            )
+            const proofNullifier = processAttestationProofs[i].hash()
             const proofIndex = await unirepContract.getProofIndex(
                 proofNullifier
             )
             proofIndexes.push(BigNumber.from(proofIndex))
         }
 
-        const USTProof = new UserTransitionProof(
-            finalTransitionProof.publicSignals,
-            finalTransitionProof.proof
-        )
-        isValid = await USTProof.verify()
-        expect(isValid, 'Verify user state transition circuit off-chain failed')
-            .to.be.true
-
-        // Verify userStateTransition proof on-chain
-        isProofValid = await unirepContract.verifyUserStateTransition(USTProof)
         expect(
-            isProofValid,
-            'Verify user state transition circuit on-chain failed'
+            await finalTransitionProof.verify(),
+            'Verify user state transition circuit off-chain failed'
         ).to.be.true
 
-        tx = await unirepSocialContract.updateUserStateRoot(
-            USTProof,
-            proofIndexes
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a user state transition proof:',
-            receipt.gasUsed.toString()
-        )
+        // Verify userStateTransition proof on-chain
+        {
+            const isProofValid = await unirepContract.verifyUserStateTransition(
+                finalTransitionProof.publicSignals,
+                finalTransitionProof.proof
+            )
+            expect(
+                isProofValid,
+                'Verify user state transition circuit on-chain failed'
+            ).to.be.true
+        }
+
+        {
+            const receipt = await unirepSocialContract
+                .updateUserStateRoot(
+                    finalTransitionProof.publicSignals,
+                    finalTransitionProof.proof,
+                    proofIndexes
+                )
+                .then((t) => t.wait())
+            expect(
+                receipt.status,
+                'Submit user state transition proof failed'
+            ).to.equal(1)
+            console.log(
+                'Gas cost of submit a user state transition proof:',
+                receipt.gasUsed.toString()
+            )
+        }
+        await userState.waitForSync()
 
         // generate reputation proof should success
         const proveGraffiti = BigInt(0)
         const minPosRep = 30,
             graffitiPreImage = BigInt(0)
-        const { publicSignals, proof } =
-            await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage
-            )
-        const reputationProof = new ReputationProof(publicSignals, proof)
-        isValid = await reputationProof.verify()
-        expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+        const reputationProof = await userState.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            minPosRep,
+            proveGraffiti,
+            graffitiPreImage
+        )
+        expect(
+            await reputationProof.verify(),
+            'Verify reputation proof off-chain failed'
+        ).to.be.true
     })
 
     it('user signs up through a signed up attester with 0 airdrop should not get airdrop', async () => {
         console.log('User sign up')
         const userId2 = new ZkIdentity()
         const userCommitment2 = userId2.genIdentityCommitment()
-        let tx = await unirepContractCalledByAttester.userSignUp(
+        const tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment2
         )
-        let receipt = await tx.wait()
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
         const userState2 = await genUserState(
@@ -338,13 +299,11 @@ describe('Airdrop', function () {
             unirepContract.address,
             userId2
         )
-        const { proof, publicSignals } =
-            await userState2.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                defaultAirdroppedReputation
-            )
-        const reputationProof = new ReputationProof(publicSignals, proof)
+        const reputationProof = await userState2.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            defaultAirdroppedReputation
+        )
         const isValid = await reputationProof.verify()
         expect(isValid, 'Verify reputation proof off-chain should fail').to.be
             .false
@@ -354,10 +313,10 @@ describe('Airdrop', function () {
         console.log('User sign up')
         const userId3 = new ZkIdentity()
         const userCommitment3 = userId3.genIdentityCommitment()
-        let tx = await unirepContractCalledByAttester.userSignUp(
+        const tx = await unirepContractCalledByAttester.userSignUp(
             userCommitment3
         )
-        let receipt = await tx.wait()
+        const receipt = await tx.wait()
         expect(receipt.status).equal(1)
 
         const userState3 = await genUserState(
@@ -366,13 +325,11 @@ describe('Airdrop', function () {
             userId3
         )
         const minRep = 1
-        const { proof, publicSignals } =
-            await userState3.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minRep
-            )
-        const reputationProof = new ReputationProof(publicSignals, proof)
+        const reputationProof = await userState3.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            minRep
+        )
         const isValid = await reputationProof.verify()
         expect(isValid, 'Verify reputation proof off-chain should fail').to.be
             .false

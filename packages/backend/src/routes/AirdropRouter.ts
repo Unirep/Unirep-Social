@@ -37,7 +37,7 @@ async function getAirdrop(req, res) {
     const { publicSignals, proof } = req.body
     const signUpProof = new SignUpProof(publicSignals, proof)
 
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
 
     // Verify proof
     const error = await verifyAirdropProof(
@@ -55,7 +55,7 @@ async function getAirdrop(req, res) {
     // submit epoch key to unirep social contract
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'airdrop',
-        [signUpProof]
+        [signUpProof.publicSignals, signUpProof.proof]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

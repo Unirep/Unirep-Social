@@ -7,8 +7,8 @@ import { getUnirepContract } from '@unirep/contracts'
 import { expect } from 'chai'
 
 import { DEFAULT_ETH_PROVIDER } from '../../cli/defaults'
-import { genUnirepState, UnirepState } from '@unirep/core'
-import { exec } from './utils'
+import { UserState } from '@unirep/core'
+import { exec, genUnirepState } from './utils'
 
 import { identityCommitmentPrefix, identityPrefix } from '../prefix'
 import { getProvider } from '../utils'
@@ -31,7 +31,7 @@ describe('test all CLI subcommands', function () {
     const epochLength = 5
     let unirepContract: ethers.Contract
     let unirepSocialContract: ethers.Contract
-    let unirepState: UnirepState
+    let unirepState: UserState
 
     let userIdentity1,
         userIdentityCommitment1,

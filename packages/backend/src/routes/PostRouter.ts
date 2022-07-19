@@ -51,7 +51,7 @@ async function loadVotesByPostId(req, res) {
 async function loadPostById(req, res) {
     const post = await req.db.findOne('Post', {
         where: {
-            transactionHash: req.params.id,
+            _id: req.params.id,
         },
     })
     res.json(post)
@@ -70,11 +70,11 @@ async function loadPosts(req, res) {
     const query = req.query.query.toString()
     // TODO: deal with this when there's an offset arg
     // const lastRead = req.query.lastRead || 0
-    const epks = req.query.epks ? req.query.epks.split('_') : []
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
 
     const posts = await req.db.findMany('Post', {
         where: {
-            epochKey: epks.length ? epks : undefined,
+            epochKey: epks,
         },
         orderBy: {
             createdAt: query === QueryType.New ? 'desc' : undefined,
@@ -126,7 +126,7 @@ async function createPost(req, res) {
         return
     }
 
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
 
     const { title, content } = req.body
 
@@ -136,7 +136,8 @@ async function createPost(req, res) {
             title !== undefined && title.length > 0
                 ? `${titlePrefix}${title}${titlePostfix}${content}`
                 : content,
-            reputationProof,
+            reputationProof.publicSignals,
+            reputationProof.proof,
         ]
     )
     const hash = await TransactionManager.queueTransaction(
@@ -150,7 +151,7 @@ async function createPost(req, res) {
     const post = await req.db.create('Post', {
         content,
         title,
-        epochKey: epochKey,
+        epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,
         minRep: Number(minRep),

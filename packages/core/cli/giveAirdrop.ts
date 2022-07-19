@@ -1,16 +1,13 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { UnirepFactory } from '@unirep/contracts'
+import { UnirepFactory, SignUpProof } from '@unirep/contracts'
 
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { signUpProofPrefix, signUpPublicSignalsPrefix } from './prefix'
 import { verifyAirdropProof } from './verifyAirdropProof'
 import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { SignUpProof } from '../test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('giveAirdrop', { add_help: true })
@@ -71,7 +68,7 @@ const giveAirdrop = async (args: any) => {
         UnirepFactory.abi,
         provider
     )
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
 
     // Parse Inputs
     const decodedProof = base64url.decode(
@@ -97,9 +94,11 @@ const giveAirdrop = async (args: any) => {
 
     let tx
     try {
-        tx = await unirepSocialContract.connect(wallet).airdrop(signUpProof, {
-            value: attestingFee,
-        })
+        tx = await unirepSocialContract
+            .connect(wallet)
+            .airdrop(publicSignals, proof, {
+                value: attestingFee,
+            })
     } catch (error) {
         console.log('Transaction Error', error)
         return

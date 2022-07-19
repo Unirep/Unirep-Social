@@ -41,14 +41,16 @@ contract UnirepSocial {
     event AirdropSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
-        Unirep.SignUpProof proofRelated
+        uint256[] publicSignals,
+        uint256[8] proof
     );
 
     event PostSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
         string _postContent,
-        Unirep.ReputationProof proofRelated
+        uint256[] publicSignals,
+        uint256[8] proof
     );
 
     event CommentSubmitted(
@@ -56,7 +58,8 @@ contract UnirepSocial {
         uint256 indexed _postId,
         uint256 indexed _epochKey,
         string _commentContent,
-        Unirep.ReputationProof proofRelated
+        uint256[] publicSignals,
+        uint256[8] proof
     );
 
     event VoteSubmitted(
@@ -66,7 +69,8 @@ contract UnirepSocial {
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 toEpochKeyProofIndex,
-        Unirep.ReputationProof proofRelated
+        uint256[] publicSignals,
+        uint256[8] proof
     );
 
     constructor(
@@ -133,19 +137,22 @@ contract UnirepSocial {
      */
     function publishPost(
         string memory content,
-        Unirep.ReputationProof memory _proofRelated
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external payable {
-        require(_proofRelated.proveReputationAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
-        require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        require(publicSignals[maxReputationBudget + 4] == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
+        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
-        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
-            _proofRelated.epochKey,
+            publicSignals[maxReputationBudget + 1], // epoch key
             content,
-            _proofRelated
+            publicSignals,
+            proof
         );
     }
 
@@ -158,20 +165,23 @@ contract UnirepSocial {
     function leaveComment(
         uint256 postId,
         string memory content,
-        Unirep.ReputationProof memory _proofRelated
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external payable {
-        require(_proofRelated.proveReputationAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
-        require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
+        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
-        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
-            _proofRelated.epochKey,
+            publicSignals[maxReputationBudget + 1], // epoch key
             content,
-            _proofRelated
+            publicSignals,
+            proof
         );
     }
 
@@ -188,17 +198,21 @@ contract UnirepSocial {
         uint256 downvoteValue,
         uint256 toEpochKey,
         uint256 toEpochKeyProofIndex,
-        Unirep.ReputationProof memory _proofRelated
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external payable {
+        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
         uint256 voteValue = upvoteValue + downvoteValue;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
-        require(_proofRelated.proveReputationAmount == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
-        require(_proofRelated.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(publicSignals[maxReputationBudget + 4] == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
+        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
-        unirep.spendReputation{value: unirep.attestingFee()}(_proofRelated);
-        bytes32 repProofHash = unirep.hashReputationProof(_proofRelated);
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
+        bytes32 repProofHash = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
         uint256 repProofIndex = unirep.getProofIndex(repProofHash);
 
         // Submit attestation to receiver's epoch key
@@ -206,7 +220,7 @@ contract UnirepSocial {
         attestation.attesterId = attesterId;
         attestation.posRep = upvoteValue;
         attestation.negRep = downvoteValue;
-        unirep.submitAttestation{value: unirep.attestingFee()}(
+        unirep.submitAttestation{value: attestingFee}(
             attestation,
             toEpochKey,
             toEpochKeyProofIndex,
@@ -215,12 +229,13 @@ contract UnirepSocial {
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
-            _proofRelated.epochKey,
+            publicSignals[maxReputationBudget + 1], // epoch key
             toEpochKey,
             upvoteValue,
             downvoteValue,
             toEpochKeyProofIndex,
-            _proofRelated
+            publicSignals,
+            proof
         );
     }
 
@@ -229,22 +244,25 @@ contract UnirepSocial {
      * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
      */
     function airdrop(
-        Unirep.SignUpProof memory _signUpProofData
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external payable {
-        require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
-        require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(_signUpProofData.userHasSignedUp == 1, "Unirep Social: user should have signed up in Unirep Social before");
+        require(isEpochKeyGotAirdrop[publicSignals[1]] == false, "Unirep Social: the epoch key has been airdropped");
+        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(publicSignals[4] == 1, "Unirep Social: user should have signed up in Unirep Social before");
 
         // Submit airdrop
-        unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
+        (,,,,,,,uint attestingFee,,) = unirep.config();
+        unirep.airdropEpochKey{value: attestingFee}(publicSignals, proof);
 
         // Set the epoch key has been airdropped
-        isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
+        isEpochKeyGotAirdrop[publicSignals[1]] = true;
 
         emit AirdropSubmitted(
             unirep.currentEpoch(),
-            _signUpProofData.epochKey,
-            _signUpProofData
+            publicSignals[1], // epoch key
+            publicSignals,
+            proof
         );
     }
 
@@ -256,12 +274,10 @@ contract UnirepSocial {
      * @param _proof The snark proof
      */
     function startUserStateTransition(
-        uint256 _blindedUserState,
-        uint256 _blindedHashChain,
-        uint256 _GSTRoot,
-        uint256[8] calldata _proof
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external {
-        unirep.startUserStateTransition(_blindedUserState, _blindedHashChain, _GSTRoot, _proof);
+        unirep.startUserStateTransition(publicSignals, proof);
     }
 
     /*
@@ -272,12 +288,10 @@ contract UnirepSocial {
      * @param _proof The snark proof
      */
     function processAttestations(
-        uint256 _outputBlindedUserState,
-        uint256 _outputBlindedHashChain,
-        uint256 _inputBlindedUserState,
-        uint256[8] calldata _proof
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
     ) external {
-        unirep.processAttestations(_outputBlindedUserState, _outputBlindedHashChain, _inputBlindedUserState, _proof);
+        unirep.processAttestations(publicSignals, proof);
     }
 
     /*
@@ -285,7 +299,11 @@ contract UnirepSocial {
      * @param userTransitionedData The public signals and proof of the user state transition
      * @param proofIndexes The proof indexes of start user state transition and process attestations
      */
-    function updateUserStateRoot(Unirep.UserTransitionProof memory userTransitionedData, uint256[] memory proofIndexes) external {
-        unirep.updateUserStateRoot(userTransitionedData, proofIndexes);
+    function updateUserStateRoot(
+        uint256[] memory publicSignals,
+        uint256[8] memory proof,
+        uint256[] memory proofIndexRecords
+    ) external {
+        unirep.updateUserStateRoot(publicSignals, proof, proofIndexRecords);
     }
 }

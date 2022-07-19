@@ -2,12 +2,12 @@ import base64url from 'base64url'
 import { ethers } from 'ethers'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
-import { genUnirepState } from '@unirep/core'
 import { reputationProofPrefix, reputationPublicSignalsPrefix } from './prefix'
 import { ReputationProof, UnirepFactory } from '@unirep/contracts'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { UnirepSocialFactory } from '../src/utils'
 import { getProvider } from './utils'
+import { genUnirepState } from './test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('verifyReputationProof', {
@@ -94,7 +94,7 @@ const verifyReputationProof = async (args: any) => {
     const minRep = reputationProof.minRep
 
     // Check if Global state tree root exists
-    const isGSTRootExisted = unirepState.GSTRootExists(GSTRoot, epoch)
+    const isGSTRootExisted = await unirepState.GSTRootExists(GSTRoot, epoch)
     if (!isGSTRootExisted) {
         console.error('Error: invalid global state tree root')
         return
@@ -110,7 +110,10 @@ const verifyReputationProof = async (args: any) => {
     }
 
     // Verify the proof on-chain
-    const isProofValid = await unirepContract.verifyReputation(reputationProof)
+    const isProofValid = await unirepContract.verifyReputation(
+        reputationProof.publicSignals,
+        reputationProof.proof
+    )
     if (!isProofValid) {
         console.error('Error: invalid reputation proof')
         return

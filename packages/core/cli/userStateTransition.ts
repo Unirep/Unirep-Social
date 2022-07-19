@@ -1,23 +1,12 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import {
-    Circuit,
-    formatProofForVerifierContract,
-    verifyProof,
-} from '@unirep/circuits'
-import { genUserState } from '@unirep/core'
 import { ZkIdentity } from '@unirep/crypto'
 import { DEFAULT_ETH_PROVIDER, DEFAULT_PRIVATE_KEY } from './defaults'
 import { identityPrefix } from './prefix'
 import { UnirepSocialFactory } from '../src/utils'
-import {
-    computeStartTransitionProofHash,
-    UnirepFactory,
-} from '@unirep/contracts'
+import { UnirepFactory } from '@unirep/contracts'
 import { getProvider } from './utils'
-
-// TODO: use export package from '@unirep/unirep'
-import { UserTransitionProof } from '../test/utils'
+import { genUserState } from './test/utils'
 
 const configureSubparser = (subparsers: any) => {
     const parser = subparsers.add_parser('userStateTransition', {
@@ -88,15 +77,14 @@ const userStateTransition = async (args: any) => {
         unirepContract.address,
         id as any // TODO
     )
-    const results = await userState.genUserStateTransitionProofs()
+    const {
+        startTransitionProof,
+        processAttestationProofs,
+        finalTransitionProof,
+    } = await userState.genUserStateTransitionProofs()
 
     // Start user state transition proof
-    let isValid = await verifyProof(
-        Circuit.startTransition,
-        results.startTransitionProof.proof,
-        results.startTransitionProof.publicSignals
-    )
-    if (!isValid) {
+    if (!(await startTransitionProof.verify())) {
         console.error(
             'Error: start state transition proof generated is not valid!'
         )
@@ -104,12 +92,8 @@ const userStateTransition = async (args: any) => {
     }
 
     // Process attestations proofs
-    for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const isValid = await verifyProof(
-            Circuit.processAttestations,
-            results.processAttestationProofs[i].proof,
-            results.processAttestationProofs[i].publicSignals
-        )
+    for (let i = 0; i < processAttestationProofs.length; i++) {
+        const isValid = await processAttestationProofs[i].verify()
         if (!isValid) {
             console.error(
                 'Error: process attestations proof generated is not valid!'
@@ -119,12 +103,7 @@ const userStateTransition = async (args: any) => {
     }
 
     // User state transition proof
-    isValid = await verifyProof(
-        Circuit.userStateTransition,
-        results.finalTransitionProof.proof,
-        results.finalTransitionProof.publicSignals
-    )
-    if (!isValid) {
+    if (!(await finalTransitionProof.verify())) {
         console.error(
             'Error: user state transition proof generated is not valid!'
         )
@@ -133,34 +112,22 @@ const userStateTransition = async (args: any) => {
 
     // submit user state transition proofs
     const txPromises = [] as Promise<any>[]
-    const { blindedUserState, blindedHashChain, globalStateTreeRoot, proof } =
-        results.startTransitionProof
     {
         const tx = await unirepSocialContract
             .connect(wallet)
             .startUserStateTransition(
-                blindedUserState,
-                blindedHashChain,
-                globalStateTreeRoot,
-                formatProofForVerifierContract(proof)
+                startTransitionProof.publicSignals,
+                startTransitionProof.proof
             )
         txPromises.push(tx.wait())
     }
 
-    for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const {
-            outputBlindedUserState,
-            outputBlindedHashChain,
-            inputBlindedUserState,
-            proof,
-        } = results.processAttestationProofs[i]
+    for (let i = 0; i < processAttestationProofs.length; i++) {
         const tx = await unirepSocialContract
             .connect(wallet)
             .processAttestations(
-                outputBlindedUserState,
-                outputBlindedHashChain,
-                inputBlindedUserState,
-                formatProofForVerifierContract(proof)
+                processAttestationProofs[i].publicSignals,
+                processAttestationProofs[i].proof
             )
         txPromises.push(tx.wait())
     }
@@ -168,47 +135,30 @@ const userStateTransition = async (args: any) => {
 
     const proofIndexes: number[] = []
     {
-        const proofNullifier = computeStartTransitionProofHash(
-            blindedUserState,
-            blindedHashChain,
-            globalStateTreeRoot,
-            formatProofForVerifierContract(proof)
-        )
+        const proofNullifier = startTransitionProof.hash()
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
     }
-    for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const {
-            outputBlindedUserState,
-            outputBlindedHashChain,
-            inputBlindedUserState,
-            proof,
-        } = results.processAttestationProofs[i]
-        const proofNullifier = computeStartTransitionProofHash(
-            outputBlindedUserState,
-            outputBlindedHashChain,
-            inputBlindedUserState,
-            formatProofForVerifierContract(proof)
-        )
+    for (let i = 0; i < processAttestationProofs.length; i++) {
+        const proofNullifier = processAttestationProofs[i].hash()
         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
         proofIndexes.push(Number(proofIndex))
     }
-    const USTProof = new UserTransitionProof(
-        results.finalTransitionProof.publicSignals,
-        results.finalTransitionProof.proof
-    )
-    let tx
     try {
-        tx = await unirepSocialContract
+        const tx = await unirepSocialContract
             .connect(wallet)
-            .updateUserStateRoot(USTProof, proofIndexes)
+            .updateUserStateRoot(
+                finalTransitionProof.publicSignals,
+                finalTransitionProof.proof,
+                proofIndexes
+            )
         await tx.wait()
     } catch (error) {
         console.log('Transaction error: ', error)
     }
 
-    const fromEpoch = userState.latestTransitionedEpoch
-    const toEpoch = userState.getUnirepStateCurrentEpoch()
+    const fromEpoch = await userState.latestTransitionedEpoch()
+    const toEpoch = await userState.getUnirepStateCurrentEpoch()
 
     console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)
 }

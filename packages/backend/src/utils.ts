@@ -4,6 +4,8 @@ import {
     ReputationProof,
     SignUpProof,
     UserTransitionProof,
+    StartTransitionProof,
+    ProcessAttestationsProof,
 } from '@unirep/contracts'
 import { DB } from 'anondb'
 
@@ -160,11 +162,11 @@ const verifyUSTProof = async (
     }
 
     // Start user state transition proof
-    let isValid = await Prover.verifyProof(
-        Circuit.startTransition,
+    let isValid = await new StartTransitionProof(
         results.startTransitionProof.publicSignals,
-        results.startTransitionProof.proof
-    )
+        results.startTransitionProof.proof,
+        Prover
+    ).verify()
     if (!isValid) {
         error = 'Error: start state transition proof generated is not valid!'
         return error
@@ -172,11 +174,11 @@ const verifyUSTProof = async (
 
     // Process attestations proofs
     for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const isValid = await Prover.verifyProof(
-            Circuit.processAttestations,
+        const isValid = await new ProcessAttestationsProof(
             results.processAttestationProofs[i].publicSignals,
-            results.processAttestationProofs[i].proof
-        )
+            results.processAttestationProofs[i].proof,
+            Prover
+        ).verify()
         if (!isValid) {
             error = 'Error: process attestations proof generated is not valid!'
             return error
@@ -186,31 +188,32 @@ const verifyUSTProof = async (
     // User state transition proof
     const USTProof = new UserTransitionProof(
         results.finalTransitionProof.publicSignals,
-        results.finalTransitionProof.proof
+        results.finalTransitionProof.proof,
+        Prover
     )
-    isValid = await Prover.verifyProof(
-        Circuit.userStateTransition,
-        (USTProof as any).publicSignals,
-        formatProofForSnarkjsVerification(USTProof.proof as string[])
-    )
+    isValid = await USTProof.verify()
     if (!isValid) {
         error = 'Error: user state transition proof generated is not valid!'
         return error
     }
 
     // Check epoch tree root
-    const epoch = Number(results.finalTransitionProof.transitionedFromEpoch)
-    const gstRoot = results?.finalTransitionProof?.fromGSTRoot
-    const epochTreeRoot = results.finalTransitionProof.fromEpochTree
+    const epoch = Number(USTProof.transitionFromEpoch)
+    const gstRoot = USTProof.fromGlobalStateTree
+    const epochTreeRoot = USTProof.fromEpochTree
     {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        const exists = await verifyGSTRoot(db, epoch, gstRoot.toString())
         if (!exists) {
             error = `Global state tree root ${gstRoot} is not in epoch ${epoch}`
             return error
         }
     }
     {
-        const exists = await verifyEpochTreeRoot(db, epoch, epochTreeRoot)
+        const exists = await verifyEpochTreeRoot(
+            db,
+            epoch,
+            epochTreeRoot.toString()
+        )
         if (!exists) {
             error = `Epoch tree root ${epochTreeRoot} is not in epoch ${epoch}`
             return error
