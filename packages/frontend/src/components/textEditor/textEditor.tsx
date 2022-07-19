@@ -130,6 +130,26 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         }
     }
 
+    const insertLink = () => {
+        const urlComponent = document.getElementById(
+            'insert-url'
+        ) as HTMLInputElement
+        const url = urlComponent.value
+        if (content) {
+            const sel = document.getElementById(
+                'inputTextArea'
+            ) as HTMLTextAreaElement
+            const start = sel.selectionStart
+            const end = sel.selectionEnd
+            const newContent =
+                content.substring(0, start) +
+                `[${content.substring(start, end)}](${url})` +
+                content.substring(end)
+            setContent(newContent)
+            urlComponent.value = ''
+        }
+    }
+
     return (
         <div>
             <div>
@@ -150,7 +170,15 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     <button onClick={() => addStyle(TextStyle.List)}>
                         List
                     </button>
-                    <label className="insert-image">
+                    <label className="insertion">
+                        <input
+                            id="insert-url"
+                            type="text"
+                            placeholder="paste your url here"
+                        />
+                        <button onClick={insertLink}>Insert Link</button>
+                    </label>
+                    <label className="insertion">
                         <input
                             id="insert-image-url"
                             type="text"
