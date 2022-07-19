@@ -118,7 +118,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         const url = urlComponent.value
         if (content) {
             const sel = document.getElementById(
-                'myTextArea'
+                'inputTextArea'
             ) as HTMLTextAreaElement
             const cursor = sel.selectionStart
             const newContent =
