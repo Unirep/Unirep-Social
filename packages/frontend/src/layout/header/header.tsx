@@ -17,7 +17,7 @@ const Header = () => {
     const gotoNewPage = () => {
         if (
             userContext.userState &&
-            userContext.netReputation >= unirepConfig.postReputation
+            userContext.spendableReputation >= unirepConfig.postReputation
         ) {
             history.push(`/new`, { isConfirmed: true })
         }

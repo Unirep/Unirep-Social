@@ -224,7 +224,7 @@ export class Data {
                     details: 'Generating zk proof...',
                 })
                 const { proof, publicSignals } = await user.genRepProof(
-                    unirepConfig.postReputation,
+                    0,
                     epkNonce,
                     minRep
                 )
@@ -254,6 +254,7 @@ export class Data {
                 this.feedsByQuery[QueryType.New].unshift(post.id)
                 this.postDraft = { title: '', content: '' }
                 this.save()
+                await userContext.loadReputation()
 
                 return { id: transaction, transactionId: transaction }
             },
@@ -280,9 +281,9 @@ export class Data {
                     details: 'Generating ZK proof...',
                 })
                 const { proof, publicSignals } = await userContext.genRepProof(
-                    upvote + downvote,
+                    0, // upvote + downvote,
                     epkNonce,
-                    Math.max(upvote + downvote, minRep)
+                    minRep
                 )
                 updateStatus({
                     title: 'Creating Vote',
@@ -296,7 +297,7 @@ export class Data {
                         upvote,
                         downvote,
                         proof,
-                        minRep: Math.max(upvote + downvote, minRep),
+                        minRep,
                         publicSignals,
                         receiver,
                         dataId: postId.length > 0 ? postId : commentId,
@@ -314,6 +315,7 @@ export class Data {
 
                 if (postId) await this.loadPost(postId)
                 if (commentId) await this.loadComment(commentId)
+                await userContext.loadReputation()
 
                 return {
                     id: postId ? postId : commentId,
@@ -340,7 +342,7 @@ export class Data {
                     details: 'Generating ZK proof...',
                 })
                 const { proof, publicSignals } = await userContext.genRepProof(
-                    unirepConfig.commentReputation,
+                    0, // unirepConfig.commentReputation,
                     epkNonce,
                     minRep
                 )
@@ -371,6 +373,7 @@ export class Data {
 
                 this.commentDraft = { title: '', content: '' }
                 this.save()
+                await userContext.loadReputation()
 
                 return {
                     id: postId + '#' + transaction,

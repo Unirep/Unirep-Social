@@ -8,7 +8,7 @@
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
-        "test": "hardhat test --parallel",
+        "test": "hardhat test",
         "deploy": "hardhat run scripts/deploy.js"
     },
     "repository": {

@@ -36,7 +36,10 @@ describe('Post', function () {
         unirepContract = await deployUnirep(accounts[0], _settings)
         unirepSocialContract = await deployUnirepSocial(
             accounts[0],
-            unirepContract.address
+            unirepContract.address,
+            {
+                airdropReputation: 30,
+            }
         )
     })
 
@@ -146,7 +149,7 @@ describe('Post', function () {
                 minPosRep,
                 proveGraffiti,
                 graffitiPreImage,
-                defaultPostReputation - 1
+                defaultPostReputation + 1
             )
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
@@ -310,7 +313,7 @@ describe('Post', function () {
                 minPosRep,
                 proveGraffiti,
                 graffitiPreImage,
-                defaultCommentReputation - 1
+                defaultCommentReputation + 1
             )
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
