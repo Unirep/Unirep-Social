@@ -38,6 +38,7 @@
         "mobx-react-lite": "^3.3.0",
         "n-readlines": "^1.0.1",
         "nanoid": "^4.0.0",
+        "node-html-markdown": "^1.2.0",
         "node-sass": "^6.0.1",
         "react": "^17.0.2",
         "react-circular-progressbar": "^2.0.4",

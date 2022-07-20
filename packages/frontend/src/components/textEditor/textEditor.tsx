@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import MarkdownIt from 'markdown-it'
+import { NodeHtmlMarkdown } from 'node-html-markdown'
 
 type Props = {
-    content?: string
+    content: string
     setContent: (value: string) => void
     autoFocus?: boolean
 }
@@ -24,10 +25,19 @@ const markdown = new MarkdownIt({
 
 const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     const [isPreview, setIsPreview] = useState<boolean>(false)
-    const contentHtml = markdown.render(content ?? '')
+    const [contentHtml, setContentHtml] = useState<string>(
+        markdown.render(content)
+    )
+
+    const handleDivContentInput = (event: any) => {
+        const text = (event.target as HTMLElement).innerHTML
+        const mdText = NodeHtmlMarkdown.translate(text)
+        setContent(mdText)
+    }
 
     const handleContentInput = (event: any) => {
         setContent(event.target.value)
+        setContentHtml(markdown.render(event.target.value))
     }
 
     const addListItem = (
@@ -61,13 +71,14 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     }
 
     const addStyle = (style: TextStyle) => {
+        const cursorPos = document.getSelection()?.getRangeAt(0).startContainer
+        console.log(cursorPos)
+
         const sel = document.getElementById(
             'inputTextArea'
         ) as HTMLTextAreaElement
         const start = sel.selectionStart
         const end = sel.selectionEnd
-
-        if (!content) return
 
         let newContent: string = content
         if (style === TextStyle.Italic) {
@@ -116,18 +127,16 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
             'insert-image-url'
         ) as HTMLInputElement
         const url = urlComponent.value
-        if (content) {
-            const sel = document.getElementById(
-                'inputTextArea'
-            ) as HTMLTextAreaElement
-            const cursor = sel.selectionStart
-            const newContent =
-                content.substring(0, cursor) +
-                `![](${url})` +
-                content.substring(cursor)
-            setContent(newContent)
-            urlComponent.value = ''
-        }
+        const sel = document.getElementById(
+            'inputTextArea'
+        ) as HTMLTextAreaElement
+        const cursor = sel.selectionStart
+        const newContent =
+            content.substring(0, cursor) +
+            `![](${url})` +
+            content.substring(cursor)
+        setContent(newContent)
+        urlComponent.value = ''
     }
 
     const insertLink = () => {
@@ -135,19 +144,17 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
             'insert-url'
         ) as HTMLInputElement
         const url = urlComponent.value
-        if (content) {
-            const sel = document.getElementById(
-                'inputTextArea'
-            ) as HTMLTextAreaElement
-            const start = sel.selectionStart
-            const end = sel.selectionEnd
-            const newContent =
-                content.substring(0, start) +
-                `[${content.substring(start, end)}](${url})` +
-                content.substring(end)
-            setContent(newContent)
-            urlComponent.value = ''
-        }
+        const sel = document.getElementById(
+            'inputTextArea'
+        ) as HTMLTextAreaElement
+        const start = sel.selectionStart
+        const end = sel.selectionEnd
+        const newContent =
+            content.substring(0, start) +
+            `[${content.substring(start, end)}](${url})` +
+            content.substring(end)
+        setContent(newContent)
+        urlComponent.value = ''
     }
 
     return (
@@ -222,6 +229,13 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     </div>
                 </div>
             )}
+            <div
+                contentEditable="true"
+                dangerouslySetInnerHTML={{
+                    __html: contentHtml,
+                }}
+                onInput={handleDivContentInput}
+            />
         </div>
     )
 }

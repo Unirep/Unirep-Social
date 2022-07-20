@@ -28,8 +28,23 @@ const WritingField = (props: Props) => {
     const user = useContext(UserContext)
     const postContext = useContext(PostContext)
 
-    const [title, setTitle] = useState<string>('')
-    const [content, setContent] = useState<string>('')
+    const [title, setTitle] = useState<string>(() => {
+        if (props.type === DataType.Post && postContext.postDraft) {
+            return postContext.postDraft.title
+        }
+        return ''
+    })
+    const [content, setContent] = useState<string>(() => {
+        if (props.type === DataType.Post && postContext.postDraft) {
+            return postContext.postDraft.content
+        } else if (
+            props.type === DataType.Comment &&
+            postContext.commentDraft
+        ) {
+            return postContext.commentDraft.content
+        }
+        return ''
+    })
     const [epkNonce, setEpkNonce] = useState<number>(0)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
@@ -38,18 +53,6 @@ const WritingField = (props: Props) => {
             ? unirepConfig.postReputation
             : unirepConfig.commentReputation
     const [reputation, setReputation] = useState(defaultRep)
-
-    useEffect(() => {
-        if (props.type === DataType.Post && postContext.postDraft) {
-            setTitle(postContext.postDraft.title)
-            setContent(postContext.postDraft.content)
-        } else if (
-            props.type === DataType.Comment &&
-            postContext.commentDraft
-        ) {
-            setContent(postContext.commentDraft.content)
-        }
-    }, [])
 
     useEffect(() => {
         setErrorMsg('')
@@ -64,16 +67,10 @@ const WritingField = (props: Props) => {
         postContext.setDraft(props.type, event.target.value, content)
     }
 
-    const handleContentInput = (event: any) => {
-        setContent(event.target.value)
-        postContext.setDraft(props.type, title, event.target.value)
-    }
-
     const handleRepInput = (event: any) => {
         setReputation(+event.target.value)
     }
 
-    // test function for text-editor
     const handleTextEditorInput = (text: string) => {
         setContent(text)
         postContext.setDraft(props.type, title, text)
