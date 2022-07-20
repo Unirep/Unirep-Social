@@ -1,4 +1,4 @@
-const ignores = ['/node_modules/', '<rootDir>/src/__tests__/__mocks__']
+const ignores = ['/node_modules/']
 
 module.exports = {
     preset: 'ts-jest',
@@ -9,9 +9,11 @@ module.exports = {
     transform: {
         '^.+\\.(ts|tsx)?$': 'ts-jest',
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+\\.(gif|svg|ico|url|require)$': '<rootDir>/svgTransform.js',
+        '^.+\\.(gif|svg|ico|url|require)$':
+            '<rootDir>/src/__tests__/__utils__/svgTransform.js',
     },
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
+
     testPathIgnorePatterns: ['/__utils__/'],
     moduleFileExtensions: ['tsx', 'js', 'ts'],
     moduleNameMapper: {
