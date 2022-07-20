@@ -18,13 +18,12 @@ const server = setupServer(
                 epoch_key: 'epoch_key test',
             })
         )
-    }
-))
+    })
+)
 
-beforeEach(() => server.listen({onUnhandledRequest: 'error'}))
+beforeEach(() => server.listen({ onUnhandledRequest: 'error' }))
 afterAll(() => server.close())
 afterEach(() => server.resetHandlers())
-
 
 // abstracted render function
 function renderWritingField(
