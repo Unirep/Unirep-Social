@@ -11,7 +11,7 @@
         "copyCircuits": "node scripts/copy_circuits",
         "test": "NODE_OPTIONS=--unhandled-rejections=warn jest --config ./jest.config.js ",
         "test:watch": "jest --watch",
-        "test:coverage": "jest --coverage"
+        "test:coverage": "NODE_OPTIONS=--unhandled-rejections=warn jest --coverage"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"
