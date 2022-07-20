@@ -1,7 +1,5 @@
-import React from 'react'
 import { screen, render } from '@testing-library/react'
 import LoadingButton from '../components/loadingButton/loadingButton'
-import userPage from '../pages/userPage/userPage'
 
 test('loadingButton renders and props render conditionally', () => {
     const { rerender } = render(

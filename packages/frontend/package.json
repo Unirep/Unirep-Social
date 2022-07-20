@@ -9,9 +9,9 @@
         "build:worker": "webpack --config webpack.worker.js",
         "postinstall": "link-module-alias && yarn copyCircuits",
         "copyCircuits": "node scripts/copy_circuits",
-        "test": "NODE_OPTIONS=--unhandled-rejections=warn jest --config ./jest.config.js ",
+        "test": "jest --config ./jest.config.js ",
         "test:watch": "jest --watch",
-        "test:coverage": "NODE_OPTIONS=--unhandled-rejections=warn jest --coverage"
+        "test:coverage": "jest --coverage"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"
@@ -48,7 +48,8 @@
         "react-router-dom": "^5.2.0",
         "react-router-hash-link": "^2.4.3",
         "snarkjs": "^0.3.59",
-        "ts-jest": "^28.0.5"
+        "ts-jest": "^28.0.5",
+        "whatwg-fetch": "^3.6.2"
     },
     "devDependencies": {
         "@babel/core": "^7.18.6",
@@ -78,6 +79,7 @@
         "jest-webpack-resolver": "^0.3.0",
         "link-module-alias": "^1.2.0",
         "mini-css-extract-plugin": "^2.6.0",
+        "msw": "^0.44.2",
         "os-browserify": "^0.3.0",
         "react-test-renderer": "^18.2.0",
         "sass": "^1.49.9",
