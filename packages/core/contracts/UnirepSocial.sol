@@ -6,11 +6,14 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import { Unirep } from "@unirep/contracts/Unirep.sol";
+import { IVerifier } from "@unirep/contracts/interfaces/IVerifier.sol";
+import { zkSNARKHelper } from '@unirep/contracts/libraries/zkSNARKHelper.sol';
 
-contract UnirepSocial {
+contract UnirepSocial is zkSNARKHelper {
     using SafeMath for uint256;
 
     Unirep public unirep;
+    IVerifier internal negativeReputationVerifier;
 
     // Before Unirep integrates with InterRep
     // We use an admin to controll user sign up
@@ -80,6 +83,7 @@ contract UnirepSocial {
 
     constructor(
         Unirep _unirepContract,
+        IVerifier _negativeReputationVerifier,
         uint256 _postReputation,
         uint256 _commentReputation,
         uint256 _airdroppedReputation,
@@ -87,6 +91,7 @@ contract UnirepSocial {
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
+        negativeReputationVerifier = _negativeReputationVerifier;
         // Set admin user
         admin = msg.sender;
 
@@ -130,7 +135,49 @@ contract UnirepSocial {
         assert(spentSubsidy <= epkSubsidy);
         uint256 remainingSubsidy = epkSubsidy - spentSubsidy;
         require(amount <= remainingSubsidy, 'Unirep Social: requesting too much subsidy');
+        require(epoch == unirep.currentEpoch(), 'Unirep Social: wrong epoch');
         subsidies[epoch][epochKey] += amount;
+    }
+
+    /**
+     * Accepts a negative reputation proof
+     **/
+    function getSubsidyAirdrop(
+      uint256[] memory publicSignals,
+      uint256[8] memory proof
+    ) public {
+        (,,,uint numEpochKeyNoncePerEpoch,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        require(publicSignals[numEpochKeyNoncePerEpoch + 2] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+
+        // verify the proof
+        require(isValidSignals(publicSignals));
+        require(negativeReputationVerifier.verifyProof(proof, publicSignals));
+
+        // update the stored subsidy balances
+        uint maxSubsidy = numEpochKeyNoncePerEpoch * epkSubsidy;
+        uint requestedSubsidy = publicSignals[numEpochKeyNoncePerEpoch + 3];
+        uint receivedSubsidy = maxSubsidy < requestedSubsidy ? maxSubsidy : requestedSubsidy;
+        uint totalSpent = 0;
+        // spend from each epoch key until we get to receivedSubsidy
+        for (uint x = 0; x < numEpochKeyNoncePerEpoch; x++) {
+            uint remaining = receivedSubsidy - totalSpent;
+            if (remaining == 0) break;
+            uint spend = epkSubsidy > remaining ? remaining : epkSubsidy;
+            trySpendSubsidy(publicSignals[numEpochKeyNoncePerEpoch + 1], publicSignals[x], spend);
+            totalSpent += spend;
+        }
+
+        // Submit attestation to receiver's first epoch key
+        Unirep.Attestation memory attestation;
+        attestation.attesterId = attesterId;
+        attestation.posRep = receivedSubsidy;
+        attestation.negRep = 0;
+        // TODO: waiting on PR
+        // unirep.submitGSTAttestation{value: attestingFee}(
+        //     attestation,
+        //     publicSignals[0], // first epoch key
+        //     publicSignals[numEpochKeyNoncePerEpoch] // GST root
+        // );
     }
 
     /*

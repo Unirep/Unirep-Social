@@ -35,6 +35,7 @@ const deployUnirepSocial = async (
         settings.commentReputation,
         settings.airdropReputation,
         settings.epkSubsidy,
+        '0x00', // TODO: placeholder for negative rep verifier
         {
             gasLimit: 9000000,
         }
