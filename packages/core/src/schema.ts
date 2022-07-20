@@ -62,6 +62,11 @@ const _schema = [
     {
         name: 'Post',
         rows: [
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
             ['transactionHash', 'String', { optional: true }],
             ['title', 'String', { optional: true }],
             ['content', 'String', { optional: true }],
@@ -92,14 +97,6 @@ const _schema = [
                 type: 'Int',
                 default: () => 0,
             },
-        ],
-    },
-    {
-        name: 'UserSignUp',
-        rows: [
-            ['transactionHash', 'String'],
-            ['commitment', 'String'],
-            ['epoch', 'Int'],
         ],
     },
     {
@@ -142,7 +139,7 @@ const _schema = [
     },
 ]
 
-export default _schema
+const finalSchema = _schema
     .map(
         (obj) =>
             ({
@@ -159,3 +156,4 @@ export default _schema
             } as TableData)
     )
     .concat(schema) as TableData[]
+export { finalSchema as schema }

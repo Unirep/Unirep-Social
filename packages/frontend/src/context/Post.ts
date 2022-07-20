@@ -83,7 +83,7 @@ export class Data {
         const apiURL = makeURL(`post/${id}`, {})
         const r = await fetch(apiURL)
         const data = await r.json()
-        const post = convertDataToPost(data[0])
+        const post = convertDataToPost(data)
         this.ingestPosts(post)
     }
 
@@ -171,7 +171,7 @@ export class Data {
         this.votesByPostId[postId] = votes.map((v: Vote) => v._id)
     }
 
-    getAirdrop() {
+    getAirdrop(blockNumber?: number) {
         queueContext.addOp(
             async (update) => {
                 if (!userContext.userState) return false
@@ -182,7 +182,7 @@ export class Data {
                 })
 
                 console.log('before userContext wait for sync')
-                await userContext.waitForSync()
+                await userContext.userState?.waitForSync(blockNumber)
                 console.log('sync complete')
 
                 await userContext.calculateAllEpks()

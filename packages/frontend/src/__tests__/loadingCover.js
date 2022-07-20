@@ -4,7 +4,7 @@ import LoadingCover from '../components/loadingCover/loadingCover'
 
 test('should render the appropriate text content ', () => {
     render(<LoadingCover />)
-    screen.debug()
+
     expect(
         screen.getByText(/generating your weekly persona/i)
     ).toBeInTheDocument()

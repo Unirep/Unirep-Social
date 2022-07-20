@@ -52,7 +52,8 @@ const PostBlock = ({ postId, page }: Props) => {
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
 
-    const date = dateformat(new Date(post.post_time), 'dd/mm/yyyy hh:MM TT')
+    const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
+
     const [showCommentField, setShowCommentField] = useState<boolean>(
         postContext.commentDraft.content.length > 0
     )

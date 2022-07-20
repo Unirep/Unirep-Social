@@ -52,30 +52,44 @@ export class UnirepConfig {
             UNIREP_SOCIAL_ABI,
             DEFAULT_ETH_PROVIDER
         )
+
         const v = await Promise.all([
             this.unirepSocial.attesterId(),
             this.unirepSocial.postReputation(),
             this.unirepSocial.commentReputation(),
             this.unirepSocial.airdroppedReputation(),
-            this.unirep.numEpochKeyNoncePerEpoch(),
-            this.unirep.maxReputationBudget(),
-            this.unirep.maxUsers(),
-            this.unirep.treeDepths(),
-            this.unirep.attestingFee(),
-            this.unirep.epochLength(),
+            this.unirep.config(),
         ])
         this.attesterId = +v[0].toString()
         this.postReputation = +v[1].toString()
         this.commentReputation = +v[2].toString()
         this.airdroppedReputation = +v[3].toString()
-        this.numEpochKeyNoncePerEpoch = +v[4].toString()
-        this.maxReputationBudget = +v[5].toString()
-        this.maxUsers = +v[6].toString()
-        this.globalStateTreeDepth = +v[7].globalStateTreeDepth.toString()
-        this.userStateTreeDepth = +v[7].userStateTreeDepth.toString()
-        this.epochTreeDepth = +v[7].epochTreeDepth.toString()
-        this.attestingFee = +v[8].toString()
-        this.epochLength = +v[9].toString()
+        const config = v[4]
+        //   struct Config {
+        //     // circuit config
+        //     uint8 globalStateTreeDepth;
+        //     uint8 userStateTreeDepth;
+        //     uint8 epochTreeDepth;
+        //     uint256 numEpochKeyNoncePerEpoch;
+        //     uint256 maxReputationBudget;
+        //     uint256 numAttestationsPerProof;
+        //     // contract config
+        //     uint256 epochLength;
+        //     uint256 attestingFee;
+        //     uint256 maxUsers;
+        //     uint256 maxAttesters;
+        // }
+
+        this.globalStateTreeDepth = +config.globalStateTreeDepth
+        this.userStateTreeDepth = +config.userStateTreeDepth
+        this.epochTreeDepth = +config.epochTreeDepth
+        this.numEpochKeyNoncePerEpoch =
+            config.numEpochKeyNoncePerEpoch.toNumber()
+        this.maxReputationBudget = config.maxReputationBudget.toNumber()
+        //
+        this.epochLength = config.epochLength.toNumber()
+        this.attestingFee = config.attestingFee.toNumber()
+        this.maxUsers = config.maxUsers.toNumber()
         this.loaded = true
     }
 

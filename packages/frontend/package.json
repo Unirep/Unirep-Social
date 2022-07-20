@@ -6,40 +6,40 @@
         "start": "webpack-dev-server",
         "start-local": "webpack-dev-server",
         "build": "webpack",
-        "lint": "prettier .",
         "build:worker": "webpack --config webpack.worker.js",
         "postinstall": "link-module-alias && yarn copyCircuits",
         "copyCircuits": "node scripts/copy_circuits",
-        "test": "jest --config ./jest.config.js",
+        "test": "NODE_OPTIONS=--unhandled-rejections=warn jest --config ./jest.config.js ",
         "test:watch": "jest --watch",
-        "test:coverage": "jest --coverage"
+        "test:coverage": "NODE_OPTIONS=--unhandled-rejections=warn jest --coverage"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"
     },
     "dependencies": {
-        "@babel/plugin-transform-runtime": "^7.18.6",
         "@babel/preset-env": "^7.18.6",
         "@types/react": "^17.0.15",
         "@types/react-dom": "^17.0.9",
-        "@unirep/circuits": "git+https://github.com/Unirep/circuits.git#alpha",
-        "@unirep/crypto": "git+https://github.com/Unirep/crypto.git",
-        "@unirep/unirep": "git+https://github.com/Unirep/unirep.git#alpha",
-        "@unirep/unirep-social": "git+https://github.com/Unirep/unirep-social.git#alpha",
+        "@unirep-social/core": "^1.0.0",
+        "@unirep/circuits": "1.0.0-alpha-7",
+        "@unirep/core": "1.0.0-alpha-13",
+        "@unirep/crypto": "1.0.0-alpha-4",
+        "anondb": "^0.0.12",
         "babel-preset-env": "^1.7.0",
         "bootstrap": "^5.0.2",
         "dateformat": "^4.5.1",
         "ethers": "^5.5.4",
+        "events": "^3.3.0",
         "identity-obj-proxy": "^3.0.0",
         "jest-environment-jsdom": "^28.1.2",
-        "keyv": "4.1.1",
         "markdown-it": "^12.3.2",
         "mobx": "^6.4.2",
         "mobx-react-lite": "^3.3.0",
         "n-readlines": "^1.0.1",
-        "nanoid": "^4.0.0",
         "node-html-markdown": "^1.2.0",
+        "nanoid": "^3.3.4",
         "node-sass": "^6.0.1",
+        "path-browserify": "^1.0.1",
         "react": "^17.0.2",
         "react-circular-progressbar": "^2.0.4",
         "react-dom": "^17.0.2",
@@ -57,7 +57,7 @@
         "@babel/preset-typescript": "^7.18.6",
         "@cloudflare/kv-asset-handler": "^0.2.0",
         "@testing-library/jest-dom": "^5.16.4",
-        "@testing-library/react": "12.1.5",
+        "@testing-library/react": "12.1.2",
         "@testing-library/user-event": "^14.2.1",
         "@types/jest": "^28.1.4",
         "@types/keyv": "^3.1.2",
@@ -76,10 +76,10 @@
         "html-webpack-plugin": "^5.5.0",
         "jest": "^28.1.2",
         "jest-axe": "^6.0.0",
+        "jest-webpack-resolver": "^0.3.0",
         "link-module-alias": "^1.2.0",
         "mini-css-extract-plugin": "^2.6.0",
         "os-browserify": "^0.3.0",
-        "prettier": "^2.6.0",
         "react-test-renderer": "^18.2.0",
         "sass": "^1.49.9",
         "sass-loader": "^12.6.0",
@@ -91,9 +91,7 @@
         "webpack-cli": "^4.9.2",
         "webpack-dev-server": "^4.7.4"
     },
-    "prettier": {
-        "tabWidth": 4,
-        "singleQuote": true,
-        "semi": false
+    "jestWebpackResolver": {
+        "webpackConfig": "./webpack.config.js"
     }
 }

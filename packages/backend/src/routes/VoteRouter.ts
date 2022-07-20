@@ -43,8 +43,8 @@ async function vote(req, res) {
 
     const { dataId } = req.body
     const [post, comment] = await Promise.all([
-        req.db.findOne('Post', { where: { transactionHash: dataId } }),
-        req.db.findOne('Comment', { where: { transactionHash: dataId } }),
+        req.db.findOne('Post', { where: { _id: dataId } }),
+        req.db.findOne('Comment', { where: { _id: dataId } }),
     ])
     if (post && comment) {
         res.status(500).json({
@@ -130,15 +130,14 @@ async function vote(req, res) {
         `Attesting to epoch key ${req.body.receiver} with pos rep ${req.body.upvote}, neg rep ${req.body.downvote}`
     )
 
-    console.log('post proof index', postProofIndex)
-
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
     const calldata = unirepSocialContract.interface.encodeFunctionData('vote', [
         req.body.upvote,
         req.body.downvote,
         ethers.BigNumber.from(`0x${req.body.receiver.replace('0x', '')}`),
         postProofIndex,
-        reputationProof,
+        reputationProof.publicSignals,
+        reputationProof.proof,
     ])
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

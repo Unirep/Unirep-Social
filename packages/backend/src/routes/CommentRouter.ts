@@ -27,7 +27,7 @@ export default (app: Express) => {
 
 async function loadComment(req, res, next) {
     const comment = await req.db.findOne('Comment', {
-        transactionHash: req.params.id,
+        _id: req.params.id,
     })
     res.json(comment)
 }
@@ -110,10 +110,24 @@ async function createComment(req, res) {
         return
     }
 
-    const attestingFee = await unirepContract.attestingFee()
+    const { attestingFee } = await unirepContract.config()
+    const post = await req.db.findOne('Post', {
+        _id: req.body.postId,
+    })
+    if (!post) {
+        res.status(400).json({
+            error: 'Post does not exist',
+        })
+        return
+    }
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
-        [req.body.postId, req.body.content, reputationProof]
+        [
+            post.transactionHash,
+            req.body.content,
+            reputationProof.publicSignals,
+            reputationProof.proof,
+        ]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

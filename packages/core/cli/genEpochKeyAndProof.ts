@@ -1,7 +1,6 @@
 import base64url from 'base64url'
 import { ethers } from 'ethers'
-import * as circuit from '@unirep/circuits'
-import { genUserState } from '@unirep/core'
+import { genUserState } from './test/utils'
 import { ZkIdentity } from '@unirep/crypto'
 
 import { DEFAULT_ETH_PROVIDER } from './defaults'
@@ -71,8 +70,7 @@ const genEpochKeyAndProof = async (args: any) => {
 
     // Validate epoch key nonce
     const epkNonce = args.epoch_key_nonce
-    const numEpochKeyNoncePerEpoch =
-        await unirepContract.numEpochKeyNoncePerEpoch()
+    const { numEpochKeyNoncePerEpoch } = await unirepContract.config()
     if (epkNonce >= numEpochKeyNoncePerEpoch) {
         console.error(
             'Error: epoch key nonce must be less than max epoch key nonce'
@@ -89,25 +87,22 @@ const genEpochKeyAndProof = async (args: any) => {
         unirepContract.address,
         id as any // TODO
     )
-    const { publicSignals, proof, epoch, epochKey } =
-        await userState.genVerifyEpochKeyProof(epkNonce)
+    const formattedProof = await userState.genVerifyEpochKeyProof(epkNonce)
 
     // TODO: Not sure if this validation is necessary
-    const isValid = await circuit.verifyProof(
-        circuit.Circuit.verifyEpochKey,
-        proof,
-        publicSignals
-    )
+    const isValid = await formattedProof.verify()
     if (!isValid) {
         console.error('Error: epoch key proof generated is not valid!')
         return
     }
 
-    const formattedProof = circuit.formatProofForVerifierContract(proof)
-    const encodedProof = base64url.encode(JSON.stringify(formattedProof))
-    const encodedPublicSignals = base64url.encode(JSON.stringify(publicSignals))
+    // const formattedProof = circuit.formatProofForVerifierContract(proof)
+    const encodedProof = base64url.encode(JSON.stringify(formattedProof.proof))
+    const encodedPublicSignals = base64url.encode(
+        JSON.stringify(formattedProof.publicSignals)
+    )
     console.log(
-        `Epoch key of epoch ${epoch} and nonce ${epkNonce}: ${epochKey}`
+        `Epoch key of epoch ${formattedProof.epoch} and nonce ${epkNonce}: ${formattedProof.epochKey}`
     )
     console.log(epkProofPrefix + encodedProof)
     console.log(epkPublicSignalsPrefix + encodedPublicSignals)

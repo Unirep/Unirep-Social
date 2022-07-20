@@ -43,9 +43,9 @@ export class EpochManager {
     }
 
     async nextTransition() {
-        const [lastTransition, epochLength] = await Promise.all([
+        const [lastTransition, { epochLength }] = await Promise.all([
             this.unirepContract.latestEpochTransitionTime(),
-            this.unirepContract.epochLength(),
+            this.unirepContract.config(),
         ])
         return lastTransition.toNumber() + epochLength.toNumber()
     }
