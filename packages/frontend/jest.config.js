@@ -1,11 +1,9 @@
-const ignores = ['/node_modules/']
-
 module.exports = {
     preset: 'ts-jest',
     roots: ['<rootDir>'],
     modulePaths: ['<rootDir>/src'],
     moduleDirectories: ['node_modules'],
-    transformIgnorePatterns: [...ignores],
+    transformIgnorePatterns: ['/node_modules/'],
     transform: {
         '^.+\\.(ts|tsx)?$': 'ts-jest',
         '^.+\\.(js|jsx)$': 'babel-jest',
