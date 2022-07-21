@@ -147,7 +147,7 @@ contract UnirepSocial is zkSNARKHelper {
       uint256[8] memory proof
     ) public {
         (,,,uint numEpochKeyNoncePerEpoch,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        require(publicSignals[numEpochKeyNoncePerEpoch + 2] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(publicSignals[numEpochKeyNoncePerEpoch + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // verify the proof
         require(isValidSignals(publicSignals));
@@ -155,7 +155,7 @@ contract UnirepSocial is zkSNARKHelper {
 
         // update the stored subsidy balances
         uint maxSubsidy = numEpochKeyNoncePerEpoch * epkSubsidy;
-        uint requestedSubsidy = publicSignals[numEpochKeyNoncePerEpoch + 3];
+        uint requestedSubsidy = publicSignals[numEpochKeyNoncePerEpoch + 1];
         uint receivedSubsidy = maxSubsidy < requestedSubsidy ? maxSubsidy : requestedSubsidy;
         uint totalSpent = 0;
         // spend from each epoch key until we get to receivedSubsidy
@@ -163,7 +163,7 @@ contract UnirepSocial is zkSNARKHelper {
             uint remaining = receivedSubsidy - totalSpent;
             if (remaining == 0) break;
             uint spend = epkSubsidy > remaining ? remaining : epkSubsidy;
-            trySpendSubsidy(publicSignals[numEpochKeyNoncePerEpoch + 1], publicSignals[x], spend);
+            trySpendSubsidy(publicSignals[numEpochKeyNoncePerEpoch + 2], publicSignals[x], spend);
             totalSpent += spend;
         }
 
