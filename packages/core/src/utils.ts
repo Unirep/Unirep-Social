@@ -31,11 +31,11 @@ const deployUnirepSocial = async (
     const f = new UnirepSocialFactory(deployer)
     const c = await f.deploy(
         UnirepAddr,
+        '0x0000000000000000000000000000000000000000', // TODO: placeholder for negative rep verifier
         settings.postReputation,
         settings.commentReputation,
         settings.airdropReputation,
         settings.epkSubsidy,
-        '0x00', // TODO: placeholder for negative rep verifier
         {
             gasLimit: 9000000,
         }

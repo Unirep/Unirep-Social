@@ -157,6 +157,7 @@ const genReputationProof = async (args: any) => {
     let nonceStarter: number = -1
     if (proveReputationAmount > 0) {
         // find valid nonce starter
+        console.log(rep)
         for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
             const reputationNullifier = genReputationNullifier(
                 id.identityNullifier,
@@ -164,6 +165,8 @@ const genReputationProof = async (args: any) => {
                 n,
                 attesterId
             )
+            console.log(reputationNullifier)
+            console.log(await userState.nullifierExist(reputationNullifier))
             if (!(await userState.nullifierExist(reputationNullifier))) {
                 nonceStarter = n
                 break

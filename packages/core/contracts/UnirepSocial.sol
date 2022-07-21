@@ -347,6 +347,33 @@ contract UnirepSocial is zkSNARKHelper {
     }
 
     /*
+     * Give a user airdrop if user has already signed up in Unirep Social
+     * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
+     */
+    function airdrop(
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
+    ) external payable {
+        require(isEpochKeyGotAirdrop[publicSignals[1]] == false, "Unirep Social: the epoch key has been airdropped");
+        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(publicSignals[4] == 1, "Unirep Social: user should have signed up in Unirep Social before");
+
+        // Submit airdrop
+        (,,,,,,,uint attestingFee,,) = unirep.config();
+        unirep.airdropEpochKey{value: attestingFee}(publicSignals, proof);
+
+        // Set the epoch key has been airdropped
+        isEpochKeyGotAirdrop[publicSignals[1]] = true;
+
+        emit AirdropSubmitted(
+            unirep.currentEpoch(),
+            publicSignals[1], // epoch key
+            publicSignals,
+            proof
+        );
+    }
+
+    /*
      * Call Unirep contract to perform start user state transition
      * @param _blindedUserState Blind user state tree before user state transition
      * @param _blindedHashChain Blind hash chain before user state transition

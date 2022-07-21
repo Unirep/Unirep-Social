@@ -88,7 +88,8 @@ describe('test all CLI subcommands', function () {
                 `npx ts-node cli/index.ts deploy` +
                 ` -d ${deployerPrivKey} ` +
                 ` -l ${epochLength} ` +
-                ` -f ${attestingFee.toString()} `
+                ` -f ${attestingFee.toString()} ` +
+                ` -a 30`
 
             console.log(command)
             const { stdout, stderr } = exec(command)

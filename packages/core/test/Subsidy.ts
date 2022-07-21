@@ -30,7 +30,7 @@ describe('Subsidy', function () {
         )
     })
 
-    it('should create a post using subsidy', async () => {
+    it.skip('should create a post using subsidy', async () => {
         const accounts = await ethers.getSigners()
         const id = new ZkIdentity()
         await unirepSocialContract
@@ -60,7 +60,7 @@ describe('Subsidy', function () {
             .then((t) => t.wait())
     })
 
-    it('should create a comment using subsidy', async () => {
+    it.skip('should create a comment using subsidy', async () => {
         const accounts = await ethers.getSigners()
         const id = new ZkIdentity()
         await unirepSocialContract
@@ -96,7 +96,7 @@ describe('Subsidy', function () {
             .then((t) => t.wait())
     })
 
-    it('should create a vote using subsidy', async () => {
+    it.skip('should create a vote using subsidy', async () => {
         const accounts = await ethers.getSigners()
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
@@ -205,7 +205,7 @@ describe('Subsidy', function () {
         ).to.be.reverted
     })
 
-    it('should partially spend using subsidy', async () => {
+    it.skip('should partially spend using subsidy', async () => {
         const accounts = await ethers.getSigners()
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
