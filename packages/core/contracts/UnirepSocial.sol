@@ -201,10 +201,19 @@ contract UnirepSocial is zkSNARKHelper {
         if (requestedSubsidy > 0) {
             require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
             trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+            Unirep.Attestation memory attestation;
+            attestation.attesterId = attesterId;
+            attestation.negRep = publicSignals[maxReputationBudget + 4];
+            // TODO: uncomment when the relevant pr is merged
+            // unirep.submitGSTAttestation{value: attestingFee}(
+            //   attestation,
+            //   publicSignals[0], // epoch key
+            //   publicSignals[1] // gst root
+            // );
+        } else {
+          // Spend reputation
+          unirep.spendReputation{value: attestingFee}(publicSignals, proof);
         }
-
-        // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
@@ -238,10 +247,19 @@ contract UnirepSocial is zkSNARKHelper {
         if (requestedSubsidy > 0) {
             require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
             trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+            Unirep.Attestation memory attestation;
+            attestation.attesterId = attesterId;
+            attestation.negRep = publicSignals[maxReputationBudget + 4];
+            // TODO: uncomment when the relevant pr is merged
+            // unirep.submitGSTAttestation{value: attestingFee}(
+            //   attestation,
+            //   publicSignals[0], // epoch key
+            //   publicSignals[1] // gst root
+            // );
+        } else {
+          // Spend reputation
+          unirep.spendReputation{value: attestingFee}(publicSignals, proof);
         }
-
-        // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -284,11 +302,21 @@ contract UnirepSocial is zkSNARKHelper {
             if (requestedSubsidy > 0) {
                 require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
                 trySpendSubsidy(epoch, epochKey, requestedSubsidy);
+                Unirep.Attestation memory attestation;
+                attestation.attesterId = attesterId;
+                attestation.negRep = publicSignals[maxReputationBudget + 4];
+                // TODO: uncomment when the relevant pr is merged
+                // unirep.submitGSTAttestation{value: attestingFee}(
+                //   attestation,
+                //   publicSignals[0], // epoch key
+                //   publicSignals[1] // gst root
+                // );
+            } else {
+              // Spend reputation
+              unirep.spendReputation{value: attestingFee}(publicSignals, proof);
             }
         }
 
-        // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
         bytes32 repProofHash = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
