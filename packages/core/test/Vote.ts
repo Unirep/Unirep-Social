@@ -23,9 +23,9 @@ const getEpochKeyProof = async (unirepContract) => {
     ) as BigNumberish
     const proof = Array(8).fill('0')
     const publicSignals = [
+        toEpochKey,
         genRandomSalt(),
         currentEpoch,
-        toEpochKey,
     ] as BigNumberish[]
     const epochKeyProof = new EpochKeyProof(
         publicSignals,
@@ -68,8 +68,6 @@ describe('Vote', function () {
     })
 
     describe('Upvote', () => {
-        it('submit epoch key proof should succeed', async () => {})
-
         it('submit upvote should succeed', async () => {
             const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
                 unirepContract

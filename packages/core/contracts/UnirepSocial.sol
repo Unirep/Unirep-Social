@@ -173,11 +173,11 @@ contract UnirepSocial is zkSNARKHelper {
         attestation.posRep = receivedSubsidy;
         attestation.negRep = 0;
         // TODO: waiting on PR
-        // unirep.submitGSTAttestation{value: attestingFee}(
-        //     attestation,
-        //     publicSignals[0], // first epoch key
-        //     publicSignals[numEpochKeyNoncePerEpoch] // GST root
-        // );
+        unirep.submitGSTAttestation{value: attestingFee}(
+            attestation,
+            publicSignals[0], // first epoch key
+            publicSignals[numEpochKeyNoncePerEpoch] // GST root
+        );
     }
 
     /*
@@ -193,27 +193,18 @@ contract UnirepSocial is zkSNARKHelper {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
-        uint256 epoch = publicSignals[maxReputationBudget];
-        uint256 epochKey = publicSignals[maxReputationBudget + 1];
+        uint256 epoch = publicSignals[maxReputationBudget + 2];
+        uint256 epochKey = publicSignals[0];
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount <= postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         uint256 requestedSubsidy = postReputation - proofSpendAmount;
         if (requestedSubsidy > 0) {
             require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
             trySpendSubsidy(epoch, epochKey, requestedSubsidy);
-            Unirep.Attestation memory attestation;
-            attestation.attesterId = attesterId;
-            attestation.negRep = publicSignals[maxReputationBudget + 4];
-            // TODO: uncomment when the relevant pr is merged
-            // unirep.submitGSTAttestation{value: attestingFee}(
-            //   attestation,
-            //   publicSignals[0], // epoch key
-            //   publicSignals[1] // gst root
-            // );
-        } else {
-          // Spend reputation
-          unirep.spendReputation{value: attestingFee}(publicSignals, proof);
         }
+
+        // Spend reputation
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
             unirep.currentEpoch(),
@@ -239,27 +230,18 @@ contract UnirepSocial is zkSNARKHelper {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
-        uint256 epoch = publicSignals[maxReputationBudget];
-        uint256 epochKey = publicSignals[maxReputationBudget + 1];
+        uint256 epoch = publicSignals[maxReputationBudget + 2];
+        uint256 epochKey = publicSignals[0];
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount <= commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         uint256 requestedSubsidy = commentReputation - proofSpendAmount;
         if (requestedSubsidy > 0) {
             require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
             trySpendSubsidy(epoch, epochKey, requestedSubsidy);
-            Unirep.Attestation memory attestation;
-            attestation.attesterId = attesterId;
-            attestation.negRep = publicSignals[maxReputationBudget + 4];
-            // TODO: uncomment when the relevant pr is merged
-            // unirep.submitGSTAttestation{value: attestingFee}(
-            //   attestation,
-            //   publicSignals[0], // epoch key
-            //   publicSignals[1] // gst root
-            // );
-        } else {
-          // Spend reputation
-          unirep.spendReputation{value: attestingFee}(publicSignals, proof);
         }
+
+        // Spend reputation
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit CommentSubmitted(
             unirep.currentEpoch(),
@@ -294,28 +276,18 @@ contract UnirepSocial is zkSNARKHelper {
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         {
-            uint256 epoch = publicSignals[maxReputationBudget];
-            uint256 epochKey = publicSignals[maxReputationBudget + 1];
+            uint256 epoch = publicSignals[maxReputationBudget + 2];
+            uint256 epochKey = publicSignals[0];
             uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
             require(proofSpendAmount <= voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
             uint256 requestedSubsidy = voteValue - proofSpendAmount;
             if (requestedSubsidy > 0) {
                 require(unirep.verifyReputation(publicSignals, proof), "Unirep Social: invalid reputation proof");
                 trySpendSubsidy(epoch, epochKey, requestedSubsidy);
-                Unirep.Attestation memory attestation;
-                attestation.attesterId = attesterId;
-                attestation.negRep = publicSignals[maxReputationBudget + 4];
-                // TODO: uncomment when the relevant pr is merged
-                // unirep.submitGSTAttestation{value: attestingFee}(
-                //   attestation,
-                //   publicSignals[0], // epoch key
-                //   publicSignals[1] // gst root
-                // );
-            } else {
-              // Spend reputation
-              unirep.spendReputation{value: attestingFee}(publicSignals, proof);
             }
         }
+        // Spend reputation
+        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         bytes32 repProofHash = keccak256(
             abi.encodePacked(publicSignals, proof)

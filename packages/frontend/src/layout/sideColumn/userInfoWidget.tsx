@@ -73,7 +73,8 @@ const UserInfoWidget = () => {
                             <img
                                 src={require('../../../public/images/lighting.svg')}
                             />
-                            {userContext.netReputation}
+                            {userContext.netReputation} |{' '}
+                            {userContext.subsidyReputation}
                         </h3>
                     </div>
                     <div className="ust-info">
@@ -140,6 +141,7 @@ const UserInfoWidget = () => {
                                             await userContext.calculateAllEpks()
                                             await userContext.loadReputation()
                                             await epochManager.updateWatch()
+                                            await userContext.updateLatestTransitionedEpoch()
 
                                             let metadata: Metadata = {
                                                 transactionId: transaction,
@@ -150,7 +152,7 @@ const UserInfoWidget = () => {
                                             type: ActionType.UST,
                                         }
                                     )
-                                    postContext.getAirdrop()
+                                    // postContext.getAirdrop()
                                 }}
                             >
                                 Let's go

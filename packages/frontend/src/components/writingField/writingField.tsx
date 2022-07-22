@@ -36,7 +36,7 @@ const WritingField = (props: Props) => {
         props.type === DataType.Post
             ? unirepConfig.postReputation
             : unirepConfig.commentReputation
-    const [reputation, setReputation] = useState(defaultRep)
+    const [reputation, setReputation] = useState(0)
 
     useEffect(() => {
         if (props.type === DataType.Post && postContext.postDraft) {
@@ -135,7 +135,7 @@ const WritingField = (props: Props) => {
                     <div className="rep-chooser">
                         <input
                             type="range"
-                            min={defaultRep}
+                            min={0}
                             max={
                                 user.userState ? user.netReputation : defaultRep
                             }
