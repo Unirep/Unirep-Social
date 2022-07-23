@@ -21,19 +21,18 @@ const server = setupServer(
     })
 )
 
-beforeEach(() => server.listen({ onUnhandledRequest: 'error' }))
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterAll(() => server.close())
-afterEach(() => server.resetHandlers())
 
 // abstracted render function
-function renderWritingField(
+const renderWritingField = (
     userData,
     unirepData,
     postData,
     type,
     page,
     submit
-) {
+) => {
     return render(
         <UserContext.Provider value={userData}>
             <UnirepContext.Provider value={unirepData}>

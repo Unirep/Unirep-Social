@@ -1,12 +1,12 @@
 import { screen, render, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event' //todo
+import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import PostBlock from '../components/postBlock/postBlock'
 
 // abstracted render function
-function renderPostBlock(userData, unirepData, postId, postData, page) {
+const renderPostBlock = (userData, unirepData, postId, postData, page) => {
     return render(
         <UserContext.Provider value={userData}>
             <UnirepContext.Provider value={unirepData}>
@@ -62,7 +62,4 @@ test('should render PostBlock with mocked data', () => {
     expect(screen.getByText(/boost/i)).toBeInTheDocument()
     expect(screen.getByText(/squash/i)).toBeInTheDocument()
     expect(screen.getByText(/share/i)).toBeInTheDocument()
-    screen.debug()
 })
-
-// todo: make assertions on userEvents

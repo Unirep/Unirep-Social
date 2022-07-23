@@ -20,7 +20,7 @@ jest.mock('react-router-dom', () => ({
 }))
 
 // abstraced render function
-function renderAppRouter() {
+const renderAppRouter = () => {
     return render(
         <BrowserRouter>
             <AppRouter />

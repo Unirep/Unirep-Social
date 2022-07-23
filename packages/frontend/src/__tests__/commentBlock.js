@@ -8,13 +8,13 @@ import CommentField from '../components/postBlock/commentField'
 const mockedCloseComment = jest.fn()
 
 // abstracted render function
-function renderCommentField(
+const renderCommentField = (
     userData,
     postData,
     page,
     post,
     mockedCloseComment
-) {
+) => {
     return render(
         <UserContext.Provider value={userData}>
             <PostContext.Provider value={postData}>
