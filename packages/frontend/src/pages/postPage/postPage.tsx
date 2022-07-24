@@ -10,7 +10,6 @@ import BasicPage from '../basicPage/basicPage'
 
 const PostPage = () => {
     const { id } = useParams<Params>()
-    console.log(id)
     const postContext = useContext(PostContext)
 
     useEffect(() => {
