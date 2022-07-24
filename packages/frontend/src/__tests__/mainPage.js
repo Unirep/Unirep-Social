@@ -33,7 +33,6 @@ test('should render MainPage with mocked data and false UserState', () => {
         postReputation: 30,
         commentReputation: 30,
     }
-    // todo: why isn't userState set to true in component?
     const userData = {
         userState: false,
         netReputation: 30,
@@ -64,7 +63,6 @@ test('should render MainPage with mocked data and false UserState', () => {
     expect(
         screen.getByText(/stay up to date & share everything with everyone./i)
     ).toBeInTheDocument()
-    screen.debug()
 })
 
 test('should render MainPage with mocked data and true UserState', () => {
@@ -106,7 +104,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     expect(screen.getByText(/back to top/i)).toBeInTheDocument()
 })
 
-test('should simulate user the "/new" route onClick while user is logged in', async () => {
+test.skip('should simulate user the "/new" route onClick while user is logged in', async () => {
     // provier data
     const unirepData = {
         postReputation: 30,

@@ -15,7 +15,6 @@ const MainPage = () => {
     const history = useHistory()
     const postController = useContext(PostContext)
     const userContext = useContext(UserContext)
-    console.log(userContext)
     const unirepConfig = useContext(UnirepContext)
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)

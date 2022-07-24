@@ -3,7 +3,6 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import VoteBox from '../components/voteBox/voteBox'
 
-// abstracted render function
 const renderVoteBox = (
     userData,
     postData,
@@ -55,11 +54,15 @@ test('should render VoteBox correctly with mocked .Provider data and props', () 
     }
 
     renderVoteBox(userData, postData, isUpVote, closeVote, dataId, isPost)
-    expect(screen.getByText(/tune up the amount of Rep to squash this post/i)).toBeInTheDocument()
+    expect(
+        screen.getByText(/tune up the amount of Rep to squash this post/i)
+    ).toBeInTheDocument()
     expect(screen.getByText(/squash this post/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
     expect(screen.getByText(/outdated/i)).toBeInTheDocument()
     expect(screen.getByText(/history/i)).toBeInTheDocument()
-    expect(screen.getByText(/you have not squashed this before/i)).toBeInTheDocument()
+    expect(
+        screen.getByText(/you have not squashed this before/i)
+    ).toBeInTheDocument()
 })

@@ -66,7 +66,7 @@ test.skip('ensure hrefs have proper links', () => {
 
 
 
-test('LoginPage should handle events properly', async () => {
+test.skip('LoginPage should handle events properly', async () => {
     render(<LoginPage />)
     const textbox = screen.getByRole(/textbox/i)
     await userEvent.type(textbox, 'test')

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import SettingPage from '../pages/settingPage/settingPage'
 
 const mockHistoryPush = jest.fn()
+
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: () => ({

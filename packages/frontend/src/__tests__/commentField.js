@@ -4,10 +4,8 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import CommentField from '../components/postBlock/commentField'
 
-// mocked props
 const mockedCloseComment = jest.fn()
 
-// abstracted render function
 const renderCommentField = (
     userData,
     postData,

@@ -9,7 +9,7 @@
         "build:worker": "webpack --config webpack.worker.js",
         "postinstall": "link-module-alias && yarn copyCircuits",
         "copyCircuits": "node scripts/copy_circuits",
-        "test": "jest --config ./jest.config.js --detectOpenHandles",
+        "test": "jest --config ./jest.config.js --detectOpenHandles --forceExit",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
     },
