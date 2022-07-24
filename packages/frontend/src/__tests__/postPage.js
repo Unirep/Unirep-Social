@@ -7,7 +7,6 @@ jest.mock('react-router-dom', () => ({
     useParams: jest.fn().mockReturnValue({ id: '1' }),
 }))
 
-
 const renderPostPage = (postData) => {
     render(
         <PostContext.Provider value={postData}>

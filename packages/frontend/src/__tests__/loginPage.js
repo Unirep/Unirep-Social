@@ -64,11 +64,8 @@ test.skip('ensure hrefs have proper links', () => {
     ).toHaveAttribute('href', 'https://about.unirep.social/alpha-invitation')
 })
 
-
-
 test.skip('LoginPage should handle events properly', async () => {
     render(<LoginPage />)
     const textbox = screen.getByRole(/textbox/i)
     await userEvent.type(textbox, 'test')
-    
 })
