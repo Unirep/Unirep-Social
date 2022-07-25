@@ -3,29 +3,38 @@ import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import LoginPage from '../pages/loginPage/loginPage'
 
-// import { rest } from 'msw'
-// import { setupServer } from 'msw/node'
+import { rest } from 'msw'
+import { setupServer } from 'msw/node'
 
-// const server = setupServer(
-//     rest.get('/', (req, res, ctx) => {
-//         return res(
-//             ctx.json({
-//                 test: 'test',
-//             })
-//         )
-//     })
-// )
+const server = setupServer(
+    rest.get('https://tetsturl.invalidtld/*', (req, res, ctx) => {
+        console.log(req)
+        return res(
+            ctx.json({
+                test: 'test',
+            })
+        )
+    }),
+    rest.post('https://geth.testurl.invalidtld:8545/', (req, res, ctx) => {
+        // a geth request
+        return res(
+            ctx.json({
+                test: 'test',
+            })
+        )
+    })
+)
 
-// beforeAll(() => {
-//     // Establish requests interception layer before all tests.
-//     server.listen()
-// })
+beforeAll(() => {
+    // Establish requests interception layer before all tests.
+    server.listen()
+})
 
-// afterAll(() => {
-//     // Clean up after all tests are done, preventing this
-//     // interception layer from affecting irrelevant tests.
-//     server.close()
-//   })
+afterAll(() => {
+    // Clean up after all tests are done, preventing this
+    // interception layer from affecting irrelevant tests.
+    server.close()
+})
 
 // mock needed for history and location hooks
 const mockHistoryPush = jest.fn()
@@ -37,7 +46,7 @@ jest.mock('react-router-dom', () => ({
     }),
 }))
 
-test.skip('should render LoginPage correctly', () => {
+test('should render LoginPage correctly', () => {
     render(<LoginPage />)
     expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
     expect(
@@ -52,7 +61,7 @@ test.skip('should render LoginPage correctly', () => {
     expect(screen.getByText(/join here/i)).toBeInTheDocument()
 })
 
-test.skip('ensure hrefs have proper links', () => {
+test('ensure hrefs have proper links', () => {
     render(<LoginPage />)
     // checking links render properly
     expect(screen.getByText(/join/i).closest('a')).toHaveAttribute(
@@ -64,7 +73,7 @@ test.skip('ensure hrefs have proper links', () => {
     ).toHaveAttribute('href', 'https://about.unirep.social/alpha-invitation')
 })
 
-test.skip('LoginPage should handle events properly', async () => {
+test('LoginPage should handle events properly', async () => {
     render(<LoginPage />)
     const textbox = screen.getByRole(/textbox/i)
     await userEvent.type(textbox, 'test')
