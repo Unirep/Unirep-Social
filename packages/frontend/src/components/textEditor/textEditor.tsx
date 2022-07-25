@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import MarkdownIt from 'markdown-it'
-import { NodeHtmlMarkdown } from 'node-html-markdown'
 
 type Props = {
     content: string
@@ -28,12 +27,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     const [contentHtml, setContentHtml] = useState<string>(
         markdown.render(content)
     )
-
-    const handleDivContentInput = (event: any) => {
-        const text = (event.target as HTMLElement).innerHTML
-        const mdText = NodeHtmlMarkdown.translate(text)
-        setContent(mdText)
-    }
 
     const handleContentInput = (event: any) => {
         setContent(event.target.value)
@@ -71,9 +64,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     }
 
     const addStyle = (style: TextStyle) => {
-        const cursorPos = document.getSelection()?.getRangeAt(0).startContainer
-        console.log(cursorPos)
-
         const sel = document.getElementById(
             'inputTextArea'
         ) as HTMLTextAreaElement
@@ -229,13 +219,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     </div>
                 </div>
             )}
-            <div
-                contentEditable="true"
-                dangerouslySetInnerHTML={{
-                    __html: contentHtml,
-                }}
-                onInput={handleDivContentInput}
-            />
         </div>
     )
 }
