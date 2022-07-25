@@ -5,12 +5,10 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import MainPage from '../pages/mainPage/mainPage'
 
-const mockHistoryPush = jest.fn()
-
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: () => ({
-        push: mockHistoryPush,
+        push: jest.fn(),
     }),
 }))
 
@@ -97,7 +95,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     ).toBeInTheDocument()
     // userState is *true*
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
-    expect(screen.getByText(/30/i)).toBeInTheDocument()
+    expect(screen.getByText(userData.netReputation)).toBeInTheDocument()
     expect(
         screen.getByText(/in this cycle, my personas are/i)
     ).toBeInTheDocument()
