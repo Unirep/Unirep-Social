@@ -110,6 +110,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
             newContent = addListItem('', content, start, end)
         }
         setContent(newContent)
+        setContentHtml(markdown.render(newContent))
     }
 
     const insertImage = () => {
@@ -126,6 +127,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
             `![](${url})` +
             content.substring(cursor)
         setContent(newContent)
+        setContentHtml(markdown.render(newContent))
         urlComponent.value = ''
     }
 
@@ -144,6 +146,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
             `[${content.substring(start, end)}](${url})` +
             content.substring(end)
         setContent(newContent)
+        setContentHtml(markdown.render(newContent))
         urlComponent.value = ''
     }
 
