@@ -187,20 +187,12 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                         <button onClick={insertImage}>Insert Image</button>
                     </label>
                 </div>
-                {autoFocus ? (
-                    <textarea
-                        id="myTextArea"
-                        onChange={handleContentInput}
-                        value={content ?? ''}
-                        autoFocus
-                    />
-                ) : (
-                    <textarea
-                        id="inputTextArea"
-                        onChange={handleContentInput}
-                        value={content ?? ''}
-                    />
-                )}
+                <textarea
+                    id="inputTextArea"
+                    onChange={handleContentInput}
+                    value={content ?? ''}
+                    autoFocus={autoFocus}
+                />
             </div>
             <label className="switch">
                 <input
