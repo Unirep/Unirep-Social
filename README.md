@@ -7,5 +7,5 @@ A social network system built on top of Unirep.
 Install
 
 ```sh
-yarn && yarn bootstrap --force-local
+yarn
 ```

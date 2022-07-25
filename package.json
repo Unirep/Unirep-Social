@@ -2,6 +2,7 @@
     "name": "root",
     "license": "MIT",
     "scripts": {
+        "install": "yarn bootstrap",
         "bootstrap": "lerna bootstrap",
         "build": "lerna run build",
         "linkUnirep": "sh scripts/linkUnirep.sh",

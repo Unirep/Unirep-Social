@@ -45,7 +45,7 @@ jobs:
             - run: *check_version
             - run:
                   name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
+                  command: yarn
             - run:
                   name: Build
                   command: yarn build --scope @unirep-social/core
@@ -62,7 +62,7 @@ jobs:
             - run: *check_version
             - run:
                   name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
+                  command: yarn
             - run:
                   name: Build
                   command: yarn build --scope @unirep-social/core
@@ -79,7 +79,7 @@ jobs:
             - run: *check_version
             - run:
                   name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
+                  command: yarn
             - run:
                   name: Build
                   command: yarn build --scope @unirep-social/core --scope @unirep-social/backend
@@ -96,7 +96,7 @@ jobs:
             - run: *check_version
             - run:
                   name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
+                  command: yarn
             - run:
                   name: Build
                   command: yarn build --scope @unirep-social/core --scope @unirep-social/frontend
