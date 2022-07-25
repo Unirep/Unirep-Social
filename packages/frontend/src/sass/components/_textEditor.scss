@@ -1,0 +1,30 @@
+.buttons {
+    .insertion {
+        input[type='text'] {
+            width: auto;
+            height: 32px;
+            padding: 4px;
+            font-size: $text-xs;
+
+            &::-webkit-input-placeholder {
+                color: $grey-300;
+                font-size: $text-xs;
+            }
+
+            &::-moz-placeholder {
+                color: $grey-300;
+                font-size: $text-xs;
+            }
+        }
+    }
+}
+
+.preview-box {
+    border: 1px solid $grey-700;
+    border-radius: 8px;
+    cursor: auto;
+
+    &:hover {
+        background-color: $white;
+    }
+}
