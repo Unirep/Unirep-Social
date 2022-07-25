@@ -1,3 +1,7 @@
 module.exports = {
-    nanoid: () => Math.random().toString(),
+    nanoid: () =>
+        Array(100)
+            .fill()
+            .map(() => Math.random())
+            .join(''),
 }
