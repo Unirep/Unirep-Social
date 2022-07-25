@@ -1,14 +1,12 @@
 module.exports = {
-    preset: 'ts-jest',
     roots: ['<rootDir>'],
     modulePaths: ['<rootDir>/src'],
     moduleDirectories: ['node_modules'],
     transformIgnorePatterns: ['/node_modules/'],
     transform: {
-        '^.+\\.(ts|tsx)?$': 'ts-jest',
-        '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+\\.(gif|svg|ico|url|require)$':
-            '<rootDir>/src/__tests__/__utils__/svgTransform.js',
+        '^.+\\.(ts|tsx|js|jsx)?$': 'babel-jest',
+        '^.+\\.(jpg|jpeg|png|gif|svg|ico|url)$':
+            '<rootDir>/src/__tests__/__utils__/imageTransform.js',
     },
     testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.js?$',
 
@@ -20,12 +18,10 @@ module.exports = {
             '<rootDir>/src/__mocks__/fileMock.js',
     },
     clearMocks: true,
-    testEnvironment: 'jsdom',
     setupFilesAfterEnv: [
         '@testing-library/jest-dom/extend-expect',
         './src/__tests__/__utils__/setup.js',
     ],
-    resolver: 'jest-webpack-resolver',
     testEnvironment: 'jsdom',
     collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/tests'],
 }

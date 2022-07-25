@@ -136,12 +136,11 @@ const UserPage = () => {
 
     useEffect(() => {
         const getUserData = async () => {
-            console.log('get my posts')
-            await getUserPosts(sort)
-            console.log('get my comments')
-            await getUserComments(sort)
-            console.log('get records')
-            await getUserRecords()
+            await Promise.all([
+                getUserPosts(sort),
+                getUserComments(sort),
+                getUserRecords(),
+            ])
         }
 
         getUserData()
