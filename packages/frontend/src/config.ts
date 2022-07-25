@@ -5,11 +5,13 @@ import Unirep from '@unirep/contracts/abi/Unirep.json'
 const EXPLORER_URL = 'https://kovan-optimistic.etherscan.io'
 
 let config: any = {}
-try {
-    const TERMINATOR = ''
-    const localConfig = require(`./localConfig.ts${TERMINATOR}`)
-    Object.assign(config, localConfig.default)
-} catch (_) {}
+if (process.env.NODE_ENV !== 'test') {
+    try {
+        const TERMINATOR = ''
+        const localConfig = require(`./localConfig.ts${TERMINATOR}`)
+        Object.assign(config, localConfig.default)
+    } catch (_) {}
+}
 
 const SERVER = config.SERVER ?? 'http://localhost:3001'
 const DEFAULT_ETH_PROVIDER_URL =
