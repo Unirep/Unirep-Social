@@ -36,8 +36,9 @@ export class UnirepConfig {
     }
 
     async load() {
+        const url = new URL(`/api/config`, SERVER)
         const { unirepAddress, unirepSocialAddress } = await fetch(
-            `${SERVER}/api/config`
+            url.toString()
         ).then((r) => r.json())
         this.unirepAddress = unirepAddress
         this.unirepSocialAddress = unirepSocialAddress
