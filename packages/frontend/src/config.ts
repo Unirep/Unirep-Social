@@ -11,6 +11,11 @@ try {
     Object.assign(config, localConfig.default)
 } catch (_) {}
 
+if (process.env.NODE_ENV === 'test') {
+    config.SERVER = 'http://testurl.invalidtld'
+    config.DEFAULT_ETH_PROVIDER_URL = 'http://geth.testurl.invalidtld:8545'
+}
+
 const SERVER = config.SERVER ?? 'http://localhost:3001'
 const DEFAULT_ETH_PROVIDER_URL =
     config.DEFAULT_ETH_PROVIDER_URL ?? 'http://localhost:8545'

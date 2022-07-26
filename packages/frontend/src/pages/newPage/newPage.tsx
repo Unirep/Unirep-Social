@@ -1,5 +1,5 @@
-import { useEffect, useContext } from 'react'
-import { useHistory, useLocation } from 'react-router-dom'
+import { useContext } from 'react'
+import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
@@ -10,15 +10,8 @@ import { DataType } from '../../constants'
 
 const NewPage = () => {
     const history = useHistory()
-    const location = useLocation<Location>()
-    const state = JSON.parse(JSON.stringify(location.state))
-    const isConfirmed = state.isConfirmed
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
-
-    useEffect(() => {
-        console.log('Is this new page being confirmd? ' + isConfirmed)
-    }, [])
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()

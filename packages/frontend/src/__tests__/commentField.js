@@ -4,6 +4,8 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import CommentField from '../components/postBlock/commentField'
 
+const mockedCloseComment = jest.fn()
+
 const renderCommentField = (
     userData,
     postData,
@@ -60,28 +62,13 @@ test('should render CommentField correctly with .Provider data', () => {
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderCommentField(userData, postData, page, post, jest.fn())
-    expect(screen.getByText(/comment - 3 points/i)).toBeInTheDocument()
+    renderCommentField(userData, postData, page, post, mockedCloseComment)
+    expect(screen.getByText(/post as/i)).toBeInTheDocument()
+    expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
 })
 
 test(`should display "somethings wrong..." if user's state is null`, () => {
     const page = '/user'
-
-    const post = {
-        type: 0,
-        id: 'txhash id',
-        title: 'title',
-        content: 'content',
-        upvote: 4,
-        downvote: 5,
-        epoch_key: 'epoch_key test',
-        username: 'username',
-        post_time: '00',
-        reputation: 30,
-        commentCount: 6,
-        current_epoch: 7,
-        proofIndex: 8,
-    }
 
     const postData = {
         commentsById: {
@@ -101,8 +88,8 @@ test(`should display "somethings wrong..." if user's state is null`, () => {
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderCommentField(userData, postData, page, post, jest.fn())
+    renderCommentField(userData, postData, page.post, mockedCloseComment)
     expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
-    // checks user's state is null
+    // checks users state is null
     expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
 })
