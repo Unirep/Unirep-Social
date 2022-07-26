@@ -12,8 +12,8 @@ try {
 } catch (_) {}
 
 if (process.env.NODE_ENV === 'test') {
-    config.SERVER = 'https://testurl.invalidtld'
-    config.DEFAULT_ETH_PROVIDER_URL = 'https://geth.testurl.invalidtld:8545'
+    config.SERVER = 'http://testurl.invalidtld'
+    config.DEFAULT_ETH_PROVIDER_URL = 'http://geth.testurl.invalidtld:8545'
 }
 
 const SERVER = config.SERVER ?? 'http://localhost:3001'
