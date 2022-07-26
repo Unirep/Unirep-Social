@@ -35,6 +35,7 @@
         "markdown-it": "^12.3.2",
         "mobx": "^6.4.2",
         "mobx-react-lite": "^3.3.0",
+        "module": "^1.2.5",
         "n-readlines": "^1.0.1",
         "nanoid": "^3.3.4",
         "node-sass": "^6.0.1",

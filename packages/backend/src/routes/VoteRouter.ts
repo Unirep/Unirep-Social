@@ -70,7 +70,7 @@ async function vote(req, res) {
             where: {
                 index: post.proofIndex,
                 epoch: currentEpoch,
-                valid: true,
+                valid: 1,
             },
         })
         if (!validProof) {
@@ -91,7 +91,7 @@ async function vote(req, res) {
             where: {
                 index: comment.proofIndex,
                 epoch: currentEpoch,
-                valid: true,
+                valid: 1,
             },
         })
         if (!validProof) {
@@ -184,6 +184,38 @@ async function vote(req, res) {
         transactionHash: hash,
         data: dataId,
         confirmed: false,
+    })
+    await req.db.transaction(async (db) => {
+        const [post, comment] = await Promise.all([
+            req.db.findOne('Post', { where: { _id: dataId } }),
+            req.db.findOne('Comment', { where: { _id: dataId } }),
+        ])
+        if (post) {
+            db.update('Post', {
+                where: {
+                    _id: post._id,
+                },
+                update: {
+                    posRep: post.posRep + req.body.upvote,
+                    negRep: post.negRep + req.body.downvote,
+                    totalRep:
+                        post.totalRep + req.body.upvote - req.body.downvote,
+                },
+            })
+        }
+        if (comment) {
+            db.update('Comment', {
+                where: {
+                    _id: comment._id,
+                },
+                update: {
+                    posRep: comment.posRep + req.body.upvote,
+                    negRep: comment.negRep + req.body.downvote,
+                    totalRep:
+                        comment.totalRep + req.body.upvote - req.body.downvote,
+                },
+            })
+        }
     })
     res.json({
         transaction: hash,

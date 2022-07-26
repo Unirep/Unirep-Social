@@ -61,14 +61,14 @@ const verifyReputationProof = async (
     }
 
     // check reputation amount
-    if (repNullifiersAmount !== spendReputation) {
-        return 'Error: proof with wrong reputation amount'
-    }
+    // if (repNullifiersAmount !== spendReputation) {
+    //     return 'Error: proof with wrong reputation amount'
+    // }
 
     const isProofValid = await Prover.verifyProof(
         Circuit.proveReputation,
         (reputationProof as any).publicSignals,
-        formatProofForSnarkjsVerification(reputationProof.proof as string[])
+        reputationProof._snarkProof
     )
     if (!isProofValid) {
         return 'Error: invalid reputation proof'
@@ -223,11 +223,11 @@ const verifyUSTProof = async (
     // check nullifiers
     const exists = await db.findOne('Nullifier', {
         where: {
-            nullifier: results.finalTransitionProof.epochKeyNullifiers,
+            nullifier: results.finalTransitionProof.epkNullifiers,
         },
     })
     if (exists) {
-        error = `Error: invalid reputation nullifier`
+        error = `Error: invalid epoch key nullifier`
     }
     return error
 }

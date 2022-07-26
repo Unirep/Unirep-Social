@@ -1,0 +1,27 @@
+{
+    "name": "@unirep-social/circuits",
+    "version": "0.0.1",
+    "description": "ZK proofs used for the unirep social attester",
+    "author": "Unirep Team",
+    "homepage": "https://github.com/Unirep/unirep-social#readme",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Unirep/unirep-social.git"
+    },
+    "scripts": {
+        "build": "node ./scripts/buildSnarks.mjs",
+        "test": "echo 'Test files not enabled'"
+    },
+    "bugs": {
+        "url": "https://github.com/Unirep/unirep-social/issues"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "circomlib": "0.5.3",
+        "circom": "^0.5.46",
+        "@unirep/crypto": "1.0.0-alpha-4",
+        "@unirep/circuits": "1.0.0-alpha-7",
+        "snarkjs": "^0.4.7"
+    }
+}

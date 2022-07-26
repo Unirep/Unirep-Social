@@ -44,9 +44,11 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
     const airdrop = 30
     const unirepSocial = await UnirepSocialF.deploy(
         unirep.address,
+        '0x0000000000000000000000000000000000000000', // placeholder for verifier
         postReputation,
         commentReputation,
-        airdrop
+        airdrop,
+        0 // epk subsidy
     )
     await unirepSocial.deployed()
     return { unirep, unirepSocial, provider }

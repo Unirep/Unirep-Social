@@ -14,31 +14,31 @@ export class User {
     id?: ZkIdentity
     allEpks = [] as string[]
     currentEpoch = 0
-    reputation = 30
+    reputation = 0
+    subsidyReputation = 0
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
+    latestTransitionedEpoch?: number
     loadingPromise
     userState?: UserState
 
     syncPercent: any
-    startBlock: any
-    latestBlock: any
     latestProcessedBlock: any
-    isInitialSyncing: any
+    isInitialSyncing = true
+    initialSyncFinalBlock = Infinity
 
     constructor() {
         makeObservable(this, {
             userState: observable,
             currentEpoch: observable,
             reputation: observable,
+            netReputation: computed,
+            subsidyReputation: observable,
             spent: observable,
             currentEpochKeys: computed,
             allEpks: observable,
             // syncPercent: computed,
-            // startBlock: observable,
-            // latestBlock: observable,
-            // latestProcessedBlock: observable,
-            // isInitialSyncing: observable,
+            isInitialSyncing: observable,
             id: observable,
         })
         if (typeof window !== 'undefined') {
@@ -46,6 +46,10 @@ export class User {
         } else {
             this.loadingPromise = Promise.resolve()
         }
+    }
+
+    get spendableReputation() {
+        return this.reputation - this.spent + this.subsidyReputation
     }
 
     get netReputation() {
@@ -63,11 +67,14 @@ export class User {
         const storedIdentity = window.localStorage.getItem('identity')
         if (storedIdentity) {
             const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
+            await this.loadCurrentEpoch()
             await this.setIdentity(id)
             await this.calculateAllEpks()
-            await this.userState?.start()
-            this.userState?.waitForSync().then(() => {
+            await this.startSync()
+            await this.updateLatestTransitionedEpoch()
+            this.userState?.waitForSync().then(async () => {
                 this.loadReputation()
+                await this.updateLatestTransitionedEpoch()
             })
         }
 
@@ -106,9 +113,18 @@ export class User {
     }
 
     get needsUST() {
-        if (!this.userState) return false
-        return false
-        // return this.currentEpoch > (await this.userState.latestTransitionedEpoch())
+        if (!this.userState || !this.latestTransitionedEpoch) return false
+        return this.currentEpoch > (this.latestTransitionedEpoch || -1)
+    }
+
+    async startSync() {
+        this.isInitialSyncing = true
+        const latestBlock = await config.DEFAULT_ETH_PROVIDER.getBlockNumber()
+        this.initialSyncFinalBlock = latestBlock
+        await this.userState?.start()
+        this.userState?.waitForSync(this.initialSyncFinalBlock).then(() => {
+            this.isInitialSyncing = false
+        })
     }
 
     async setIdentity(identity: string | ZkIdentity) {
@@ -182,9 +198,30 @@ export class User {
         return epochKey.toString(16)
     }
 
+    async updateLatestTransitionedEpoch() {
+        this.latestTransitionedEpoch =
+            await this.userState?.latestTransitionedEpoch()
+    }
+
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
+        const { number: currentEpoch } =
+            await this.userState?.loadCurrentEpoch()
+        const epkSubsidy = 10
+        const subsidyBalance = (
+            await Promise.all(
+                this.currentEpochKeys.map((epk) => {
+                    return this.unirepConfig.unirepSocial.subsidies(
+                        currentEpoch,
+                        ethers.BigNumber.from(`0x${epk}`)
+                    )
+                })
+            )
+        ).reduce((acc, val) => {
+            return acc + (epkSubsidy - val.toNumber())
+        }, 0)
+        this.subsidyReputation = subsidyBalance
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
@@ -295,7 +332,7 @@ export class User {
         // this.initialSyncFinalBlock = blockNumber
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
-        await this.userState?.start()
+        await this.startSync()
         return {
             i: serializedIdentity,
             c: commitment,
@@ -315,7 +352,7 @@ export class User {
         if (!this.userState) {
             throw new Error('User state is not set')
         }
-        await this.userState.start()
+        await this.startSync()
         this.userState.waitForSync().then(() => {
             this.loadReputation()
             this.save()
@@ -351,17 +388,6 @@ export class User {
         if (this.spent + Math.max(proveKarma, minRep) > this.reputation) {
             throw new Error('Not enough reputation')
         }
-        const nonceList = [] as BigInt[]
-        for (let i = 0; i < proveKarma; i++) {
-            nonceList.push(BigInt(this.spent + i))
-        }
-        for (
-            let i = proveKarma;
-            i < this.unirepConfig.maxReputationBudget;
-            i++
-        ) {
-            nonceList.push(BigInt(-1))
-        }
         const proveGraffiti = BigInt(0)
         const graffitiPreImage = BigInt(0)
         if (!this.userState) throw new Error('User state not initialized')
@@ -369,10 +395,11 @@ export class User {
             await this.userState.genProveReputationProof(
                 BigInt(this.unirepConfig.attesterId),
                 epkNonce,
+                proveKarma,
+                this.spent,
                 minRep,
                 proveGraffiti,
-                graffitiPreImage,
-                nonceList
+                graffitiPreImage
             )
 
         this.save()

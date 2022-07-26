@@ -65,7 +65,7 @@ const SignupPage = () => {
             setButtonLoading(false)
         } else if (step === 1) {
             if (isDownloaded) {
-                navigator.clipboard.writeText(userContext.identity || '')
+                navigator.clipboard?.writeText(userContext.identity || '')
                 setStep(2)
             }
         } else if (step === 2) {
@@ -76,10 +76,7 @@ const SignupPage = () => {
             }
         } else if (step === 3) {
             setButtonLoading(true)
-            const { blockNumber } = await signupPromise
-            if (signupError === null) {
-                postContext.getAirdrop(blockNumber)
-            }
+            await signupPromise
             history.push('/')
         }
     }

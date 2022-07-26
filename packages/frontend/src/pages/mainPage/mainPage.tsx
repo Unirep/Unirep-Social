@@ -35,7 +35,7 @@ const MainPage = () => {
     const gotoNewPost = () => {
         if (
             userContext.userState &&
-            userContext.netReputation >= unirepConfig.postReputation
+            userContext.spendableReputation >= unirepConfig.postReputation
         ) {
             history.push('/new', { isConfirmed: true })
         } else {
@@ -48,7 +48,8 @@ const MainPage = () => {
             <div className="create-post" onClick={gotoNewPost}>
                 {!userContext.userState
                     ? AlertType.postNotLogin
-                    : userContext.netReputation < unirepConfig.postReputation
+                    : userContext.spendableReputation <
+                      unirepConfig.postReputation
                     ? AlertType.postNotEnoughPoints
                     : 'Create post'}
             </div>

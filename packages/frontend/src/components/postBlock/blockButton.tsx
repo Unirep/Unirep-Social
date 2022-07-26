@@ -30,7 +30,7 @@ const BlockButton = ({ type, count, data }: Props) => {
             else {
                 if (data.current_epoch !== userContext.currentEpoch)
                     return false
-                else if (userContext.netReputation < 1) return false
+                else if (userContext.spendableReputation < 1) return false
                 else return true
             }
         }
@@ -76,7 +76,8 @@ const BlockButton = ({ type, count, data }: Props) => {
         else {
             if (data.current_epoch !== userContext.currentEpoch)
                 setReminder('Time out :(')
-            else if (userContext.netReputation < 1) setReminder('No enough Rep')
+            else if (userContext.spendableReputation < 1)
+                setReminder('No enough Rep')
             else if (type !== ButtonType.Share) setReminder('loading...')
         }
     }
