@@ -223,11 +223,11 @@ const verifyUSTProof = async (
     // check nullifiers
     const exists = await db.findOne('Nullifier', {
         where: {
-            nullifier: results.finalTransitionProof.epochKeyNullifiers,
+            nullifier: results.finalTransitionProof.epkNullifiers,
         },
     })
     if (exists) {
-        error = `Error: invalid reputation nullifier`
+        error = `Error: invalid epoch key nullifier`
     }
     return error
 }
