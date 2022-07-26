@@ -70,7 +70,7 @@ async function vote(req, res) {
             where: {
                 index: post.proofIndex,
                 epoch: currentEpoch,
-                valid: true,
+                valid: 1,
             },
         })
         if (!validProof) {
@@ -91,7 +91,7 @@ async function vote(req, res) {
             where: {
                 index: comment.proofIndex,
                 epoch: currentEpoch,
-                valid: true,
+                valid: 1,
             },
         })
         if (!validProof) {
