@@ -17,14 +17,14 @@ export class User {
     reputation = 30
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
+    latestTransitionedEpoch?: number
     loadingPromise
     userState?: UserState
 
     syncPercent: any
-    startBlock: any
-    latestBlock: any
     latestProcessedBlock: any
-    isInitialSyncing: any
+    isInitialSyncing = true
+    initialSyncFinalBlock = Infinity
 
     constructor() {
         makeObservable(this, {
@@ -35,10 +35,7 @@ export class User {
             currentEpochKeys: computed,
             allEpks: observable,
             // syncPercent: computed,
-            // startBlock: observable,
-            // latestBlock: observable,
-            // latestProcessedBlock: observable,
-            // isInitialSyncing: observable,
+            isInitialSyncing: observable,
             id: observable,
         })
         if (typeof window !== 'undefined') {
@@ -63,11 +60,14 @@ export class User {
         const storedIdentity = window.localStorage.getItem('identity')
         if (storedIdentity) {
             const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
+            await this.loadCurrentEpoch()
             await this.setIdentity(id)
             await this.calculateAllEpks()
-            await this.userState?.start()
+            await this.startSync()
+            await this.updateLatestTransitionedEpoch()
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
+                this.updateLatestTransitionedEpoch()
             })
         }
 
@@ -106,9 +106,18 @@ export class User {
     }
 
     get needsUST() {
-        if (!this.userState) return false
-        return false
-        // return this.currentEpoch > (await this.userState.latestTransitionedEpoch())
+        if (!this.userState || !this.latestTransitionedEpoch) return false
+        return this.currentEpoch > (this.latestTransitionedEpoch || -1)
+    }
+
+    async startSync() {
+        this.isInitialSyncing = true
+        const latestBlock = await config.DEFAULT_ETH_PROVIDER.getBlockNumber()
+        this.initialSyncFinalBlock = latestBlock
+        await this.userState?.start()
+        this.userState?.waitForSync(this.initialSyncFinalBlock).then(() => {
+            this.isInitialSyncing = false
+        })
     }
 
     async setIdentity(identity: string | ZkIdentity) {
@@ -137,6 +146,11 @@ export class User {
             AttestationSubmitted,
             this.attestationSubmitted.bind(this)
         )
+    }
+
+    async updateLatestTransitionedEpoch() {
+        this.latestTransitionedEpoch =
+            await this.userState?.latestTransitionedEpoch()
     }
 
     async calculateAllEpks() {
@@ -295,7 +309,7 @@ export class User {
         // this.initialSyncFinalBlock = blockNumber
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
-        await this.userState?.start()
+        await this.startSync()
         return {
             i: serializedIdentity,
             c: commitment,
@@ -315,7 +329,7 @@ export class User {
         if (!this.userState) {
             throw new Error('User state is not set')
         }
-        await this.userState.start()
+        await this.startSync()
         this.userState.waitForSync().then(() => {
             this.loadReputation()
             this.save()
@@ -351,17 +365,6 @@ export class User {
         if (this.spent + Math.max(proveKarma, minRep) > this.reputation) {
             throw new Error('Not enough reputation')
         }
-        const nonceList = [] as BigInt[]
-        for (let i = 0; i < proveKarma; i++) {
-            nonceList.push(BigInt(this.spent + i))
-        }
-        for (
-            let i = proveKarma;
-            i < this.unirepConfig.maxReputationBudget;
-            i++
-        ) {
-            nonceList.push(BigInt(-1))
-        }
         const proveGraffiti = BigInt(0)
         const graffitiPreImage = BigInt(0)
         if (!this.userState) throw new Error('User state not initialized')
@@ -372,7 +375,7 @@ export class User {
                 minRep,
                 proveGraffiti,
                 graffitiPreImage,
-                nonceList
+                proveKarma
             )
 
         this.save()

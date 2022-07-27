@@ -194,7 +194,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                     index,
                 },
                 update: {
-                    valid: false,
+                    valid: 0,
                 },
             })
             return { isProofValid: false }
@@ -371,7 +371,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         if (!findValidProof) {
             throw new Error('unable to find proof for post')
         }
-        if (findValidProof.valid === false) {
+        if (findValidProof.valid === 0) {
             console.log(`proof index ${proofIndex} is invalid`)
             return
         }
@@ -513,7 +513,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         if (!proof) {
             throw new Error('Unable to find proof for vote')
         }
-        if (proof.valid === false) {
+        if (proof.valid === 0) {
             console.log(`proof index ${_toEpochKeyProofIndex} is invalid`)
             return
         }
@@ -538,7 +538,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         if (!fromValidProof) {
             throw new Error('Unable to find from valid proof vote')
         }
-        if (fromValidProof.valid === false) {
+        if (fromValidProof.valid === 0) {
             console.log(`proof index ${fromProofIndex} is invalid`)
             return
         }

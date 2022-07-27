@@ -65,7 +65,7 @@ const SignupPage = () => {
             setButtonLoading(false)
         } else if (step === 1) {
             if (isDownloaded) {
-                navigator.clipboard.writeText(userContext.identity || '')
+                navigator.clipboard?.writeText(userContext.identity || '')
                 setStep(2)
             }
         } else if (step === 2) {
