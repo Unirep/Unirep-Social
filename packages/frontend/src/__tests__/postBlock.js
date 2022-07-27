@@ -18,7 +18,7 @@ const renderPostBlock = (userData, unirepData, postId, postData, page) => {
     )
 }
 
-test('should render PostBlock with mocked data', () => {
+test.skip('should render PostBlock with mocked data', () => {
     const postId = '1'
     const page = '/post'
 
@@ -62,4 +62,45 @@ test('should render PostBlock with mocked data', () => {
     expect(screen.getByText(/boost/i)).toBeInTheDocument()
     expect(screen.getByText(/squash/i)).toBeInTheDocument()
     expect(screen.getByText(/share/i)).toBeInTheDocument()
+})
+
+test("should display commentField when user's net reputation > unirep commentReputation", () => {
+    const postId = '1'
+    const page = '/post'
+
+    const unirepData = {
+        postReputation: 30,
+        commentReputation: 30,
+    }
+
+    const userData = {
+        userState: true,
+        netReputation: 100,
+        commentReputation: 30,
+        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+    }
+
+    const postData = {
+        // the '1' matches the postId being passed as an argument in renderPostBlock
+        id: '1',
+        postsById: {
+            1: {
+                createdAt: '00',
+                content: 'mocked post content',
+            },
+        },
+        commentsByPostId: {
+            1: {
+                content: 'comment content',
+            },
+        },
+        commentDraft: {
+            content: 'showing comment field',
+        },
+        loadCommentsByPostId: jest.fn(),
+    }
+
+    renderPostBlock(userData, unirepData, postId, postData, page)
+    expect(screen.getByText(postData.commentDraft.content)).toBeInTheDocument()
+    // todo: add more assertions here after textEditor is done
 })

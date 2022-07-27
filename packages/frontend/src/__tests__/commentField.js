@@ -63,6 +63,7 @@ test('should render CommentField correctly with .Provider data', () => {
     }
 
     renderCommentField(userData, postData, page, post, mockedCloseComment)
+    screen.debug()
     expect(screen.getByText(/post as/i)).toBeInTheDocument()
     expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
 })
