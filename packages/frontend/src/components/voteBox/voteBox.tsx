@@ -24,6 +24,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
         (isPost ? postContext.votesByPostId : postContext.votesByCommentId)[
             dataId
         ] || []
+    console.log(votes)
 
     const isAvailable = isPost
         ? userContext.currentEpoch ===

@@ -15,14 +15,20 @@ const renderPostPage = (postData) => {
     )
 }
 
-const preDate = new Date()
-
-test.skip('should render properly with mocked data', () => {
+test('should render PostPage with mocked post data', () => {
     const postData = {
         postsById: {
             1: {
                 current_epoch: 7,
                 content: 'mocked post content',
+                createdAt: parseInt('00'),
+            },
+        },
+        commentsById: {
+            1: {
+                current_epoch: 7,
+                content: 'mocked post content',
+                createdAt: parseInt('00'),
             },
         },
         votesByPostId: {
@@ -31,10 +37,51 @@ test.skip('should render properly with mocked data', () => {
         commentsByPostId: {
             1: ['1'],
         },
+        commentDraft: {
+            content: 'some comment draft content',
+        },
         loadVotesForPostId: jest.fn(),
         loadVotesForCommentId: jest.fn(),
         loadPost: jest.fn(),
-        createdAt: '00/00/0000 00:00 00', //todo: fix date mocking
+        loadCommentsByPostId: jest.fn(),
+    }
+    renderPostPage(postData)
+
+    expect(
+        screen.getByText(/community built on ideas, not identities/i)
+    ).toBeInTheDocument()
+    expect(screen.getByText(/loading.../i)).toBeInTheDocument()
+})
+
+test('should render PostPage with mocked post data', () => {
+    const postData = {
+        postsById: {
+            1: {
+                current_epoch: 7,
+                content: 'mocked post content',
+                createdAt: parseInt('00'),
+            },
+        },
+        commentsById: {
+            1: {
+                current_epoch: 7,
+                content: 'mocked post content',
+                createdAt: parseInt('00'),
+            },
+        },
+        votesByPostId: {
+            1: ['1'],
+        },
+        commentsByPostId: {
+            1: ['1'],
+        },
+        commentDraft: {
+            content: 'some comment draft content',
+        },
+        loadVotesForPostId: jest.fn(),
+        loadVotesForCommentId: jest.fn(),
+        loadPost: jest.fn(),
+        loadCommentsByPostId: jest.fn(),
     }
     renderPostPage(postData)
 
