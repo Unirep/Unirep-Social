@@ -149,7 +149,7 @@ contract UnirepSocial {
 
         emit PostSubmitted(
             unirep.currentEpoch(),
-            publicSignals[maxReputationBudget + 1], // epoch key
+            publicSignals[0], // epoch key
             content,
             publicSignals,
             proof
@@ -178,7 +178,7 @@ contract UnirepSocial {
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
-            publicSignals[maxReputationBudget + 1], // epoch key
+            publicSignals[0], // epoch key
             content,
             publicSignals,
             proof
@@ -229,7 +229,7 @@ contract UnirepSocial {
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
-            publicSignals[maxReputationBudget + 1], // epoch key
+            publicSignals[0], // epoch key
             toEpochKey,
             upvoteValue,
             downvoteValue,
