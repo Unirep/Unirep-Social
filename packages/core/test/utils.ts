@@ -2,7 +2,7 @@ import { BigNumberish, ethers } from 'ethers'
 import { ZkIdentity } from '@unirep/crypto'
 import { defaultProver } from '@unirep/circuits/provers/defaultProver'
 import * as config from '@unirep/circuits'
-import { schema, genReputationNullifier, UserState } from '@unirep/core'
+import { schema, UserState } from '@unirep/core'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
 
@@ -24,35 +24,6 @@ export const getTreeDepthsForTesting = (deployEnv: string = 'circuit') => {
     } else {
         throw new Error('Only contract and circuit testing env are supported')
     }
-}
-
-export const findValidNonce = async (
-    userState: UserState,
-    repNullifiersAmount: number,
-    epoch: number,
-    attesterId: BigInt
-): Promise<BigInt[]> => {
-    const nonceList: BigInt[] = []
-    let nonce = 0
-    while (nonceList.length < repNullifiersAmount) {
-        if (
-            !(await userState.nullifierExist(
-                genReputationNullifier(
-                    userState.id.identityNullifier,
-                    epoch,
-                    nonce,
-                    attesterId
-                )
-            ))
-        ) {
-            nonceList.push(BigInt(nonce))
-        }
-        nonce++
-    }
-    for (let i = repNullifiersAmount; i < config.MAX_REPUTATION_BUDGET; i++) {
-        nonceList.push(BigInt(-1))
-    }
-    return nonceList
 }
 
 export const genUserState = async (
