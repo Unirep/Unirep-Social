@@ -140,6 +140,7 @@ const UserInfoWidget = () => {
                                             await userContext.calculateAllEpks()
                                             await userContext.loadReputation()
                                             await epochManager.updateWatch()
+                                            await userContext.updateLatestTransitionedEpoch()
 
                                             let metadata: Metadata = {
                                                 transactionId: transaction,
