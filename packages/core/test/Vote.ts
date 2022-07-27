@@ -23,9 +23,9 @@ const getEpochKeyProof = async (unirepContract) => {
     ) as BigNumberish
     const proof = Array(8).fill('0')
     const publicSignals = [
+        toEpochKey,
         genRandomSalt(),
         currentEpoch,
-        toEpochKey,
     ] as BigNumberish[]
     const epochKeyProof = new EpochKeyProof(
         publicSignals,
