@@ -40,10 +40,12 @@ test.skip('ensure hrefs have proper links', () => {
 })
 
 // todo: make sure value is actually in screen.debug() output; value not being shown currently but assertion is passing
-test('LoginPage should handle events properly', async () => {
+test.skip('LoginPage should handle events properly', async () => {
     render(<LoginPage />)
     screen.debug()
-    const privateKeyInput = screen.getByPlaceholderText(/enter your private key here/i)
+    const privateKeyInput = screen.getByPlaceholderText(
+        /enter your private key here/i
+    )
     await userEvent.type(privateKeyInput, 'asdf4saf45saf45sdaf542545')
     expect(privateKeyInput).toHaveValue('asdf4saf45saf45sdaf542545')
     screen.debug(privateKeyInput)

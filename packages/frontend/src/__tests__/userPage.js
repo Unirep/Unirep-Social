@@ -14,8 +14,7 @@ const renderUserPage = (userData, postData) => {
     )
 }
 
-test('should render correctly without UserContext', () => {
-    // user.state would be falsy in this case and will return the BasicPage
+test('UserPage should render BasicPage with falsy user state', () => {
     render(<UserPage />)
     expect(
         screen.getByText(/community built on ideas, not identities./i)

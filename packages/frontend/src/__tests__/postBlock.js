@@ -18,7 +18,7 @@ const renderPostBlock = (userData, unirepData, postId, postData, page) => {
     )
 }
 
-test.skip('should render PostBlock with mocked data', () => {
+test('should render PostBlock with mocked data', () => {
     const postId = '1'
     const page = '/post'
 

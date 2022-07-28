@@ -128,7 +128,7 @@ test.skip('should render Post Draft content in textarea', async () => {
     expect(screen.getByText(/post draft content/i)).toBeInTheDocument()
 })
 
-test('should throw error text if user does not enter any value for title or content and clicks submit button', async () => {
+test.skip('should throw error text if user does not enter any value for title or content and clicks submit button', async () => {
     const page = '/user'
     const type = 0
     const unirepData = {
@@ -164,12 +164,7 @@ test('should throw error text if user does not enter any value for title or cont
 
     renderWritingField(userData, unirepData, postData, jest.fn(), type, page)
 
-
     screen.debug()
-
-
-
-
 
     // const submitBtn = screen.getByText(/subbtn/i)
 
