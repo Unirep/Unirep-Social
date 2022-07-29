@@ -2,53 +2,42 @@ import { screen, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import CommentField from '../components/postBlock/commentField'
+import CommentBlock from '../components/postBlock/commentBlock'
 
-const renderCommentField = (
-    userData,
-    postData,
-    page,
-    post,
-    mockedCloseComment
-) => {
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useHistory: () => ({
+        push: jest.fn(),
+    }),
+    useLocation: () => ({
+        state: {
+            test: {
+                test: 'test',
+            },
+        },
+    }),
+}))
+
+const renderCommentBlock = (userData, postData, commentId, page) => {
     return render(
         <UserContext.Provider value={userData}>
             <PostContext.Provider value={postData}>
-                <CommentField
-                    post={post}
-                    mockedCloseComment={mockedCloseComment}
-                    page={page}
-                ></CommentField>
+                <CommentBlock commentId={commentId} page={page}></CommentBlock>
             </PostContext.Provider>
         </UserContext.Provider>
     )
 }
 
-test('should render CommentField correctly with .Provider data', () => {
+test('should render CommentBlock correctly with provider data', () => {
     const page = '/user'
-
-    const post = {
-        type: 0,
-        id: 'txhash id',
-        title: 'title',
-        content: 'content',
-        upvote: 4,
-        downvote: 5,
-        epoch_key: 'epoch_key test',
-        username: 'username',
-        post_time: '00',
-        reputation: 30,
-        commentCount: 6,
-        current_epoch: 7,
-        proofIndex: 8,
-    }
+    const commentId = '1'
 
     const postData = {
         commentsById: {
-            commentId: {
+            1: {
                 id: 'commentId',
-                content: 'string',
-                post_time: '00',
+                content: 'content from commentsById',
+                createdAt: '00',
                 reputation: 30,
                 epoch_key: 'epoch_key test',
             },
@@ -60,35 +49,27 @@ test('should render CommentField correctly with .Provider data', () => {
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderCommentField(userData, postData, page, post, jest.fn())
-    expect(screen.getByText(/comment - 3 points/i)).toBeInTheDocument()
+    renderCommentBlock(userData, postData, commentId, page)
+    expect(screen.getByText(/post by/i)).toBeInTheDocument()
+    expect(screen.getByText(/epoch_key test/i)).toBeInTheDocument()
+    expect(screen.getByText(/etherscan/i)).toBeInTheDocument()
+    expect(screen.getByText(/content from commentsById/i)).toBeInTheDocument()
+    expect(screen.getByText(/boost/i)).toBeInTheDocument()
+    expect(screen.getByText(/squash/i)).toBeInTheDocument()
+    expect(screen.getByText(/share/i)).toBeInTheDocument()
 })
 
-test(`should display "somethings wrong..." if user's state is null`, () => {
+test('should simulate user triggering gotoPost function on user route', async () => {
     const page = '/user'
-
-    const post = {
-        type: 0,
-        id: 'txhash id',
-        title: 'title',
-        content: 'content',
-        upvote: 4,
-        downvote: 5,
-        epoch_key: 'epoch_key test',
-        username: 'username',
-        post_time: '00',
-        reputation: 30,
-        commentCount: 6,
-        current_epoch: 7,
-        proofIndex: 8,
-    }
+    const commentId = '1'
 
     const postData = {
         commentsById: {
-            commentId: {
+            1: {
                 id: 'commentId',
-                content: 'string',
-                post_time: '00',
+                post_id: '1',
+                content: 'content from commentsById',
+                createdAt: '00',
                 reputation: 30,
                 epoch_key: 'epoch_key test',
             },
@@ -96,13 +77,14 @@ test(`should display "somethings wrong..." if user's state is null`, () => {
     }
 
     const userData = {
-        // null user state
-        userState: null,
+        userState: 'userState',
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderCommentField(userData, postData, page, post, jest.fn())
-    expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
-    // checks user's state is null
-    expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
+    renderCommentBlock(userData, postData, commentId, page)
+    const gotoPost = document.getElementsByClassName(
+        'block-content no-padding-horizontal'
+    )[0]
+    // this will trigger the gotoPost function
+    await userEvent.click(gotoPost)
 })
