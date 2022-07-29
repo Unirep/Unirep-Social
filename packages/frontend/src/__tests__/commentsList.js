@@ -14,7 +14,7 @@ const renderCommentsField = (postData, commentIds, page, loadMoreComments) => {
     )
 }
 
-test('should render CommentLists correctly with data and populated commentIds prop', () => {
+test('should render CommentLists correctly with data and populated commentIds array', () => {
     const commentIds = ['1']
     const page = '/post'
 
@@ -27,9 +27,8 @@ test('should render CommentLists correctly with data and populated commentIds pr
                 reputation: 30,
                 epoch_key: 'epoch_key test',
             },
-        }
+        },
     }
-
 
     renderCommentsField(postData, commentIds, page, jest.fn())
     expect(screen.getByText(/post by/i)).toBeInTheDocument()
@@ -55,11 +54,12 @@ test('should render CommentLists with nothing in the commentIds array', () => {
                 reputation: 30,
                 epoch_key: 'epoch_key test',
             },
-        }
+        },
     }
-
 
     renderCommentsField(postData, commentIds, page, jest.fn())
     expect(screen.getByText(/it's empty here./i)).toBeInTheDocument()
-    expect(screen.getByText(/people just being shy, no post yet./i)).toBeInTheDocument()
+    expect(
+        screen.getByText(/people just being shy, no post yet./i)
+    ).toBeInTheDocument()
 })

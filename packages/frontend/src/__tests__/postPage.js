@@ -58,5 +58,4 @@ test('should render PostPage with mocked post data and props', () => {
     renderPostPage(userData, postData, '1', '/home')
     expect(screen.getAllByText(/mocked post content/i)).toBeTruthy()
     expect(screen.getByText(/some comment draft content/i)).toBeInTheDocument()
-    // todo: fix error being thrown from TextEditor component
 })

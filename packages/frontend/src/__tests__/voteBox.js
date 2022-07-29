@@ -66,16 +66,18 @@ test('should render VoteBox correctly with mocked .Provider data and props', () 
     expect(
         screen.getByText(/you have not squashed this before/i)
     ).toBeInTheDocument()
+    // 1 is the givenAmount set my useState in VoteBox
+    expect(screen.getByRole('spinbutton')).toHaveValue(1)
 })
 
-test('input should have the correct value', async () => {
+test('should display empty div with false userState', async () => {
     const isUpVote = true
     const closeVote = jest.fn()
     const dataId = '1'
     const isPost = true
 
     const userData = {
-        userState: true,
+        userState: false,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
         currentEpoch: 1,
     }
@@ -88,16 +90,15 @@ test('input should have the correct value', async () => {
             },
         },
         votesById: {
-            1: {
+            10: {
                 posRep: 7,
                 negRep: 3,
                 voter: '0x1234567890123456789012345678901234567890',
             },
         },
         votesByPostId: {
-            1: {
+            14: {
                 commentId: ['10'],
-
             },
         },
         commentsByPostId: {
@@ -108,11 +109,7 @@ test('input should have the correct value', async () => {
     }
 
     renderVoteBox(userData, postData, isUpVote, closeVote, dataId, isPost)
-    const input = screen.getByRole('spinbutton')
-    expect(input).toHaveValue(1)
-
-    const mainBtn = document.getElementsByClassName('main-btn')[0]
-    userEvent.dblClick(mainBtn)
-
-    // todo: is the data mocked properly? 
+    // checking if nothing is rendered
+    expect(screen.queryByText(/tune up the amount of rep/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/history/i)).not.toBeInTheDocument()
 })

@@ -3,8 +3,6 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import PostsList from '../components/postsList/postsList'
 
-const mockLoadMorePosts = jest.fn()
-
 const renderPostsList = (userData, postData, postIds = 0) => {
     return render(
         <UserContext.Provider value={userData}>
@@ -24,9 +22,8 @@ test('should render PostsList correctly *without* posts', () => {
     expect(screen.queryByText(/load more posts/i)).not.toBeInTheDocument()
 })
 
-// todo: how do I get props to be passed in for children components? (PostBlock in this case)
-test('should render PostsList correctly *with* posts', () => {
-    const postIds = 0
+test('should render PostsList with PostBlock child component', () => {
+    const postIds = ['1']
 
     const userData = {
         userState: true,
@@ -56,8 +53,15 @@ test('should render PostsList correctly *with* posts', () => {
         commentDraft: {
             content: 'mocked comment draft content',
         },
+        loadCommentsByPostId: jest.fn(),
     }
 
     renderPostsList(userData, postData, postIds)
-    screen.debug()
+    expect(screen.getByText(/post by/i)).toBeInTheDocument()
+    expect(screen.getByText(/etherscan/i)).toBeInTheDocument()
+    expect(screen.getByText(/mocked post content/i)).toBeInTheDocument()
+    expect(screen.getByText(/comments/i)).toBeInTheDocument()
+    expect(screen.getByText(/boost/i)).toBeInTheDocument()
+    expect(screen.getByText(/squash/i)).toBeInTheDocument()
+    expect(screen.getByText(/share/i)).toBeInTheDocument()
 })

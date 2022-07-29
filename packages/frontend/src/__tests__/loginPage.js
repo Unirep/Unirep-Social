@@ -1,18 +1,16 @@
 import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import UserContext from '../context/User'
 import LoginPage from '../pages/loginPage/loginPage'
-
-// mock needed for history and location hooks
-const mockHistoryPush = jest.fn()
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: () => ({
-        push: mockHistoryPush,
+        push: jest.fn(),
     }),
 }))
 
-test.skip('should render LoginPage correctly', () => {
+test('should render LoginPage correctly', () => {
     render(<LoginPage />)
     expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
     expect(
@@ -27,7 +25,7 @@ test.skip('should render LoginPage correctly', () => {
     expect(screen.getByText(/join here/i)).toBeInTheDocument()
 })
 
-test.skip('ensure hrefs have proper links', () => {
+test('ensure hrefs have proper links', () => {
     render(<LoginPage />)
     // checking links render properly
     expect(screen.getByText(/join/i).closest('a')).toHaveAttribute(
@@ -39,9 +37,19 @@ test.skip('ensure hrefs have proper links', () => {
     ).toHaveAttribute('href', 'https://about.unirep.social/alpha-invitation')
 })
 
-// todo: make sure value is actually in screen.debug() output; value not being shown currently but assertion is passing
+// todo: why is userEvent.type not working? Test passes but value is not displayed when using screen.debug()
 test.skip('LoginPage should handle events properly', async () => {
-    render(<LoginPage />)
+
+    const userData = {
+        login: jest.fn(),
+        
+    }
+
+    render(
+        <UserContext.Provider value={userData}>
+            <LoginPage />
+        </UserContext.Provider>
+    )
     screen.debug()
     const privateKeyInput = screen.getByPlaceholderText(
         /enter your private key here/i

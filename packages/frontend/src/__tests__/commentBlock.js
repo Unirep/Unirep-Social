@@ -57,7 +57,6 @@ test('should render CommentBlock correctly with provider data', () => {
     expect(screen.getByText(/boost/i)).toBeInTheDocument()
     expect(screen.getByText(/squash/i)).toBeInTheDocument()
     expect(screen.getByText(/share/i)).toBeInTheDocument()
-    screen.debug()
 })
 
 test('should simulate user triggering gotoPost function on user route', async () => {
