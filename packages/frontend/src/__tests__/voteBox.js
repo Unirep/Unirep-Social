@@ -110,6 +110,8 @@ test('should display empty div with false userState', async () => {
 
     renderVoteBox(userData, postData, isUpVote, closeVote, dataId, isPost)
     // checking if nothing is rendered
-    expect(screen.queryByText(/tune up the amount of rep/i)).not.toBeInTheDocument()
+    expect(
+        screen.queryByText(/tune up the amount of rep/i)
+    ).not.toBeInTheDocument()
     expect(screen.queryByText(/history/i)).not.toBeInTheDocument()
 })

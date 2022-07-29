@@ -24,9 +24,5 @@ test('should render SettingPage properly with BasicPage and PrivateKey component
             /uniRep social uses semaphore technology to generate the private key. it's a super dope string and it's very important for you to store it safely. this key will be used to regain access to your rep points./i
         )
     ).toBeInTheDocument()
-    expect(
-        screen.queryByText(
-            /private key./i
-        )
-    ).toBeInTheDocument()
+    expect(screen.queryByText(/private key./i)).toBeInTheDocument()
 })

@@ -39,10 +39,8 @@ test('ensure hrefs have proper links', () => {
 
 // todo: why is userEvent.type not working? Test passes but value is not displayed when using screen.debug()
 test.skip('LoginPage should handle events properly', async () => {
-
     const userData = {
         login: jest.fn(),
-        
     }
 
     render(

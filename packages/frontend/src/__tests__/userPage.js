@@ -25,7 +25,6 @@ test('UserPage should render BasicPage with falsy user state', () => {
 })
 
 test('should render correctly with UserContext and PostContext', () => {
-
     const userData = {
         userState: true,
         netReputation: 30,
@@ -46,13 +45,18 @@ test('should render correctly with UserContext and PostContext', () => {
         loadFeed: jest.fn(),
         feedKey: jest.fn(),
         loadComments: jest.fn(),
-        
     }
 
     renderUserPage(userData, postData)
     expect(screen.getByText(/my stuff/i)).toBeInTheDocument()
-    expect(screen.getByText(/how I use my rep in this cycle/i)).toBeInTheDocument()
+    expect(
+        screen.getByText(/how I use my rep in this cycle/i)
+    ).toBeInTheDocument()
     expect(screen.getByText(/Received/i)).toBeInTheDocument()
-    expect(screen.getByText(/this rep is in the vault. it will be yours in the next cycle./i)).toBeInTheDocument()
+    expect(
+        screen.getByText(
+            /this rep is in the vault. it will be yours in the next cycle./i
+        )
+    ).toBeInTheDocument()
     expect(screen.getByText(/system drop/i)).toBeInTheDocument()
 })
