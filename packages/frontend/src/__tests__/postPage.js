@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import PostContext from '../context/Post'
+import UserContext from '../context/User'
 import PostPage from '../pages/postPage/postPage'
 
 jest.mock('react-router-dom', () => ({
@@ -7,22 +8,37 @@ jest.mock('react-router-dom', () => ({
     useParams: jest.fn().mockReturnValue({ id: '1' }),
 }))
 
-const renderPostPage = (postData) => {
+const renderPostPage = (userData, postData, postId, page) => {
     render(
-        <PostContext.Provider value={postData}>
-            <PostPage />
-        </PostContext.Provider>
+        <UserContext.Provider value={userData}>
+            <PostContext.Provider value={postData}>
+                <PostPage postId={postId} page={page} />
+            </PostContext.Provider>
+        </UserContext.Provider>
     )
 }
 
-const preDate = new Date()
+test('should render PostPage with mocked post data and props', () => {
+    const userData = {
+        userState: true,
+        netReputation: 30,
+        commentReputation: 30,
+        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+    }
 
-test.skip('should render properly with mocked data', () => {
     const postData = {
         postsById: {
             1: {
                 current_epoch: 7,
                 content: 'mocked post content',
+                createdAt: parseInt('00'),
+            },
+        },
+        commentsById: {
+            1: {
+                current_epoch: 7,
+                content: 'mocked post content',
+                createdAt: parseInt('00'),
             },
         },
         votesByPostId: {
@@ -31,15 +47,15 @@ test.skip('should render properly with mocked data', () => {
         commentsByPostId: {
             1: ['1'],
         },
+        commentDraft: {
+            content: 'some comment draft content',
+        },
         loadVotesForPostId: jest.fn(),
         loadVotesForCommentId: jest.fn(),
         loadPost: jest.fn(),
-        createdAt: '00/00/0000 00:00 00', //todo: fix date mocking
+        loadCommentsByPostId: jest.fn(),
     }
-    renderPostPage(postData)
-
-    expect(
-        screen.getByText(/community built on ideas, not identities/i)
-    ).toBeInTheDocument()
-    expect(screen.getByText(/loading.../i)).toBeInTheDocument()
+    renderPostPage(userData, postData, '1', '/home')
+    expect(screen.getAllByText(/mocked post content/i)).toBeTruthy()
+    expect(screen.getByText(/some comment draft content/i)).toBeInTheDocument()
 })

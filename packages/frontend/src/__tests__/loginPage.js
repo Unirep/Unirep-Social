@@ -1,15 +1,12 @@
-import { screen, render } from '@testing-library/react'
+import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import LoginPage from '../pages/loginPage/loginPage'
 
-// mock needed for history and location hooks
-const mockHistoryPush = jest.fn()
-
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: () => ({
-        push: mockHistoryPush,
+        push: jest.fn(),
     }),
 }))
 
@@ -41,7 +38,18 @@ test('ensure hrefs have proper links', () => {
 })
 
 test('LoginPage should handle events properly', async () => {
-    render(<LoginPage />)
-    const textbox = screen.getByRole(/textbox/i)
-    await userEvent.type(textbox, 'test')
+    const userData = {
+        login: jest.fn(),
+    }
+
+    render(
+        <UserContext.Provider value={userData}>
+            <LoginPage />
+        </UserContext.Provider>
+    )
+    const privateKeyInput = screen.getByPlaceholderText(
+        /enter your private key here/i
+    )
+    await userEvent.type(privateKeyInput, 'asdf4saf45saf45sdaf542545')
+    expect(privateKeyInput).toHaveValue('asdf4saf45saf45sdaf542545')
 })
