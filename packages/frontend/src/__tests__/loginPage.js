@@ -37,8 +37,7 @@ test('ensure hrefs have proper links', () => {
     ).toHaveAttribute('href', 'https://about.unirep.social/alpha-invitation')
 })
 
-// todo: why is userEvent.type not working? Test passes but value is not displayed when using screen.debug()
-test.skip('LoginPage should handle events properly', async () => {
+test('LoginPage should handle events properly', async () => {
     const userData = {
         login: jest.fn(),
     }
@@ -48,11 +47,9 @@ test.skip('LoginPage should handle events properly', async () => {
             <LoginPage />
         </UserContext.Provider>
     )
-    screen.debug()
     const privateKeyInput = screen.getByPlaceholderText(
         /enter your private key here/i
     )
     await userEvent.type(privateKeyInput, 'asdf4saf45saf45sdaf542545')
     expect(privateKeyInput).toHaveValue('asdf4saf45saf45sdaf542545')
-    screen.debug(privateKeyInput)
 })

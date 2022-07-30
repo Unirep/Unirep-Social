@@ -32,7 +32,9 @@ test('should render CommentLists correctly with data and populated commentIds ar
 
     renderCommentsField(postData, commentIds, page, jest.fn())
     expect(screen.getByText(/post by/i)).toBeInTheDocument()
-    expect(screen.getByText(/epoch_key test/i)).toBeInTheDocument()
+    expect(
+        screen.getByText(`Post by ${postData.commentsById[1].epoch_key}`)
+    ).toBeInTheDocument()
     expect(screen.getByText(/etherscan/i)).toBeInTheDocument()
     expect(screen.getByText(/content from commentsById/i)).toBeInTheDocument()
     expect(screen.getByText(/boost/i)).toBeInTheDocument()
