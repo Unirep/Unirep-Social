@@ -1,0 +1,11 @@
+.generic-button {
+    border-radius: 4px;
+    background: black;
+    color: white;
+    padding: 4px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 400;
+    min-width: 60px;
+    text-align: center;
+}
