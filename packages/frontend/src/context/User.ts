@@ -21,10 +21,10 @@ export class User {
     loadingPromise
     userState?: UserState
 
-    syncPercent: any
     latestProcessedBlock: any
     isInitialSyncing = true
     initialSyncFinalBlock = Infinity
+    syncStartBlock: any
 
     constructor() {
         makeObservable(this, {
@@ -34,7 +34,10 @@ export class User {
             spent: observable,
             currentEpochKeys: computed,
             allEpks: observable,
-            // syncPercent: computed,
+            syncPercent: computed,
+            syncStartBlock: observable,
+            initialSyncFinalBlock: observable,
+            latestProcessedBlock: observable,
             isInitialSyncing: observable,
             id: observable,
         })
@@ -110,11 +113,31 @@ export class User {
         return this.currentEpoch > (this.latestTransitionedEpoch || -1)
     }
 
+    get syncPercent() {
+        if (!this.latestProcessedBlock) {
+            return 0
+        }
+        return (
+            (100 * (this.latestProcessedBlock - this.syncStartBlock)) /
+            (this.initialSyncFinalBlock - this.syncStartBlock)
+        )
+    }
+
     async startSync() {
         this.isInitialSyncing = true
+        const syncState = await (this.userState as any)._db.findOne(
+            'SynchronizerState',
+            {
+                where: {},
+            }
+        )
         const latestBlock = await config.DEFAULT_ETH_PROVIDER.getBlockNumber()
+        this.syncStartBlock = syncState?.latestCompleteBlock ?? 0
         this.initialSyncFinalBlock = latestBlock
         await this.userState?.start()
+        this.userState?.on('processedEvent', (event) => {
+            this.latestProcessedBlock = event.blockNumber
+        })
         this.userState?.waitForSync(this.initialSyncFinalBlock).then(() => {
             this.isInitialSyncing = false
         })
