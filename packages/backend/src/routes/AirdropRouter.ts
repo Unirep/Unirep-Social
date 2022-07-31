@@ -73,7 +73,7 @@ async function getAirdrop(req, res) {
         action: 'UST',
         data: '0',
         transactionHash: hash,
-        confirmed: false,
+        confirmed: 0,
     })
     res.json({ transaction: hash })
 }

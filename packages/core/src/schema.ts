@@ -132,8 +132,8 @@ const _schema = [
             ['transactionHash', 'String', { optional: true }],
             {
                 name: 'confirmed',
-                type: 'Bool',
-                default: () => true,
+                type: 'Int',
+                default: () => 1,
             },
         ],
     },
