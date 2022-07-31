@@ -296,7 +296,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -436,7 +436,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -614,7 +614,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -718,7 +718,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {

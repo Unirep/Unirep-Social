@@ -162,18 +162,6 @@ async function vote(req, res) {
         commentId: comment ? dataId : '',
         status: 0,
     })
-
-    await req.db.create(
-        'Nullifier',
-        reputationProof.repNullifiers
-            .filter((n) => n.toString() !== '0')
-            .map((n) => ({
-                nullifier: n.toString(),
-                epoch: currentEpoch,
-                transactionHash: hash,
-                confirmed: false,
-            }))
-    )
     await req.db.create('Record', {
         to: req.body.receiver,
         from: epochKey,
@@ -183,7 +171,7 @@ async function vote(req, res) {
         action: ActionType.Vote,
         transactionHash: hash,
         data: dataId,
-        confirmed: false,
+        confirmed: 0,
     })
     await req.db.transaction(async (db) => {
         const [post, comment] = await Promise.all([
