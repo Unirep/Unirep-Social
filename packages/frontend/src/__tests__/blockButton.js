@@ -1,8 +1,17 @@
 import { screen, render, waitFor } from '@testing-library/react'
+import UserContext from '../context/User'
 import userEvent from '@testing-library/user-event'
 import BlockButton from '../components/postBlock/blockButton'
 
-test('should render BlockButton props correctly', () => {
+const renderBlockButton = (userData, type, count, data) => {
+    return render(
+        <UserContext.Provider value={userData}>
+            <BlockButton type={type} count={count} data={data} />
+        </UserContext.Provider>
+    )
+}
+
+test('should render BlockButton props correctly with comment button', () => {
     // Mocked props
     const type = 'comment'
     const count = 1
@@ -20,15 +29,21 @@ test('should render BlockButton props correctly', () => {
         current_epoch: 0,
         proofIndex: 0,
     }
+    const userData = {
+        userState: true,
+        currentEpoch: 3,
+        netReputation: 30,
+    }
 
-    render(<BlockButton type={type} count={count} data={data} />)
+    renderBlockButton(userData, type, count, data)
+    expect(screen.getByText(count)).toBeInTheDocument()
     expect(screen.getByText(/comment/i)).toBeInTheDocument()
 })
 
-test('should render BlockButton share button correctly', () => {
+test('should render BlockButton share button correctly', async () => {
     // Mocked props
     const type = 'share'
-    const count = 1
+    const count = 100
     const data = {
         type: 'share',
         id: '0x123456789',
@@ -43,8 +58,21 @@ test('should render BlockButton share button correctly', () => {
         current_epoch: 0,
         proofIndex: 0,
     }
+    const userData = {
+        userState: true,
+        currentEpoch: 3,
+        netReputation: 30,
+    }
 
-    render(<BlockButton type={type} count={count} data={data} />)
+    renderBlockButton(userData, type, count, data)
+    // count prop should be rendered with type 'share' prop
+    expect(screen.queryByText(count)).not.toBeInTheDocument()
     // Check if share button is rendered
     expect(document.getElementsByClassName('block-button-share')).toBeTruthy()
+    const blockBtnShare =
+        document.getElementsByClassName('block-button-share')[0]
+    // this will trigger setIsHover
+    await userEvent.click(blockBtnShare)
+    await userEvent.hover(blockBtnShare)
+    await userEvent.dblClick(blockBtnShare)
 })
