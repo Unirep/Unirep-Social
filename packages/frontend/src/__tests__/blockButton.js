@@ -14,7 +14,7 @@ const renderBlockButton = (userData, type, count, data) => {
 test('should render BlockButton props correctly with comment button', () => {
     // Mocked props
     const type = 'comment'
-    const count = 4321
+    const count = 3109
     const data = {
         type: 'comment',
         id: '0x123456789',

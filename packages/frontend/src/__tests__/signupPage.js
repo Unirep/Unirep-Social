@@ -43,6 +43,8 @@ test('should render SignupPage correctly with user typing into textbox', async (
         setSignUpPromise: jest.fn(),
     }
 
+    const fakeText = 'lorem ipsum dolor sit amet'
+
     renderSignupPage(userData, postData)
     expect(
         screen.getByText(
@@ -52,6 +54,6 @@ test('should render SignupPage correctly with user typing into textbox', async (
     expect(screen.getByText(/join us/i)).toBeInTheDocument()
     // generate text on signup page
     const textbox = screen.getByRole('textbox')
-    await userEvent.type(textbox, 'lorem ipsum dolor sit amet')
-    expect(screen.getByText(/lorem ipsum dolor sit amet/i)).toBeInTheDocument()
+    await userEvent.type(textbox, fakeText)
+    expect(screen.getByText(fakeText)).toBeInTheDocument()
 })
