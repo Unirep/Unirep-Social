@@ -42,7 +42,7 @@ test('should render SignupPage correctly with user typing into textbox', async (
         signUp: jest.fn(),
         setSignUpPromise: jest.fn(),
     }
-    
+
     const fakeText = 'lorem ipsum dolor sit amet'
 
     renderSignupPage(userData, postData)
