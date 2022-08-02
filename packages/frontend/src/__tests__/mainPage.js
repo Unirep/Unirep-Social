@@ -134,4 +134,5 @@ test('should page rerender after user clicks create post button', async () => {
     expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
     expect(screen.getByText(/remaining time/i)).toBeInTheDocument()
+    screen.debug()
 })
