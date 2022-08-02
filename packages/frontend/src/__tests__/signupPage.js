@@ -1,9 +1,20 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import SignupPage from '../pages/signupPage/signupPage'
 
-test('should render SignupPage correctly with content[0]', () => {
+const renderSignupPage = (userData, postData) => {
+    return render(
+        <UserContext.Provider value={userData}>
+            <PostContext.Provider value={postData}>
+                <SignupPage />
+            </PostContext.Provider>
+        </UserContext.Provider>
+    )
+}
+
+test('should render SignupPage correctly with user typing into textbox', async () => {
     const userData = {
         userState: true,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
@@ -28,18 +39,21 @@ test('should render SignupPage correctly with content[0]', () => {
         loadVotesForPostId: jest.fn(),
         loadVotesForCommentId: jest.fn(),
         getAirdrop: jest.fn(),
+        signUp: jest.fn(),
+        setSignUpPromise: jest.fn(),
     }
 
-    render(
-        <UserContext.Provider value={userData}>
-            <PostContext.Provider value={postData}>
-                <SignupPage />
-            </PostContext.Provider>
-        </UserContext.Provider>
-    )
+    const fakeText = 'lorem ipsum dolor sit amet'
+
+    renderSignupPage(userData, postData)
     expect(
         screen.getByText(
             /currently, UniRep Social is an invite only community. Please enter your invitation code below./i
         )
     ).toBeInTheDocument()
+    expect(screen.getByText(/join us/i)).toBeInTheDocument()
+    // generate text on signup page
+    const textbox = screen.getByRole('textbox')
+    await userEvent.type(textbox, fakeText)
+    expect(screen.getByText(fakeText)).toBeInTheDocument()
 })
