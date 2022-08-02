@@ -102,4 +102,4 @@ jobs:
                   command: yarn build --scope @unirep-social/core --scope @unirep-social/frontend
             - run:
                   name: Test
-                  command: cd packages/frontend && yarn test
+                  command: cd packages/frontend && yarn test && yarn test:e2e 
