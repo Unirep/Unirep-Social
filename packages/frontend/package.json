@@ -12,10 +12,10 @@
         "test": "jest --config ./jest.config.js",
         "test:watch": "jest --watch",
         "cy:run": "cypress run",
-        "cy:open": "cypress open",
+        "cy:open": "cypress open --e2e --browser chrome",
         "test:coverage": "jest --coverage",
         "test:e2e": "start-server-and-test start http://localhost:3000 cy:run",
-        "test:e2e:dev": "start-server-and-test start http://localhost:3000 cy:open"
+        "test:e2e:dev": "start-server-and-test 3000 cy:open"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"
