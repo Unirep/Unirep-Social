@@ -57,6 +57,6 @@ async function main() {
     require('not-index')([__dirname, 'routes'], /[a-zA-Z0-9]\.ts/).map((r) =>
         r.default(app)
     )
-    const port = process.env.APP_PORT ?? 5000
+    const port = process.env.APP_PORT ?? 3001
     app.listen(port, () => console.log(`> Listening on port ${port}`))
 }

@@ -4,6 +4,16 @@ import { nanoid } from 'nanoid'
 
 const _schema = [
     {
+        name: 'OAuthState',
+        rows: [
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+        ],
+    },
+    {
         name: 'AccountNonce',
         primaryKey: 'address',
         rows: [

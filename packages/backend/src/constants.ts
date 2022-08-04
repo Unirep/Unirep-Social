@@ -22,6 +22,8 @@ export const {
     MONGO_URL,
     ADMIN_SESSION_CODE,
     DB_PATH,
+    GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET,
 } = process.env as any
 
 console.log(`Admin session code is "${ADMIN_SESSION_CODE}"`)
