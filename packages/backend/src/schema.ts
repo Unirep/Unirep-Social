@@ -11,6 +11,8 @@ const _schema = [
                 type: 'Int',
                 default: () => +new Date(),
             },
+            ['type', 'String'],
+            ['data', 'String', { optional: true }],
         ],
     },
     {

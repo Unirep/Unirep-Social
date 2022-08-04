@@ -24,6 +24,10 @@ export const {
     DB_PATH,
     GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET,
+    TWITTER_CLIENT_ID,
+    TWITTER_CLIENT_SECRET,
+    TWITTER_REDIRECT_URI,
+    GITHUB_REDIRECT_URI,
 } = process.env as any
 
 console.log(`Admin session code is "${ADMIN_SESSION_CODE}"`)
