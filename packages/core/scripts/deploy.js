@@ -1,5 +1,6 @@
 const { deployUnirep } = require('@unirep/contracts')
 const UnirepSocial = require('../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json')
+const SemaphoreVerifier = require('../artifacts/contracts/SemaphoreVerifier.sol/SemaphoreVerifier.json')
 const {
     GLOBAL_STATE_TREE_DEPTH,
     USER_STATE_TREE_DEPTH,
@@ -28,6 +29,13 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
         maxUsers,
         maxAttesters,
     })
+    const SemaphoreVerifierF = new ethers.ContractFactory(
+        SemaphoreVerifier.abi,
+        SemaphoreVerifier.bytecode,
+        signer
+    )
+    const verifier = await SemaphoreVerifierF.deploy()
+    await verifier.deployed()
     const UnirepSocialF = new ethers.ContractFactory(
         UnirepSocial.abi,
         UnirepSocial.bytecode,
@@ -40,7 +48,13 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
         unirep.address,
         postReputation,
         commentReputation,
-        airdrop
+        airdrop,
+        [
+            {
+                contractAddress: verifier.address,
+                merkleTreeDepth: 32,
+            },
+        ]
     )
     await unirepSocial.deployed()
     console.log(`Unirep address: ${unirep.address}`)
