@@ -18,7 +18,6 @@ describe('visit and interact with home page', () => {
                 },
             },
         }).as('post8545')
-        // cy.wait('@getApi')
         cy.visit('/')
     })
 })

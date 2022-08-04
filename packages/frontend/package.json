@@ -11,7 +11,7 @@
         "copyCircuits": "node scripts/copy_circuits",
         "test": "jest --config ./jest.config.js",
         "test:watch": "jest --watch",
-        "cy:run": "cypress run",
+        "cy:run": "cypress run --e2e --browser chrome",
         "cy:open": "cypress open --e2e --browser chrome",
         "test:coverage": "jest --coverage",
         "test:e2e": "start-server-and-test start http://localhost:3000 cy:run",
