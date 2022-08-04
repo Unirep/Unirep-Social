@@ -7,6 +7,7 @@ import {
 } from '../config/socialMedia'
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
 import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
+import { SemaphoreVerifier__factory as SemaphoreVerifierFactory } from '../typechain/factories/SemaphoreVerifier__factory'
 import { UnirepSocial } from '../typechain/UnirepSocial'
 
 // TODO: use export package from '@unirep/unirep'
@@ -17,6 +18,11 @@ const deployUnirepSocial = async (
     UnirepAddr: string,
     _settings?: any
 ): Promise<UnirepSocial> => {
+    console.log('Deploying interep verifier')
+    const VerifierFactory = new SemaphoreVerifierFactory(deployer)
+    const verifier = await VerifierFactory.deploy()
+    await verifier.deployed()
+
     console.log('Deploying Unirep Social')
 
     const _defaultAirdroppedRep = defaultAirdroppedReputation
@@ -29,6 +35,12 @@ const deployUnirepSocial = async (
         _postReputation,
         _commentReputation,
         _defaultAirdroppedRep,
+        [
+            {
+                contractAddress: verifier.address,
+                merkleTreeDepth: 32,
+            },
+        ],
         {
             gasLimit: 9000000,
         }

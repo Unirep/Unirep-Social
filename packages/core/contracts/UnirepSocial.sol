@@ -6,8 +6,10 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import { Unirep } from "@unirep/contracts/Unirep.sol";
+import { Interep } from "@interep/contracts/Interep.sol";
+import "@appliedzkp/semaphore-contracts/interfaces/IVerifier.sol";
 
-contract UnirepSocial {
+contract UnirepSocial is Interep {
     using SafeMath for uint256;
 
     Unirep public unirep;
@@ -77,8 +79,9 @@ contract UnirepSocial {
         Unirep _unirepContract,
         uint256 _postReputation,
         uint256 _commentReputation,
-        uint256 _airdroppedReputation
-    ) {
+        uint256 _airdroppedReputation,
+        Verifier[] memory interepVerifiers
+    ) Interep(interepVerifiers) {
         // Set the unirep contracts
         unirep = _unirepContract;
         // Set admin user
