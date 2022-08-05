@@ -8,6 +8,7 @@ export default defineConfig({
         video: false,
     },
     env: {
-        apiUrl: 'http://localhost:3001/api',
+        apiURL: 'http://localhost:3001',
+        ethProvider: 'http://localhost:8545',
     },
 })
