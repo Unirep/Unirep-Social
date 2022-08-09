@@ -30,25 +30,20 @@ describe('visit and interact with home page', () => {
         }).as('genInvitationCode')
     })
 
-    it('navigate to the signup page and signup a user', () => {
+    it('navigate to the login page and login a user', () => {
         cy.visit('/')
         cy.wait('@getApiConfig').then((res) => {
             cy.log(JSON.stringify(res))
         })
         // quickly tests if signup page loads
-        cy.findByText('Join').click()
+        cy.findByText('Sign in').click()
         cy.findByRole('textbox').type('test')
-        cy.get('*[class^="signup-page"]').should('be.visible')
+        cy.get('*[class^="login-page"]').should('be.visible')
         cy.get('#close-icon').click()
 
-        cy.findByText('Join').click()
+        cy.findByText('Sign in').click()
         cy.findByRole('textbox').type('testprivatekey')
-        cy.findByText('Let me in').click()
-        cy.wait('@genInvitationCode').then((res: any) => {
-            cy.log(JSON.stringify(res))
-            assert.isNotNull(res.response.body, '1st API call has data')
-        })
-        cy.findByText('Download').click()
+        cy.get('*[class^="loading-btn"]').click()
         // Error: invalid contract address or ENS name (argument="addressOrName", value=undefined, code=INVALID_ARGUMENT, version=contracts/5.6.2) error thrown here
     })
 })
