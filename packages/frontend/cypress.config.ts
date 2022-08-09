@@ -11,5 +11,5 @@ export default defineConfig({
         serverUrl: 'http://localhost:3001',
         ethProvider: 'http://localhost:8545',
     },
-    chromeWebSecurity: false
+    chromeWebSecurity: false,
 })

@@ -46,6 +46,5 @@ describe('Landing Page', () => {
         cy.get('*[class^="progress-list"]').should('be.visible')
         cy.findByText('Detail').click()
         cy.get('*[class^="progress-list"]').should('not.exist')
-
     })
 })
