@@ -1,0 +1,40 @@
+describe('Landing Page', () => {
+    const serverUrl = `${Cypress.env('serverUrl')}`
+    const ethProvider = `${Cypress.env('ethProvider')}`
+
+    Cypress.on('uncaught:exception', (err, runnable) => {
+        // returning false here prevents Cypress from
+        // failing the test
+        // note: uncaught errors are shown in Cypress GUI
+        return false
+    })
+
+    beforeEach(() => {
+        cy.intercept('GET', `${serverUrl}/api/post?*`, {
+            body: {
+                posts: 'string',
+            },
+        }).as('getApiContent')
+        cy.intercept('GET', `${serverUrl}/api/config`, {
+            statusCode: 200,
+            body: {
+                test: 'string',
+            },
+        }).as('getApiConfig')
+        cy.intercept('POST', `${ethProvider}*`, {
+            statusCode: 200,
+            fixture: 'ethProvider.json',
+        }).as('ethProvider')
+        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
+            fixture: 'genInvitationCode.json',
+        }).as('genInvitationCode')
+        // intercepts come before visits
+        cy.visit('/')
+    })
+    it('loads the landing page', () => {
+        cy.get('*[class^="main-content"]').should('be.visible')
+        cy.get('*[class^="banner"]').should('be.visible')
+        cy.get('#join').should('be.visible')
+        cy.get('#login').should('be.visible')
+    })
+})

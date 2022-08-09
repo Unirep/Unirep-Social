@@ -1,4 +1,4 @@
-import { defineConfig } from 'cypress' // might have to change this because of js
+import { defineConfig } from 'cypress'
 
 export default defineConfig({
     e2e: {
@@ -8,7 +8,8 @@ export default defineConfig({
         video: false,
     },
     env: {
-        apiURL: 'http://localhost:3001',
+        serverUrl: 'http://localhost:3001',
         ethProvider: 'http://localhost:8545',
     },
+    chromeWebSecurity: false
 })
