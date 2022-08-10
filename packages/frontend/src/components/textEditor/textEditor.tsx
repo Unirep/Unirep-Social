@@ -114,28 +114,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     }
 
     const insertImage = () => {
-        const urlComponent = document.getElementById(
-            'insert-image-url'
-        ) as HTMLInputElement
-        const url = urlComponent.value
-        const sel = document.getElementById(
-            'inputTextArea'
-        ) as HTMLTextAreaElement
-        const cursor = sel.selectionStart
-        const newContent =
-            content.substring(0, cursor) +
-            `![](${url})` +
-            content.substring(cursor)
-        setContent(newContent)
-        setContentHtml(markdown.render(newContent))
-        urlComponent.value = ''
-    }
-
-    const insertLink = () => {
-        const urlComponent = document.getElementById(
-            'insert-url'
-        ) as HTMLInputElement
-        const url = urlComponent.value
         const sel = document.getElementById(
             'inputTextArea'
         ) as HTMLTextAreaElement
@@ -143,49 +121,53 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         const end = sel.selectionEnd
         const newContent =
             content.substring(0, start) +
-            `[${content.substring(start, end)}](${url})` +
+            `![${content.substring(start, end)}](https://paste-image-url-here.jpg|png|svg|gif)` +
             content.substring(end)
         setContent(newContent)
         setContentHtml(markdown.render(newContent))
-        urlComponent.value = ''
+    }
+
+    const insertLink = () => {
+        const sel = document.getElementById(
+            'inputTextArea'
+        ) as HTMLTextAreaElement
+        const start = sel.selectionStart
+        const end = sel.selectionEnd
+        const newContent =
+            content.substring(0, start) +
+            `[${content.substring(start, end)}](https://)` +
+            content.substring(end)
+        setContent(newContent)
+        setContentHtml(markdown.render(newContent))
     }
 
     return (
         <div>
             <div>
                 <div className="buttons">
-                    <button onClick={() => addStyle(TextStyle.Bold)}>B</button>
+                    <button onClick={() => addStyle(TextStyle.Bold)}><strong>B</strong></button>
                     <button onClick={() => addStyle(TextStyle.Italic)}>
-                        I
+                        <i>I</i>
                     </button>
                     <button onClick={() => addStyle(TextStyle.Strike)}>
-                        S
+                        <s>S</s>
                     </button>
                     <button onClick={() => addStyle(TextStyle.Code)}>
-                        Code
+                        {`</>`}
                     </button>
                     <button onClick={() => addStyle(TextStyle.Quote)}>
-                        Quote
+                        ""
                     </button>
                     <button onClick={() => addStyle(TextStyle.List)}>
                         List
                     </button>
-                    <label className="insertion">
-                        <input
-                            id="insert-url"
-                            type="text"
-                            placeholder="paste your url here"
-                        />
-                        <button onClick={insertLink}>Insert Link</button>
-                    </label>
-                    <label className="insertion">
-                        <input
-                            id="insert-image-url"
-                            type="text"
-                            placeholder="paste your image url here"
-                        />
-                        <button onClick={insertImage}>Insert Image</button>
-                    </label>
+                    <button onClick={insertLink}>Link</button>
+                    <button onClick={insertImage}>Image</button>
+                    <button onClick={() =>
+                        window.open('https://commonmark.org/help/', '__blank')
+                    }>
+                        More
+                    </button>
                 </div>
                 <textarea
                     id="inputTextArea"
