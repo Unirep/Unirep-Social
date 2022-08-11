@@ -121,7 +121,10 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         const end = sel.selectionEnd
         const newContent =
             content.substring(0, start) +
-            `![${content.substring(start, end)}](https://paste-image-url-here.jpg|png|svg|gif)` +
+            `![${content.substring(
+                start,
+                end
+            )}](https://paste-image-url-here.jpg|png|svg|gif)` +
             content.substring(end)
         setContent(newContent)
         setContentHtml(markdown.render(newContent))
@@ -145,57 +148,74 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         <div>
             <div>
                 <div className="buttons">
-                    <button onClick={() => addStyle(TextStyle.Bold)}><strong>B</strong></button>
-                    <button onClick={() => addStyle(TextStyle.Italic)}>
-                        <i>I</i>
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Strike)}>
-                        <s>S</s>
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Code)}>
-                        {`</>`}
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Quote)}>
-                        ""
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.List)}>
-                        List
-                    </button>
-                    <button onClick={insertLink}>Link</button>
-                    <button onClick={insertImage}>Image</button>
-                    <button onClick={() =>
-                        window.open('https://commonmark.org/help/', '__blank')
-                    }>
-                        More
-                    </button>
-                </div>
-                <textarea
-                    id="inputTextArea"
-                    onChange={handleContentInput}
-                    value={content ?? ''}
-                    autoFocus={autoFocus}
-                />
-            </div>
-            <label className="switch">
-                <input
-                    type="checkbox"
-                    checked={isPreview}
-                    onClick={() => setIsPreview(!isPreview)}
-                />
-                <span className="slider round"></span>
-                Show Preview
-            </label>
-            {isPreview && (
-                <div className="block-content preview-box">
-                    <div className="content">
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: contentHtml,
-                            }}
-                        />
+                    <div className="basic group">
+                        <button onClick={() => addStyle(TextStyle.Bold)}>
+                            <strong>B</strong>
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Italic)}>
+                            <i>I</i>
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Strike)}>
+                            <s>S</s>
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Code)}>
+                            {`</>`}
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Quote)}>
+                            ""
+                        </button>
+                    </div>
+                    <span>|</span>
+                    <div className="advanced group">
+                        <button onClick={() => addStyle(TextStyle.List)}>
+                            List
+                        </button>
+                        <button onClick={insertLink}>Link</button>
+                        <button onClick={insertImage}>Image</button>
+                    </div>
+                    <span>|</span>
+                    <div className="other group">
+                        <button
+                            onClick={() =>
+                                window.open(
+                                    'https://commonmark.org/help/',
+                                    '__blank'
+                                )
+                            }
+                        >
+                            More
+                        </button>
+                    </div>
+                    <span>|</span>
+                    <div className="other">
+                        <button
+                            className={!isPreview ? 'button-white' : ''}
+                            onClick={() => setIsPreview(!isPreview)}
+                        >
+                            Preview
+                        </button>
                     </div>
                 </div>
-            )}
+                {isPreview && (
+                    <div className="block-content preview-box">
+                        <div className="content">
+                            <div
+                                dangerouslySetInnerHTML={{
+                                    __html: contentHtml,
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+                {!isPreview && (
+                    <textarea
+                        id="inputTextArea"
+                        onChange={handleContentInput}
+                        value={content ?? ''}
+                        autoFocus={autoFocus}
+                    />
+                )}
+            </div>
         </div>
     )
 }
