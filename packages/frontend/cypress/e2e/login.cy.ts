@@ -17,12 +17,12 @@ describe('visit and interact with home page', () => {
         }).as('getApiContent')
         cy.intercept('GET', `${serverUrl}/api/config`, {
             statusCode: 200,
+            statusMessage: 'OK',
             body: {
                 test: 'string',
             },
         }).as('getApiConfig')
         cy.intercept('POST', `${ethProvider}*`, {
-            statusCode: 200,
             fixture: 'ethProvider.json',
         }).as('ethProvider')
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
@@ -32,8 +32,8 @@ describe('visit and interact with home page', () => {
 
     it('navigate to the login page and login a user', () => {
         cy.visit('/')
-        cy.wait('@getApiConfig').then((res) => {
-            cy.log(JSON.stringify(res))
+        cy.wait('@getApiConfig').then((res: any) => {
+            cy.log(JSON.stringify(res.response.body))
         })
         // quickly tests if signup page loads
         cy.findByText('Sign in').click()
@@ -44,6 +44,7 @@ describe('visit and interact with home page', () => {
         cy.findByText('Sign in').click()
         cy.findByRole('textbox').type('testprivatekey')
         cy.get('*[class^="loading-btn"]').click()
+        
         // Error: invalid contract address or ENS name (argument="addressOrName", value=undefined, code=INVALID_ARGUMENT, version=contracts/5.6.2) error thrown here
     })
 })
