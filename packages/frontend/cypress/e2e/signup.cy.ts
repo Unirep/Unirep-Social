@@ -18,7 +18,8 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/config`, {
             body: {
                 unirepAddress: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-                unirepSocialAddress: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
+                unirepSocialAddress:
+                    '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
             },
         }).as('getApiConfig')
         cy.intercept('POST', `${ethProvider}*`, {
