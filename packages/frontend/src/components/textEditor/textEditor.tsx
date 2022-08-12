@@ -148,33 +148,49 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         <div>
             <div>
                 <div className="buttons">
-                    <div className="basic group">
+                    <div className="group basic">
                         <button onClick={() => addStyle(TextStyle.Bold)}>
-                            <strong>B</strong>
+                            <img
+                                src={require('../../../public/images/bold.svg')}
+                            />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Italic)}>
-                            <i>I</i>
+                            <img
+                                src={require('../../../public/images/italic.svg')}
+                            />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Strike)}>
-                            <s>S</s>
+                            <img
+                                src={require('../../../public/images/strike.svg')}
+                            />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Code)}>
-                            {`</>`}
+                            <img
+                                src={require('../../../public/images/codeblock.svg')}
+                            />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Quote)}>
-                            ""
+                            <img
+                                src={require('../../../public/images/quote.svg')}
+                            />
                         </button>
-                    </div>
-                    <span>|</span>
-                    <div className="advanced group">
                         <button onClick={() => addStyle(TextStyle.List)}>
-                            List
+                            <img
+                                src={require('../../../public/images/bullet.svg')}
+                            />
                         </button>
-                        <button onClick={insertLink}>Link</button>
-                        <button onClick={insertImage}>Image</button>
+                        <button onClick={insertLink}>
+                            <img
+                                src={require('../../../public/images/link.svg')}
+                            />
+                        </button>
+                        <button onClick={insertImage}>
+                            <img
+                                src={require('../../../public/images/img.svg')}
+                            />
+                        </button>
                     </div>
-                    <span>|</span>
-                    <div className="other group">
+                    <div className="group">
                         <button
                             onClick={() =>
                                 window.open(
@@ -183,16 +199,15 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                                 )
                             }
                         >
-                            More
+                            <img
+                                src={require('../../../public/images/info_small.svg')}
+                            />
                         </button>
-                    </div>
-                    <span>|</span>
-                    <div className="other">
                         <button
-                            className={!isPreview ? 'button-white' : ''}
+                            className="button-border"
                             onClick={() => setIsPreview(!isPreview)}
                         >
-                            Preview
+                            {isPreview ? 'Edit' : 'Preview'}
                         </button>
                     </div>
                 </div>
