@@ -114,28 +114,6 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     }
 
     const insertImage = () => {
-        const urlComponent = document.getElementById(
-            'insert-image-url'
-        ) as HTMLInputElement
-        const url = urlComponent.value
-        const sel = document.getElementById(
-            'inputTextArea'
-        ) as HTMLTextAreaElement
-        const cursor = sel.selectionStart
-        const newContent =
-            content.substring(0, cursor) +
-            `![](${url})` +
-            content.substring(cursor)
-        setContent(newContent)
-        setContentHtml(markdown.render(newContent))
-        urlComponent.value = ''
-    }
-
-    const insertLink = () => {
-        const urlComponent = document.getElementById(
-            'insert-url'
-        ) as HTMLInputElement
-        const url = urlComponent.value
         const sel = document.getElementById(
             'inputTextArea'
         ) as HTMLTextAreaElement
@@ -143,77 +121,116 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
         const end = sel.selectionEnd
         const newContent =
             content.substring(0, start) +
-            `[${content.substring(start, end)}](${url})` +
+            `![${content.substring(
+                start,
+                end
+            )}](https://paste-image-url-here.jpg|png|svg|gif)` +
             content.substring(end)
         setContent(newContent)
         setContentHtml(markdown.render(newContent))
-        urlComponent.value = ''
+    }
+
+    const insertLink = () => {
+        const sel = document.getElementById(
+            'inputTextArea'
+        ) as HTMLTextAreaElement
+        const start = sel.selectionStart
+        const end = sel.selectionEnd
+        const newContent =
+            content.substring(0, start) +
+            `[${content.substring(start, end)}](https://)` +
+            content.substring(end)
+        setContent(newContent)
+        setContentHtml(markdown.render(newContent))
     }
 
     return (
         <div>
             <div>
                 <div className="buttons">
-                    <button onClick={() => addStyle(TextStyle.Bold)}>B</button>
-                    <button onClick={() => addStyle(TextStyle.Italic)}>
-                        I
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Strike)}>
-                        S
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Code)}>
-                        Code
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.Quote)}>
-                        Quote
-                    </button>
-                    <button onClick={() => addStyle(TextStyle.List)}>
-                        List
-                    </button>
-                    <label className="insertion">
-                        <input
-                            id="insert-url"
-                            type="text"
-                            placeholder="paste your url here"
-                        />
-                        <button onClick={insertLink}>Insert Link</button>
-                    </label>
-                    <label className="insertion">
-                        <input
-                            id="insert-image-url"
-                            type="text"
-                            placeholder="paste your image url here"
-                        />
-                        <button onClick={insertImage}>Insert Image</button>
-                    </label>
-                </div>
-                <textarea
-                    id="inputTextArea"
-                    onChange={handleContentInput}
-                    value={content ?? ''}
-                    autoFocus={autoFocus}
-                />
-            </div>
-            <label className="switch">
-                <input
-                    type="checkbox"
-                    checked={isPreview}
-                    onClick={() => setIsPreview(!isPreview)}
-                />
-                <span className="slider round"></span>
-                Show Preview
-            </label>
-            {isPreview && (
-                <div className="block-content preview-box">
-                    <div className="content">
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: contentHtml,
-                            }}
-                        />
+                    <div className="group basic">
+                        <button onClick={() => addStyle(TextStyle.Bold)}>
+                            <img
+                                src={require('../../../public/images/bold.svg')}
+                            />
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Italic)}>
+                            <img
+                                src={require('../../../public/images/italic.svg')}
+                            />
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Strike)}>
+                            <img
+                                src={require('../../../public/images/strike.svg')}
+                            />
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Code)}>
+                            <img
+                                src={require('../../../public/images/codeblock.svg')}
+                            />
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.Quote)}>
+                            <img
+                                src={require('../../../public/images/quote.svg')}
+                            />
+                        </button>
+                        <button onClick={() => addStyle(TextStyle.List)}>
+                            <img
+                                src={require('../../../public/images/bullet.svg')}
+                            />
+                        </button>
+                        <button onClick={insertLink}>
+                            <img
+                                src={require('../../../public/images/link.svg')}
+                            />
+                        </button>
+                        <button onClick={insertImage}>
+                            <img
+                                src={require('../../../public/images/img.svg')}
+                            />
+                        </button>
+                    </div>
+                    <div className="group">
+                        <button
+                            onClick={() =>
+                                window.open(
+                                    'https://commonmark.org/help/',
+                                    '__blank'
+                                )
+                            }
+                        >
+                            <img
+                                src={require('../../../public/images/info_small.svg')}
+                            />
+                        </button>
+                        <button
+                            className="button-border"
+                            onClick={() => setIsPreview(!isPreview)}
+                        >
+                            {isPreview ? 'Edit' : 'Preview'}
+                        </button>
                     </div>
                 </div>
-            )}
+                {isPreview && (
+                    <div className="block-content preview-box">
+                        <div className="content">
+                            <div
+                                dangerouslySetInnerHTML={{
+                                    __html: contentHtml,
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+                {!isPreview && (
+                    <textarea
+                        id="inputTextArea"
+                        onChange={handleContentInput}
+                        value={content ?? ''}
+                        autoFocus={autoFocus}
+                    />
+                )}
+            </div>
         </div>
     )
 }
