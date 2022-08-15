@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import VoteBox from '../components/voteBox/voteBox'
+import VoteBox from '../components/voteBox'
 
 const renderVoteBox = (
     userData,
