@@ -1,17 +1,17 @@
 import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 
-import UserContext from '../../context/User'
+import UserContext from '../context/User'
 
-import { ActionType } from '../../context/Queue'
-import { getRecords } from '../../utils'
+import { ActionType } from '../context/Queue'
+import { getRecords } from '../utils'
 
-import BasicPage from '../basicPage/basicPage'
-import { Record, Page, QueryType } from '../../constants'
-import ActivityWidget from './activityWidget'
-import PostsList from '../../components/postsList'
-import CommentsList from '../../components/commentsList'
-import PostContext from '../../context/Post'
+import BasicPage from './basicPage'
+import { Record, Page, QueryType } from '../constants'
+import ActivityWidget from '../components/activityWidget'
+import PostsList from '../components/postsList'
+import CommentsList from '../components/commentsList'
+import PostContext from '../context/Post'
 
 enum Tag {
     Posts = 'Posts',
@@ -47,7 +47,7 @@ const RepPortion = ({ spent, total, action }: Props) => {
             {isHover ? (
                 <div className="rep-description">
                     <img
-                        src={require(`../../../public/images/${
+                        src={require(`../../public/images/${
                             portionName === 'Post' || portionName === 'Comment'
                                 ? 'unirep'
                                 : portionName.toLowerCase()
@@ -214,7 +214,7 @@ const UserPage = () => {
                             <p>My Rep</p>
                             <div className="rep-info">
                                 <img
-                                    src={require('../../../public/images/lighting.svg')}
+                                    src={require('../../public/images/lighting.svg')}
                                 />
                                 {user.netReputation}
                             </div>
@@ -250,7 +250,7 @@ const UserPage = () => {
                             <div className="received-info">
                                 <span>
                                     <img
-                                        src={require('../../../public/images/unirep.svg')}
+                                        src={require('../../public/images/unirep.svg')}
                                     />
                                     System drop
                                 </span>
@@ -259,7 +259,7 @@ const UserPage = () => {
                             <div className="received-info">
                                 <span>
                                     <img
-                                        src={require('../../../public/images/boost.svg')}
+                                        src={require('../../public/images/boost.svg')}
                                     />
                                     Boost
                                 </span>
@@ -268,7 +268,7 @@ const UserPage = () => {
                             <div className="received-info">
                                 <span>
                                     <img
-                                        src={require('../../../public/images/squash.svg')}
+                                        src={require('../../public/images/squash.svg')}
                                     />
                                     Squash
                                 </span>
@@ -318,7 +318,7 @@ const UserPage = () => {
                                     onClick={() => setSortType(QueryType.Boost)}
                                 >
                                     <img
-                                        src={require('../../../public/images/boost-fill.svg')}
+                                        src={require('../../public/images/boost-fill.svg')}
                                     />
                                     Boost
                                 </div>
@@ -327,7 +327,7 @@ const UserPage = () => {
                                     onClick={() => setSortType(QueryType.New)}
                                 >
                                     <img
-                                        src={require('../../../public/images/new-fill.svg')}
+                                        src={require('../../public/images/new-fill.svg')}
                                     />
                                     New
                                 </div>
@@ -338,7 +338,7 @@ const UserPage = () => {
                                     }
                                 >
                                     <img
-                                        src={require('../../../public/images/squash-fill.svg')}
+                                        src={require('../../public/images/squash-fill.svg')}
                                     />
                                     Squash
                                 </div>
@@ -354,7 +354,7 @@ const UserPage = () => {
                                     onClick={() => setSortType(QueryType.New)}
                                 >
                                     <img
-                                        src={require('../../../public/images/new-fill.svg')}
+                                        src={require('../../public/images/new-fill.svg')}
                                     />
                                     New
                                 </div>
@@ -363,7 +363,7 @@ const UserPage = () => {
                                     onClick={() => setSortType(QueryType.Rep)}
                                 >
                                     <img
-                                        src={require('../../../public/images/unirep-fill.svg')}
+                                        src={require('../../public/images/unirep-fill.svg')}
                                     />
                                     Rep
                                 </div>
@@ -376,7 +376,7 @@ const UserPage = () => {
                         >
                             <div className="menu-choice isChosen">
                                 <img
-                                    src={require(`../../../public/images/${
+                                    src={require(`../../public/images/${
                                         sort === QueryType.Rep ? 'unirep' : sort
                                     }-fill.svg`)}
                                 />
@@ -385,7 +385,7 @@ const UserPage = () => {
                                         sort.slice(1)}
                                 </span>
                                 <img
-                                    src={require('../../../public/images/arrow-down.svg')}
+                                    src={require('../../public/images/arrow-down.svg')}
                                 />
                             </div>
                         </div>

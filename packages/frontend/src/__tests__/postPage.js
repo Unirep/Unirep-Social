@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import PostContext from '../context/Post'
 import UserContext from '../context/User'
-import PostPage from '../pages/postPage/postPage'
+import PostPage from '../pages/postPage'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),

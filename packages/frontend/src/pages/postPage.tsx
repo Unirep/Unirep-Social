@@ -2,11 +2,11 @@ import { useEffect, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
-import PostContext from '../../context/Post'
+import PostContext from '../context/Post'
 
-import { Page, Params } from '../../constants'
-import PostBlock from '../../components/postBlock'
-import BasicPage from '../basicPage/basicPage'
+import { Page, Params } from '../constants'
+import PostBlock from '../components/postBlock'
+import BasicPage from './basicPage'
 
 const PostPage = () => {
     const { id } = useParams<Params>()

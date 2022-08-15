@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react'
-import FeedbackPage from '../pages/feedbackPage/feedbackPage'
+import FeedbackPage from '../pages/feedbackPage'
 
 test('should render FeedbackPage with iframe tag', () => {
     render(<FeedbackPage />)

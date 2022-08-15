@@ -2,12 +2,12 @@ import { useHistory } from 'react-router-dom'
 import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 
-import PostContext from '../../context/Post'
-import UserContext from '../../context/User'
-import { ABOUT_URL } from '../../config'
+import PostContext from '../context/Post'
+import UserContext from '../context/User'
+import { ABOUT_URL } from '../config'
 
-import LoadingCover from '../../components/loadingCover'
-import LoadingButton from '../../components/loadingButton'
+import LoadingCover from '../components/loadingCover'
+import LoadingButton from '../components/loadingButton'
 
 const SignupPage = () => {
     const userContext = useContext(UserContext)
@@ -108,7 +108,7 @@ const SignupPage = () => {
         <div className="signup-page">
             <div className="left-column">
                 <img
-                    src={require('../../../public/images/unirep-title-white.svg')}
+                    src={require('../../public/images/unirep-title-white.svg')}
                 />
             </div>
             <div className="right-column">
@@ -116,11 +116,11 @@ const SignupPage = () => {
                     <div className="close">
                         <img
                             id="unirep-icon"
-                            src={require('../../../public/images/unirep-title-white.svg')}
+                            src={require('../../public/images/unirep-title-white.svg')}
                         />
                         <img
                             id="close-icon"
-                            src={require('../../../public/images/close.svg')}
+                            src={require('../../public/images/close.svg')}
                             onClick={() => history.push('/')}
                         />
                     </div>

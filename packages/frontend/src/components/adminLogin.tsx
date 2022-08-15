@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { WebContext } from '../../context/WebContext'
+import { WebContext } from '../context/WebContext'
 
 type Props = {
     submit: (id: string, password: string) => void

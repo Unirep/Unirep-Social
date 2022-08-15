@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import MainPage from '../pages/mainPage/mainPage'
+import MainPage from '../pages/mainPage'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { WebContext } from '../context/WebContext'
-import BasicPage from '../pages/basicPage/basicPage'
+import BasicPage from '../pages/basicPage'
 
 const renderBasicPage = (webData) => {
     return render(

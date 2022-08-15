@@ -2,7 +2,7 @@ import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import UserPage from '../pages/userPage/userPage'
+import UserPage from '../pages/userPage'
 
 const renderUserPage = (userData, postData) => {
     return render(

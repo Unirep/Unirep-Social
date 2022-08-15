@@ -1,6 +1,6 @@
 import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import SettingPage from '../pages/settingPage/settingPage'
+import SettingPage from '../pages/settingPage'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
