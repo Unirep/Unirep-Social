@@ -1,8 +1,8 @@
 import { observer } from 'mobx-react-lite'
 
-import PostBlock from '../postBlock/postBlock'
-import { Page } from '../../constants'
-import { LOAD_POST_COUNT } from '../../config'
+import PostBlock from './postBlock'
+import { Page } from '../constants'
+import { LOAD_POST_COUNT } from '../config'
 
 type Props = {
     postIds: string[]
@@ -18,7 +18,7 @@ const PostsList = ({ postIds, loadMorePosts }: Props) => {
                 ))
             ) : (
                 <div className="no-posts">
-                    <img src={require('../../../public/images/glasses.svg')} />
+                    <img src={require('../../public/images/glasses.svg')} />
                     <p>
                         It's empty here.
                         <br />

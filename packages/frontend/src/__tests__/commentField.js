@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import CommentField from '../components/postBlock/commentField'
+import CommentField from '../components/commentField'
 
 const renderCommentField = (
     userData,

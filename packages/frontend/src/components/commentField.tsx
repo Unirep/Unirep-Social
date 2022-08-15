@@ -1,11 +1,11 @@
 import { useContext } from 'react'
 import { observer } from 'mobx-react-lite'
 
-import UserContext from '../../context/User'
-import PostContext from '../../context/Post'
+import UserContext from '../context/User'
+import PostContext from '../context/Post'
 
-import { Post, DataType, Page } from '../../constants'
-import WritingField from '../writingField/writingField'
+import { Post, DataType, Page } from '../constants'
+import WritingField from './writingField'
 
 type Props = {
     post: Post

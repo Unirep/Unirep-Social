@@ -1,7 +1,7 @@
 import { screen, render, waitFor } from '@testing-library/react'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import PostsList from '../components/postsList/postsList'
+import PostsList from '../components/postsList'
 
 const renderPostsList = (userData, postData, postIds = 0) => {
     return render(

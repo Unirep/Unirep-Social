@@ -4,11 +4,11 @@ import { useHistory } from 'react-router-dom'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
 
-import UnirepContext from '../../context/Unirep'
-import PostContext from '../../context/Post'
+import UnirepContext from '../context/Unirep'
+import PostContext from '../context/Post'
 
-import { EXPLORER_URL } from '../../config'
-import { Page, ButtonType } from '../../constants'
+import { EXPLORER_URL } from '../config'
+import { Page, ButtonType } from '../constants'
 import BlockButton from './blockButton'
 import MarkdownIt from 'markdown-it'
 
@@ -50,7 +50,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     >
                         Post by {comment.epoch_key}{' '}
                         <img
-                            src={require('../../../public/images/lighting.svg')}
+                            src={require('../../public/images/lighting.svg')}
                         />
                         {isEpkHovered ? (
                             <span className="show-off-rep">
@@ -70,9 +70,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     href={`${EXPLORER_URL}/tx/${comment.id}`}
                 >
                     <span>Etherscan</span>
-                    <img
-                        src={require('../../../public/images/etherscan.svg')}
-                    />
+                    <img src={require('../../public/images/etherscan.svg')} />
                 </a>
             </div>
             <div

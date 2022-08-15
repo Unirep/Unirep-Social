@@ -9,8 +9,8 @@ import { getRecords } from '../../utils'
 import BasicPage from '../basicPage/basicPage'
 import { Record, Page, QueryType } from '../../constants'
 import ActivityWidget from './activityWidget'
-import PostsList from '../../components/postsList/postsList'
-import CommentsList from '../../components/postsList/commentsList'
+import PostsList from '../../components/postsList'
+import CommentsList from '../../components/commentsList'
 import PostContext from '../../context/Post'
 
 enum Tag {

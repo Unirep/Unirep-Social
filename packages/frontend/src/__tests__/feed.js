@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import Feed from '../components/feed/feed'
+import Feed from '../components/feed'
 
 const setFeedChoiceMock = jest.fn()
 

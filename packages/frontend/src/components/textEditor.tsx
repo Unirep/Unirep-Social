@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import MarkdownIt from 'markdown-it'
 
 type Props = {
@@ -151,43 +151,41 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                     <div className="group basic">
                         <button onClick={() => addStyle(TextStyle.Bold)}>
                             <img
-                                src={require('../../../public/images/bold.svg')}
+                                src={require('../../public/images/bold.svg')}
                             />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Italic)}>
                             <img
-                                src={require('../../../public/images/italic.svg')}
+                                src={require('../../public/images/italic.svg')}
                             />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Strike)}>
                             <img
-                                src={require('../../../public/images/strike.svg')}
+                                src={require('../../public/images/strike.svg')}
                             />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Code)}>
                             <img
-                                src={require('../../../public/images/codeblock.svg')}
+                                src={require('../../public/images/codeblock.svg')}
                             />
                         </button>
                         <button onClick={() => addStyle(TextStyle.Quote)}>
                             <img
-                                src={require('../../../public/images/quote.svg')}
+                                src={require('../../public/images/quote.svg')}
                             />
                         </button>
                         <button onClick={() => addStyle(TextStyle.List)}>
                             <img
-                                src={require('../../../public/images/bullet.svg')}
+                                src={require('../../public/images/bullet.svg')}
                             />
                         </button>
                         <button onClick={insertLink}>
                             <img
-                                src={require('../../../public/images/link.svg')}
+                                src={require('../../public/images/link.svg')}
                             />
                         </button>
                         <button onClick={insertImage}>
-                            <img
-                                src={require('../../../public/images/img.svg')}
-                            />
+                            <img src={require('../../public/images/img.svg')} />
                         </button>
                     </div>
                     <div className="group">
@@ -200,7 +198,7 @@ const TextEditor = ({ content, setContent, autoFocus }: Props) => {
                             }
                         >
                             <img
-                                src={require('../../../public/images/info_small.svg')}
+                                src={require('../../public/images/info_small.svg')}
                             />
                         </button>
                         <button

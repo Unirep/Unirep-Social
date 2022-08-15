@@ -3,12 +3,12 @@ import { useHistory } from 'react-router-dom'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
 
-import UserContext from '../../context/User'
-import UnirepContext from '../../context/Unirep'
-import PostContext from '../../context/Post'
+import UserContext from '../context/User'
+import UnirepContext from '../context/Unirep'
+import PostContext from '../context/Post'
 
-import { EXPLORER_URL } from '../../config'
-import { Page, ButtonType, AlertType } from '../../constants'
+import { EXPLORER_URL } from '../config'
+import { Page, ButtonType, AlertType } from '../constants'
 import CommentField from './commentField'
 import CommentBlock from './commentBlock'
 import BlockButton from './blockButton'
@@ -28,7 +28,7 @@ const AlertBox = ({ type }: AlertProps) => {
     return (
         <div className="alert">
             <img
-                src={require(`../../../public/images/${
+                src={require(`../../public/images/${
                     type === AlertType.commentNotEnoughPoints
                         ? 'lighting'
                         : 'glasses'
@@ -83,7 +83,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     >
                         Post by {post.epoch_key}{' '}
                         <img
-                            src={require('../../../public/images/lighting.svg')}
+                            src={require('../../public/images/lighting.svg')}
                         />
                         {isEpkHovered ? (
                             <span className="show-off-rep">
@@ -102,9 +102,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     href={`${EXPLORER_URL}/tx/${post.id}`}
                 >
                     <span>Etherscan</span>
-                    <img
-                        src={require('../../../public/images/etherscan.svg')}
-                    />
+                    <img src={require('../../public/images/etherscan.svg')} />
                 </a>
             </div>
             {page === Page.Home ? <div className="divider"></div> : <div></div>}
@@ -181,7 +179,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     ) : (
                         <div className="no-comments">
                             <img
-                                src={require('../../../public/images/glasses.svg')}
+                                src={require('../../public/images/glasses.svg')}
                             />
                             <p>
                                 Nothing to see here.
