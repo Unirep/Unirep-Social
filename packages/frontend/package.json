@@ -6,6 +6,7 @@
         "start": "webpack-dev-server",
         "start-local": "webpack-dev-server",
         "build": "webpack",
+        "build:e2e": "webpack --env CYPRESS=true",
         "build:worker": "webpack --config webpack.worker.js",
         "postinstall": "link-module-alias && yarn copyCircuits",
         "copyCircuits": "node scripts/copy_circuits",
@@ -14,8 +15,8 @@
         "cy:run": "cypress run --e2e --browser chrome",
         "cy:open": "cypress open --e2e --browser chrome",
         "test:coverage": "jest --coverage",
-        "test:e2e": "start-server-and-test start 3000 cy:run",
-        "test:e2e:dev": "start-server-and-test 3000 cy:open"
+        "test:e2e": "sh scripts/start_test_environment.sh && yarn cy:run",
+        "test:e2e:dev": "sh scripts/start_test_environment.sh && yarn cy:open"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"

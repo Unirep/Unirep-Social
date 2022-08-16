@@ -6,6 +6,6 @@ RUN apk add --no-cache git nodejs npm && \
 COPY . /src
 WORKDIR /src
 
-RUN yarn && yarn build --mode=production && cp -r public/build build && rm -rf node_modules
+RUN rm package.json && npm i express
 
 CMD ["node", "/src/server.js"]

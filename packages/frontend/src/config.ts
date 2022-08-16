@@ -11,7 +11,7 @@ try {
     Object.assign(config, localConfig.default)
 } catch (_) {}
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
     config.SERVER = 'http://testurl.invalidtld'
     config.DEFAULT_ETH_PROVIDER_URL = 'http://geth.testurl.invalidtld:8545'
 }

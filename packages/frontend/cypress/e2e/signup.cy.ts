@@ -1,6 +1,6 @@
 describe('visit and interact with home page', () => {
-    const serverUrl = `${Cypress.env('serverUrl')}`
-    const ethProvider = `${Cypress.env('ethProvider')}`
+    const serverUrl = `http://testurl.invalidtld`
+    const ethProvider = `http://geth.testurl.invalidtld:8545`
 
     Cypress.on('uncaught:exception', (err, runnable) => {
         // returning false here prevents Cypress from
