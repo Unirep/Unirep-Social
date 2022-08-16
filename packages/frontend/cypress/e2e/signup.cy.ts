@@ -18,12 +18,27 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/config`, {
             statusCode: 200,
             body: {
-                test: 'string',
+                unirepAddress: '0x41afd703a36b19D9BB94E3083baA5E4F70f5adD6',
+                unirepSocialAddress:
+                    '0x903Ae15BfbddFAD6cd44B4cC1CF01EEBa0742456',
             },
         }).as('getApiConfig')
-        cy.intercept('POST', `${ethProvider}*`, {
-            statusCode: 200,
-            fixture: 'ethProvider.json',
+        cy.intercept('/ethProvider', (req) => {
+            // conditonal logic to return different responses based on the request url
+
+            req.continue((res) => {
+                if (req.body.method === 'eth_chainId') {
+                    // return the chainId of the test network
+                    return {
+                        body: {
+                            id: 1,
+                            jsonrpc: '2.0',
+                            result: '0x111111',
+                        },
+                    }
+                }
+                return {}
+            })
         }).as('ethProvider')
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
             fixture: 'genInvitationCode.json',
