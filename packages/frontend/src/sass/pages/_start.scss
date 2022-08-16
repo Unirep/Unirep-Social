@@ -31,6 +31,10 @@
 
     p {
         font-size: $text-md;
+
+        strong {
+            cursor: pointer;
+        }
     }
 
     .box-dark {
@@ -50,6 +54,10 @@
         .title {
             font-size: $title-md;
             font-weight: 600;
+        }
+
+        p {
+            text-align: center;
         }
     }
 
@@ -89,5 +97,18 @@
 
     .gap {
         height: 24px;
+    }
+
+    textarea {
+        height: 172px;
+        border-radius: 8px;
+        border: $grey-200 1px solid;
+        padding: 8px 16px;
+    }
+
+    input {
+        width: 100%;
+        height: 60px;
+        padding: 8px 16px;
     }
 }
