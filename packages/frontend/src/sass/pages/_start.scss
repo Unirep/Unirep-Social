@@ -74,6 +74,11 @@
             &:hover {
                 background-color: $grey-300;
             }
+
+            img {
+                width: 48px;
+                height: 48px;
+            }
         }
 
         .button-dark {
@@ -83,7 +88,7 @@
         }
 
         .button-light {
-            background-color: $white;
+            background-color: $grey-100;
             color: $black;
             border: $black solid 1px;
         }
