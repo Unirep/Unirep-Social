@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react'
+import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import PostContext from '../../context/Post'
@@ -99,21 +100,52 @@ const OnboardedBox = () => {
     )
 }
 
-const SigninBox = () => {
+const SigninBox = ({ setStep }: Props) => {
+    const [input, setInput] = useState<string>('')
+    const [pwd, setPwd] = useState<string>('')
+    const history = useHistory()
+
+    const onInputChange = (event: any) => {
+        setInput(event.target.value)
+        console.log(event.target.value)
+    }
+
+    const onPwdChange = (event: any) => {
+        setPwd(event.target.value)
+        console.log(event.target.value)
+    }
+
+    const gotoHomePage = () => {
+        history.push('/')
+    }
+
     return (
-        <div className="box box-dark">
-            <div className="title">GM!</div>
+        <div className="box box-light">
+            <div className="title">Sign in</div>
             <p>
-                Great to have you here.Currently, UniRep Social is an
-                experimental & research use dApp. We are part of Privacy &
-                Scaling Explorations team that specialized in zero-knowledge
-                proof and advance blockchain technology.
+                We have deploy the contract on Optimism, that is different from
+                the previous release. If you have previously use UniRep Social,
+                the private key is no longer valid.
             </p>
+            <p>Please paste the newly registered private key below</p>
+            <textarea onChange={onInputChange} />
+            <div className="gap"></div>
+            <p>If you have setup the encryption password, please enter here</p>
+            <input
+                onChange={onPwdChange}
+                placeholder="Password (Only if you need to decrypt)"
+            />
+            <div className="gap"></div>
+            <div className="box-buttons">
+                <button className="button-dark" onClick={gotoHomePage}>
+                    Sign in
+                </button>
+            </div>
             <p>
-                Our mission is to empower the general public to have full
-                privacy under the social media setup, while earning the
-                reputation they deserved. It’s tricky, but yes, we know it’s
-                very important.
+                Need an access?{' '}
+                <strong onClick={() => setStep(StepType.signup)}>
+                    Sign up here
+                </strong>
             </p>
         </div>
     )
@@ -136,7 +168,7 @@ const StartPage = () => {
             ) : step === StepType.onboarded ? (
                 <OnboardedBox />
             ) : step === StepType.signin ? (
-                <SigninBox />
+                <SigninBox setStep={setStep} />
             ) : null}
         </div>
     )
