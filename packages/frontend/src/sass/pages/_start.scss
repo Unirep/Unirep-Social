@@ -45,6 +45,11 @@
             font-size: $title-lg;
             font-weight: 700;
         }
+
+        h3 {
+            color: $grey-100;
+            text-align: center;
+        }
     }
 
     .box-light {

@@ -211,21 +211,30 @@ const SignupBox = ({ setStep }: Props) => {
 }
 
 const OnboardedBox = () => {
+    const history = useHistory()
+
+    const gotoHomePage = () => {
+        history.push('/')
+    }
+
     return (
         <div className="box box-dark">
-            <div className="title">GM!</div>
+            <div className="title">🎉 You’re in!</div>
+            <h3>30 Rep + 3 personas await you! </h3>
+            <div className="gap"></div>
             <p>
-                Great to have you here.Currently, UniRep Social is an
-                experimental & research use dApp. We are part of Privacy &
-                Scaling Explorations team that specialized in zero-knowledge
-                proof and advance blockchain technology.
+                Excllent! One huge difference of UniRep Social is that you don’t
+                have to interact with any wallet, we have come up this solution
+                to smooth out the experience. If you are interested, you can
+                learn more from our developer document.
             </p>
-            <p>
-                Our mission is to empower the general public to have full
-                privacy under the social media setup, while earning the
-                reputation they deserved. It’s tricky, but yes, we know it’s
-                very important.
-            </p>
+            <p>Enjoy your journey in UniRep Social!</p>
+            <div className="gap"></div>
+            <div className="box-buttons">
+                <button className="button-light" onClick={gotoHomePage}>
+                    Get in
+                </button>
+            </div>
         </div>
     )
 }
