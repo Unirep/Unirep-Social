@@ -4,7 +4,7 @@ const LoadingCover = () => {
             <div className="loading-main">
                 <h2>Generating your weekly persona</h2>
                 <img
-                    src={require('../../../public/images/user-state-generating.gif')}
+                    src={require('../../public/images/user-state-generating.gif')}
                 />
                 <div className="normal-font">
                     This process will take about 20 seconds. Please do not close

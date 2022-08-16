@@ -1,7 +1,7 @@
 import React from 'react'
 import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import ShareBox from '../components/shareBox/shareBox'
+import ShareBox from '../components/shareBox'
 
 const closeBoxMock = jest.fn()
 

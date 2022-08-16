@@ -1,9 +1,9 @@
 import { useState, useContext, useEffect } from 'react'
 import 'react-circular-progressbar/dist/styles.css'
 
-import UserContext from '../../context/User'
-import PostContext from '../../context/Post'
-import { shortenEpochKey } from '../../utils'
+import UserContext from '../context/User'
+import PostContext from '../context/Post'
+import { shortenEpochKey } from '../utils'
 
 type Props = {
     isUpvote: boolean
@@ -91,13 +91,13 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                 <div className="grey-box">
                     <div className="close">
                         <img
-                            src={require('../../../public/images/close-white.svg')}
+                            src={require('../../public/images/close-white.svg')}
                             onClick={close}
                         />
                     </div>
                     <div className="title">
                         <img
-                            src={require(`../../../public/images/${
+                            src={require(`../../public/images/${
                                 isUpvote ? 'boost' : 'squash'
                             }-fill.svg`)}
                         />
@@ -128,7 +128,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                 }}
                             >
                                 <img
-                                    src={require('../../../public/images/arrow-up.svg')}
+                                    src={require('../../public/images/arrow-up.svg')}
                                 />
                             </div>
                             <div
@@ -142,7 +142,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                 }}
                             >
                                 <img
-                                    src={require('../../../public/images/arrow-down.svg')}
+                                    src={require('../../public/images/arrow-down.svg')}
                                 />
                             </div>
                         </div>
@@ -182,7 +182,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                 } this before`}</p>
                             </div>
                             <img
-                                src={require(`../../../public/images/arrow-tri-${
+                                src={require(`../../public/images/arrow-tri-${
                                     isHistoriesOpen ? 'up' : 'down'
                                 }.svg`)}
                             />
@@ -206,7 +206,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                                 {isUpvote ? v.posRep : v.negRep}
                                             </span>
                                             <img
-                                                src={require(`../../../public/images/${
+                                                src={require(`../../public/images/${
                                                     isUpvote
                                                         ? 'boost'
                                                         : 'squash'

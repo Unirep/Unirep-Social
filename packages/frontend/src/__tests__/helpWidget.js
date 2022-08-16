@@ -1,6 +1,6 @@
 import { screen, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import HelpWidget from '../components/helpWidget/helpWidget'
+import HelpWidget from '../components/helpWidget'
 
 test('helpWidget conditionally renders to the page on click', async () => {
     const epk4Post = 'Select a persona to post this'

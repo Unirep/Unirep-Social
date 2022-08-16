@@ -2,10 +2,10 @@ import { useEffect, useState, useContext } from 'react'
 import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
-import UserContext from '../../context/User'
+import UserContext from '../context/User'
 
-import { Post, Comment, ButtonType, DataType } from '../../constants'
-import VoteBox from '../voteBox/voteBox'
+import { Post, Comment, ButtonType, DataType } from '../constants'
+import VoteBox from './voteBox'
 
 type Props = {
     type: ButtonType
@@ -105,7 +105,7 @@ const BlockButton = ({ type, count, data }: Props) => {
             onClick={onClick}
         >
             <img
-                src={require(`../../../public/images/${type}${
+                src={require(`../../public/images/${type}${
                     isHover && checkAbility() ? '-fill' : ''
                 }.svg`)}
             />

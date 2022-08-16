@@ -3,8 +3,8 @@ import { useContext, useState, useEffect } from 'react'
 
 import { ABOUT_URL } from '../../config'
 
-import LoadingCover from '../../components/loadingCover/loadingCover'
-import LoadingButton from '../../components/loadingButton/loadingButton'
+import LoadingCover from '../../components/loadingCover'
+import LoadingButton from '../../components/loadingButton'
 import UserContext from '../../context/User'
 
 const LoginPage = () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import useWindowDimension from '../../hooks/useWindowDimensions'
-import { QueryType } from '../../constants'
+import useWindowDimension from '../hooks/useWindowDimensions'
+import { QueryType } from '../constants'
 
 type choiceProps = {
     type: QueryType
@@ -15,7 +15,7 @@ const FeedChoice = ({ type, isChosen, setFeedChoice }: choiceProps) => {
             onClick={() => setFeedChoice(type)}
         >
             <img
-                src={require(`../../../public/images/${type}${
+                src={require(`../../public/images/${type}${
                     isChosen ? '-fill' : ''
                 }.svg`)}
             />

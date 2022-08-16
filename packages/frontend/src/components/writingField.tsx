@@ -2,14 +2,14 @@ import { useState, useContext, useEffect } from 'react'
 import 'react-circular-progressbar/dist/styles.css'
 import { observer } from 'mobx-react-lite'
 
-import UnirepContext from '../../context/Unirep'
-import UserContext from '../../context/User'
-import PostContext from '../../context/Post'
+import UnirepContext from '../context/Unirep'
+import UserContext from '../context/User'
+import PostContext from '../context/Post'
 
-import HelpWidget from '../helpWidget/helpWidget'
-import TextEditor from '../textEditor/textEditor'
-import { DataType, InfoType } from '../../constants'
-import { shortenEpochKey } from '../../utils'
+import HelpWidget from './helpWidget'
+import TextEditor from './textEditor'
+import { DataType, InfoType } from '../constants'
+import { shortenEpochKey } from '../utils'
 
 type Props = {
     type: DataType

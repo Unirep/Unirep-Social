@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import CommentBlock from '../components/postBlock/commentBlock'
+import CommentBlock from '../components/commentBlock'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
