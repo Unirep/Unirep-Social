@@ -22,22 +22,48 @@ describe('visit and interact with home page', () => {
                     '0x903Ae15BfbddFAD6cd44B4cC1CF01EEBa0742456',
             },
         }).as('getApiConfig')
-        cy.intercept('/ethProvider', (req) => {
+        cy.intercept(`${ethProvider}`, (req) => {
             // conditonal logic to return different responses based on the request url
-
-            req.continue((res) => {
-                if (req.body.method === 'eth_chainId') {
-                    // return the chainId of the test network
-                    return {
-                        body: {
-                            id: 1,
-                            jsonrpc: '2.0',
-                            result: '0x111111',
-                        },
-                    }
-                }
-                return {}
-            })
+            console.log(req.body)
+            const { method, params, id } = req.body
+            if (method === 'eth_chainId') {
+                req.reply({
+                    body: {
+                        id: 1,
+                        jsonrpc: '2.0',
+                        result: '0x111111',
+                    },
+                })
+            } else if (
+                method === 'eth_call' &&
+                params[0]?.data === '0x79502c55'
+            ) {
+                req.reply({
+                    body: {
+                        id,
+                        jsonrpc: '2.0',
+                        result:
+                            '0x' +
+                            Array(10 * 64)
+                                .fill(0)
+                                .map((_, i) => (i % 64 === 63 ? 1 : 0))
+                                .join(''),
+                    },
+                })
+            } else if (method === 'eth_call') {
+                // other uint256 retrievals
+                req.reply({
+                    body: {
+                        id,
+                        jsonrpc: '2.0',
+                        result: '0x0000000000000000000000000000000000000000000000000000000000000001',
+                    },
+                })
+            } else {
+                req.reply({
+                    body: { test: 'test' },
+                })
+            }
         }).as('ethProvider')
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
             fixture: 'genInvitationCode.json',
