@@ -16,7 +16,6 @@ describe('visit and interact with home page', () => {
             },
         }).as('getApiContent')
         cy.intercept('GET', `${serverUrl}/api/config`, {
-            statusCode: 200,
             body: {
                 unirepAddress: '0x41afd703a36b19D9BB94E3083baA5E4F70f5adD6',
                 unirepSocialAddress:

@@ -1,4 +1,3 @@
 {
-    "transactions": "string",
-    "newVote": "string"
+    "randomOutput": "000000000"
 }
