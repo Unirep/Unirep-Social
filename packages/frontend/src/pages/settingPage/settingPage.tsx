@@ -1,7 +1,7 @@
 import { useHistory, useLocation } from 'react-router-dom'
 
-import BasicPage from './basicPage'
-import PrivateKey from '../components/privateKey'
+import BasicPage from '../basicPage/basicPage'
+import PrivateKey from './privateKey'
 
 const SettingPage = () => {
     const history = useHistory()
@@ -15,7 +15,7 @@ const SettingPage = () => {
                 className="back"
                 onClick={() => history.push('/user', { isConfirmed: true })}
             >
-                <img src={require('../../public/images/arrow-left.svg')} />
+                <img src={require('../../../public/images/arrow-left.svg')} />
             </div>
             <PrivateKey />
         </BasicPage>

@@ -1,10 +1,10 @@
 import { useContext, useEffect, useState } from 'react'
 
-import { WebContext } from '../context/WebContext'
+import { WebContext } from '../../context/WebContext'
 
-import { checkIsAdminCodeValid, adminLogin } from '../utils'
-import AdminTable from '../components/adminTable'
-import AdminLoginPage from '../components/adminLogin'
+import { checkIsAdminCodeValid, adminLogin } from '../../utils'
+import AdminTable from './adminTable'
+import AdminLoginPage from './adminLoginPage'
 
 enum AdminPageStatus {
     loading,

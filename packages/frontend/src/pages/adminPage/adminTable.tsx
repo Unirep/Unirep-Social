@@ -1,8 +1,8 @@
 import { useState, useContext } from 'react'
 
-import { WebContext } from '../context/WebContext'
+import { WebContext } from '../../context/WebContext'
 
-import { genInvitationCode } from '../utils'
+import { genInvitationCode } from '../../utils'
 
 enum AdminActionType {
     GenInvitationCode,

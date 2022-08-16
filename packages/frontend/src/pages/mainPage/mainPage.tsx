@@ -2,14 +2,14 @@ import { useContext, useState, useEffect } from 'react'
 import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
-import PostContext from '../context/Post'
-import UserContext from '../context/User'
-import UnirepContext from '../context/Unirep'
+import PostContext from '../../context/Post'
+import UserContext from '../../context/User'
+import UnirepContext from '../../context/Unirep'
 
-import { QueryType, AlertType } from '../constants'
-import BasicPage from './basicPage'
-import PostsList from '../components/postsList'
-import Feed from '../components/feed'
+import { QueryType, AlertType } from '../../constants'
+import BasicPage from '../basicPage/basicPage'
+import PostsList from '../../components/postsList'
+import Feed from '../../components/feed'
 
 const MainPage = () => {
     const history = useHistory()

@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
 
-import UserContext from '../context/User'
+import UserContext from '../../context/User'
 
 const PrivateKey = () => {
     const [isRevealed, setRevealed] = useState<boolean>(false)
@@ -25,7 +25,7 @@ const PrivateKey = () => {
 
     return (
         <div className="private-key">
-            <img src={require('../../public/images/glasses.svg')} />
+            <img src={require('../../../public/images/glasses.svg')} />
             <h3>My private key</h3>
             {isRevealed && user !== null ? (
                 <div>

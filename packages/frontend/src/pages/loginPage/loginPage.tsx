@@ -1,11 +1,11 @@
 import { useHistory } from 'react-router-dom'
 import { useContext, useState, useEffect } from 'react'
 
-import { ABOUT_URL } from '../config'
+import { ABOUT_URL } from '../../config'
 
-import LoadingCover from '../components/loadingCover'
-import LoadingButton from '../components/loadingButton'
-import UserContext from '../context/User'
+import LoadingCover from '../../components/loadingCover'
+import LoadingButton from '../../components/loadingButton'
+import UserContext from '../../context/User'
 
 const LoginPage = () => {
     const history = useHistory()
@@ -43,18 +43,18 @@ const LoginPage = () => {
         <div className="login-page">
             <div className="left-column">
                 <img
-                    src={require('../../public/images/unirep-title-white.svg')}
+                    src={require('../../../public/images/unirep-title-white.svg')}
                 />
             </div>
             <div className="right-column">
                 <div className="close">
                     <img
                         id="unirep-icon"
-                        src={require('../../public/images/unirep-title.svg')}
+                        src={require('../../../public/images/unirep-title.svg')}
                     />
                     <img
                         id="close-icon"
-                        src={require('../../public/images/close.svg')}
+                        src={require('../../../public/images/close.svg')}
                         onClick={() => history.push('/')}
                     />
                 </div>

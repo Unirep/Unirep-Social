@@ -3,9 +3,9 @@ import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import MarkdownIt from 'markdown-it'
 
-import { ActionType } from '../context/Queue'
-import PostContext from '../context/Post'
-import { Record, titlePrefix, titlePostfix } from '../constants'
+import { ActionType } from '../../context/Queue'
+import PostContext from '../../context/Post'
+import { Record, titlePrefix, titlePostfix } from '../../constants'
 
 type Props = {
     record: Record
@@ -113,9 +113,9 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                                 src={
                                     record.action === ActionType.Vote
                                         ? record.upvote > 0
-                                            ? require('../../public/images/boost.svg')
-                                            : require('../../public/images/squash.svg')
-                                        : require('../../public/images/unirep.svg')
+                                            ? require('../../../public/images/boost.svg')
+                                            : require('../../../public/images/squash.svg')
+                                        : require('../../../public/images/unirep.svg')
                                 }
                             />
                             Used
@@ -130,7 +130,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                         <div className="etherscan">
                             Etherscan{' '}
                             <img
-                                src={require('../../public/images/etherscan.svg')}
+                                src={require('../../../public/images/etherscan.svg')}
                             />
                         </div>
                     </div>
@@ -138,7 +138,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                         <div className="who">
                             {info.who}{' '}
                             <img
-                                src={require('../../public/images/lighting.svg')}
+                                src={require('../../../public/images/lighting.svg')}
                             />{' '}
                             {info.action}
                         </div>
@@ -187,9 +187,9 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                                 src={
                                     record.action === ActionType.Vote
                                         ? record.upvote > 0
-                                            ? require('../../public/images/boost.svg')
-                                            : require('../../public/images/squash.svg')
-                                        : require('../../public/images/unirep.svg')
+                                            ? require('../../../public/images/boost.svg')
+                                            : require('../../../public/images/squash.svg')
+                                        : require('../../../public/images/unirep.svg')
                                 }
                             />
                             Received
