@@ -1,8 +1,8 @@
 import { observer } from 'mobx-react-lite'
 
-import CommentBlock from '../postBlock/commentBlock'
-import { Page } from '../../constants'
-import { LOAD_POST_COUNT } from '../../config'
+import CommentBlock from './commentBlock'
+import { Page } from '../constants'
+import { LOAD_POST_COUNT } from '../config'
 
 type Props = {
     commentIds: string[]
@@ -21,7 +21,7 @@ const CommentsList = ({ commentIds, page, loadMoreComments }: Props) => {
                 ))
             ) : (
                 <div className="no-posts">
-                    <img src={require('../../../public/images/glasses.svg')} />
+                    <img src={require('../../public/images/glasses.svg')} />
                     <p>
                         It's empty here.
                         <br />

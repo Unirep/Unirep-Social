@@ -6,8 +6,8 @@ import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 import { ABOUT_URL } from '../../config'
 
-import LoadingCover from '../../components/loadingCover/loadingCover'
-import LoadingButton from '../../components/loadingButton/loadingButton'
+import LoadingCover from '../../components/loadingCover'
+import LoadingButton from '../../components/loadingButton'
 
 const SignupPage = () => {
     const userContext = useContext(UserContext)

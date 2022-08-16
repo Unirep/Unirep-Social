@@ -1,5 +1,5 @@
 import { screen, render, waitFor } from '@testing-library/react'
-import CommentsList from '../components/postsList/commentsList'
+import CommentsList from '../components/commentsList'
 import PostContext from '../context/Post'
 
 const renderCommentsField = (postData, commentIds, page, loadMoreComments) => {

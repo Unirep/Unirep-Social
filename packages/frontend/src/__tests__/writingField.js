@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import WritingField from '../components/writingField/writingField'
+import WritingField from '../components/writingField'
 
 // abstracted render function
 const renderWritingField = (

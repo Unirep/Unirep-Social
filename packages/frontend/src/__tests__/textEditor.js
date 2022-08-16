@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import TextEditor from '../components/textEditor/textEditor'
+import TextEditor from '../components/textEditor'
 
 // todo: WIP
 test.skip('should render TextEditor correctly', async () => {

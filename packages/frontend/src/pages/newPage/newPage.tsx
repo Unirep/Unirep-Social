@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
 import PostContext from '../../context/Post'
-import WritingField from '../../components/writingField/writingField'
+import WritingField from '../../components/writingField'
 import BasicPage from '../basicPage/basicPage'
 import { DataType } from '../../constants'
 

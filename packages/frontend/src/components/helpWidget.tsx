@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { InfoType } from '../../constants'
+import { InfoType } from '../constants'
 
 type Props = {
     type: InfoType
@@ -11,7 +11,7 @@ const HelpWidget = ({ type }: Props) => {
     return (
         <div className="help-widget">
             <img
-                src={require('../../../public/images/info.svg')}
+                src={require('../../public/images/info.svg')}
                 onMouseEnter={() => setHover(true)}
                 onMouseOut={() => setHover(false)}
                 onClick={() => setHover(!isHover)}

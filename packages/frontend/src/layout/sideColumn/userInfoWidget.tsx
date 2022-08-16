@@ -7,7 +7,7 @@ import PostContext from '../../context/Post'
 import EpochContext from '../../context/EpochManager'
 import QueueContext, { ActionType, Metadata } from '../../context/Queue'
 
-import HelpWidget from '../../components/helpWidget/helpWidget'
+import HelpWidget from '../../components/helpWidget'
 import { InfoType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
 

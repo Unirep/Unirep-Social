@@ -1,6 +1,6 @@
 import React from 'react'
 import { screen, render, rerender } from '@testing-library/react'
-import LoadingCover from '../components/loadingCover/loadingCover'
+import LoadingCover from '../components/loadingCover'
 
 test('should render the appropriate text content ', () => {
     render(<LoadingCover />)

@@ -1,7 +1,7 @@
 import { screen, render, waitFor } from '@testing-library/react'
 import UserContext from '../context/User'
 import userEvent from '@testing-library/user-event'
-import BlockButton from '../components/postBlock/blockButton'
+import BlockButton from '../components/blockButton'
 
 const renderBlockButton = (userData, type, count, data) => {
     return render(

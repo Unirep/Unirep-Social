@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import PostBlock from '../components/postBlock/postBlock'
+import PostBlock from '../components/postBlock'
 
 // abstracted render function
 const renderPostBlock = (userData, unirepData, postId, postData, page) => {
