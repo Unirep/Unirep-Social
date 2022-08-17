@@ -1,0 +1,35 @@
+.custom-input-box {
+    width: 100%;
+    height: 60px;
+    border: 1px $grey-200 solid;
+    border-radius: 8px;
+    background-color: $white;
+    padding: 8px 16px;
+    text-align: left;
+
+    label {
+        display: block;
+        font-size: $text-xs;
+        color: $black;
+        margin: 0px;
+    }
+
+    .custom-input {
+        width: 100%;
+        display: flex;
+
+        input {
+            width: 100%;
+            height: 24px;
+            outline: none;
+            border: none;
+            font-size: $text-base;
+            padding-left: 0px;
+        }
+
+        img {
+            width: 24px;
+            height: 24px;
+        }
+    }
+}

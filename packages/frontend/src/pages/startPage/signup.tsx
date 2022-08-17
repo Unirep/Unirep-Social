@@ -3,7 +3,8 @@ import { useState, useContext } from 'react'
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 
-import CustomBox, { BoxStyle, ButtonAlign } from '../../components/customBox'
+import CustomBox, { BoxStyle } from '../../components/customBox'
+import CustomInput from '../../components/customInput'
 
 type Props = {
     onboarded: () => void
@@ -92,26 +93,26 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         </button>
                     </div>
                     <div className="gap"></div>
-                    <p>
+                    <div className="note">
                         We don't store your user information, we use it to
                         generate a proof that you have an identity.
-                    </p>
+                    </div>
                 </>
             ) : step === 1 ? (
                 <>
                     <div className="title">Password for encryption</div>
-                    <input placeholder="Password" onChange={onPwdChange} />
+                    <CustomInput title="Password" onChange={onPwdChange} />
                     <div className="gap"></div>
-                    <input
-                        placeholder="Confirm password"
+                    <CustomInput
+                        title="Confirm password"
                         onChange={onConfirmPwdChange}
                     />
                     <div className="gap"></div>
-                    <p>
+                    <div className="note">
                         Keep in mind, this password is <strong>NOT</strong>{' '}
                         recoverable. If you lost one day, we won’t be able to
                         help you.
-                    </p>
+                    </div>
                     <div className="box-buttons buttons-horizontal buttons-bottom">
                         <button
                             className="button-light"
