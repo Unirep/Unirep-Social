@@ -28,7 +28,7 @@ const Onboarded = () => {
             </p>
             <p>Enjoy your journey in UniRep Social!</p>
             <div className="gap"></div>
-            <div className="box-buttons buttons-bottom">
+            <div className="box-buttons box-buttons-bottom">
                 <button className="button-light" onClick={gotoHomePage}>
                     Get in
                 </button>
