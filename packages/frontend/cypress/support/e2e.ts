@@ -16,6 +16,8 @@
 // Import commands.js using ES2015 syntax:
 import '@testing-library/cypress/add-commands'
 import './commands'
+import {ethers} from 'ethers'
 
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
+const GANACHE_URL = 'http://127.0.0.1:18545'
+const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
+console.log(provider)

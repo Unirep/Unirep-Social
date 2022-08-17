@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "lib": ["esnext", "dom"],
+        "types": ["cypress", "@testing-library/cypress"]
+    },
+    "include": ["**/*.ts"]
+}

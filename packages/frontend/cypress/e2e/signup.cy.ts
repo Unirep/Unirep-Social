@@ -1,6 +1,7 @@
 describe('visit and interact with home page', () => {
     const serverUrl = `http://testurl.invalidtld`
-    const ethProvider = `http://geth.testurl.invalidtld:8545`
+    // pass the url of the localnode e.g. http://localhost:18545
+    const ethProvider = `http://localhost:18545`
 
     Cypress.on('uncaught:exception', (err, runnable) => {
         // returning false here prevents Cypress from
@@ -84,11 +85,6 @@ describe('visit and interact with home page', () => {
         cy.findByText('Join').click()
         cy.findByRole('textbox').type('testprivatekey')
         cy.findByText('Let me in').click()
-        cy.wait('@genInvitationCode').then((res: any) => {
-            cy.log(JSON.stringify(res))
-            assert.isNotNull(res.response.body, '1st API call has data')
-        })
         cy.findByText('Download').click()
-        // Error: invalid contract address or ENS name (argument="addressOrName", value=undefined, code=INVALID_ARGUMENT, version=contracts/5.6.2) error thrown here
     })
 })

@@ -13,7 +13,7 @@ try {
 
 if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
     config.SERVER = 'http://testurl.invalidtld'
-    config.DEFAULT_ETH_PROVIDER_URL = 'http://geth.testurl.invalidtld:8545'
+    config.DEFAULT_ETH_PROVIDER_URL = 'http://localhost:18545'
 }
 
 const SERVER = config.SERVER ?? 'http://localhost:3001'
