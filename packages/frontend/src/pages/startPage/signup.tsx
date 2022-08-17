@@ -5,6 +5,7 @@ import UserContext from '../../context/User'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomInput from '../../components/customInput'
+import CustomGap from '../../components/customGap'
 
 type Props = {
     onboarded: () => void
@@ -56,11 +57,12 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             {step === 0 ? (
                 <>
                     <h2 className="title">Sign up</h2>
+                    <CustomGap times={2} />
                     <p>
                         UniRep Social uses Interep for authentication. You can
                         sign up easily while maintaining your anonymity.
                     </p>
-                    <div className="gap"></div>
+                    <CustomGap times={3} />
                     <div className="box-buttons">
                         <button
                             className="button-light"
@@ -71,7 +73,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                                 src={require('../../../public/images/twitter.svg')}
                             />
                         </button>
-                        <div className="gap"></div>
+                        <CustomGap times={1} />
                         <button
                             className="button-light"
                             onClick={() => setStep(step + 1)}
@@ -81,7 +83,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                                 src={require('../../../public/images/github.svg')}
                             />
                         </button>
-                        <div className="gap"></div>
+                        <CustomGap times={1} />
                         <button
                             className="button-light"
                             onClick={() => setStep(step + 1)}
@@ -92,7 +94,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                             />
                         </button>
                     </div>
-                    <div className="gap"></div>
+                    <CustomGap times={10} />
                     <div className="note">
                         We don't store your user information, we use it to
                         generate a proof that you have an identity.
@@ -101,13 +103,21 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             ) : step === 1 ? (
                 <>
                     <div className="title">Password for encryption</div>
+                    <CustomGap times={2} />
+                    <p>
+                        This is optional and only for your local environment.
+                        The password is use for adding an extra layer of
+                        security to the private key we are going to give you in
+                        the next step.
+                    </p>
+                    <CustomGap times={2} />
                     <CustomInput title="Password" onChange={onPwdChange} />
-                    <div className="gap"></div>
+                    <CustomGap times={2} />
                     <CustomInput
                         title="Confirm password"
                         onChange={onConfirmPwdChange}
                     />
-                    <div className="gap"></div>
+                    <CustomGap times={12} />
                     <div className="note">
                         Keep in mind, this password is <strong>NOT</strong>{' '}
                         recoverable. If you lost one day, we won’t be able to
@@ -131,13 +141,16 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             ) : step === 2 ? (
                 <>
                     <div className="title">The most important, private key</div>
+                    <CustomGap times={2} />
                     <p>
                         UniRep Social uses a zero-knowledge gadget called{' '}
                         <strong>Semaphore</strong> to generates a secure private
                         key. This is the only key for you to access your UniRep
                         Social and Rep points.{' '}
                     </p>
+                    <CustomGap times={1} />
                     <textarea />
+                    <CustomGap times={2} />
                     <p>
                         <strong>
                             ⚠️​ It’s very important for you to store it
@@ -158,6 +171,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             ) : step === 3 ? (
                 <>
                     <div className="title">Have a practice</div>
+                    <CustomGap times={2} />
                     <p>
                         The private key you just copied is used for signing in
                         to the UniRep social, let’s give a try.

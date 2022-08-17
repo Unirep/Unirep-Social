@@ -1,4 +1,5 @@
 import CustomBox, { BoxStyle } from '../../components/customBox'
+import CustomGap from '../../components/customGap'
 
 type Props = {
     signin: () => void
@@ -26,17 +27,17 @@ const GetStarted = ({ signin, signup }: Props) => {
                 reputation they deserved. It’s tricky, but yes, we know it’s
                 very important.
             </p>
-            <div className="gap"></div>
+            <CustomGap times={4} />
             <div className="box-buttons">
                 <button className="button-light" onClick={signup}>
                     Sign Up
                 </button>
-                <div className="gap"></div>
+                <CustomGap times={3} />
                 <button className="button-dark" onClick={signin}>
                     Sign In
                 </button>
             </div>
-            <div className="gap"></div>
+            <CustomGap times={2} />
             <div className="note">
                 If you have previously used UniRep, you might need to re-sign up
                 again, since we have change the network.{' '}

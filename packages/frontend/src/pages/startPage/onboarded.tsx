@@ -1,6 +1,7 @@
 import { useHistory } from 'react-router-dom'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
+import CustomGap from '../../components/customGap'
 
 const Onboarded = () => {
     const history = useHistory()
@@ -18,7 +19,7 @@ const Onboarded = () => {
         >
             <h1 className="title">🎉 You’re in!</h1>
             <h3>30 Rep + 3 personas await you! </h3>
-            <div className="gap"></div>
+            <CustomGap times={8} />
             <p>
                 Excllent! One huge difference of UniRep Social is that you don’t
                 have to interact with any wallet, we have come up this solution
