@@ -52,8 +52,7 @@ const Overlay = () => {
                 ) : (
                     <div className="dynamic-info">
                         <a href="/feedback">Send feedback</a>
-                        <a href="/login">Sign in</a>
-                        <a href="/signup">Join</a>
+                        <a href="/start">Get started</a>
                     </div>
                 )}
             </div>
