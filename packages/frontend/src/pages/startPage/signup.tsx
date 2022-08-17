@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
@@ -43,6 +43,10 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             getStarted()
         }
     }
+
+    useEffect(() => {
+        console.log('step: ', step)
+    }, [step])
 
     return (
         <CustomBox
