@@ -81,9 +81,9 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         sign up easily while maintaining your anonymity.
                     </p>
                     <CustomGap times={3} />
-                    <div className="box-buttons">
+                    <div className="box-buttons box-buttons-smaller">
                         <button
-                            className="button-light"
+                            className="button-dark-transparent button-with-img"
                             onClick={() => setStep(step + 1)}
                         >
                             Twitter{' '}
@@ -93,7 +93,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         </button>
                         <CustomGap times={1} />
                         <button
-                            className="button-light"
+                            className="button-dark-transparent button-with-img"
                             onClick={() => setStep(step + 1)}
                         >
                             Github{' '}
@@ -103,7 +103,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         </button>
                         <CustomGap times={1} />
                         <button
-                            className="button-light"
+                            className="button-dark-transparent button-with-img"
                             onClick={() => setStep(step + 1)}
                         >
                             Reddit{' '}
@@ -120,7 +120,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                 </>
             ) : step === 1 ? (
                 <>
-                    <div className="title">Password for encryption</div>
+                    <h2>Password for encryption</h2>
                     <CustomGap times={2} />
                     <p>
                         This is optional and only for your local environment.
@@ -141,9 +141,9 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         recoverable. If you lost one day, we won’t be able to
                         help you.
                     </div>
-                    <div className="box-buttons buttons-horizontal buttons-bottom">
+                    <div className="box-buttons box-buttons-horizontal box-buttons-bottom">
                         <button
-                            className="button-light"
+                            className="button-dark-transparent"
                             onClick={() => setStep(step + 1)}
                         >
                             Skip this
@@ -158,7 +158,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                 </>
             ) : step === 2 ? (
                 <>
-                    <div className="title">The most important, private key</div>
+                    <h2>The most important, private key</h2>
                     <CustomGap times={2} />
                     <p>
                         UniRep Social uses a zero-knowledge gadget called{' '}
@@ -193,18 +193,32 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                             2
                         </div>
                     </div>
-                    <div className="box-buttons buttons-horizontal buttons-bottom">
-                        <button className="button-light" onClick={download}>
+                    <div className="box-buttons box-buttons-horizontal box-buttons-bottom">
+                        <button
+                            className={
+                                isDownloaded
+                                    ? 'button-dark disabled '
+                                    : 'button-dark'
+                            }
+                            onClick={download}
+                        >
                             Download
                         </button>
-                        <button className="button-dark" onClick={copy}>
+                        <button
+                            className={
+                                isDownloaded
+                                    ? 'button-dark'
+                                    : 'button-dark disabled'
+                            }
+                            onClick={copy}
+                        >
                             Copy
                         </button>
                     </div>
                 </>
             ) : step === 3 ? (
                 <>
-                    <div className="title">Have a practice</div>
+                    <h2>Have a practice</h2>
                     <CustomGap times={2} />
                     <p>
                         The private key you just copied is used for signing in
@@ -212,9 +226,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                     </p>
                     <p>Please paste the private key below ️​</p>
                     <textarea />
-                    <div className="gap"></div>
-                    <div className="gap"></div>
-                    <div className="box-buttons buttons-bottom">
+                    <div className="box-buttons box-buttons-bottom">
                         <button className="button-dark" onClick={onboarded}>
                             Submit
                         </button>

@@ -33,7 +33,7 @@ const GetStarted = ({ signin, signup }: Props) => {
                     Sign Up
                 </button>
                 <CustomGap times={3} />
-                <button className="button-dark" onClick={signin}>
+                <button className="button-light-transparent" onClick={signin}>
                     Sign In
                 </button>
             </div>

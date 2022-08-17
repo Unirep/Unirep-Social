@@ -51,7 +51,7 @@ const Signin = ({ getStarted }: Props) => {
                 onChange={onPwdChange}
             />
             <CustomGap times={4} />
-            <div className="box-buttons">
+            <div className="box-buttons box-buttons-bottom">
                 <button className="button-dark" onClick={gotoHomePage}>
                     Sign in
                 </button>
