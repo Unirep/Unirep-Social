@@ -49,6 +49,35 @@
         }
     }
 
+    .download-steps {
+        width: 56%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .download-step {
+        width: 24px;
+        height: 24px;
+        background-color: $black;
+        color: $white;
+        font-size: $text-base;
+        font-weight: 700;
+        border-radius: 20px;
+    }
+
+    .line {
+        width: 75%;
+        height: 2px;
+        background-color: $grey-800;
+    }
+
+    .disabled {
+        background-color: $grey-400;
+        cursor: not-allowed;
+    }
+
     .box {
         position: relative;
         width: 609px;
@@ -60,6 +89,9 @@
         border: $grey-100 solid 6px;
 
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 
         @media (max-width: 609px) {
             width: 100%;
@@ -118,6 +150,7 @@
     }
 
     .box-buttons {
+        width: 100%;
         background-color: transparent;
 
         button {
@@ -159,7 +192,6 @@
     .buttons-bottom {
         position: absolute;
         bottom: 48px;
-        width: 100%;
-        padding-right: 64px;
+        padding: 0px 32px;
     }
 }
