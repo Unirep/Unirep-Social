@@ -235,7 +235,6 @@
     }
 
     .disabled {
-        background-color: $grey-400;
-        cursor: not-allowed;
+        @include disabled;
     }
 }
