@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useHistory } from 'react-router-dom'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
+import CustomInput from '../../components/customInput'
 
 type Props = {
     getStarted: () => void
@@ -45,9 +46,9 @@ const Signin = ({ getStarted, signup }: Props) => {
             <textarea onChange={onInputChange} />
             <div className="gap"></div>
             <p>If you have setup the encryption password, please enter here</p>
-            <input
+            <CustomInput
+                title="Password (Only if you need to decrypt)"
                 onChange={onPwdChange}
-                placeholder="Password (Only if you need to decrypt)"
             />
             <div className="gap"></div>
             <div className="box-buttons">

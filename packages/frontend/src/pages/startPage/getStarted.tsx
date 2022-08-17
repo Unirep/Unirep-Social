@@ -37,10 +37,10 @@ const GetStarted = ({ signin, signup }: Props) => {
                 </button>
             </div>
             <div className="gap"></div>
-            <p>
+            <div className="note">
                 If you have previously used UniRep, you might need to re-sign up
                 again, since we have change the network.{' '}
-            </p>
+            </div>
         </CustomBox>
     )
 }
