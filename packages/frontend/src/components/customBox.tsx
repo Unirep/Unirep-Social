@@ -52,7 +52,23 @@ const CustomBox = (props: Props) => {
                     onClick={gotoHomePage}
                 />
             </div>
-            {props.stepNum && <div className="steps"></div>}
+            {props.stepNum && (
+                <div className="steps">
+                    {[...Array(props.stepNum).keys()].map((n) => (
+                        <div
+                            className="step"
+                            key={n}
+                            style={{
+                                backgroundImage:
+                                    props.currentStep !== undefined &&
+                                    n <= props.currentStep
+                                        ? `url(${require('../../public/images/progress-bg.png')})`
+                                        : '',
+                            }}
+                        ></div>
+                    ))}
+                </div>
+            )}
             <div
                 className={
                     props.boxStyle === BoxStyle.dark
