@@ -3,13 +3,13 @@ import { useHistory } from 'react-router-dom'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomInput from '../../components/customInput'
+import CustomGap from '../../components/customGap'
 
 type Props = {
     getStarted: () => void
-    signup: () => void
 }
 
-const Signin = ({ getStarted, signup }: Props) => {
+const Signin = ({ getStarted }: Props) => {
     const [input, setInput] = useState<string>('')
     const [pwd, setPwd] = useState<string>('')
     const history = useHistory()
@@ -37,6 +37,7 @@ const Signin = ({ getStarted, signup }: Props) => {
             hasClose={false}
         >
             <h2 className="title">Sign in</h2>
+            <CustomGap times={2} />
             <p>
                 We have deploy the contract on Optimism, that is different from
                 the previous release. If you have previously use UniRep Social,
@@ -44,21 +45,17 @@ const Signin = ({ getStarted, signup }: Props) => {
             </p>
             <p>Please paste the newly registered private key below</p>
             <textarea onChange={onInputChange} />
-            <div className="gap"></div>
-            <p>If you have setup the encryption password, please enter here</p>
+            <CustomGap times={2} />
             <CustomInput
                 title="Password (Only if you need to decrypt)"
                 onChange={onPwdChange}
             />
-            <div className="gap"></div>
+            <CustomGap times={4} />
             <div className="box-buttons">
                 <button className="button-dark" onClick={gotoHomePage}>
                     Sign in
                 </button>
             </div>
-            <p>
-                Need an access? <strong onClick={signup}>Sign up here</strong>
-            </p>
         </CustomBox>
     )
 }

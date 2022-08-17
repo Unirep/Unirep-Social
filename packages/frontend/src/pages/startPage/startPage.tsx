@@ -37,10 +37,7 @@ const StartPage = () => {
             ) : step === StepType.onboarded ? (
                 <Onboarded />
             ) : step === StepType.signin ? (
-                <Signin
-                    getStarted={() => setStep(StepType.getstarted)}
-                    signup={() => setStep(StepType.signup)}
-                />
+                <Signin getStarted={() => setStep(StepType.getstarted)} />
             ) : null}
         </div>
     )
