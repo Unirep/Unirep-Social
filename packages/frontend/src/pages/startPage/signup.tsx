@@ -19,6 +19,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
     const [step, setStep] = useState<number>(0)
     const [pwd, setPwd] = useState<string>('')
     const [confirmPwd, setConfirmPwd] = useState<string>('')
+    const [isDownloaded, setIsDownloaded] = useState<boolean>(false)
 
     const onPwdChange = (event: any) => {
         setPwd(event.target.value)
@@ -30,10 +31,27 @@ const Signup = ({ onboarded, getStarted }: Props) => {
         console.log('confirm pwd:', event.target.value)
     }
 
-    const download = () => {}
+    const download = () => {
+        // if (!userContext.identity) throw new Error('Identity not initialized')
+        const element = document.createElement('a')
+        // const file = new Blob([userContext.identity], { type: 'text/plain' })
+        const file = new Blob(['something test'], { type: 'text/plain' })
+
+        element.href = URL.createObjectURL(file)
+        element.download = 'unirep-social-identity.txt'
+        document.body.appendChild(element)
+        element.click()
+
+        setIsDownloaded(true)
+    }
 
     const copy = () => {
-        setStep(step + 1)
+        if (isDownloaded) {
+            navigator.clipboard.writeText(
+                userContext.identity || 'something is wrong'
+            )
+            setStep(step + 1)
+        }
     }
 
     const back = () => {
@@ -43,10 +61,6 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             getStarted()
         }
     }
-
-    useEffect(() => {
-        console.log('step: ', step)
-    }, [step])
 
     return (
         <CustomBox
@@ -163,6 +177,22 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         <br />
                         We can not recover it for you if it’s lost. ️​
                     </p>
+                    <CustomGap times={2} />
+                    <div className="download-steps">
+                        <div className="download-step">1</div>
+                        <div
+                            className={isDownloaded ? 'line' : 'line disabled'}
+                        ></div>
+                        <div
+                            className={
+                                isDownloaded
+                                    ? 'download-step'
+                                    : 'download-step disabled'
+                            }
+                        >
+                            2
+                        </div>
+                    </div>
                     <div className="box-buttons buttons-horizontal buttons-bottom">
                         <button className="button-light" onClick={download}>
                             Download
