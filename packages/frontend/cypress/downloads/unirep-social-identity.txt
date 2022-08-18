@@ -1,1 +1,0 @@
-{"identityNullifier":"20bc4f6c988a20dbcffadb1d1cf0807d48399eb9825100daee9fb9f44dc8887","identityTrapdoor":"25a78547b36a541cd1030db491bc5bdaac1c491605d7aba1a33a7b836bfea758","secret":["20bc4f6c988a20dbcffadb1d1cf0807d48399eb9825100daee9fb9f44dc8887","25a78547b36a541cd1030db491bc5bdaac1c491605d7aba1a33a7b836bfea758"]}

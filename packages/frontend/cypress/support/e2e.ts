@@ -66,20 +66,9 @@ export async function startServer(contractOverrides = {}) {
     console.log('start server function in e2e')
     await waitForGanache()
 
-    // const { TransactionManager } = require('../../../backend/src/daemons/transaction-manager')
-
     const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
-    // this is the global manager shared across test processes
-    // const txManager = new TransactionManager()
-    // txManager.configure(FUNDED_PRIVATE_KEY, provider)
-    // await txManager.start()
 
-    const wallet = ethers.Wallet.createRandom().connect(provider)
-    // now fund our fresh wallet
-    // const hash = await txManager.queueTransaction(wallet.address, {
-    //     value: ethers.BigNumber.from(10).pow(20), // 100 eth
-    // })
-    // await provider.waitForTransaction(hash)
+    const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
     const data = await deploy(wallet, contractOverrides)
     const { unirep, unirepSocial } = data

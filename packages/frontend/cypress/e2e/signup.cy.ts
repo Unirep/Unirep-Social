@@ -12,10 +12,10 @@ describe('visit and interact with home page', () => {
         return false
     })
 
-    beforeEach(async (t: any) => {
+    beforeEach(() => {
         // deploy unirep and unirep social contract
-        const context = await startServer()
-        Object.assign(t.context, context)
+        const context = startServer()
+        Object.assign(context)
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {
@@ -79,7 +79,6 @@ describe('visit and interact with home page', () => {
 
     it('navigate to the signup page and signup a user', () => {
         cy.visit('/')
-
         cy.findByText('Join').click()
         cy.findByRole('textbox').type('testprivatekey')
         cy.findByText('Let me in').click()
