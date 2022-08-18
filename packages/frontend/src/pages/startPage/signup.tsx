@@ -195,22 +195,16 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                     </div>
                     <div className="box-buttons box-buttons-horizontal box-buttons-bottom">
                         <button
-                            className={
-                                isDownloaded
-                                    ? 'button-dark disabled '
-                                    : 'button-dark'
-                            }
+                            className="button-dark"
                             onClick={download}
+                            disabled={isDownloaded}
                         >
                             Download
                         </button>
                         <button
-                            className={
-                                isDownloaded
-                                    ? 'button-dark'
-                                    : 'button-dark disabled'
-                            }
+                            className="button-dark disabled"
                             onClick={copy}
+                            disabled={!isDownloaded}
                         >
                             Copy
                         </button>
