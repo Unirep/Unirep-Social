@@ -1,4 +1,5 @@
 import { startServer } from '../../cypress/support/e2e'
+import { getInvitationCode, signUp } from '../../cypress/support/utils'
 
 describe('visit and interact with home page', () => {
     const serverUrl = `http://testurl.invalidtld`
@@ -12,10 +13,10 @@ describe('visit and interact with home page', () => {
         return false
     })
 
-    beforeEach(() => {
+    beforeEach((t: any) => {
         // deploy unirep and unirep social contract
         const context = startServer()
-        Object.assign(context)
+        Object.assign(t.context, context)
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {
@@ -75,13 +76,17 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
             fixture: 'genInvitationCode.json',
         }).as('genInvitationCode')
+        cy.intercept('GET', `${serverUrl}/api/signup*`, {
+            fixture: 'signup.json',
+        }).as('signup')
     })
 
-    it('navigate to the signup page and signup a user', () => {
-        cy.visit('/')
-        cy.findByText('Join').click()
-        cy.findByRole('textbox').type('testprivatekey')
-        cy.findByText('Let me in').click()
-        cy.findByText('Download').click()
+    it('should get signup code', async (t: any) => {
+        let signupCode: string = await getInvitationCode(t)
+        const r = await fetch(
+            `${t.context.url}/api/genInvitationCode/${signupCode}`
+        )
+        t.is(r.status, 200)
+        t.pass()
     })
 })
