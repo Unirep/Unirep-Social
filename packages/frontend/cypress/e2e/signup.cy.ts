@@ -1,3 +1,5 @@
+import { startServer } from '../../cypress/support/e2e'
+
 describe('visit and interact with home page', () => {
     const serverUrl = `http://testurl.invalidtld`
     // pass the url of the localnode e.g. http://localhost:18545
@@ -10,7 +12,11 @@ describe('visit and interact with home page', () => {
         return false
     })
 
-    beforeEach(() => {
+    beforeEach(async (t: any) => {
+        // deploy unirep and unirep social contract
+        const context = await startServer()
+        Object.assign(t.context, context)
+
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {
                 posts: 'string',
@@ -23,7 +29,7 @@ describe('visit and interact with home page', () => {
                     '0x903Ae15BfbddFAD6cd44B4cC1CF01EEBa0742456',
             },
         }).as('getApiConfig')
-        cy.intercept(`${ethProvider}`, (req) => {
+        cy.intercept(`${ethProvider}*`, (req) => {
             // conditonal logic to return different responses based on the request url
             console.log(req.body)
             const { method, params, id } = req.body
@@ -73,14 +79,6 @@ describe('visit and interact with home page', () => {
 
     it('navigate to the signup page and signup a user', () => {
         cy.visit('/')
-        cy.wait('@getApiConfig').then((res) => {
-            cy.log(JSON.stringify(res))
-        })
-        // quickly tests if signup page loads
-        cy.findByText('Join').click()
-        cy.findByRole('textbox').type('test')
-        cy.get('*[class^="signup-page"]').should('be.visible')
-        cy.get('#close-icon').click()
 
         cy.findByText('Join').click()
         cy.findByRole('textbox').type('testprivatekey')
