@@ -65,12 +65,22 @@
         font-size: $text-base;
         font-weight: 700;
         border-radius: 20px;
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
     }
 
     .line {
         width: 75%;
         height: 2px;
         background-color: $grey-800;
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
     }
 
     .box {
@@ -155,6 +165,10 @@
         font-weight: 600;
         border-radius: 8px;
         padding: 16px 24px;
+
+        &:disabled {
+            cursor: not-allowed;
+        }
     }
 
     .button-dark {
@@ -165,6 +179,11 @@
         &:hover {
             background-color: $grey-400;
         }
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
     }
 
     .button-light {
@@ -174,6 +193,11 @@
 
         &:hover {
             background-color: $grey-200;
+        }
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
         }
     }
 
@@ -187,6 +211,12 @@
             border: $grey-200 solid 1px;
             background-color: transparent;
         }
+
+        &:disabled {
+            color: $grey-400;
+            border: $grey-400 solid 1px;
+            background-color: transparent;
+        }
     }
 
     .button-dark-transparent {
@@ -195,6 +225,12 @@
         background-color: transparent;
 
         &:hover {
+            color: $grey-400;
+            border: $grey-400 solid 1px;
+            background-color: transparent;
+        }
+
+        &:disabled {
             color: $grey-400;
             border: $grey-400 solid 1px;
             background-color: transparent;
