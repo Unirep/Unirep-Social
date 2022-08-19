@@ -1,22 +1,17 @@
 import { startServer } from '../../cypress/support/e2e'
-import { getInvitationCode, signUp } from '../../cypress/support/utils'
 
 describe('visit and interact with home page', () => {
     const serverUrl = `http://testurl.invalidtld`
-    // pass the url of the localnode e.g. http://localhost:18545
     const ethProvider = `http://localhost:18545`
 
     Cypress.on('uncaught:exception', (err, runnable) => {
-        // returning false here prevents Cypress from
-        // failing the test
-        // note: uncaught errors are shown in Cypress GUI
         return false
     })
 
-    beforeEach((t: any) => {
+    beforeEach(() => {
         // deploy unirep and unirep social contract
         const context = startServer()
-        Object.assign(t.context, context)
+        Object.assign(context)
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {
@@ -32,7 +27,7 @@ describe('visit and interact with home page', () => {
         }).as('getApiConfig')
         cy.intercept(`${ethProvider}*`, (req) => {
             // conditonal logic to return different responses based on the request url
-            console.log(req.body)
+            // console.log(req.body)
             const { method, params, id } = req.body
             if (method === 'eth_chainId') {
                 req.reply({
@@ -81,12 +76,10 @@ describe('visit and interact with home page', () => {
         }).as('signup')
     })
 
-    it('should get signup code', async (t: any) => {
-        let signupCode: string = await getInvitationCode(t)
-        const r = await fetch(
-            `${t.context.url}/api/genInvitationCode/${signupCode}`
-        )
-        t.is(r.status, 200)
-        t.pass()
+    it('navigate to the signup page and signup a user', () => {
+        cy.visit('/')
+        cy.findByText('Join').click()
+        cy.findByRole('textbox').type('testprivatekey')
+        cy.findByText('Let me in').click()
     })
 })

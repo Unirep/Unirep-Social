@@ -25,8 +25,6 @@ import { deployUnirep } from '@unirep/contracts'
 const GANACHE_URL = 'http://127.0.0.1:18545'
 const FUNDED_PRIVATE_KEY =
     '0x0000000000000000000000000000000000000000000000000000000000000001'
-// chain id is 1337 for ganache RPC provider
-const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
 
 async function waitForGanache() {
     for (let x = 0; x < 100; x++) {
@@ -71,7 +69,9 @@ export async function startServer(contractOverrides = {}) {
     const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
     const data = await deploy(wallet, contractOverrides)
+    console.log('This is data', data)
     const { unirep, unirepSocial } = data
+
 
     Object.assign(process.env, {
         UNIREP: unirep.address,

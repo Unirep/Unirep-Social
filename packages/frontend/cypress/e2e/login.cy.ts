@@ -1,11 +1,8 @@
 describe('visit and interact with home page', () => {
-    const serverUrl = `${Cypress.env('serverUrl')}`
-    const ethProvider = `${Cypress.env('ethProvider')}`
+    const serverUrl = `http://testurl.invalidtld`
+    const ethProvider = `http://localhost:18545`
 
     Cypress.on('uncaught:exception', (err, runnable) => {
-        // returning false here prevents Cypress from
-        // failing the test
-        // note: uncaught errors are shown in Cypress GUI
         return false
     })
 
@@ -22,19 +19,61 @@ describe('visit and interact with home page', () => {
                     '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
             },
         }).as('getApiConfig')
-        cy.intercept('POST', `${ethProvider}*`, {
-            fixture: 'ethProvider.json',
+        cy.intercept(`${ethProvider}*`, (req) => {
+            // conditonal logic to return different responses based on the request url
+            console.log(req.body)
+            const { method, params, id } = req.body
+            // if (method === 'eth_chainId') {
+            //     req.reply({
+            //         body: {
+            //             id: 1,
+            //             jsonrpc: '2.0',
+            //             result: '0x111111',
+            //         },
+            //     })
+            // } else if (
+            //     method === 'eth_call' &&
+            //     params[0]?.data === '0x79502c55'
+            // ) {
+            //     req.reply({
+            //         body: {
+            //             id,
+            //             jsonrpc: '2.0',
+            //             result:
+            //                 '0x' +
+            //                 Array(10 * 64)
+            //                     .fill(0)
+            //                     .map((_, i) => (i % 64 === 63 ? 1 : 0))
+            //                     .join(''),
+            //         },
+            //     })
+            // } else if (method === 'eth_call') {
+            //     // other uint256 retrievals
+            //     req.reply({
+            //         body: {
+            //             id,
+            //             jsonrpc: '2.0',
+            //             result: '0x0000000000000000000000000000000000000000000000000000000000000001',
+            //         },
+            //     })
+            // } else {
+            //     req.reply({
+            //         body: { test: 'test' },
+            //     })
+            // }
+            req.reply({
+                body: {
+                    id,
+                    jsonrpc: '2.0',
+                    result: '0x0000000000000000000000000000000000000000000000000000000000000001',
+                },
+            })
         }).as('ethProvider')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
     })
 
     it('navigate to the login page and login a user', () => {
         cy.visit('/')
-        cy.wait('@getApiConfig').then((res: any) => {
-            cy.log(JSON.stringify(res.response.body))
-        })
+
         // quickly tests if signup page loads
         cy.findByText('Sign in').click()
         cy.findByRole('textbox').type('test')
@@ -44,7 +83,5 @@ describe('visit and interact with home page', () => {
         cy.findByText('Sign in').click()
         cy.findByRole('textbox').type('testprivatekey')
         cy.get('*[class^="loading-btn"]').click()
-
-        // Error: invalid contract address or ENS name (argument="addressOrName", value=undefined, code=INVALID_ARGUMENT, version=contracts/5.6.2) error thrown here
     })
 })
