@@ -26,6 +26,8 @@ export class User {
     latestProcessedBlock: any
     isInitialSyncing: any
 
+    closeBanner: boolean = false
+
     constructor() {
         makeObservable(this, {
             userState: observable,
@@ -40,6 +42,7 @@ export class User {
             // latestProcessedBlock: observable,
             // isInitialSyncing: observable,
             id: observable,
+            closeBanner: observable,
         })
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
@@ -69,6 +72,7 @@ export class User {
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
             })
+            await this.loadUserInfo()
         }
 
         // start listening for new epochs
@@ -190,6 +194,20 @@ export class User {
         )
         this.reputation = Number(rep.posRep) - Number(rep.negRep)
         return rep
+    }
+
+    async loadUserInfo() {
+        if (!this.id || !this.userState) return
+
+        const commitment = this.id
+            .genIdentityCommitment()
+            .toString(16)
+            .padStart(64, '0')
+
+        const userInfo = await fetch(makeURL(`userinfo/${commitment}`)).then(
+            (r) => r.json()
+        )
+        if (userInfo.closeBanner) this.closeBanner = true
     }
 
     async getAirdrop() {
@@ -433,6 +451,28 @@ export class User {
         await this.loadReputation()
         await this.calculateAllEpks()
         this.spent = 0
+    }
+
+    async editUserInfo(data: any) {
+        if (!this.id) return undefined
+
+        const commitment = this.id
+            .genIdentityCommitment()
+            .toString(16)
+            .padStart(64, '0')
+
+        await fetch(makeURL('userinfo'), {
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                ...data,
+                userCommitment: commitment,
+            }),
+            method: 'POST',
+        })
+
+        if (data.closeBanner) this.closeBanner = data.closeBanner
     }
 }
 

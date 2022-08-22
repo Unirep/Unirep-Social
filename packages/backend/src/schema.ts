@@ -43,6 +43,22 @@ const _schema = [
             ['email', 'String', { optional: true }],
         ],
     },
+    {
+        name: 'UserInfo',
+        rows: [
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+            ['userCommitment', 'String'],
+            {
+                name: 'closeBanner',
+                type: 'Bool',
+                default: () => false,
+            },
+        ],
+    },
 ]
 
 export default _schema

@@ -56,6 +56,8 @@ async function signup(req, res) {
     const epoch = await unirepContract.currentEpoch()
     console.log('transaction: ' + hash + ', sign up epoch: ' + epoch.toString())
 
+    await req.db.create('UserInfo', { userCommitment: uploadedCommitment })
+
     res.json({
         transaction: hash,
         epoch: epoch.toNumber(),

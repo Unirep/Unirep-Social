@@ -15,9 +15,14 @@ const Banner = () => {
         }
     }, [])
 
+    const closeBanner = async () => {
+        setOn(false)
+        await userContext.editUserInfo({ closeBanner: true })
+    }
+
     return (
         <div className="banner-row">
-            {on ? (
+            {on && !userContext.closeBanner && (
                 <div className="banner">
                     <img src={require('../../../public/images/banner.svg')} />
                     <div className="banner-title">
@@ -41,14 +46,12 @@ const Banner = () => {
                             <div></div>
                         )}
                     </div>
-                    <div className="banner-close" onClick={() => setOn(false)}>
+                    <div className="banner-close" onClick={closeBanner}>
                         <img
                             src={require('../../../public/images/close.svg')}
                         />
                     </div>
                 </div>
-            ) : (
-                <div></div>
             )}
         </div>
     )
