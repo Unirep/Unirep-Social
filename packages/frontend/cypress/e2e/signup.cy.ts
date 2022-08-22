@@ -1,8 +1,8 @@
-import { startServer } from '../../cypress/support/e2e'
+import { startServer } from '../support/e2e'
 
 describe('visit and interact with home page', () => {
-    const serverUrl = `http://testurl.invalidtld`
-    const ethProvider = `http://localhost:18545`
+    const serverUrl = Cypress.env('serverUrl')
+    const ethProvider = Cypress.env('ethProvider')
 
     Cypress.on('uncaught:exception', (err, runnable) => {
         return false
@@ -27,7 +27,8 @@ describe('visit and interact with home page', () => {
         }).as('getApiConfig')
         cy.intercept(`${ethProvider}*`, (req) => {
             // conditonal logic to return different responses based on the request url
-            // console.log(req.body)
+            console.log('Req.body in eth provider req', req.body)
+
             const { method, params, id } = req.body
             if (method === 'eth_chainId') {
                 req.reply({
@@ -71,9 +72,6 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
             fixture: 'genInvitationCode.json',
         }).as('genInvitationCode')
-        cy.intercept('GET', `${serverUrl}/api/signup*`, {
-            fixture: 'signup.json',
-        }).as('signup')
     })
 
     it('navigate to the signup page and signup a user', () => {
@@ -83,3 +81,5 @@ describe('visit and interact with home page', () => {
         cy.findByText('Let me in').click()
     })
 })
+
+// sends a post request to geth node every ~70-500ms. Why?

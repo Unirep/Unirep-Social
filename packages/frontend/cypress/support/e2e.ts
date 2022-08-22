@@ -16,13 +16,14 @@
 // Import commands.js using ES2015 syntax:
 import '@testing-library/cypress/add-commands'
 import './commands'
+
 import { ethers } from 'ethers'
 
 // import unirep social json abi
 import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
 import { deployUnirep } from '@unirep/contracts'
 
-const GANACHE_URL = 'http://127.0.0.1:18545'
+const GANACHE_URL = 'http://localhost:18545'
 const FUNDED_PRIVATE_KEY =
     '0x0000000000000000000000000000000000000000000000000000000000000001'
 
@@ -31,6 +32,10 @@ async function waitForGanache() {
         await new Promise((r) => setTimeout(r, 1000))
         try {
             const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
+            console.log(
+                'hey lets see if the JSONRPC works..........:',
+                provider
+            )
             await provider.getNetwork()
             break
         } catch (_) {}
@@ -69,9 +74,8 @@ export async function startServer(contractOverrides = {}) {
     const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
     const data = await deploy(wallet, contractOverrides)
-    console.log('This is data', data)
+    console.log('This is deploy data', data)
     const { unirep, unirepSocial } = data
-
 
     Object.assign(process.env, {
         UNIREP: unirep.address,
@@ -81,6 +85,7 @@ export async function startServer(contractOverrides = {}) {
         ADMIN_SESSION_CODE: 'ffff',
         ...process.env,
     })
+    console.log('This is process env:', process.env)
 
     return { ...data }
 }

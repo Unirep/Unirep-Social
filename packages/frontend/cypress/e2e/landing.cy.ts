@@ -1,11 +1,8 @@
 describe('Landing Page', () => {
-    const serverUrl = `${Cypress.env('serverUrl')}`
-    const ethProvider = `${Cypress.env('ethProvider')}`
+    const serverUrl = Cypress.env('serverUrl')
+    const ethProvider = Cypress.env('ethProvider')
 
     Cypress.on('uncaught:exception', (err, runnable) => {
-        // returning false here prevents Cypress from
-        // failing the test
-        // note: uncaught errors are shown in Cypress GUI
         return false
     })
 
@@ -48,3 +45,5 @@ describe('Landing Page', () => {
         cy.get('*[class^="progress-list"]').should('not.exist')
     })
 })
+
+// test sends a lot of requests when finished

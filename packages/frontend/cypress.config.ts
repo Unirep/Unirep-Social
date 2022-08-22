@@ -8,8 +8,9 @@ export default defineConfig({
         video: false,
     },
     env: {
-        serverUrl: 'http://localhost:3001',
-        ethProvider: 'http://localhost:8545',
+        serverUrl: 'http://testurl.invalidtld',
+        ethProvider: 'http://localhost:18545',
     },
     chromeWebSecurity: false,
+    experimentalFetchPolyfill: true,
 })

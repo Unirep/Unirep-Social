@@ -1,12 +1,18 @@
+import { startServer } from '../support/e2e'
+
 describe('visit and interact with home page', () => {
-    const serverUrl = `http://testurl.invalidtld`
-    const ethProvider = `http://localhost:18545`
+    const serverUrl = Cypress.env('serverUrl')
+    const ethProvider = Cypress.env('ethProvider')
 
     Cypress.on('uncaught:exception', (err, runnable) => {
         return false
     })
 
     beforeEach(() => {
+        // deploy unirep and unirep social contract
+        const context = startServer()
+        Object.assign(context)
+
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {
                 posts: 'string',
@@ -23,44 +29,44 @@ describe('visit and interact with home page', () => {
             // conditonal logic to return different responses based on the request url
             console.log(req.body)
             const { method, params, id } = req.body
-            // if (method === 'eth_chainId') {
-            //     req.reply({
-            //         body: {
-            //             id: 1,
-            //             jsonrpc: '2.0',
-            //             result: '0x111111',
-            //         },
-            //     })
-            // } else if (
-            //     method === 'eth_call' &&
-            //     params[0]?.data === '0x79502c55'
-            // ) {
-            //     req.reply({
-            //         body: {
-            //             id,
-            //             jsonrpc: '2.0',
-            //             result:
-            //                 '0x' +
-            //                 Array(10 * 64)
-            //                     .fill(0)
-            //                     .map((_, i) => (i % 64 === 63 ? 1 : 0))
-            //                     .join(''),
-            //         },
-            //     })
-            // } else if (method === 'eth_call') {
-            //     // other uint256 retrievals
-            //     req.reply({
-            //         body: {
-            //             id,
-            //             jsonrpc: '2.0',
-            //             result: '0x0000000000000000000000000000000000000000000000000000000000000001',
-            //         },
-            //     })
-            // } else {
-            //     req.reply({
-            //         body: { test: 'test' },
-            //     })
-            // }
+            if (method === 'eth_chainId') {
+                req.reply({
+                    body: {
+                        id: 1,
+                        jsonrpc: '2.0',
+                        result: '0x111111',
+                    },
+                })
+            } else if (
+                method === 'eth_call' &&
+                params[0]?.data === '0x79502c55'
+            ) {
+                req.reply({
+                    body: {
+                        id,
+                        jsonrpc: '2.0',
+                        result:
+                            '0x' +
+                            Array(10 * 64)
+                                .fill(0)
+                                .map((_, i) => (i % 64 === 63 ? 1 : 0))
+                                .join(''),
+                    },
+                })
+            } else if (method === 'eth_call') {
+                // other uint256 retrievals
+                req.reply({
+                    body: {
+                        id,
+                        jsonrpc: '2.0',
+                        result: '0x0000000000000000000000000000000000000000000000000000000000000001',
+                    },
+                })
+            } else {
+                req.reply({
+                    body: { test: 'test' },
+                })
+            }
             req.reply({
                 body: {
                     id,
@@ -71,7 +77,7 @@ describe('visit and interact with home page', () => {
         }).as('ethProvider')
     })
 
-    it('navigate to the login page and login a user', () => {
+    it.skip('navigate to the login page and login a user', () => {
         cy.visit('/')
 
         // quickly tests if signup page loads
@@ -85,3 +91,5 @@ describe('visit and interact with home page', () => {
         cy.get('*[class^="loading-btn"]').click()
     })
 })
+
+// sends a post request to geth node every ~70-500ms. Why?
