@@ -19,20 +19,26 @@
         top: 0;
         z-index: 16;
         width: 100%;
-        padding: 16px 48px;
-
-        display: flex;
-        justify-content: space-between;
 
         img {
+            position: absolute;
+            top: 16px;
             width: 48px;
             height: 48px;
             cursor: pointer;
         }
+
+        #back {
+            left: 48px;
+        }
+
+        #close {
+            right: 48px;
+        }
     }
 
     .steps {
-        width: 492px;
+        width: 75%;
         display: flex;
         justify-content: space-between;
         gap: 8px;
@@ -86,7 +92,7 @@
     .box {
         position: relative;
         width: 609px;
-        height: 658px;
+        min-height: 658px;
         padding: 48px 32px;
         overflow-y: scroll;
 
@@ -101,6 +107,10 @@
         @media (max-width: 609px) {
             width: 100%;
         }
+    }
+
+    .box-with-bottom-btns {
+        padding-bottom: 120px;
     }
 
     textarea {

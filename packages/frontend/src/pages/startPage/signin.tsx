@@ -35,6 +35,7 @@ const Signin = ({ getStarted }: Props) => {
             hasBack={true}
             backFunction={getStarted}
             hasClose={false}
+            bottomBtns={1}
         >
             <h2 className="title">Sign in</h2>
             <CustomGap times={2} />

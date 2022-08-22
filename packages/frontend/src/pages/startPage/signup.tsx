@@ -23,12 +23,10 @@ const Signup = ({ onboarded, getStarted }: Props) => {
 
     const onPwdChange = (event: any) => {
         setPwd(event.target.value)
-        console.log('pwd:', event.target.value)
     }
 
     const onConfirmPwdChange = (event: any) => {
         setConfirmPwd(event.target.value)
-        console.log('confirm pwd:', event.target.value)
     }
 
     const download = () => {
@@ -62,15 +60,19 @@ const Signup = ({ onboarded, getStarted }: Props) => {
         }
     }
 
+    const buttomBtnsCount = [0, 2, 2, 1]
+    const hasBack = [true, true, false, false]
+
     return (
         <CustomBox
             bg="bg-signup"
             boxStyle={BoxStyle.light}
-            hasBack={true}
+            hasBack={hasBack[step]}
             backFunction={back}
             hasClose={false}
             stepNum={4}
             currentStep={step}
+            bottomBtns={buttomBtnsCount[step]}
         >
             {step === 0 ? (
                 <>
@@ -202,7 +204,9 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                             Download
                         </button>
                         <button
-                            className="button-dark disabled"
+                            className={`button-dark ${
+                                isDownloaded ? '' : 'disabled'
+                            }`}
                             onClick={copy}
                             disabled={!isDownloaded}
                         >
