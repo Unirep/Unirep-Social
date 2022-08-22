@@ -25,6 +25,7 @@ type Props = {
     hasClose: boolean
     stepNum?: number
     currentStep?: number
+    bottomBtns?: number
 }
 
 const CustomBox = (props: Props) => {
@@ -42,11 +43,13 @@ const CustomBox = (props: Props) => {
         >
             <div className="top-buttons">
                 <img
+                    id="back"
                     src={require('../../public/images/back.svg')}
                     style={{ display: props.hasBack ? 'block' : 'none' }}
                     onClick={props.backFunction}
                 />
                 <img
+                    id="close"
                     src={require('../../public/images/close.svg')}
                     style={{ display: props.hasClose ? 'block' : 'none' }}
                     onClick={gotoHomePage}
@@ -72,7 +75,11 @@ const CustomBox = (props: Props) => {
             <div
                 className={
                     props.boxStyle === BoxStyle.dark
-                        ? 'box box-dark'
+                        ? props.bottomBtns
+                            ? 'box box-dark box-with-bottom-btns'
+                            : 'box box-dark'
+                        : props.bottomBtns
+                        ? 'box box-light box-with-bottom-btns'
                         : 'box box-light'
                 }
             >

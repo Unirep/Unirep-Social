@@ -12,10 +12,11 @@ const Onboarded = () => {
 
     return (
         <CustomBox
-            bg="bg-getstarted"
+            bg="bg-onboarded"
             boxStyle={BoxStyle.dark}
             hasBack={false}
             hasClose={true}
+            bottomBtns={1}
         >
             <h1 className="title">🎉 You’re in!</h1>
             <h3>30 Rep + 3 personas await you! </h3>
