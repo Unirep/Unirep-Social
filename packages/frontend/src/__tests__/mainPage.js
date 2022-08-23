@@ -48,18 +48,15 @@ test('should render MainPage with mocked data and false UserState', () => {
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData)
-    expect(
-        screen.getByText(/community built on ideas, not identities./i)
-    ).toBeInTheDocument()
-    expect(
-        screen.getByText(/stay up to date & share everything with everyone./i)
-    ).toBeInTheDocument()
+    // expect(
+    //     screen.getByText(/community built on ideas, not identities./i)
+    // ).toBeInTheDocument()
+    // expect(
+    //     screen.getByText(/stay up to date & share everything with everyone./i)
+    // ).toBeInTheDocument()
     // userState is *false* so login text is rendered
     expect(
         screen.getByText(/you must join or login to create post/i)
-    ).toBeInTheDocument()
-    expect(
-        screen.getByText(/stay up to date & share everything with everyone./i)
     ).toBeInTheDocument()
 })
 
@@ -87,12 +84,12 @@ test('should render MainPage with mocked data and true UserState', () => {
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData)
-    expect(
-        screen.getByText(/community built on ideas, not identities./i)
-    ).toBeInTheDocument()
-    expect(
-        screen.getByText(/stay up to date & share everything with everyone./i)
-    ).toBeInTheDocument()
+    // expect(
+    //     screen.getByText(/community built on ideas, not identities./i)
+    // ).toBeInTheDocument()
+    // expect(
+    //     screen.getByText(/stay up to date & share everything with everyone./i)
+    // ).toBeInTheDocument()
     // userState is *true*
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
     expect(screen.getByText(userData.netReputation)).toBeInTheDocument()
