@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
@@ -13,12 +13,21 @@ import { Page } from '../../constants'
 const SideColumn = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
-
     const page = window.location.pathname as any
+    const [showBackBtn, setShowBackBtn] = useState<boolean>(false)
 
     const gotoSetting = () => {
         if (userContext.userState) {
             history.push('/setting', { isConfirmed: true })
+        }
+    }
+
+    window.onscroll = () => {
+        console.log(document.documentElement.scrollTop, window.innerHeight)
+        if (document.documentElement.scrollTop > 104 + window.innerHeight / 2) {
+            setShowBackBtn(true)
+        } else {
+            setShowBackBtn(false)
         }
     }
 
@@ -56,9 +65,14 @@ const SideColumn = () => {
                 <div></div>
             )}
             <DefaultWidget />
-            <div className="back-to-top" onClick={() => window.scrollTo(0, 0)}>
-                Back to top
-            </div>
+            {showBackBtn && (
+                <div
+                    className="back-to-top"
+                    onClick={() => window.scrollTo(0, 0)}
+                >
+                    Back to top
+                </div>
+            )}
         </div>
     )
 }
