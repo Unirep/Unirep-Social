@@ -14,13 +14,8 @@ const verifyGSTRoot = async (
     epoch: number,
     gstRoot: string
 ): Promise<boolean> => {
-    const exists = await db.findOne('GSTRoot', {
-        where: {
-            epoch,
-            root: gstRoot,
-        },
-    })
-    return !!exists
+    // TODO: check onchain
+    return true
 }
 
 const verifyEpochTreeRoot = async (
@@ -28,13 +23,8 @@ const verifyEpochTreeRoot = async (
     epoch: number,
     epochTreeRoot: string
 ) => {
-    const exists = await db.findOne('Epoch', {
-        where: {
-            number: epoch,
-            epochRoot: epochTreeRoot,
-        },
-    })
-    return !!exists
+    // TODO: check onchain
+    return true
 }
 
 const verifyReputationProof = async (

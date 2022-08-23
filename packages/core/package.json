@@ -8,9 +8,8 @@
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
-        "test": "yarn scriptsTest",
-        "deploy": "hardhat run scripts/deploy.js",
-        "scriptsTest": "hardhat test --parallel test/*.ts"
+        "test": "hardhat test --parallel",
+        "deploy": "hardhat run scripts/deploy.js"
     },
     "repository": {
         "type": "git",
@@ -43,6 +42,7 @@
         "@unirep/contracts": "1.0.0-alpha-9",
         "@unirep/core": "1.0.0-alpha-13",
         "@unirep/crypto": "1.0.0-alpha-4",
+        "@zk-kit/incremental-merkle-tree.sol": "^1.2.0",
         "anondb": "^0.0.12",
         "argparse": "^2.0.1",
         "base64url": "^3.0.1",

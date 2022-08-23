@@ -59,20 +59,20 @@ import {
     configureSubparser as configureSubparserForGenUserStateTransitionProof,
 } from './userStateTransition'
 
-import {
-    genAirdropProof,
-    configureSubparser as configureSubparserForGenAirdropProof,
-} from './genAirdropProof'
+// import {
+//     genAirdropProof,
+//     configureSubparser as configureSubparserForGenAirdropProof,
+// } from './genAirdropProof'
 
-import {
-    verifyAirdropProof,
-    configureSubparser as configureSubparserForVerifyAirdropProof,
-} from './verifyAirdropProof'
+// import {
+//     verifyAirdropProof,
+//     configureSubparser as configureSubparserForVerifyAirdropProof,
+// } from './verifyAirdropProof'
 
-import {
-    giveAirdrop,
-    configureSubparser as configureSubparserForGiveAirdrop,
-} from './giveAirdrop'
+// import {
+//     giveAirdrop,
+//     configureSubparser as configureSubparserForGiveAirdrop,
+// } from './giveAirdrop'
 
 const main = async () => {
     const parser = new argparse.ArgumentParser({
@@ -127,13 +127,13 @@ const main = async () => {
     configureSubparserForGenUserStateTransitionProof(subparsers)
 
     // Subcommand: genAirdropProof
-    configureSubparserForGenAirdropProof(subparsers)
+    // configureSubparserForGenAirdropProof(subparsers)
 
     // Subcommand: verifyAirdropProof
-    configureSubparserForVerifyAirdropProof(subparsers)
+    // configureSubparserForVerifyAirdropProof(subparsers)
 
     // Subcommand: giveAirdrop
-    configureSubparserForGiveAirdrop(subparsers)
+    // configureSubparserForGiveAirdrop(subparsers)
 
     const args = parser.parse_args()
 
@@ -162,12 +162,12 @@ const main = async () => {
         await epochTransition(args)
     } else if (args.subcommand === 'userStateTransition') {
         await userStateTransition(args)
-    } else if (args.subcommand === 'genAirdropProof') {
-        await genAirdropProof(args)
-    } else if (args.subcommand === 'verifyAirdropProof') {
-        await verifyAirdropProof(args)
-    } else if (args.subcommand === 'giveAirdrop') {
-        await giveAirdrop(args)
+        // } else if (args.subcommand === 'genAirdropProof') {
+        //     await genAirdropProof(args)
+        // } else if (args.subcommand === 'verifyAirdropProof') {
+        //     await verifyAirdropProof(args)
+        // } else if (args.subcommand === 'giveAirdrop') {
+        //     await giveAirdrop(args)
     }
     process.exit(0)
 }

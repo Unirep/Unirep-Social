@@ -78,7 +78,7 @@ const SignupPage = () => {
             setButtonLoading(true)
             const { blockNumber } = await signupPromise
             if (signupError === null) {
-                postContext.getAirdrop(blockNumber)
+                // postContext.getAirdrop(blockNumber)
             }
             history.push('/')
         }

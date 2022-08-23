@@ -38,7 +38,6 @@ const _schema = [
             ['hashedContent', 'String', { optional: true }],
             ['epoch', 'Int'],
             ['epochKey', 'String'],
-            ['proofIndex', 'Int', { optional: true }],
             ['proveMinRep', 'Bool', { optional: true }],
             ['minRep', 'Int', { optional: true }],
             {
@@ -73,7 +72,6 @@ const _schema = [
             ['hashedContent', 'String', { optional: true }],
             ['epoch', 'Int'],
             ['epochKey', 'String'],
-            ['proofIndex', 'Int', { optional: true }],
             ['proveMinRep', 'Bool', { optional: true }],
             ['minRep', 'Int', { optional: true }],
             {

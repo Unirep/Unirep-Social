@@ -1,4 +1,4 @@
-const { deployUnirep } = require('@unirep/contracts')
+const { deployUnirep } = require('@unirep/contracts/deploy')
 const UnirepSocial = require('../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json')
 const {
     GLOBAL_STATE_TREE_DEPTH,

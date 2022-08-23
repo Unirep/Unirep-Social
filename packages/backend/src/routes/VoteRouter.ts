@@ -57,60 +57,6 @@ async function vote(req, res) {
         })
         return
     }
-    let postProofIndex: number = 0
-    if (post) {
-        if (post.epoch !== currentEpoch) {
-            res.status(422).json({
-                info: 'The epoch key is expired',
-            })
-            return
-        }
-
-        const validProof = await req.db.findOne('Proof', {
-            where: {
-                index: post.proofIndex,
-                epoch: currentEpoch,
-                valid: 1,
-            },
-        })
-        if (!validProof) {
-            res.status(422).json({
-                info: 'Voting for invalid post',
-            })
-            return
-        }
-        postProofIndex = post.proofIndex
-    } else if (comment) {
-        if (comment.epoch !== currentEpoch) {
-            res.status(422).json({
-                info: 'Epoch key is expired',
-            })
-            return
-        }
-        const validProof = await req.db.findOne('Proof', {
-            where: {
-                index: comment.proofIndex,
-                epoch: currentEpoch,
-                valid: 1,
-            },
-        })
-        if (!validProof) {
-            res.status(422).json({
-                info: 'Voting for invalid comment',
-            })
-            return
-        }
-        postProofIndex = comment.proofIndex
-    } else {
-        throw new Error('unreachable')
-    }
-
-    if (Number(postProofIndex) === 0) {
-        res.status(404).json({
-            info: 'Cannot find post proof index',
-        })
-        return
-    }
 
     const error = await verifyReputationProof(
         req.db,
@@ -135,7 +81,6 @@ async function vote(req, res) {
         req.body.upvote,
         req.body.downvote,
         ethers.BigNumber.from(`0x${req.body.receiver.replace('0x', '')}`),
-        postProofIndex,
         reputationProof.publicSignals,
         reputationProof.proof,
     ])

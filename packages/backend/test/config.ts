@@ -4,7 +4,7 @@ import {
     USER_STATE_TREE_DEPTH,
     MAX_REPUTATION_BUDGET,
     NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-} from '@unirep/circuits/config'
+} from '@unirep/circuits'
 import { ethers } from 'ethers'
 
 const attestingFee = ethers.utils.parseEther('0.1')

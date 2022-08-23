@@ -151,7 +151,7 @@ const UserInfoWidget = () => {
                                             type: ActionType.UST,
                                         }
                                     )
-                                    postContext.getAirdrop()
+                                    // postContext.getAirdrop()
                                 }}
                             >
                                 Let's go

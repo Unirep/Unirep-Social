@@ -798,6 +798,11 @@
     circomlibjs "0.0.8"
     maci-crypto "^0.9.1"
 
+"@zk-kit/incremental-merkle-tree.sol@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@zk-kit/incremental-merkle-tree.sol/-/incremental-merkle-tree.sol-1.2.0.tgz#b5332a5de7eb08f2c2b1777eeb3f639345cb4de8"
+  integrity sha512-nTxw4gf41SlWEc3Y11X+ihDLs5fjvUzPLy8JvPofyM9O5tEKK5KCf5FEoPI8sqitctTTasjax925/qbT+aDJ+A==
+
 "@zk-kit/incremental-merkle-tree@^0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@zk-kit/incremental-merkle-tree/-/incremental-merkle-tree-0.4.3.tgz#197f72102d35dd9c546a6a432896d6d6f6de05f4"

@@ -4,7 +4,8 @@ import { ethers, BigNumber } from 'ethers'
 import { expect } from 'chai'
 import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
 import { Circuit } from '@unirep/circuits'
-import { deployUnirep, getUnirepContract, Attestation } from '@unirep/contracts'
+import { getUnirepContract, Attestation } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import * as config from '@unirep/circuits'
 import { genEpochKey, UserState } from '@unirep/core'
 import { genUserState } from './utils'
@@ -26,9 +27,10 @@ describe('Epoch Transition', function () {
     let userState: UserState
     const signedUpInLeaf = 1
     let epochKeyProofIndex
-    const proofIndexes: BigInt[] = []
     const attestingFee = ethers.utils.parseEther('0.1') // to avoid VM Exception: 'Address: insufficient balance'
     const fromProofIndex = 0
+
+    const EPOCH_LENGTH = 10000
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
@@ -39,7 +41,7 @@ describe('Epoch Transition', function () {
             maxAttesters: config.MAX_ATTESTERS,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
-            epochLength: config.EPOCH_LENGTH,
+            epochLength: EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
         unirepContract = (await deployUnirep(
@@ -80,20 +82,6 @@ describe('Epoch Transition', function () {
         let epoch = await unirepContract.currentEpoch()
         let nonce = 1
         let epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
-        let epochKeyProof = await userState.genVerifyEpochKeyProof(nonce)
-        let isValid = await epochKeyProof.verify()
-        expect(isValid, 'Verify epoch key proof off-chain failed').to.be.true
-
-        // Submit epoch key proof
-        tx = await unirepContract.submitEpochKeyProof(
-            epochKeyProof.publicSignals,
-            epochKeyProof.proof
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        epochKeyProofIndex = await unirepContract.getProofIndex(
-            epochKeyProof.hash()
-        )
 
         // Submit attestations
         const attestationNum = 2
@@ -108,8 +96,6 @@ describe('Epoch Transition', function () {
             tx = await unirepContractCalledByAttester.submitAttestation(
                 attestation,
                 epochKey,
-                epochKeyProofIndex,
-                fromProofIndex,
                 { value: attestingFee }
             )
             receipt = await tx.wait()
@@ -118,18 +104,6 @@ describe('Epoch Transition', function () {
 
         nonce = 2
         epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
-        epochKeyProof = await userState.genVerifyEpochKeyProof(nonce)
-
-        // Submit epoch key proof
-        tx = await unirepContract.submitEpochKeyProof(
-            epochKeyProof.publicSignals,
-            epochKeyProof.proof
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        epochKeyProofIndex = await unirepContract.getProofIndex(
-            epochKeyProof.hash()
-        )
 
         for (let i = 0; i < attestationNum; i++) {
             let attestation = new Attestation(
@@ -142,8 +116,6 @@ describe('Epoch Transition', function () {
             tx = await unirepContractCalledByAttester.submitAttestation(
                 attestation,
                 epochKey,
-                epochKeyProofIndex,
-                fromProofIndex,
                 { value: attestingFee }
             )
             receipt = await tx.wait()
@@ -152,18 +124,6 @@ describe('Epoch Transition', function () {
 
         nonce = 0
         epochKey = genEpochKey(userId.identityNullifier, epoch, nonce)
-        epochKeyProof = await userState.genVerifyEpochKeyProof(nonce)
-
-        // Submit epoch key proof
-        tx = await unirepContract.submitEpochKeyProof(
-            epochKeyProof.publicSignals,
-            epochKeyProof.proof
-        )
-        receipt = await tx.wait()
-        expect(receipt.status).equal(1)
-        epochKeyProofIndex = await unirepContract.getProofIndex(
-            epochKeyProof.hash()
-        )
 
         for (let i = 0; i < attestationNum; i++) {
             let attestation = new Attestation(
@@ -176,8 +136,6 @@ describe('Epoch Transition', function () {
             tx = await unirepContractCalledByAttester.submitAttestation(
                 attestation,
                 epochKey,
-                epochKeyProofIndex,
-                fromProofIndex,
                 { value: attestingFee }
             )
             receipt = await tx.wait()
@@ -196,9 +154,7 @@ describe('Epoch Transition', function () {
         let epoch = await unirepContract.currentEpoch()
 
         // Fast-forward epochLength of seconds
-        await hardhatEthers.provider.send('evm_increaseTime', [
-            config.EPOCH_LENGTH,
-        ])
+        await hardhatEthers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
         // Assert no epoch transition compensation is dispensed to volunteer
         expect(
             await unirepContract.epochTransitionCompensation(attesterAddress)
@@ -269,8 +225,6 @@ describe('Epoch Transition', function () {
         )
 
         const proofNullifier = startTransitionProof.hash()
-        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(BigInt(proofIndex))
 
         for (let i = 0; i < processAttestationProofs.length; i++) {
             expect(
@@ -304,10 +258,6 @@ describe('Epoch Transition', function () {
             )
 
             const proofNullifier = processAttestationProofs[i].hash()
-            const proofIndex = await unirepContract.getProofIndex(
-                proofNullifier
-            )
-            proofIndexes.push(BigInt(proofIndex))
         }
 
         isValid = await finalTransitionProof.verify()
@@ -326,8 +276,7 @@ describe('Epoch Transition', function () {
 
         tx = await unirepContract.updateUserStateRoot(
             finalTransitionProof.publicSignals,
-            finalTransitionProof.proof,
-            proofIndexes
+            finalTransitionProof.proof
         )
         receipt = await tx.wait()
         expect(
@@ -356,9 +305,7 @@ describe('Epoch Transition', function () {
         let epoch = await unirepContract.currentEpoch()
 
         // Fast-forward epochLength of seconds
-        await hardhatEthers.provider.send('evm_increaseTime', [
-            config.EPOCH_LENGTH,
-        ])
+        await hardhatEthers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
         // Begin epoch transition
         let tx = await unirepContract.beginEpochTransition()
         let receipt = await tx.wait()

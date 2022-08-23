@@ -40,17 +40,14 @@ contract UnirepSocial {
 
     event AirdropSubmitted(
         uint256 indexed _epoch,
-        uint256 indexed _epochKey,
-        uint256[] publicSignals,
-        uint256[8] proof
+        uint256 indexed _epochKey
     );
 
     event PostSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
         string _postContent,
-        uint256[] publicSignals,
-        uint256[8] proof
+        uint256 minRep
     );
 
     event CommentSubmitted(
@@ -58,8 +55,7 @@ contract UnirepSocial {
         uint256 indexed _postId,
         uint256 indexed _epochKey,
         string _commentContent,
-        uint256[] publicSignals,
-        uint256[8] proof
+        uint256 minRep
     );
 
     event VoteSubmitted(
@@ -68,9 +64,7 @@ contract UnirepSocial {
         uint256 indexed _toEpochKey,
         uint256 upvoteValue,
         uint256 downvoteValue,
-        uint256 toEpochKeyProofIndex,
-        uint256[] publicSignals,
-        uint256[8] proof
+        uint256 minRep
     );
 
     constructor(
@@ -86,7 +80,6 @@ contract UnirepSocial {
 
         // signup Unirep Social contract as an attester in Unirep contract
         unirep.attesterSignUp();
-        unirep.setAirdropAmount(_airdroppedReputation);
         attesterId = unirep.attesters(address(this));
 
         postReputation = _postReputation;
@@ -100,35 +93,13 @@ contract UnirepSocial {
      */
     function userSignUp(uint256 _identityCommitment) external {
         require(msg.sender == admin, "Unirep Social: sign up should through an admin");
-        unirep.userSignUp(_identityCommitment);
+        unirep.userSignUp(_identityCommitment, airdroppedReputation);
 
         emit UserSignedUp(
             unirep.currentEpoch(),
             _identityCommitment
         );
     }
-
-    /*
-     * Give a user sign up flag if user has already signed up in Unirep but not Unirep Social
-     * @param _signUpProofData A sign up proof indicates that the user has not signed up in Unirep Social
-     */
-    // function userSignUpWithProof(Unirep.SignUpProofRelated memory _signUpProofData) external payable {
-    //     require(isEpochKeyGotAirdrop[_signUpProofData.epochKey] == false, "Unirep Social: the epoch key has been airdropped");
-    //     require(_signUpProofData.attesterId == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-    //     require(_signUpProofData.userHasSignedUp == 0, "Unirep Social: user should not sign up in Unirep Social before");
-
-    //     // Submit airdrop
-    //     unirep.airdropEpochKey{value: unirep.attestingFee()}(_signUpProofData);
-
-    //     // Set the epoch key has been airdropped
-    //     isEpochKeyGotAirdrop[_signUpProofData.epochKey] = true;
-
-    //     emit AirdropSubmitted(
-    //         unirep.currentEpoch(),
-    //         _signUpProofData.epochKey,
-    //         _signUpProofData
-    //     );
-    // }
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
@@ -151,8 +122,7 @@ contract UnirepSocial {
             unirep.currentEpoch(),
             publicSignals[0], // epoch key
             content,
-            publicSignals,
-            proof
+            publicSignals[maxReputationBudget + 5] // min rep
         );
     }
 
@@ -180,8 +150,7 @@ contract UnirepSocial {
             postId,
             publicSignals[0], // epoch key
             content,
-            publicSignals,
-            proof
+            publicSignals[maxReputationBudget + 5] // min rep
         );
     }
 
@@ -197,7 +166,6 @@ contract UnirepSocial {
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 toEpochKey,
-        uint256 toEpochKeyProofIndex,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
@@ -210,10 +178,6 @@ contract UnirepSocial {
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
-        bytes32 repProofHash = keccak256(
-            abi.encodePacked(publicSignals, proof)
-        );
-        uint256 repProofIndex = unirep.getProofIndex(repProofHash);
 
         // Submit attestation to receiver's epoch key
         Unirep.Attestation memory attestation;
@@ -222,20 +186,16 @@ contract UnirepSocial {
         attestation.negRep = downvoteValue;
         unirep.submitAttestation{value: attestingFee}(
             attestation,
-            toEpochKey,
-            toEpochKeyProofIndex,
-            repProofIndex
+            toEpochKey
         );
 
         emit VoteSubmitted(
             unirep.currentEpoch(),
-            publicSignals[0], // epoch key
+            publicSignals[0], // from epoch key
             toEpochKey,
             upvoteValue,
             downvoteValue,
-            toEpochKeyProofIndex,
-            publicSignals,
-            proof
+            publicSignals[maxReputationBudget + 5] // min rep
         );
     }
 
@@ -243,28 +203,28 @@ contract UnirepSocial {
      * Give a user airdrop if user has already signed up in Unirep Social
      * @param _signUpProofData A sign up proof indicates that the user has signed up in Unirep Social
      */
-    function airdrop(
-        uint256[] memory publicSignals,
-        uint256[8] memory proof
-    ) external payable {
-        require(isEpochKeyGotAirdrop[publicSignals[1]] == false, "Unirep Social: the epoch key has been airdropped");
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(publicSignals[4] == 1, "Unirep Social: user should have signed up in Unirep Social before");
+    // function airdrop(
+    //     uint256[] memory publicSignals,
+    //     uint256[8] memory proof
+    // ) external payable {
+    //     require(isEpochKeyGotAirdrop[publicSignals[1]] == false, "Unirep Social: the epoch key has been airdropped");
+    //     require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+    //     require(publicSignals[4] == 1, "Unirep Social: user should have signed up in Unirep Social before");
 
-        // Submit airdrop
-        (,,,,,,,uint attestingFee,,) = unirep.config();
-        unirep.airdropEpochKey{value: attestingFee}(publicSignals, proof);
+    //     // Submit airdrop
+    //     (,,,,,,,uint attestingFee,,) = unirep.config();
+    //     unirep.airdropEpochKey{value: attestingFee}(publicSignals, proof);
 
-        // Set the epoch key has been airdropped
-        isEpochKeyGotAirdrop[publicSignals[1]] = true;
+    //     // Set the epoch key has been airdropped
+    //     isEpochKeyGotAirdrop[publicSignals[1]] = true;
 
-        emit AirdropSubmitted(
-            unirep.currentEpoch(),
-            publicSignals[1], // epoch key
-            publicSignals,
-            proof
-        );
-    }
+    //     emit AirdropSubmitted(
+    //         unirep.currentEpoch(),
+    //         publicSignals[1], // epoch key
+    //         publicSignals,
+    //         proof
+    //     );
+    // }
 
     /*
      * Call Unirep contract to perform start user state transition
@@ -301,9 +261,8 @@ contract UnirepSocial {
      */
     function updateUserStateRoot(
         uint256[] memory publicSignals,
-        uint256[8] memory proof,
-        uint256[] memory proofIndexRecords
+        uint256[8] memory proof
     ) external {
-        unirep.updateUserStateRoot(publicSignals, proof, proofIndexRecords);
+        unirep.updateUserStateRoot(publicSignals, proof);
     }
 }
