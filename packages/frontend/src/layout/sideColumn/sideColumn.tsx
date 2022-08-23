@@ -23,7 +23,6 @@ const SideColumn = () => {
     }
 
     window.onscroll = () => {
-        console.log(document.documentElement.scrollTop, window.innerHeight)
         if (document.documentElement.scrollTop > 104 + window.innerHeight / 2) {
             setShowBackBtn(true)
         } else {
