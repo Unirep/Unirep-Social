@@ -99,7 +99,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     expect(
         screen.getByText(/in this cycle, my personas are/i)
     ).toBeInTheDocument()
-    expect(screen.getByText(/back to top/i)).toBeInTheDocument()
+    // expect(screen.getByText(/back to top/i)).toBeInTheDocument()
 })
 
 test('should page rerender after user clicks create post button', async () => {
