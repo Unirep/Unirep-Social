@@ -28,9 +28,16 @@ contract UnirepSocial {
     // The amount of karma airdropped to user when user signs up and executes user state transition
     uint256 immutable public airdroppedReputation;
 
+    // The set of user names
+    uint256[] public userNames;
+
+
     // A mapping between user’s epoch key and if they request airdrop in the current epoch;
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
+
+    // A mapping between username and if they're already claimed;
+    mapping(uint256 => bool) public isClaimed;
 
     // help Unirep Social track event
     event UserSignedUp(
@@ -67,11 +74,13 @@ contract UnirepSocial {
         uint256 minRep
     );
 
+
     constructor(
         Unirep _unirepContract,
         uint256 _postReputation,
         uint256 _commentReputation,
-        uint256 _airdroppedReputation
+        uint256 _airdroppedReputation,
+        uint256 _userName
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
@@ -85,6 +94,8 @@ contract UnirepSocial {
         postReputation = _postReputation;
         commentReputation = _commentReputation;
         airdroppedReputation = _airdroppedReputation;
+        isClaimed[_userName] = true;
+        unirep.userNames.push(_userName);
     }
 
     /*
@@ -265,4 +276,34 @@ contract UnirepSocial {
     ) external {
         unirep.updateUserStateRoot(publicSignals, proof);
     }
+
+     /*
+     * Set new user name for an epochKey
+     * @param epochKey epoch key that attempts to set a new uername
+     * @param oldUsername
+     * @param newUsername requested new user name
+     */
+     function setUsername(
+        uint256 epochKey,
+        uint256 oldUsername,
+        uint256 newUsername
+     ) external {
+        // check if the new username is taken
+        require(isClaimed[newUsername] == false, "This user name is already taken");
+
+        count = userNames.length;
+        for(i=0; i<count;i++) {
+            if(userNmaes[i] == oldUsername) {
+                // free the old username
+                isClaimed[userNmaes[i]] = false;
+
+                // set new user name
+                userNames[i] = newUserName;
+
+                // set new user name taken
+                isClaimed[newUsername] = true;
+            }
+        }
+
+     }
 }
