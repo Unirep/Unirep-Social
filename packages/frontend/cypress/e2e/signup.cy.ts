@@ -4,42 +4,48 @@ import '../support/commands'
 import { ethers } from 'ethers'
 import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 
-const FUNDED_PRIVATE_KEY =
-    '0x0000000000000000000000000000000000000000000000000000000000000001'
-const GANACHE_URL = 'http://localhost:18545'
-
-const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
-
-const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
-
 describe('visit and interact with home page', () => {
     const serverUrl = Cypress.env('serverUrl')
 
     beforeEach(() => {
         // deploy unirep and unirep social contract
-        cy.task('deployUnirep').then(({ unirep, unirepSocial }) => {
-            const unirepSocialContract = new ethers.Contract(
-                unirepSocial.address,
-                UnirepSocialABI,
-                provider
-            )
-            cy.intercept('GET', `${serverUrl}/api/config`, {
-                body: {
-                    unirepAddress: unirep.address,
-                    unirepSocialAddress: unirepSocial.address,
-                },
-            }).as('getApiConfig')
-            cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
-                const { commitment } = req.query
-                const tx = await unirepSocialContract
-                    .connect(wallet)
-                    ['userSignUp(uint256)']('0x' + commitment.replace('0x', ''))
-                req.reply({
-                    epoch: 1,
-                    transaction: tx.hash,
+        cy.task('deployUnirep').then(
+            ({
+                unirepAddress,
+                unirepSocialAddress,
+                unirepSocialABI,
+                ganacheUrl,
+                fundedKey,
+            }) => {
+                const provider = new ethers.providers.JsonRpcProvider(
+                    ganacheUrl
+                )
+                const wallet = new ethers.Wallet(fundedKey, provider)
+                const unirepSocial = new ethers.Contract(
+                    unirepSocialAddress,
+                    unirepSocialABI,
+                    provider
+                )
+                cy.intercept('GET', `${serverUrl}/api/config`, {
+                    body: {
+                        unirepAddress,
+                        unirepSocialAddress,
+                    },
+                }).as('getApiConfig')
+                cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
+                    const { commitment } = req.query
+                    const tx = await unirepSocial
+                        .connect(wallet)
+                        ['userSignUp(uint256)'](
+                            '0x' + commitment.replace('0x', '')
+                        )
+                    req.reply({
+                        epoch: 1,
+                        transaction: tx.hash,
+                    })
                 })
-            })
-        })
+            }
+        )
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
@@ -59,7 +65,7 @@ describe('visit and interact with home page', () => {
             const iden = e[0].value
             cy.findByText('Download').click()
             cy.findByText('Copy').realClick()
-            cy.findByRole('textbox').type(iden, {
+            cy.get('textarea').type(iden, {
                 parseSpecialCharSequences: false,
             })
             cy.findByText('Submit').click()

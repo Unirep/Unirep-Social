@@ -48,13 +48,13 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
     const postReputation = 5
     const commentReputation = 3
     const airdrop = 30
-    const unirepSocial = await UnirepSocialF.deploy(
+    const unirepSocialF = await UnirepSocialF.deploy(
         unirep.address,
         postReputation,
         commentReputation,
         airdrop
     )
-    await unirepSocial.deployed()
+    const unirepSocial = await unirepSocialF.deployed()
     return { unirep, unirepSocial, provider }
 }
 
@@ -79,5 +79,11 @@ export async function startServer(contractOverrides = {}) {
     // })
     // console.log('This is process env:', process.env)
 
-    return { ...data }
+    return {
+        unirepSocialAddress: unirepSocial.address,
+        unirepAddress: unirep.address,
+        unirepSocialABI: UnirepSocial.abi,
+        fundedKey: FUNDED_PRIVATE_KEY,
+        ganacheUrl: GANACHE_URL,
+    }
 }

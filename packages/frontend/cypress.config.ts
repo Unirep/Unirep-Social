@@ -1,6 +1,7 @@
 import { defineConfig } from 'cypress'
 import { startServer } from './cypress/support/e2e'
 
+let deployed
 export default defineConfig({
     e2e: {
         baseUrl: 'http://localhost:3000',
@@ -9,8 +10,10 @@ export default defineConfig({
         video: false,
         setupNodeEvents(on, config) {
             on('task', {
-                deployUnirep() {
-                    return startServer()
+                deployUnirep(forceRedeploy) {
+                    if (deployed) return deployed
+                    deployed = startServer()
+                    return deployed
                 },
             })
         },
