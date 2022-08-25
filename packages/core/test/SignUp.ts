@@ -38,6 +38,11 @@ describe('Signup', function () {
             accounts[0],
             unirepContract.address
         )
+        unirepSocialContract.setUsername(
+            config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+            oldUsername,
+            newUsername
+        )
     })
 
     describe('User sign-ups', () => {

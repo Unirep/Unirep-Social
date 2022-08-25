@@ -284,6 +284,9 @@ contract UnirepSocial {
         // check if the new username is taken
         require(usernames[newUsername] == false, "This user name is already taken");
 
+        // only admin can call this function
+        require(msg.sender == admin);
+
         usernames[oldUsername] = false;
         usernames[newUsername] = true;
      }
