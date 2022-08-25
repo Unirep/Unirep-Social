@@ -1,74 +1,49 @@
-import { startServer } from '../support/e2e'
+import '@testing-library/cypress/add-commands'
+import 'cypress-real-events/support'
+import '../support/commands'
+import { ethers } from 'ethers'
+import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
+
+const FUNDED_PRIVATE_KEY =
+    '0x0000000000000000000000000000000000000000000000000000000000000001'
+const GANACHE_URL = 'http://localhost:18545'
+
+const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
+
+const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
 describe('visit and interact with home page', () => {
     const serverUrl = Cypress.env('serverUrl')
-    const ethProvider = Cypress.env('ethProvider')
-
-    Cypress.on('uncaught:exception', (err, runnable) => {
-        return false
-    })
 
     beforeEach(() => {
         // deploy unirep and unirep social contract
-        const context = startServer()
-        Object.assign(context)
+        cy.task('deployUnirep').then(({ unirep, unirepSocial }) => {
+            const unirepSocialContract = new ethers.Contract(
+                unirepSocial.address,
+                UnirepSocialABI,
+                provider
+            )
+            cy.intercept('GET', `${serverUrl}/api/config`, {
+                body: {
+                    unirepAddress: unirep.address,
+                    unirepSocialAddress: unirepSocial.address,
+                },
+            }).as('getApiConfig')
+            cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
+                const { commitment } = req.query
+                const tx = await unirepSocialContract
+                    .connect(wallet)
+                    ['userSignUp(uint256)']('0x' + commitment.replace('0x', ''))
+                req.reply({
+                    epoch: 1,
+                    transaction: tx.hash,
+                })
+            })
+        })
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
-            body: {
-                posts: 'string',
-            },
+            body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/config`, {
-            body: {
-                unirepAddress: '0x41afd703a36b19D9BB94E3083baA5E4F70f5adD6',
-                unirepSocialAddress:
-                    '0x903Ae15BfbddFAD6cd44B4cC1CF01EEBa0742456',
-            },
-        }).as('getApiConfig')
-        cy.intercept(`${ethProvider}*`, (req) => {
-            // conditonal logic to return different responses based on the request url
-            console.log('Req.body in eth provider req', req.body)
-
-            const { method, params, id } = req.body
-            if (method === 'eth_chainId') {
-                req.reply({
-                    body: {
-                        id: 1,
-                        jsonrpc: '2.0',
-                        result: '0x111111',
-                    },
-                })
-            } else if (
-                method === 'eth_call' &&
-                params[0]?.data === '0x79502c55'
-            ) {
-                req.reply({
-                    body: {
-                        id,
-                        jsonrpc: '2.0',
-                        result:
-                            '0x' +
-                            Array(10 * 64)
-                                .fill(0)
-                                .map((_, i) => (i % 64 === 63 ? 1 : 0))
-                                .join(''),
-                    },
-                })
-            } else if (method === 'eth_call') {
-                // other uint256 retrievals
-                req.reply({
-                    body: {
-                        id,
-                        jsonrpc: '2.0',
-                        result: '0x0000000000000000000000000000000000000000000000000000000000000001',
-                    },
-                })
-            } else {
-                req.reply({
-                    body: { test: 'test' },
-                })
-            }
-        }).as('ethProvider')
         cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
             fixture: 'genInvitationCode.json',
         }).as('genInvitationCode')
@@ -77,9 +52,19 @@ describe('visit and interact with home page', () => {
     it('navigate to the signup page and signup a user', () => {
         cy.visit('/')
         cy.findByText('Join').click()
-        cy.findByRole('textbox').type('testprivatekey')
+        cy.findByRole('textbox').type('invitationcode')
         cy.findByText('Let me in').click()
+        cy.wait(2000)
+        cy.findByRole('textbox').then((e) => {
+            const iden = e[0].value
+            cy.findByText('Download').click()
+            cy.findByText('Copy').realClick()
+            cy.findByRole('textbox').type(iden, {
+                parseSpecialCharSequences: false,
+            })
+            cy.findByText('Submit').click()
+            cy.findByText('Generate').click()
+            // then check that the rep balance is accurate
+        })
     })
 })
-
-// sends a post request to geth node every ~70-500ms. Why?

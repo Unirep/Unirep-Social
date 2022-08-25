@@ -14,8 +14,6 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
-import '@testing-library/cypress/add-commands'
-import './commands'
 
 import { ethers } from 'ethers'
 
@@ -32,10 +30,6 @@ async function waitForGanache() {
         await new Promise((r) => setTimeout(r, 1000))
         try {
             const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
-            console.log(
-                'hey lets see if the JSONRPC works..........:',
-                provider
-            )
             await provider.getNetwork()
             break
         } catch (_) {}
@@ -60,7 +54,6 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
         commentReputation,
         airdrop
     )
-    console.log('This is unirepSocial deployed', unirepSocial)
     await unirepSocial.deployed()
     return { unirep, unirepSocial, provider }
 }
@@ -74,18 +67,17 @@ export async function startServer(contractOverrides = {}) {
     const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
     const data = await deploy(wallet, contractOverrides)
-    console.log('This is deploy data', data)
     const { unirep, unirepSocial } = data
 
-    Object.assign(process.env, {
-        UNIREP: unirep.address,
-        UNIREP_SOCIAL: unirepSocial.address,
-        DEPLOYER_PRIV_KEY: wallet.privateKey,
-        DEFAULT_ETH_PROVIDER_URL: GANACHE_URL,
-        ADMIN_SESSION_CODE: 'ffff',
-        ...process.env,
-    })
-    console.log('This is process env:', process.env)
+    // Object.assign(process.env, {
+    //     UNIREP: unirep.address,
+    //     UNIREP_SOCIAL: unirepSocial.address,
+    //     DEPLOYER_PRIV_KEY: wallet.privateKey,
+    //     DEFAULT_ETH_PROVIDER_URL: GANACHE_URL,
+    //     ADMIN_SESSION_CODE: 'ffff',
+    //     ...process.env,
+    // })
+    // console.log('This is process env:', process.env)
 
     return { ...data }
 }

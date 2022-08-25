@@ -9,7 +9,6 @@ GANACHE_NAME=unirep-ganache-e2e-test
 
 docker kill $NAME
 
-
 docker stop $GANACHE_NAME 2> /dev/null
 docker rm $GANACHE_NAME 2> /dev/null
 
@@ -23,5 +22,8 @@ docker run -d --name $GANACHE_NAME -p 18545:8545 trufflesuite/ganache-cli:v6.12.
   --gasLimit 10000000
 
 while ! nc -z localhost 3000; do
+  sleep 0.1
+done
+while ! nc -z localhost 18545; do
   sleep 0.1
 done

@@ -2,10 +2,6 @@ describe('Landing Page', () => {
     const serverUrl = Cypress.env('serverUrl')
     const ethProvider = Cypress.env('ethProvider')
 
-    Cypress.on('uncaught:exception', (err, runnable) => {
-        return false
-    })
-
     beforeEach(() => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: {

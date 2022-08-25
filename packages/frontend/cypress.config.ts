@@ -1,4 +1,5 @@
 import { defineConfig } from 'cypress'
+import { startServer } from './cypress/support/e2e'
 
 export default defineConfig({
     e2e: {
@@ -6,11 +7,17 @@ export default defineConfig({
         viewportHeight: 900,
         viewportWidth: 1200,
         video: false,
+        setupNodeEvents(on, config) {
+            on('task', {
+                deployUnirep() {
+                    return startServer()
+                },
+            })
+        },
     },
     env: {
         serverUrl: 'http://testurl.invalidtld',
-        ethProvider: 'http://localhost:18545',
     },
-    chromeWebSecurity: false,
-    experimentalFetchPolyfill: true,
+    // chromeWebSecurity: false,
+    // experimentalFetchPolyfill: true,
 })
