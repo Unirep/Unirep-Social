@@ -93,97 +93,110 @@ async function vote(req, res) {
             value: attestingFee.mul(2),
         }
     )
-    // save to db data
-    const newVote = await req.db.create('Vote', {
-        transactionHash: hash,
-        epoch: currentEpoch,
-        voter: epochKey,
-        receiver: req.body.receiver,
-        posRep: req.body.upvote,
-        negRep: req.body.downvote,
-        graffiti: '0',
-        overwriteGraffiti: false,
-        postId: post ? dataId : '',
-        commentId: comment ? dataId : '',
-        status: 0,
-    })
-    await req.db.create('Record', {
-        to: req.body.receiver,
-        from: epochKey,
-        upvote: req.body.upvote,
-        downvote: req.body.downvote,
-        epoch: currentEpoch,
-        action: ActionType.Vote,
-        transactionHash: hash,
-        data: dataId,
-        confirmed: 0,
-    })
-    await req.db.transaction(async (db) => {
-        const [post, comment] = await Promise.all([
-            req.db.findOne('Post', { where: { _id: dataId } }),
-            req.db.findOne('Comment', { where: { _id: dataId } }),
-        ])
-        if (post) {
-            db.update('Post', {
-                where: {
-                    _id: post._id,
-                },
-                update: {
-                    posRep: post.posRep + req.body.upvote,
-                    negRep: post.negRep + req.body.downvote,
-                    totalRep:
-                        post.totalRep + req.body.upvote - req.body.downvote,
-                },
-            })
-        }
-        if (comment) {
-            db.update('Comment', {
-                where: {
-                    _id: comment._id,
-                },
-                update: {
-                    posRep: comment.posRep + req.body.upvote,
-                    negRep: comment.negRep + req.body.downvote,
-                    totalRep:
-                        comment.totalRep + req.body.upvote - req.body.downvote,
-                },
-            })
-        }
-    })
-    await req.db.transaction(async (db) => {
-        const [post, comment] = await Promise.all([
-            req.db.findOne('Post', { where: { _id: dataId } }),
-            req.db.findOne('Comment', { where: { _id: dataId } }),
-        ])
-        if (post) {
-            db.update('Post', {
-                where: {
-                    _id: post._id,
-                },
-                update: {
-                    posRep: post.posRep + req.body.upvote,
-                    negRep: post.negRep + req.body.downvote,
-                    totalRep:
-                        post.totalRep + req.body.upvote - req.body.downvote,
-                },
-            })
-        }
-        if (comment) {
-            db.update('Comment', {
-                where: {
-                    _id: comment._id,
-                },
-                update: {
-                    posRep: comment.posRep + req.body.upvote,
-                    negRep: comment.negRep + req.body.downvote,
-                    totalRep:
-                        comment.totalRep + req.body.upvote - req.body.downvote,
-                },
-            })
-        }
-    })
     res.json({
         transaction: hash,
         newVote,
     })
+    // make sure tx above succeeds before changing the db below
+    TransactionManager.wait(hash)
+        .then(async () => {
+            // save to db data
+            const newVote = await req.db.create('Vote', {
+                transactionHash: hash,
+                epoch: currentEpoch,
+                voter: epochKey,
+                receiver: req.body.receiver,
+                posRep: req.body.upvote,
+                negRep: req.body.downvote,
+                graffiti: '0',
+                overwriteGraffiti: false,
+                postId: post ? dataId : '',
+                commentId: comment ? dataId : '',
+                status: 0,
+            })
+            await req.db.create('Record', {
+                to: req.body.receiver,
+                from: epochKey,
+                upvote: req.body.upvote,
+                downvote: req.body.downvote,
+                epoch: currentEpoch,
+                action: ActionType.Vote,
+                transactionHash: hash,
+                data: dataId,
+                confirmed: 0,
+            })
+            await req.db.transaction(async (db) => {
+                const [post, comment] = await Promise.all([
+                    req.db.findOne('Post', { where: { _id: dataId } }),
+                    req.db.findOne('Comment', { where: { _id: dataId } }),
+                ])
+                if (post) {
+                    db.update('Post', {
+                        where: {
+                            _id: post._id,
+                        },
+                        update: {
+                            posRep: post.posRep + req.body.upvote,
+                            negRep: post.negRep + req.body.downvote,
+                            totalRep:
+                                post.totalRep +
+                                req.body.upvote -
+                                req.body.downvote,
+                        },
+                    })
+                }
+                if (comment) {
+                    db.update('Comment', {
+                        where: {
+                            _id: comment._id,
+                        },
+                        update: {
+                            posRep: comment.posRep + req.body.upvote,
+                            negRep: comment.negRep + req.body.downvote,
+                            totalRep:
+                                comment.totalRep +
+                                req.body.upvote -
+                                req.body.downvote,
+                        },
+                    })
+                }
+            })
+            await req.db.transaction(async (db) => {
+                const [post, comment] = await Promise.all([
+                    req.db.findOne('Post', { where: { _id: dataId } }),
+                    req.db.findOne('Comment', { where: { _id: dataId } }),
+                ])
+                if (post) {
+                    db.update('Post', {
+                        where: {
+                            _id: post._id,
+                        },
+                        update: {
+                            posRep: post.posRep + req.body.upvote,
+                            negRep: post.negRep + req.body.downvote,
+                            totalRep:
+                                post.totalRep +
+                                req.body.upvote -
+                                req.body.downvote,
+                        },
+                    })
+                }
+                if (comment) {
+                    db.update('Comment', {
+                        where: {
+                            _id: comment._id,
+                        },
+                        update: {
+                            posRep: comment.posRep + req.body.upvote,
+                            negRep: comment.negRep + req.body.downvote,
+                            totalRep:
+                                comment.totalRep +
+                                req.body.upvote -
+                                req.body.downvote,
+                        },
+                    })
+                }
+            })
+        })
+        .catch(() => console.log('Vote tx reverted'))
 }
