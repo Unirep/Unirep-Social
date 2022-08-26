@@ -4,7 +4,8 @@
     "description": "",
     "main": "build/src/index.js",
     "scripts": {
-        "build": "hardhat typechain && tsc && yarn abi",
+        "build": "yarn buildVerifier && hardhat typechain && tsc && yarn abi",
+        "buildVerifier": "sh scripts/genVerifiers.sh",
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
@@ -22,6 +23,7 @@
     },
     "homepage": "https://github.com/Unirep/Unirep-Social#readme",
     "devDependencies": {
+        "@unirep-social/circuits": "0.0.1",
         "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@openzeppelin/contracts": "^4.6.0",
@@ -50,6 +52,7 @@
         "ethers": "^5.5.4",
         "nanoid": "3",
         "path-browserify": "^1.0.1",
+        "snarkjs": "^0.4.24",
         "typescript": "^4.0.5"
     }
 }

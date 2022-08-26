@@ -31,7 +31,8 @@ const deployUnirepSocial = async (
     const f = new UnirepSocialFactory(deployer)
     const c = await f.deploy(
         UnirepAddr,
-        '0x0000000000000000000000000000000000000000', // TODO: placeholder for negative rep verifier
+        '0x0000000000000000000000000000000000000000', // TODO: placeholder for verifier
+        '0x0000000000000000000000000000000000000000', // TODO: placeholder for verifier
         settings.postReputation,
         settings.commentReputation,
         settings.airdropReputation,
