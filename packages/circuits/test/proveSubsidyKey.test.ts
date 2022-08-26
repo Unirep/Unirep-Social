@@ -8,6 +8,7 @@ import {
     USER_STATE_TREE_DEPTH,
     GLOBAL_STATE_TREE_DEPTH,
     NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+    EPOCH_TREE_DEPTH,
 } from '@unirep/circuits'
 import { Reputation } from '../src/Reputation'
 
@@ -17,11 +18,26 @@ const circuitPath = path.join(
     `../circuits/test/${circuitName}_test.circom`
 )
 
+const genEpochKey = (
+    identityNullifier: BigInt,
+    epoch: number,
+    nonce: number,
+    _epochTreeDepth: number = EPOCH_TREE_DEPTH
+): BigInt => {
+    const epochKey = crypto
+        .hash2([(identityNullifier as any) + BigInt(nonce), epoch])
+        .valueOf()
+    // Adjust epoch key size according to epoch tree depth
+    const epochKeyModed = epochKey % BigInt(2 ** _epochTreeDepth)
+    return epochKeyModed
+}
+
 const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
     reputationRecords,
     attesterId,
+    notEpochKey,
     _minRep?
 ) => {
     const minRep = _minRep ?? 0
@@ -70,6 +86,7 @@ const genCircuitInput = (
         sign_up: reputationRecords[attesterId].signUp,
         UST_path_elements: USTPathElements,
         minRep,
+        notEpochKey,
     }
     return crypto.stringifyBigInts(circuitInputs)
 }
@@ -124,6 +141,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             5
         )
 
@@ -150,6 +168,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             5
         )
 
@@ -177,6 +196,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             11
         )
 
@@ -203,6 +223,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             2
         )
 
@@ -229,6 +250,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             0
         )
 
@@ -255,6 +277,7 @@ describe('Prove subsidy key and minrep', function () {
             epoch,
             reputationRecords,
             attesterId,
+            crypto.genRandomSalt(),
             0
         )
 
@@ -263,5 +286,35 @@ describe('Prove subsidy key and minrep', function () {
         )
         const isValid = await verifyProof(publicSignals, proof)
         expect(isValid).to.be.true
+    })
+
+    it('should fail to prove own epk', async () => {
+        const attesterId = 1
+        const reputationRecords = {
+            [attesterId]: new Reputation(
+                BigInt(0),
+                BigInt(0),
+                BigInt(0),
+                BigInt(1)
+            ),
+        }
+        const id = new ZkIdentity()
+        for (let i = 0; i < NUM_EPOCH_KEY_NONCE_PER_EPOCH; i++) {
+            const epk = genEpochKey(id.identityNullifier, epoch, i)
+            const circuitInputs = genCircuitInput(
+                id,
+                epoch,
+                reputationRecords,
+                attesterId,
+                epk,
+                0
+            )
+
+            const { proof, publicSignals } = await genProofAndPublicSignals(
+                circuitInputs
+            )
+            const isValid = await verifyProof(publicSignals, proof)
+            expect(isValid).to.be.false
+        }
     })
 })

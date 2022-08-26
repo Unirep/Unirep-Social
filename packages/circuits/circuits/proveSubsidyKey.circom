@@ -14,6 +14,7 @@ include "../node_modules/circomlib/circuits/sign.circom";
 include "./sparseMerkleTree.circom";
 include "./identityCommitment.circom";
 include "./incrementalMerkleTree.circom";
+include "./modulo.circom";
 
 template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, NUM_EPOCH_KEY_NONCE_PER_EPOCH, MAX_REPUTATION_SCORE_BITS) {
     signal input epoch;
@@ -35,6 +36,7 @@ template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth
     signal private input sign_up;
     signal private input UST_path_elements[user_state_tree_depth][1];
     signal input minRep;
+    signal input notEpochKey;
     signal output subsidyKey;
 
     // we only need to verify that one epk is in the gst
@@ -94,4 +96,25 @@ template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth
     rep_check.in[0] <== pos_rep - neg_rep;
     rep_check.in[1] <== minRep;
     rep_check.out === 1;
+
+    /* 5. Prove that user does not control a certain epoch key */
+
+    component not_equal_check[NUM_EPOCH_KEY_NONCE_PER_EPOCH];
+    component epoch_key_hasher[NUM_EPOCH_KEY_NONCE_PER_EPOCH];
+    component epoch_key_mod[NUM_EPOCH_KEY_NONCE_PER_EPOCH];
+
+    for (var i = 0; i < NUM_EPOCH_KEY_NONCE_PER_EPOCH; i++) {
+      epoch_key_hasher[i] = Poseidon(2);
+      epoch_key_hasher[i].inputs[0] <== identity_nullifier + i;
+      epoch_key_hasher[i].inputs[1] <== epoch;
+
+      epoch_key_mod[i] = ModuloTreeDepth(epoch_tree_depth);
+      epoch_key_mod[i].dividend <== epoch_key_hasher[i].out;
+      not_equal_check[i] = IsEqual();
+      not_equal_check[i].in[0] <== notEpochKey;
+      not_equal_check[i].in[1] <== epoch_key_mod[i].remainder;
+      not_equal_check[i].out === 0;
+    }
+
+    /* End of check 6 */
 }
