@@ -7,6 +7,7 @@ import * as snarkjs from 'snarkjs'
 import {
     USER_STATE_TREE_DEPTH,
     GLOBAL_STATE_TREE_DEPTH,
+    EPOCH_TREE_DEPTH,
 } from '@unirep/circuits'
 import { Reputation } from '../src/Reputation'
 
@@ -95,6 +96,20 @@ const verifyProof = async (publicSignals, proof): Promise<boolean> => {
     return snarkjs.groth16.verify(vkey, publicSignals, proof)
 }
 
+const genEpochKey = (
+    identityNullifier: BigInt,
+    epoch: number,
+    nonce: number,
+    _epochTreeDepth: number = EPOCH_TREE_DEPTH
+): BigInt => {
+    const epochKey = crypto
+        .hash2([(identityNullifier as any) + BigInt(nonce), epoch])
+        .valueOf()
+    // Adjust epoch key size according to epoch tree depth
+    const epochKeyModed = epochKey % BigInt(2 ** _epochTreeDepth)
+    return epochKeyModed
+}
+
 describe('Prove reputation from attester circuit', function () {
     this.timeout(300000)
 
@@ -124,6 +139,35 @@ describe('Prove reputation from attester circuit', function () {
         )
         const isValid = await verifyProof(publicSignals, proof)
         expect(isValid).to.be.true
+    })
+
+    it('should output epoch key', async () => {
+        const attesterId = 1
+        const reputationRecords = {
+            [attesterId]: new Reputation(
+                BigInt(10),
+                BigInt(20),
+                BigInt(0),
+                BigInt(1)
+            ),
+        }
+        const id = new ZkIdentity()
+        const circuitInputs = genCircuitInput(
+            id,
+            epoch,
+            reputationRecords,
+            attesterId,
+            5
+        )
+
+        const { proof, publicSignals } = await genProofAndPublicSignals(
+            circuitInputs
+        )
+        const isValid = await verifyProof(publicSignals, proof)
+        expect(isValid).to.be.true
+
+        const epk = genEpochKey(id.identityNullifier, epoch, 0)
+        expect(publicSignals[2]).to.equal(epk.toString())
     })
 
     it('successfully fail to prove negative reputation with equal positive and negative repuataion', async () => {

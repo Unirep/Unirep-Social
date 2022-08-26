@@ -14,6 +14,7 @@ include "../node_modules/circomlib/circuits/sign.circom";
 include "./sparseMerkleTree.circom";
 include "./identityCommitment.circom";
 include "./incrementalMerkleTree.circom";
+include "./modulo.circom";
 
 template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH, MAX_REPUTATION_SCORE_BITS) {
     signal input epoch;
@@ -36,6 +37,7 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     signal private input UST_path_elements[user_state_tree_depth][1];
     signal input maxRep;
     signal output subsidyKey;
+    signal output epochKey;
 
     /* 1. Calculate subsidy key */
 
@@ -97,4 +99,16 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     max_rep_check.out === 1;
 
     /* End of check 4 */
+
+    /* 5. Output an epoch key */
+
+    component epochKeyHasher = Poseidon(2);
+
+    epochKeyHasher.inputs[0] <== identity_nullifier;
+    epochKeyHasher.inputs[1] <== epoch;
+    component epoch_key_mod = ModuloTreeDepth(epoch_tree_depth);
+    epoch_key_mod.dividend <== epochKeyHasher.out;
+    epochKey <== epoch_key_mod.remainder;
+
+    /* End of check 5 */
 }
