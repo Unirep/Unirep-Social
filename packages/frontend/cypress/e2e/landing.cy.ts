@@ -1,30 +1,11 @@
 import '@testing-library/cypress/add-commands'
-import { ethers } from 'ethers'
-import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 
 describe('Landing Page', () => {
     const serverUrl = Cypress.env('serverUrl')
-    const ethProvider = Cypress.env('ethProvider')
 
     beforeEach(() => {
         // deploy unirep and unirep social contract
-        cy.task('deployUnirep').then(
-            ({ unirepAddress, unirepSocialAddress, wallet, provider }) => {
-                cy.intercept('GET', `${serverUrl}/api/config`, {
-                    body: {
-                        unirepAddress,
-                        unirepSocialAddress,
-                    },
-                }).as('getApiConfig')
-            }
-        )
-
-        cy.intercept('GET', `${serverUrl}/api/post?*`, {
-            body: [],
-        }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
+        cy.deployUnirep()
     })
     it('loads the landing page', () => {
         cy.visit('/')
@@ -46,5 +27,3 @@ describe('Landing Page', () => {
         cy.get('*[class^="progress-list"]').should('not.exist')
     })
 })
-
-// test sends a lot of requests when finished

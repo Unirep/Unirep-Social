@@ -8,31 +8,84 @@
 // commands please read more here:
 // https://on.cypress.io/custom-commands
 // ***********************************************
-export {}
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => {
+import '@testing-library/cypress/add-commands'
+import 'cypress-real-events/support'
+import { ethers } from 'ethers'
+import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 
-// })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-// //
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//     //   drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//     //   dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//     //   visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+// -- This is a parent command --
+Cypress.Commands.add('deployUnirep', () => {
+    const serverUrl = Cypress.env('serverUrl')
+    cy.task('deployUnirep').then(
+        ({
+            unirepAddress,
+            unirepSocialAddress,
+            unirepSocialABI,
+            ganacheUrl,
+            fundedKey,
+        }) => {
+            const provider = new ethers.providers.JsonRpcProvider(ganacheUrl)
+            const wallet = new ethers.Wallet(fundedKey, provider)
+            const unirepSocial = new ethers.Contract(
+                unirepSocialAddress,
+                unirepSocialABI,
+                provider
+            )
+            cy.intercept('GET', `${serverUrl}/api/config`, {
+                body: {
+                    unirepAddress,
+                    unirepSocialAddress,
+                },
+            }).as('getApiConfig')
+            cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
+                const { commitment } = req.query
+                const tx = await unirepSocial
+                    .connect(wallet)
+                    ['userSignUp(uint256)']('0x' + commitment.replace('0x', ''))
+                req.reply({
+                    epoch: 1,
+                    transaction: tx.hash,
+                })
+            })
+        }
+    )
+})
+
+Cypress.Commands.add('signupNewUser', () => {
+    cy.log('Signing up')
+
+    cy.visit('/')
+    cy.findByText('Join').click()
+    cy.findByRole('textbox').type('invitationcode')
+    cy.findByText('Let me in').click()
+    cy.wait(3000)
+    cy.findByRole('textbox').then((e) => {
+        const iden = e[0].value
+        cy.findByText('Download').click()
+        cy.findByText('Copy').realClick()
+        cy.get('textarea').type(iden, {
+            parseSpecialCharSequences: false,
+        })
+        cy.findByText('Submit').click()
+        cy.findByText('Generate').click()
+    })
+})
+
+Cypress.Commands.add('airdrop', () => {
+    cy.intercept(
+        'GET',
+        'http://testurl.invalidtld/build/proveUserSignUp.wasm',
+        {
+            body: [],
+        }
+    ).as('getProveUserSignUpWasm')
+    cy.intercept(
+        'GET',
+        'http://testurl.invalidtld/build/proveUserSignUp.zkey',
+        {
+            body: [],
+        }
+    ).as('getProveUserSignUpZkey')
+})
+
+export {}

@@ -21,6 +21,4 @@ export default defineConfig({
     env: {
         serverUrl: 'http://testurl.invalidtld',
     },
-    // chromeWebSecurity: false,
-    // experimentalFetchPolyfill: true,
 })
