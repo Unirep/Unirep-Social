@@ -5,6 +5,8 @@ const {
     USER_STATE_TREE_DEPTH,
     EPOCH_TREE_DEPTH,
 } = require('@unirep/circuits')
+const NegativeRepVerifier = require('../artifacts/contracts/NegativeRepVerifier.sol/Verifier.json')
+const SubsidyKeyVerifier = require('../artifacts/contracts/SubsidyKeyVerifier.sol/Verifier.json')
 
 const attestingFee = ethers.utils.parseEther('0.000000000001')
 const numEpochKeyNoncePerEpoch = 3
@@ -28,6 +30,23 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
         maxUsers,
         maxAttesters,
     })
+    console.log('Deploying NegativeRepVerifier')
+    const NegativeRepVerifierF = new ethers.ContractFactory(
+        NegativeRepVerifier.abi,
+        NegativeRepVerifier.bytecode,
+        signer
+    )
+    const negativeRepVerifier = await NegativeRepVerifierF.deploy()
+    await negativeRepVerifier.deployed()
+    console.log('Deploying SubsidyKeyVerifier')
+    const SubsidyKeyVerifierF = new ethers.ContractFactory(
+        SubsidyKeyVerifier.abi,
+        SubsidyKeyVerifier.bytecode,
+        signer
+    )
+    const subsidyKeyVerifier = await SubsidyKeyVerifierF.deploy()
+    await subsidyKeyVerifier.deployed()
+    console.log('Deploying UnirepSocial')
     const UnirepSocialF = new ethers.ContractFactory(
         UnirepSocial.abi,
         UnirepSocial.bytecode,
@@ -39,7 +58,8 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
     const epkSubsidy = 10
     const unirepSocial = await UnirepSocialF.deploy(
         unirep.address,
-        '0x0000000000000000000000000000000000000000',
+        negativeRepVerifier.address,
+        subsidyKeyVerifier.address,
         postReputation,
         commentReputation,
         airdrop,
