@@ -15,7 +15,7 @@ include "./sparseMerkleTree.circom";
 include "./identityCommitment.circom";
 include "./incrementalMerkleTree.circom";
 
-template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH, MAX_REPUTATION_SCORE_BITS) {
+template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, NUM_EPOCH_KEY_NONCE_PER_EPOCH, MAX_REPUTATION_SCORE_BITS) {
     signal input epoch;
 
     // Global state tree leaf: Identity & user state root
@@ -34,14 +34,16 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     signal private input graffiti;
     signal private input sign_up;
     signal private input UST_path_elements[user_state_tree_depth][1];
-    signal input maxRep;
+    signal input minRep;
     signal output subsidyKey;
 
+    // we only need to verify that one epk is in the gst
+    // we can then simply calculate the others
     /* 1. Calculate subsidy key */
 
     component subsidyKeyHasher = Poseidon(2);
 
-    subsidyKeyHasher.inputs[0] <== identity_nullifier + EPOCH_KEY_NONCE_PER_EPOCH;
+    subsidyKeyHasher.inputs[0] <== identity_nullifier + NUM_EPOCH_KEY_NONCE_PER_EPOCH;
     subsidyKeyHasher.inputs[1] <== epoch;
     subsidyKey <== subsidyKeyHasher.out;
     /* End of check 1 */
@@ -66,7 +68,6 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
 
     /* End of check 2 */
 
-
     /* 3. Check if the claimed reputation given by the attester is in the user state tree */
     component reputation_hasher = Poseidon(5);
     reputation_hasher.inputs[0] <== pos_rep;
@@ -84,17 +85,13 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     reputation_membership_check.root <== user_tree_root;
     /* End of check 3 */
 
-    /* 4. Check if user has reputation < maxRep */
-
-    component rep_negativity_check = GreaterThan(MAX_REPUTATION_SCORE_BITS);
-    rep_negativity_check.in[0] <== neg_rep;
-    rep_negativity_check.in[1] <== pos_rep;
-    rep_negativity_check.out === 1;
-
-    component max_rep_check = GreaterEqThan(MAX_REPUTATION_SCORE_BITS);
-    max_rep_check.in[0] <== neg_rep - pos_rep;
-    max_rep_check.in[1] <== maxRep;
-    max_rep_check.out === 1;
-
-    /* End of check 4 */
+    /* 4. Check if user has reputation >= minRep */
+    component pos_rep_check = GreaterEqThan(MAX_REPUTATION_SCORE_BITS);
+    pos_rep_check.in[0] <== pos_rep;
+    pos_rep_check.in[1] <== neg_rep;
+    pos_rep_check.out === 1;
+    component rep_check = GreaterEqThan(MAX_REPUTATION_SCORE_BITS);
+    rep_check.in[0] <== pos_rep - neg_rep;
+    rep_check.in[1] <== minRep;
+    rep_check.out === 1;
 }

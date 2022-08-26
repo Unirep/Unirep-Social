@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es2018",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": false,
+        "declaration": true,
+        "outDir": "./dist",
+        "allowSyntheticDefaultImports": true
+    },
+    "exclude": ["node_modules/**"],
+    "include": ["./src", "./config", "./provers"]
+}
