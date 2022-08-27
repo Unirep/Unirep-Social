@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
+import { deployUnirepSocial } from '@unirep-social/core'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import express from 'express'
 import cors from 'cors'
@@ -34,22 +34,14 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
         epochLength: settings.epochLength,
         ...overrides,
     })
-    const UnirepSocialF = new ethers.ContractFactory(
-        UnirepSocial.abi,
-        UnirepSocial.bytecode,
-        wallet
-    )
     const postReputation = 5
     const commentReputation = 3
-    const airdrop = 30
-    const unirepSocial = await UnirepSocialF.deploy(
-        unirep.address,
-        '0x0000000000000000000000000000000000000000', // placeholder for verifier
+    const airdropReputation = 30
+    const unirepSocial = await deployUnirepSocial(wallet, unirep.address, {
         postReputation,
         commentReputation,
-        airdrop,
-        0 // epk subsidy
-    )
+        airdropReputation,
+    })
     await unirepSocial.deployed()
     return { unirep, unirepSocial, provider }
 }
