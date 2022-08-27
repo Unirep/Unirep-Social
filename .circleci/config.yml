@@ -50,7 +50,7 @@ jobs:
                   command: yarn
             - run:
                   name: Build
-                  command: yarn build --scope @unirep-social/core
+                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core
             - run:
                   name: Test
                   command: cd packages/core && yarn test --parallel
@@ -67,7 +67,7 @@ jobs:
                   command: yarn
             - run:
                   name: Build
-                  command: yarn build --scope @unirep-social/core
+                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core
             - run:
                   name: Test
                   command: cd packages/core && yarn test-cli
@@ -84,7 +84,7 @@ jobs:
                   command: yarn
             - run:
                   name: Build
-                  command: yarn build --scope @unirep-social/core --scope @unirep-social/backend
+                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/backend
             - run:
                   name: Test
                   command: cd packages/backend && yarn test
@@ -101,7 +101,7 @@ jobs:
                   command: yarn
             - run:
                   name: Build
-                  command: yarn build --scope @unirep-social/core --scope @unirep-social/frontend
+                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/frontend
             - run:
                   name: Test
                   command: cd packages/frontend && yarn test
