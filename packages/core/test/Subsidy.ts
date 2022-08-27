@@ -45,18 +45,21 @@ describe('Subsidy', function () {
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
         )
-        const repProof = await userState.genProveReputationProof(
-            attesterId.toBigInt(),
-            0,
-            0
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt()
         )
-        expect(await repProof.verify()).to.be.true
+        expect(await subsidyProof.verify()).to.be.true
         // now create a post
         await unirepSocialContract
             .connect(accounts[0])
-            .publishPost('test post', repProof.publicSignals, repProof.proof, {
-                value: attestingFee,
-            })
+            .publishPostSubsidy(
+                'test post',
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
             .then((t) => t.wait())
         await userState.stop()
     })
@@ -76,20 +79,18 @@ describe('Subsidy', function () {
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
         )
-        const repProof = await userState.genProveReputationProof(
-            attesterId.toBigInt(),
-            0,
-            0
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt()
         )
-        expect(await repProof.verify()).to.be.true
+        expect(await subsidyProof.verify()).to.be.true
         // now create a post
         await unirepSocialContract
             .connect(accounts[0])
-            .leaveComment(
+            .publishCommentSubsidy(
                 '0x000001', // dummy post id
                 'test comment',
-                repProof.publicSignals,
-                repProof.proof,
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
                 {
                     value: attestingFee,
                 }
@@ -115,25 +116,31 @@ describe('Subsidy', function () {
             unirepContract.address,
             id
         )
-        const repProof = await userState.genProveReputationProof(
-            attesterId.toBigInt(),
-            0,
+        const epoch = await unirepContract.currentEpoch()
+        const toEpochKey = genEpochKey(
+            receivingId.identityNullifier,
+            epoch.toNumber(),
             0
         )
-        expect(await repProof.verify()).to.be.true
-        const epoch = await unirepContract.currentEpoch()
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt(),
+            BigInt(0),
+            toEpochKey
+        )
+        expect(await subsidyProof.verify()).to.be.true
         await unirepSocialContract
             .connect(accounts[1])
-            .vote(
+            .voteSubsidy(
                 3,
                 0,
-                genEpochKey(receivingId.identityNullifier, epoch.toNumber(), 0),
-                repProof.publicSignals,
-                repProof.proof,
+                toEpochKey,
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
                 {
                     value: attestingFee.mul(2),
                 }
             )
+            .then((t) => t.wait())
         await userState.stop()
     })
 
@@ -142,7 +149,7 @@ describe('Subsidy', function () {
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
         )
-        const epkSubsidy = (await unirepSocialContract.epkSubsidy()).toNumber()
+        const epkSubsidy = (await unirepSocialContract.subsidy()).toNumber()
         const id = new ZkIdentity()
         await unirepSocialContract
             .connect(accounts[0])
@@ -153,166 +160,71 @@ describe('Subsidy', function () {
             unirepContract.address,
             id
         )
-        const repProof = await userState.genProveReputationProof(
+        const toEpochKey = '0x000001'
+        const subsidyProof = await userState.genSubsidyProof(
             attesterId.toBigInt(),
-            0,
-            0
+            BigInt(0),
+            BigInt(toEpochKey)
         )
-        expect(await repProof.verify()).to.be.true
+        expect(await subsidyProof.verify()).to.be.true
         await expect(
             unirepSocialContract
                 .connect(accounts[1])
-                .vote(
+                .voteSubsidy(
                     epkSubsidy + 1,
                     0,
-                    '0x000001',
-                    repProof.publicSignals,
-                    repProof.proof,
+                    toEpochKey,
+                    subsidyProof.publicSignals,
+                    subsidyProof.proof,
                     {
                         value: attestingFee.mul(2),
                     }
                 )
-        ).to.be.reverted
+        ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
         await userState.stop()
     })
 
-    it('should partially spend using subsidy', async () => {
+    it('should fail to vote for self with subsidy', async () => {
         const accounts = await ethers.getSigners()
         const attesterId = await unirepContract.attesters(
             unirepSocialContract.address
         )
         const receivingId = new ZkIdentity()
         // now create a vote
-        {
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .connect(accounts[0])
-                .userSignUp(receivingId.genIdentityCommitment())
-                .then((t) => t.wait())
-            await unirepSocialContract
-                .connect(accounts[0])
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const repProof = await userState.genProveReputationProof(
-                attesterId.toBigInt(),
-                0,
-                0
-            )
-            expect(await repProof.verify()).to.be.true
-            const epoch = await unirepContract.currentEpoch()
-            await unirepSocialContract
-                .connect(accounts[1])
-                .vote(
-                    5,
-                    0,
-                    genEpochKey(
-                        receivingId.identityNullifier,
-                        epoch.toNumber(),
-                        0
-                    ),
-                    repProof.publicSignals,
-                    repProof.proof,
-                    {
-                        value: attestingFee.mul(2),
-                    }
-                )
-            await userState.stop()
-        }
-        // need to do a UST to get access to the rep
-        const { epochLength } = await unirepContract.config()
-        await ethers.provider.send('evm_increaseTime', [epochLength.toNumber()])
-        await unirepContract
-            .connect(accounts[1])
-            .beginEpochTransition()
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .connect(accounts[0])
+            .userSignUp(id.genIdentityCommitment())
             .then((t) => t.wait())
-        {
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                receivingId
-            )
-            const {
-                startTransitionProof,
-                processAttestationProofs,
-                finalTransitionProof,
-            } = await userState.genUserStateTransitionProofs()
-            await unirepSocialContract
-                .startUserStateTransition(
-                    startTransitionProof.publicSignals,
-                    startTransitionProof.proof
-                )
-                .then((t) => t.wait())
-            for (let i = 0; i < processAttestationProofs.length; i++) {
-                expect(
-                    await processAttestationProofs[i].verify(),
-                    'Verify process attestations circuit off-chain failed'
-                ).to.be.true
-
-                await unirepSocialContract
-                    .processAttestations(
-                        processAttestationProofs[i].publicSignals,
-                        processAttestationProofs[i].proof
-                    )
-                    .then((t) => t.wait())
-            }
-
-            await unirepContract
-                .updateUserStateRoot(
-                    finalTransitionProof.publicSignals,
-                    finalTransitionProof.proof
-                )
-                .then((t) => t.wait())
-            await userState.stop()
-        }
-        // now receivingId has a positive rep balance
-        {
-            const epoch = (await unirepContract.currentEpoch()).toNumber()
-            const epochKey = genEpochKey(
-                receivingId.identityNullifier,
-                epoch,
-                0
-            )
-            const epkSubsidy = (
-                await unirepSocialContract.epkSubsidy()
-            ).toNumber()
-            const spentSubsidy = (
-                await unirepSocialContract.subsidies(epoch, epochKey)
-            ).toNumber()
-            const remainingSubsidy = epkSubsidy - spentSubsidy
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                receivingId
-            )
-            const repProof = await userState.genProveReputationProof(
-                attesterId.toBigInt(),
-                0,
-                0,
-                undefined,
-                undefined,
-                5
-            )
-            expect(await repProof.verify()).to.be.true
-            // now create a post
-            await unirepSocialContract
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt()
+        )
+        expect(await subsidyProof.verify()).to.be.true
+        const epoch = await unirepContract.currentEpoch()
+        const toEpochKey = genEpochKey(
+            receivingId.identityNullifier,
+            epoch.toNumber(),
+            0
+        )
+        await expect(
+            unirepSocialContract
                 .connect(accounts[1])
-                .vote(
-                    remainingSubsidy + 5,
+                .voteSubsidy(
+                    3,
                     0,
-                    '0x00001',
-                    repProof.publicSignals,
-                    repProof.proof,
+                    toEpochKey,
+                    subsidyProof.publicSignals,
+                    subsidyProof.proof,
                     {
                         value: attestingFee.mul(2),
                     }
                 )
-                .then((t) => t.wait())
-            await userState.stop()
-        }
+        ).to.be.revertedWith('Unirep Social: must prove non-ownership of epk')
+        await userState.stop()
     })
 })

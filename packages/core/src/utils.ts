@@ -9,6 +9,8 @@ import {
 import { Unirep__factory as UnirepFactory } from '../typechain/factories/Unirep__factory'
 import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain/factories/UnirepSocial__factory'
 import { UnirepSocial } from '../typechain/UnirepSocial'
+import NegativeRepVerifier from '../artifacts/contracts/NegativeRepVerifier.sol/Verifier.json'
+import SubsidyKeyVerifier from '../artifacts/contracts/SubsidyKeyVerifier.sol/Verifier.json'
 
 // TODO: use export package from '@unirep/unirep'
 import { Unirep } from '../typechain/Unirep'
@@ -18,8 +20,6 @@ const deployUnirepSocial = async (
     UnirepAddr: string,
     _settings?: any
 ): Promise<UnirepSocial> => {
-    console.log('Deploying Unirep Social')
-
     const settings = {
         airdropReputation: defaultAirdroppedReputation,
         postReputation: defaultPostReputation,
@@ -27,12 +27,29 @@ const deployUnirepSocial = async (
         epkSubsidy: defaultEpkSubsidy,
         ..._settings,
     }
+    console.log('Deploying NegativeRepVerifier')
+    const NegativeRepVerifierF = new ethers.ContractFactory(
+        NegativeRepVerifier.abi,
+        NegativeRepVerifier.bytecode,
+        deployer
+    )
+    const negativeRepVerifier = await NegativeRepVerifierF.deploy()
+    await negativeRepVerifier.deployed()
+    console.log('Deploying SubsidyKeyVerifier')
+    const SubsidyKeyVerifierF = new ethers.ContractFactory(
+        SubsidyKeyVerifier.abi,
+        SubsidyKeyVerifier.bytecode,
+        deployer
+    )
+    const subsidyKeyVerifier = await SubsidyKeyVerifierF.deploy()
+    await subsidyKeyVerifier.deployed()
 
+    console.log('Deploying Unirep Social')
     const f = new UnirepSocialFactory(deployer)
     const c = await f.deploy(
         UnirepAddr,
-        '0x0000000000000000000000000000000000000000', // TODO: placeholder for verifier
-        '0x0000000000000000000000000000000000000000', // TODO: placeholder for verifier
+        negativeRepVerifier.address,
+        subsidyKeyVerifier.address,
         settings.postReputation,
         settings.commentReputation,
         settings.airdropReputation,

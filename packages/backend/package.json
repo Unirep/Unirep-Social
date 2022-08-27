@@ -3,11 +3,10 @@
     "version": "1.0.0",
     "description": "",
     "scripts": {
-        "postinstall": "sh scripts/loadKeys.sh",
         "start": "ts-node src/app.ts",
         "synct": "ts-node src/sync-test.ts",
         "keys": "sh scripts/loadKeys.sh",
-        "build": "tsc",
+        "build": "tsc && yarn keys",
         "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose"
     },
     "keywords": [],
@@ -25,11 +24,12 @@
         "typescript": "^4.4.0"
     },
     "dependencies": {
+        "@unirep-social/circuits": "^0.0.1",
+        "@unirep-social/core": "^1.0.0",
         "@unirep/circuits": "1.0.0-alpha-8",
         "@unirep/contracts": "1.0.0-alpha-10",
         "@unirep/core": "1.0.0-alpha-14",
         "@unirep/crypto": "1.0.0-alpha-5",
-        "@unirep-social/core": "^1.0.0",
         "anondb": "^0.0.12",
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
