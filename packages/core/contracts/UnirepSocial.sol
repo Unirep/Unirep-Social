@@ -220,6 +220,7 @@ contract UnirepSocial is zkSNARKHelper {
     ) external payable {
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
+        require(verifySubsidyKeyProof(publicSignals, proof));
         trySpendSubsidy(epoch, publicSignals[1], postReputation);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
         emit PostSubmitted(
@@ -238,6 +239,7 @@ contract UnirepSocial is zkSNARKHelper {
     ) external payable {
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
+        require(verifySubsidyKeyProof(publicSignals, proof));
         trySpendSubsidy(epoch, publicSignals[1], postReputation);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
         emit CommentSubmitted(
@@ -256,8 +258,9 @@ contract UnirepSocial is zkSNARKHelper {
         uint256[6] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        (,,,,,,,uint attestingFee,,) = unirep.config();
+        uint attestingFee = unirep.attestingFee();
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(verifySubsidyKeyProof(publicSignals, proof));
         uint256 voteValue = upvoteValue + downvoteValue;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
@@ -265,7 +268,7 @@ contract UnirepSocial is zkSNARKHelper {
         uint256 epoch = publicSignals[2];
         trySpendSubsidy(epoch, publicSignals[1], voteValue);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
-        require(publicSignals[5] != toEpochKey, "Unirep Social: can't vote for own epoch key");
+        require(publicSignals[5] == toEpochKey, "Unirep Social: must prove non-ownership of epk");
 
         // Submit attestation to receiver's epoch key
         Unirep.Attestation memory attestation;

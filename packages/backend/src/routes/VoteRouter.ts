@@ -93,6 +93,31 @@ async function vote(req, res) {
             value: attestingFee.mul(2),
         }
     )
+    const newVote = await req.db.create('Vote', {
+        transactionHash: hash,
+        epoch: currentEpoch,
+        voter: epochKey,
+        receiver: req.body.receiver,
+        posRep: req.body.upvote,
+        negRep: req.body.downvote,
+        graffiti: '0',
+        overwriteGraffiti: false,
+        postId: post ? dataId : '',
+        commentId: comment ? dataId : '',
+        status: 0,
+    })
+    // save to db data
+    await req.db.create('Record', {
+        to: req.body.receiver,
+        from: epochKey,
+        upvote: req.body.upvote,
+        downvote: req.body.downvote,
+        epoch: currentEpoch,
+        action: ActionType.Vote,
+        transactionHash: hash,
+        data: dataId,
+        confirmed: 0,
+    })
     res.json({
         transaction: hash,
         newVote,
@@ -100,31 +125,6 @@ async function vote(req, res) {
     // make sure tx above succeeds before changing the db below
     TransactionManager.wait(hash)
         .then(async () => {
-            // save to db data
-            const newVote = await req.db.create('Vote', {
-                transactionHash: hash,
-                epoch: currentEpoch,
-                voter: epochKey,
-                receiver: req.body.receiver,
-                posRep: req.body.upvote,
-                negRep: req.body.downvote,
-                graffiti: '0',
-                overwriteGraffiti: false,
-                postId: post ? dataId : '',
-                commentId: comment ? dataId : '',
-                status: 0,
-            })
-            await req.db.create('Record', {
-                to: req.body.receiver,
-                from: epochKey,
-                upvote: req.body.upvote,
-                downvote: req.body.downvote,
-                epoch: currentEpoch,
-                action: ActionType.Vote,
-                transactionHash: hash,
-                data: dataId,
-                confirmed: 0,
-            })
             await req.db.transaction(async (db) => {
                 const [post, comment] = await Promise.all([
                     req.db.findOne('Post', { where: { _id: dataId } }),
