@@ -215,24 +215,29 @@ export class Data {
         epkNonce: number = 0,
         minRep = 0
     ) {
-        const user = (UserContext as any)._currentValue
-
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
                     title: 'Creating post',
                     details: 'Generating zk proof...',
                 })
-                const { proof, publicSignals } = await user.genRepProof(
-                    0,
-                    epkNonce,
-                    minRep
-                )
+                // if the epk nonce is a positive value then we generate a rep
+                // proof, otherwise we generate a subsidy proof
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          unirepConfig.postReputation,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(minRep))
                 updateStatus({
                     title: 'Creating post',
                     details: 'Waiting for TX inclusion...',
                 })
-                const apiURL = makeURL('post', {})
+                const apiURL = makeURL(
+                    epkNonce >= 0 ? 'post' : 'post/subsidy',
+                    {}
+                )
                 const r = await fetch(apiURL, {
                     headers: {
                         'content-type': 'application/json',
@@ -280,16 +285,22 @@ export class Data {
                     title: 'Creating Vote',
                     details: 'Generating ZK proof...',
                 })
-                const { proof, publicSignals } = await userContext.genRepProof(
-                    0, // upvote + downvote,
-                    epkNonce,
-                    minRep
-                )
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          upvote + downvote,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(
+                          minRep,
+                          `0x${receiver.replace('0x', '')}`
+                      ))
                 updateStatus({
                     title: 'Creating Vote',
                     details: 'Broadcasting vote...',
                 })
-                const r = await fetch(makeURL('vote'), {
+                const url = makeURL(epkNonce >= 0 ? 'vote' : 'vote/subsidy')
+                const r = await fetch(url, {
                     headers: {
                         'content-type': 'application/json',
                     },
@@ -341,16 +352,21 @@ export class Data {
                     title: 'Creating comment',
                     details: 'Generating ZK proof...',
                 })
-                const { proof, publicSignals } = await userContext.genRepProof(
-                    0, // unirepConfig.commentReputation,
-                    epkNonce,
-                    minRep
-                )
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          unirepConfig.commentReputation,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(minRep))
                 updateStatus({
                     title: 'Creating comment',
                     details: 'Waiting for transaction...',
                 })
-                const r = await fetch(makeURL('comment'), {
+                const url = makeURL(
+                    epkNonce >= 0 ? 'comment' : 'comment/subsidy'
+                )
+                const r = await fetch(url, {
                     headers: {
                         'content-type': 'application/json',
                     },
