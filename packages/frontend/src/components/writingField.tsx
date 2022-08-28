@@ -118,6 +118,14 @@ const WritingField = (props: Props) => {
                         Post as <HelpWidget type={InfoType.epk4Post} />
                     </div>
                     <div className="epks">
+                        <div
+                            className={-1 === epkNonce ? 'epk chosen' : 'epk'}
+                            onClick={() => setEpkNonce(-1)}
+                            key={0}
+                        >
+                            Subsidy
+                        </div>
+
                         {!user.userState ? (
                             <div>somethings wrong...</div>
                         ) : (

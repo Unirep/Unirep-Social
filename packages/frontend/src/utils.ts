@@ -125,7 +125,7 @@ export const convertDataToComment = (data: any) => {
         // votes,
         upvote: data.posRep,
         downvote: data.negRep,
-        epoch_key: data.epochKey,
+        epoch_key: `0x${(+data.epochKey).toString(16)}`,
         username: '',
         createdAt: data.createdAt,
         reputation: data.minRep,
@@ -137,6 +137,7 @@ export const convertDataToComment = (data: any) => {
 }
 
 export const convertDataToPost = (data: any) => {
+    console.log(data.epochKey)
     const post: Post = {
         type: DataType.Post,
         id: data._id,
@@ -145,7 +146,7 @@ export const convertDataToPost = (data: any) => {
         // votes,
         upvote: data.posRep,
         downvote: data.negRep,
-        epoch_key: data.epochKey,
+        epoch_key: `0x${(+data.epochKey).toString(16)}`,
         username: '',
         createdAt: data.createdAt,
         reputation: data.minRep,

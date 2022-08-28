@@ -2,10 +2,10 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy } from '@unirep/crypto'
-import { Attestation } from '@unirep/contracts'
+import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
 import { makeURL } from '../utils'
-import { genEpochKey, UserState, schema } from '@unirep/core'
+import { genEpochKey, schema } from '@unirep/core'
+import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
@@ -20,7 +20,7 @@ export class User {
     spent = 0
     latestTransitionedEpoch?: number
     loadingPromise
-    userState?: UserState
+    userState?: SocialUserState
 
     syncStartBlock: any
     latestProcessedBlock: any
@@ -104,9 +104,19 @@ export class User {
     }
 
     get currentEpochKeys() {
-        return this.allEpks.slice(
-            -1 * this.unirepConfig.numEpochKeyNoncePerEpoch
-        )
+        return Array(this.unirepConfig.numEpochKeyNoncePerEpoch)
+            .fill(null)
+            .map((_, i) => {
+                if (!this.id) throw new Error('No id set')
+                return genEpochKey(
+                    this.id.identityNullifier,
+                    this.currentEpoch,
+                    i,
+                    this.unirepConfig.epochTreeDepth
+                )
+                    .toString(16)
+                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
+            })
     }
 
     get identity() {
@@ -160,7 +170,7 @@ export class User {
             this.id = identity
         }
         const db = await IndexedDBConnector.create(schema, 1)
-        this.userState = new UserState(
+        this.userState = new SocialUserState(
             db,
             prover as any,
             this.unirepConfig.unirep,
@@ -231,20 +241,22 @@ export class User {
 
         const { number: currentEpoch } =
             await this.userState?.loadCurrentEpoch()
-        const epkSubsidy = 10
-        const subsidyBalance = (
-            await Promise.all(
-                this.currentEpochKeys.map((epk) => {
-                    return this.unirepConfig.unirepSocial.subsidies(
-                        currentEpoch,
-                        ethers.BigNumber.from(`0x${epk}`)
-                    )
-                })
-            )
-        ).reduce((acc, val) => {
-            return acc + (epkSubsidy - val.toNumber())
-        }, 0)
-        this.subsidyReputation = subsidyBalance
+        const subsidy = await this.unirepConfig.unirepSocial.subsidy()
+        // see the unirep social circuits for more info about this
+        // the subsidy key is an epoch key that doesn't have the modulus applied
+        // it uses nonce == maxNonce + 1
+        const subsidyKey = hash2([
+            BigInt(this.id.identityNullifier) +
+                BigInt(this.unirepConfig.numEpochKeyNoncePerEpoch),
+            currentEpoch,
+        ])
+        console.log(subsidyKey)
+        const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
+            currentEpoch,
+            subsidyKey
+        )
+        console.log(subsidy, spentSubsidy)
+        this.subsidyReputation = subsidy.sub(spentSubsidy).toNumber()
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
@@ -393,6 +405,17 @@ export class User {
         this.reputation = 0
         this.spent = 0
         this.save()
+    }
+
+    async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
+        const currentEpoch = await this.loadCurrentEpoch()
+        if (!this.userState) throw new Error('User state not initialized')
+        const { proof, publicSignals } = await this.userState.genSubsidyProof(
+            BigInt(this.unirepConfig.attesterId),
+            BigInt(minRep),
+            BigInt(notEpochKey)
+        )
+        return { proof, publicSignals, currentEpoch }
     }
 
     async genRepProof(proveKarma: number, epkNonce: number, minRep = 0) {
