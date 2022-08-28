@@ -18,6 +18,10 @@ describe('Signup', function () {
     const maxUsers = 3
     const maxAttesters = 3
 
+    const oldUsername = 0
+    const newUsername = 1
+    const newUsername2 = 2
+
     before(async () => {
         const accounts = await ethers.getSigners()
 
@@ -79,6 +83,28 @@ describe('Signup', function () {
                 unirepContract,
                 'ReachedMaximumNumberUserSignedUp'
             )
+        })
+
+        it('setUsername should succeed', async () => {
+            const isClaimed = await unirepSocialContract.usernames(newUsername)
+            expect(isClaimed, 'This username has not been updated').to.be.true
+        })
+
+        it('should fail if a username is double registered', async () => {
+            const accounts = await ethers.getSigners()
+            await unirepSocialContract
+                .connect(accounts[0])
+                .setUsername(
+                    config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+                    newUsername,
+                    newUsername2
+                )
+                .then((t) => t.wait())
+        })
+
+        it('should fail if the old username is not freed', async () => {
+            const isClaimed = await unirepSocialContract.usernames(oldUsername)
+            expect(isClaimed, 'The old username is not freed').to.be.false
         })
     })
 })
