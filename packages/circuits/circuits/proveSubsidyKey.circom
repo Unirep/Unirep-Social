@@ -38,16 +38,24 @@ template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth
     signal input minRep;
     signal input notEpochKey;
     signal output subsidyKey;
+    signal output epochKey;
 
     // we only need to verify that one epk is in the gst
     // we can then simply calculate the others
-    /* 1. Calculate subsidy key */
+    /* 1. Calculate subsidy key and epoch key */
 
     component subsidyKeyHasher = Poseidon(2);
 
     subsidyKeyHasher.inputs[0] <== identity_nullifier + NUM_EPOCH_KEY_NONCE_PER_EPOCH;
     subsidyKeyHasher.inputs[1] <== epoch;
     subsidyKey <== subsidyKeyHasher.out;
+
+    component epochKeyHasher = Poseidon(2);
+    epochKeyHasher.inputs[0] <== identity_nullifier;
+    epochKeyHasher.inputs[1] <== epoch;
+    component epochKeyMod = ModuloTreeDepth(epoch_tree_depth);
+    epochKeyMod.dividend <== epochKeyHasher.out;
+    epochKey <== epochKeyMod.remainder;
     /* End of check 1 */
 
     /* 2. Check if user exists in the Global State Tree */
