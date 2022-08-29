@@ -2,11 +2,14 @@ import { useEffect, useState, useContext } from 'react'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
+import UIContext from '../../context/UI'
 
 import { ABOUT_URL } from '../../config'
 
 const Banner = () => {
     const userContext = useContext(UserContext)
+    const uiContext = useContext(UIContext)
+
     const [on, setOn] = useState<boolean>(false)
 
     useEffect(() => {
@@ -15,9 +18,14 @@ const Banner = () => {
         }
     }, [])
 
+    const closeBanner = () => {
+        setOn(false)
+        uiContext.setHasBanner(false)
+    }
+
     return (
         <div className="banner-row">
-            {on ? (
+            {uiContext.hasBanner && on && (
                 <div className="banner">
                     <img src={require('../../../public/images/banner.svg')} />
                     <div className="banner-title">
@@ -41,14 +49,12 @@ const Banner = () => {
                             <div></div>
                         )}
                     </div>
-                    <div className="banner-close" onClick={() => setOn(false)}>
+                    <div className="banner-close" onClick={closeBanner}>
                         <img
                             src={require('../../../public/images/close.svg')}
                         />
                     </div>
                 </div>
-            ) : (
-                <div></div>
             )}
         </div>
     )
