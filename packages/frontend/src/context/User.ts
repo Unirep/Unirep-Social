@@ -368,6 +368,7 @@ export class User {
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
         await this.startSync()
+        await this.loadReputation()
         return {
             i: serializedIdentity,
             c: commitment,
