@@ -418,49 +418,49 @@ describe('test all CLI subcommands', function () {
         })
     })
 
-    describe('genAirdropProof CLI subcommand', () => {
-        it('should submit an airdrop query', async () => {
-            const command =
-                `npx ts-node cli/index.ts genAirdropProof` +
-                ` -x ${unirepSocialContract.address} ` +
-                ` -id ${userIdentity1}`
+    // describe('genAirdropProof CLI subcommand', () => {
+    //     it('should submit an airdrop query', async () => {
+    //         const command =
+    //             `npx ts-node cli/index.ts genAirdropProof` +
+    //             ` -x ${unirepSocialContract.address} ` +
+    //             ` -id ${userIdentity1}`
 
-            console.log(command)
-            const { stdout, stderr } = exec(command)
-            console.log(stdout.trim(), stderr.trim())
+    //         console.log(command)
+    //         const { stdout, stderr } = exec(command)
+    //         console.log(stdout.trim(), stderr.trim())
 
-            const airdropProofRegMatch = stdout
-                .trim()
-                .match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/) as any
-            const publicSignalRegMatch = stdout
-                .trim()
-                .match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/) as any
-            expect(airdropProofRegMatch).not.equal(null)
-            airdropProof = airdropProofRegMatch[1]
-            expect(publicSignalRegMatch).not.equal(null)
-            airdropPublicSignals = publicSignalRegMatch[1]
-        })
-    })
+    //         const airdropProofRegMatch = stdout
+    //             .trim()
+    //             .match(/(Unirep.signUp.proof.[a-zA-Z0-9\-\_]+)/) as any
+    //         const publicSignalRegMatch = stdout
+    //             .trim()
+    //             .match(/(Unirep.signUp.publicSignals.[a-zA-Z0-9]+)/) as any
+    //         expect(airdropProofRegMatch).not.equal(null)
+    //         airdropProof = airdropProofRegMatch[1]
+    //         expect(publicSignalRegMatch).not.equal(null)
+    //         airdropPublicSignals = publicSignalRegMatch[1]
+    //     })
+    // })
 
-    describe('giveAirdrop CLI subcommand', () => {
-        it('should submit an airdrop query', async () => {
-            const command =
-                `npx ts-node cli/index.ts giveAirdrop` +
-                ` -x ${unirepSocialContract.address} ` +
-                ` -p ${airdropPublicSignals} ` +
-                ` -pf ${airdropProof} ` +
-                ` -d ${deployerPrivKey} `
+    // describe('giveAirdrop CLI subcommand', () => {
+    //     it('should submit an airdrop query', async () => {
+    //         const command =
+    //             `npx ts-node cli/index.ts giveAirdrop` +
+    //             ` -x ${unirepSocialContract.address} ` +
+    //             ` -p ${airdropPublicSignals} ` +
+    //             ` -pf ${airdropProof} ` +
+    //             ` -d ${deployerPrivKey} `
 
-            console.log(command)
-            const { stdout, stderr } = exec(command)
-            console.log(stdout.trim(), stderr.trim())
+    //         console.log(command)
+    //         const { stdout, stderr } = exec(command)
+    //         console.log(stdout.trim(), stderr.trim())
 
-            const commentRegMatch = stdout
-                .trim()
-                .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
-            expect(commentRegMatch).not.equal(null)
-        })
-    })
+    //         const commentRegMatch = stdout
+    //             .trim()
+    //             .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
+    //         expect(commentRegMatch).not.equal(null)
+    //     })
+    // })
 
     describe('genReputation CLI subcommand', () => {
         it('should generate a reputation proof for a vote', async () => {
@@ -503,7 +503,6 @@ describe('test all CLI subcommands', function () {
                 ` -x ${unirepSocialContract.address} ` +
                 ` -d ${attesterPrivKey} ` +
                 ` -epk ${epk} ` +
-                ` -i ${proofIdx} ` +
                 ` -p ${repPublicSignals}` +
                 ` -pf ${userRepProof}` +
                 ` -uv ${posRep} `

@@ -8,19 +8,21 @@ import {
     ProcessAttestationsProof,
 } from '@unirep/contracts'
 import { DB } from 'anondb'
+import { UNIREP, UNIREP_ABI, DEFAULT_ETH_PROVIDER } from './constants'
+import { ethers } from 'ethers'
+
+const unirepContract = new ethers.Contract(
+    UNIREP,
+    UNIREP_ABI,
+    DEFAULT_ETH_PROVIDER
+)
 
 const verifyGSTRoot = async (
     db: DB,
     epoch: number,
     gstRoot: string
 ): Promise<boolean> => {
-    const exists = await db.findOne('GSTRoot', {
-        where: {
-            epoch,
-            root: gstRoot,
-        },
-    })
-    return !!exists
+    return unirepContract.globalStateTreeRoots(epoch, gstRoot)
 }
 
 const verifyEpochTreeRoot = async (
@@ -28,13 +30,8 @@ const verifyEpochTreeRoot = async (
     epoch: number,
     epochTreeRoot: string
 ) => {
-    const exists = await db.findOne('Epoch', {
-        where: {
-            number: epoch,
-            epochRoot: epochTreeRoot,
-        },
-    })
-    return !!exists
+    const root = await unirepContract.epochRoots(epoch)
+    return root.eq(ethers.BigNumber.from(epochTreeRoot))
 }
 
 const verifyReputationProof = async (
@@ -80,16 +77,6 @@ const verifyReputationProof = async (
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
-    }
-
-    // check nullifiers
-    const exists = await db.findOne('Nullifier', {
-        where: {
-            nullifier: reputationProof.repNullifiers.map((n) => n.toString()),
-        },
-    })
-    if (exists) {
-        return `Error: duplicate reputation nullifier`
     }
 }
 
@@ -151,14 +138,12 @@ const verifyUSTProof = async (
     results: any,
     currentEpoch: number
 ): Promise<string | undefined> => {
-    let error
     // Check if the fromEpoch is less than the current epoch
     if (
         Number(results.finalTransitionProof.transitionedFromEpoch) >=
         currentEpoch
     ) {
-        error = 'Error: user transitions from an invalid epoch'
-        return error
+        return 'Error: user transitions from an invalid epoch'
     }
 
     // Start user state transition proof
@@ -168,8 +153,7 @@ const verifyUSTProof = async (
         Prover
     ).verify()
     if (!isValid) {
-        error = 'Error: start state transition proof generated is not valid!'
-        return error
+        return 'Error: start state transition proof generated is not valid!'
     }
 
     // Process attestations proofs
@@ -180,8 +164,7 @@ const verifyUSTProof = async (
             Prover
         ).verify()
         if (!isValid) {
-            error = 'Error: process attestations proof generated is not valid!'
-            return error
+            return 'Error: process attestations proof generated is not valid!'
         }
     }
 
@@ -193,8 +176,7 @@ const verifyUSTProof = async (
     )
     isValid = await USTProof.verify()
     if (!isValid) {
-        error = 'Error: user state transition proof generated is not valid!'
-        return error
+        return 'Error: user state transition proof generated is not valid!'
     }
 
     // Check epoch tree root
@@ -204,8 +186,7 @@ const verifyUSTProof = async (
     {
         const exists = await verifyGSTRoot(db, epoch, gstRoot.toString())
         if (!exists) {
-            error = `Global state tree root ${gstRoot} is not in epoch ${epoch}`
-            return error
+            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
     }
     {
@@ -215,21 +196,19 @@ const verifyUSTProof = async (
             epochTreeRoot.toString()
         )
         if (!exists) {
-            error = `Epoch tree root ${epochTreeRoot} is not in epoch ${epoch}`
-            return error
+            return `Epoch tree root ${epochTreeRoot} is not in epoch ${epoch}`
         }
     }
 
     // check nullifiers
     const exists = await db.findOne('Nullifier', {
         where: {
-            nullifier: results.finalTransitionProof.epochKeyNullifiers,
+            nullifier: results.finalTransitionProof.epkNullifiers,
         },
     })
     if (exists) {
-        error = `Error: invalid reputation nullifier`
+        return `Error: invalid epoch key nullifier`
     }
-    return error
 }
 
 export { verifyReputationProof, verifyUSTProof, verifyAirdropProof }

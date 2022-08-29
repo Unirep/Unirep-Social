@@ -5,7 +5,8 @@ import { expect } from 'chai'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import * as config from '@unirep/circuits'
 import { genEpochKey } from '@unirep/core'
-import { deployUnirep, EpochKeyProof } from '@unirep/contracts'
+import { EpochKeyProof } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 
 import { genUserState } from './utils'
@@ -13,32 +14,6 @@ import { maxReputationBudget } from '../config/socialMedia'
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
-
-const getEpochKeyProof = async (unirepContract) => {
-    const currentEpoch = await unirepContract.currentEpoch()
-    const toEpochKey = genEpochKey(
-        genRandomSalt(),
-        currentEpoch,
-        0
-    ) as BigNumberish
-    const proof = Array(8).fill('0')
-    const publicSignals = [
-        genRandomSalt(),
-        currentEpoch,
-        toEpochKey,
-    ] as BigNumberish[]
-    const epochKeyProof = new EpochKeyProof(
-        publicSignals,
-        formatProofForSnarkjsVerification(proof)
-    )
-    await unirepContract
-        .submitEpochKeyProof(publicSignals, proof)
-        .then((t) => t.wait())
-    const epochKeyProofIndex = await unirepContract.getProofIndex(
-        epochKeyProof.hash()
-    )
-    return { epochKeyProofIndex, toEpochKey }
-}
 
 describe('Vote', function () {
     this.timeout(300000)
@@ -65,12 +40,13 @@ describe('Vote', function () {
     })
 
     describe('Upvote', () => {
-        it('submit epoch key proof should succeed', async () => {})
-
         it('submit upvote should succeed', async () => {
-            const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
-                unirepContract
-            )
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
@@ -96,23 +72,25 @@ describe('Vote', function () {
                 graffitiPreImage,
                 upvoteValue
             )
-            const tx = await unirepSocialContract.vote(
-                upvoteValue,
-                0,
-                toEpochKey,
-                epochKeyProofIndex,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
-            )
-            const receipt = await tx.wait()
-            expect(receipt.status, 'Submit vote failed').to.equal(1)
+            await unirepSocialContract
+                .vote(
+                    upvoteValue,
+                    0,
+                    toEpochKey,
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    { value: DEFAULT_ATTESTING_FEE.mul(2) }
+                )
+                .then((t) => t.wait())
         })
 
         it('submit upvote with different amount of nullifiers should fail', async () => {
-            const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
-                unirepContract
-            )
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
@@ -148,7 +126,6 @@ describe('Vote', function () {
                     upvoteValue,
                     0,
                     toEpochKey,
-                    epochKeyProofIndex,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
@@ -158,55 +135,13 @@ describe('Vote', function () {
             )
         })
 
-        it('submit zero proof index upvote should fail', async () => {
-            const { toEpochKey } = await getEpochKeyProof(unirepContract)
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const upvoteValue = 3
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                upvoteValue
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
-
-            const zeroProofIndex = 0
-            await expect(
-                unirepSocialContract.vote(
-                    upvoteValue,
-                    0,
-                    toEpochKey,
-                    zeroProofIndex,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
-                )
-            ).to.be.revertedWithCustomError(unirepContract, 'InvalidProofIndex')
-        })
-
         it('submit upvote with both upvote and downvote value should fail', async () => {
-            const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
-                unirepContract
-            )
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
@@ -237,7 +172,6 @@ describe('Vote', function () {
                     upvoteValue,
                     5,
                     toEpochKey,
-                    epochKeyProofIndex,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
@@ -248,9 +182,12 @@ describe('Vote', function () {
         })
 
         it('submit vote with 0 value should fail', async () => {
-            const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
-                unirepContract
-            )
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
@@ -281,7 +218,6 @@ describe('Vote', function () {
                     0,
                     0,
                     toEpochKey,
-                    epochKeyProofIndex,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }
@@ -292,9 +228,12 @@ describe('Vote', function () {
         })
 
         it('submit upvote proof with wrong attester id should fail', async () => {
-            const { toEpochKey, epochKeyProofIndex } = await getEpochKeyProof(
-                unirepContract
-            )
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
@@ -329,7 +268,6 @@ describe('Vote', function () {
                     reputationProof.proveReputationAmount,
                     0,
                     toEpochKey,
-                    epochKeyProofIndex,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2), gasLimit: 1000000 }

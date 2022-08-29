@@ -24,12 +24,6 @@ const configureSubparser = (subparsers: any) => {
         help: "The user's epoch key to attest to (in hex representation)",
     })
 
-    parser.add_argument('-i', '--proof-index', {
-        required: true,
-        type: 'int',
-        help: "The proof index of the user's epoch key ",
-    })
-
     parser.add_argument('-p', '--public-signals', {
         required: true,
         type: 'str',
@@ -137,7 +131,6 @@ const vote = async (args: any) => {
                 upvoteValue,
                 downvoteValue,
                 args.epoch_key,
-                args.proof_index,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 {

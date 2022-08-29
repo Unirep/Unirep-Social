@@ -3,14 +3,14 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 
-const config: HardhatUserConfig = {
+export default {
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
             blockGasLimit: 12000000,
         },
         optimism: {
-            url: 'https://kovan.optimism.io',
+            url: 'https://goerli.optimism.io',
             accounts: [
                 // 0xeb465b6C56758a1CCff6Fa56aAee190646A597A0
                 '0x18ef552014cb0717769838c7536bc1d3b1c800fe351aa2c38ac093fa4d4eb7d6',
@@ -30,5 +30,3 @@ const config: HardhatUserConfig = {
         outDir: './typechain',
     },
 }
-
-export default config

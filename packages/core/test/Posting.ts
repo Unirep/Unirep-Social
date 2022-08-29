@@ -3,11 +3,10 @@ import { ethers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber } from 'ethers'
 import * as config from '@unirep/circuits'
-import { UserState } from '@unirep/core'
-import { deployUnirep } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 
-import { findValidNonce, genUserState } from './utils'
+import { genUserState } from './utils'
 import {
     defaultCommentReputation,
     defaultPostReputation,
@@ -59,20 +58,13 @@ describe('Post', function () {
             const minPosRep = 0,
                 graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            const epoch = await userState.getUnirepStateCurrentEpoch()
-            const nonceList: BigInt[] = await findValidNonce(
-                userState,
-                defaultPostReputation,
-                epoch,
-                attesterId
-            )
             const reputationProof = await userState.genProveReputationProof(
                 attesterId,
                 epkNonce,
                 minPosRep,
                 proveGraffiti,
                 graffitiPreImage,
-                nonceList
+                defaultPostReputation
             )
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
@@ -125,7 +117,7 @@ describe('Post', function () {
                 'some post text',
                 reputationProof.publicSignals,
                 reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
+                { value: DEFAULT_ATTESTING_FEE }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit post failed').to.equal(1)
@@ -167,7 +159,6 @@ describe('Post', function () {
                     reputationProof.proof,
                     {
                         value: DEFAULT_ATTESTING_FEE,
-                        gasLimit: 1000000,
                     }
                 )
             ).to.be.revertedWith(
@@ -213,7 +204,7 @@ describe('Post', function () {
                         'some post text',
                         reputationProof.publicSignals,
                         reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
+                        { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
                 postId = receipt.transactionHash
@@ -231,20 +222,13 @@ describe('Post', function () {
             const minPosRep = 20,
                 graffitiPreImage = BigInt(0)
             const epkNonce = 0
-            const epoch = await userState.getUnirepStateCurrentEpoch()
-            const nonceList: BigInt[] = await findValidNonce(
-                userState,
-                defaultCommentReputation,
-                epoch,
-                attesterId
-            )
             const reputationProof = await userState.genProveReputationProof(
                 attesterId,
                 epkNonce,
                 minPosRep,
                 proveGraffiti,
                 graffitiPreImage,
-                nonceList
+                defaultCommentReputation
             )
             const isValid = await reputationProof.verify()
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
@@ -260,7 +244,7 @@ describe('Post', function () {
                 'some comment text',
                 reputationProof.publicSignals,
                 reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
+                { value: DEFAULT_ATTESTING_FEE }
             )
             const receipt = await tx.wait()
             expect(receipt.status, 'Submit comment failed').to.equal(1)
@@ -302,7 +286,7 @@ describe('Post', function () {
                         'some post text',
                         reputationProof.publicSignals,
                         reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
+                        { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
                 postId = receipt.transactionHash
@@ -338,7 +322,7 @@ describe('Post', function () {
                     'a comment that should fail',
                     reputationProof.publicSignals,
                     reputationProof.proof,
-                    { value: DEFAULT_ATTESTING_FEE, gasLimit: 1000000 }
+                    { value: DEFAULT_ATTESTING_FEE }
                 )
             ).to.be.revertedWith(
                 'Unirep Social: submit different nullifiers amount from the required amount for comment'

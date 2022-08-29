@@ -1,7 +1,8 @@
 // @ts-ignore
 import { ethers } from 'ethers'
 import * as config from '@unirep/circuits'
-import { deployUnirep, getUnirepContract } from '@unirep/contracts'
+import { getUnirepContract } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import * as socialMediaConfig from '../config/socialMedia'
 import { deployUnirepSocial } from '../src/utils'
 import * as defaultConfig from './defaults'

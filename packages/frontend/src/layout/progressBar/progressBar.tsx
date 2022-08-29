@@ -17,7 +17,8 @@ const ProgressBar = () => {
 
     return (
         <div className="progress-block">
-            {queueContext.loadingState === LoadingState.loading ? (
+            {queueContext.loadingState === LoadingState.loading ||
+            userContext.isInitialSyncing ? (
                 <div className="progress-bar-container">
                     <div className="progress-bar">
                         <div

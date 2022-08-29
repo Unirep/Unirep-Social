@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
-import { deployUnirep } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import express from 'express'
 import cors from 'cors'
 import getPort from 'get-port'

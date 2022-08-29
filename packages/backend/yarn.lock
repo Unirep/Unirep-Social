@@ -633,43 +633,49 @@
     "@types/mime" "^1"
     "@types/node" "*"
 
-"@unirep/circuits@1.0.0-alpha-7":
-  version "1.0.0-alpha-7"
-  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-7.tgz#f15b57fbd392e5e6179ada20a731740f77318ee6"
-  integrity sha512-j4m+bSqYVF8mwwLK6sLR2S8kg/u8GviDVEXuYtW4gcCsOi9++ks5IVyeeo2SzPBPd0plaHsRjtQ3lCbiAK5qSA==
+"@unirep/circuits@1.0.0-alpha-8":
+  version "1.0.0-alpha-8"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-8.tgz#374766ce308a1390e5b5443dd2618f4f7c4808d3"
+  integrity sha512-wDTbxRo31hwryj2pibQXDQxfdZenFfZ7t8EqEMexJZA/+BJOCOySXeiYM9XPwldOFLj3dN9AfeSWd7uVjUl9ug==
   dependencies:
-    "@unirep/crypto" "1.0.0-alpha-4"
+    "@unirep/crypto" "1.0.0-alpha-5"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-9":
-  version "1.0.0-alpha-9"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-9.tgz#1ac3ecec1e84eb646a6b03ca18df42b33548b42e"
-  integrity sha512-ujKTx+TfhDJsGV/3dsInDIHmpEPixzGrqRqVzaMe3OCHTCsJohUiTgE6SBKYzEjpZqxIPlKJqcdFDFUslA2Rvg==
+"@unirep/contracts@1.0.0-alpha-10":
+  version "1.0.0-alpha-10"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-10.tgz#067fabdad5d9de1087b5eb1fe2e34a439967fe3a"
+  integrity sha512-NL/rlW8X8eUDgzVPBxUQmyjwRGK44rgS6HHhUe/HR4b5lxzPmaRGmn9mw30gYUEqnPoC3XcV3L+nP7ey8/mwgw==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-7"
-    "@unirep/crypto" "1.0.0-alpha-4"
+    "@unirep/circuits" "1.0.0-alpha-8"
+    "@unirep/crypto" "1.0.0-alpha-5"
+    "@zk-kit/incremental-merkle-tree.sol" "^1.2.0"
     ethers "^5.6.8"
 
-"@unirep/core@1.0.0-alpha-13":
-  version "1.0.0-alpha-13"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-13.tgz#06a5ad64ddfeaeb09981518f2dd138e26067f170"
-  integrity sha512-YunI1DM4TbWl92x/mB8wzby3GxD/xIUCM6OzBqRVI4lxN0ppDwp0xBvj9bL05UoUX1cLhdYkhatu3OtFzGmm1Q==
+"@unirep/core@1.0.0-alpha-14":
+  version "1.0.0-alpha-14"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-14.tgz#d65406025dea234c29364c4b7e3aae5fce5f7af8"
+  integrity sha512-tLlf35BOEqFI8nq+q2rw0XLwttTslySbKrQmkOX6owA2T24BQDxqaEeykbh0QI6lZL3Oxg09dQ/Lozs/mgqdog==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-7"
-    "@unirep/contracts" "1.0.0-alpha-9"
-    "@unirep/crypto" "1.0.0-alpha-4"
-    anondb "^0.0.12"
+    "@unirep/circuits" "1.0.0-alpha-8"
+    "@unirep/contracts" "1.0.0-alpha-10"
+    "@unirep/crypto" "1.0.0-alpha-5"
+    anondb "^0.0.10"
     ethers "^5.6.8"
     nanoid "3"
 
-"@unirep/crypto@1.0.0-alpha-4":
-  version "1.0.0-alpha-4"
-  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.0-alpha-4.tgz#009797e8200871e6d95e7c54f55e1b23ac47a4e1"
-  integrity sha512-WVVqSbO7Y12MjyqB69l8v3gkuviDTHL/z+8KqTG6wRhAJeZelVCDr6Q/8a1VBsR2jyckHHwCHFHFKVxTXbUu/w==
+"@unirep/crypto@1.0.0-alpha-5":
+  version "1.0.0-alpha-5"
+  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.0-alpha-5.tgz#d392473d6e0be6326d56d08c32694949b23ce615"
+  integrity sha512-ILLSDDP/DCdoA7p2JLN8Xyr9LWU8HvYXege9xhwAaE+e4MBfIaFTvnG+QpxcqYOqX+6blDC+vPxWmLlqcfbo+Q==
   dependencies:
     "@zk-kit/incremental-merkle-tree" "^0.4.3"
     circomlibjs "0.0.8"
     maci-crypto "^0.9.1"
+
+"@zk-kit/incremental-merkle-tree.sol@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@zk-kit/incremental-merkle-tree.sol/-/incremental-merkle-tree.sol-1.2.0.tgz#b5332a5de7eb08f2c2b1777eeb3f639345cb4de8"
+  integrity sha512-nTxw4gf41SlWEc3Y11X+ihDLs5fjvUzPLy8JvPofyM9O5tEKK5KCf5FEoPI8sqitctTTasjax925/qbT+aDJ+A==
 
 "@zk-kit/incremental-merkle-tree@^0.4.3":
   version "0.4.3"
@@ -737,6 +743,19 @@ ajv@^6.12.3:
     fast-json-stable-stringify "^2.0.0"
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
+
+anondb@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/anondb/-/anondb-0.0.10.tgz#6e9dfa5fb1de33e1a2ef7ae52650fd651f0a47b8"
+  integrity sha512-k6IDehijplQsBZZ2+NbGyXWGNTyyLJ8YhUBWrb7agTnvaugYr4mwYYE6KF4tQ7RL7xeCTJz1dC3bO+6lsgX4Hw==
+  dependencies:
+    async-lock "^1.2.11"
+    idb "^6.0.0"
+    nanoid "^3.1.30"
+    pg "^8.5.1"
+    sql.js "^1.5.0"
+    sqlite "^4.0.19"
+    sqlite3 "^5.0.2"
 
 anondb@^0.0.12:
   version "0.0.12"

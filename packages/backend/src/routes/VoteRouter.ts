@@ -57,60 +57,6 @@ async function vote(req, res) {
         })
         return
     }
-    let postProofIndex: number = 0
-    if (post) {
-        if (post.epoch !== currentEpoch) {
-            res.status(422).json({
-                info: 'The epoch key is expired',
-            })
-            return
-        }
-
-        const validProof = await req.db.findOne('Proof', {
-            where: {
-                index: post.proofIndex,
-                epoch: currentEpoch,
-                valid: true,
-            },
-        })
-        if (!validProof) {
-            res.status(422).json({
-                info: 'Voting for invalid post',
-            })
-            return
-        }
-        postProofIndex = post.proofIndex
-    } else if (comment) {
-        if (comment.epoch !== currentEpoch) {
-            res.status(422).json({
-                info: 'Epoch key is expired',
-            })
-            return
-        }
-        const validProof = await req.db.findOne('Proof', {
-            where: {
-                index: comment.proofIndex,
-                epoch: currentEpoch,
-                valid: true,
-            },
-        })
-        if (!validProof) {
-            res.status(422).json({
-                info: 'Voting for invalid comment',
-            })
-            return
-        }
-        postProofIndex = comment.proofIndex
-    } else {
-        throw new Error('unreachable')
-    }
-
-    if (Number(postProofIndex) === 0) {
-        res.status(404).json({
-            info: 'Cannot find post proof index',
-        })
-        return
-    }
 
     const error = await verifyReputationProof(
         req.db,
@@ -135,7 +81,6 @@ async function vote(req, res) {
         req.body.upvote,
         req.body.downvote,
         ethers.BigNumber.from(`0x${req.body.receiver.replace('0x', '')}`),
-        postProofIndex,
         reputationProof.publicSignals,
         reputationProof.proof,
     ])
@@ -162,18 +107,6 @@ async function vote(req, res) {
         commentId: comment ? dataId : '',
         status: 0,
     })
-
-    await req.db.create(
-        'Nullifier',
-        reputationProof.repNullifiers
-            .filter((n) => n.toString() !== '0')
-            .map((n) => ({
-                nullifier: n.toString(),
-                epoch: currentEpoch,
-                transactionHash: hash,
-                confirmed: false,
-            }))
-    )
     await req.db.create('Record', {
         to: req.body.receiver,
         from: epochKey,
@@ -183,7 +116,39 @@ async function vote(req, res) {
         action: ActionType.Vote,
         transactionHash: hash,
         data: dataId,
-        confirmed: false,
+        confirmed: 0,
+    })
+    await req.db.transaction(async (db) => {
+        const [post, comment] = await Promise.all([
+            req.db.findOne('Post', { where: { _id: dataId } }),
+            req.db.findOne('Comment', { where: { _id: dataId } }),
+        ])
+        if (post) {
+            db.update('Post', {
+                where: {
+                    _id: post._id,
+                },
+                update: {
+                    posRep: post.posRep + req.body.upvote,
+                    negRep: post.negRep + req.body.downvote,
+                    totalRep:
+                        post.totalRep + req.body.upvote - req.body.downvote,
+                },
+            })
+        }
+        if (comment) {
+            db.update('Comment', {
+                where: {
+                    _id: comment._id,
+                },
+                update: {
+                    posRep: comment.posRep + req.body.upvote,
+                    negRep: comment.negRep + req.body.downvote,
+                    totalRep:
+                        comment.totalRep + req.body.upvote - req.body.downvote,
+                },
+            })
+        }
     })
     res.json({
         transaction: hash,

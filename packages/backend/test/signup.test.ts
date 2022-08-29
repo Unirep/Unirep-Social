@@ -23,7 +23,7 @@ test('should sign up', async (t: any) => {
     t.pass()
 })
 
-test('should airdrop', async (t: any) => {
+test.skip('should airdrop', async (t: any) => {
     const { iden } = await signUp(t)
     await airdrop(t, iden)
     t.pass()

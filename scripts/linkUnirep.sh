@@ -10,25 +10,25 @@ rm -rf packages/backend/node_modules/@unirep/core
 rm -rf packages/backend/node_modules/@unirep/contracts
 rm -rf packages/backend/node_modules/@unirep/crypto
 rm -rf packages/backend/node_modules/@unirep/circuits
-ln -s $1/packages/core $(pwd)/packages/backend/node_modules/@unirep/core
-ln -s $1/packages/contracts $(pwd)/packages/backend/node_modules/@unirep/contracts
-ln -s $1/packages/crypto $(pwd)/packages/backend/node_modules/@unirep/crypto
-ln -s $1/packages/circuits $(pwd)/packages/backend/node_modules/@unirep/circuits
+ln -s $1/packages/core/build $(pwd)/packages/backend/node_modules/@unirep/core
+ln -s $1/packages/contracts/build $(pwd)/packages/backend/node_modules/@unirep/contracts
+ln -s $1/packages/crypto/build $(pwd)/packages/backend/node_modules/@unirep/crypto
+ln -s $1/packages/circuits/dist $(pwd)/packages/backend/node_modules/@unirep/circuits
 
 rm -rf packages/frontend/node_modules/@unirep/core
 rm -rf packages/frontend/node_modules/@unirep/contracts
 rm -rf packages/frontend/node_modules/@unirep/crypto
 rm -rf packages/frontend/node_modules/@unirep/circuits
-ln -s $1/packages/core $(pwd)/packages/frontend/node_modules/@unirep/core
-ln -s $1/packages/contracts $(pwd)/packages/frontend/node_modules/@unirep/contracts
-ln -s $1/packages/crypto $(pwd)/packages/frontend/node_modules/@unirep/crypto
-ln -s $1/packages/circuits $(pwd)/packages/frontend/node_modules/@unirep/circuits
+ln -s $1/packages/core/build $(pwd)/packages/frontend/node_modules/@unirep/core
+ln -s $1/packages/contracts/build $(pwd)/packages/frontend/node_modules/@unirep/contracts
+ln -s $1/packages/crypto/build $(pwd)/packages/frontend/node_modules/@unirep/crypto
+ln -s $1/packages/circuits/dist $(pwd)/packages/frontend/node_modules/@unirep/circuits
 
 rm -rf packages/core/node_modules/@unirep/core
 rm -rf packages/core/node_modules/@unirep/contracts
 rm -rf packages/core/node_modules/@unirep/crypto
 rm -rf packages/core/node_modules/@unirep/circuits
-ln -s $1/packages/core $(pwd)/packages/core/node_modules/@unirep/core
-ln -s $1/packages/contracts $(pwd)/packages/core/node_modules/@unirep/contracts
-ln -s $1/packages/crypto $(pwd)/packages/core/node_modules/@unirep/crypto
-ln -s $1/packages/circuits $(pwd)/packages/core/node_modules/@unirep/circuits
+ln -s $1/packages/core/build $(pwd)/packages/core/node_modules/@unirep/core
+ln -s $1/packages/contracts/build $(pwd)/packages/core/node_modules/@unirep/contracts
+ln -s $1/packages/crypto/build $(pwd)/packages/core/node_modules/@unirep/crypto
+ln -s $1/packages/circuits/dist $(pwd)/packages/core/node_modules/@unirep/circuits
