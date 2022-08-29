@@ -36,6 +36,7 @@ test('should render MainPage with mocked data and false UserState', () => {
         netReputation: 30,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        hasBanner: true,
     }
 
     const postData = {
@@ -48,12 +49,12 @@ test('should render MainPage with mocked data and false UserState', () => {
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData)
-    // expect(
-    //     screen.getByText(/community built on ideas, not identities./i)
-    // ).toBeInTheDocument()
-    // expect(
-    //     screen.getByText(/stay up to date & share everything with everyone./i)
-    // ).toBeInTheDocument()
+    expect(
+        screen.getByText(/community built on ideas, not identities./i)
+    ).toBeInTheDocument()
+    expect(
+        screen.getByText(/stay up to date & share everything with everyone./i)
+    ).toBeInTheDocument()
     // userState is *false* so login text is rendered
     expect(
         screen.getByText(/you must join or login to create post/i)
@@ -72,6 +73,7 @@ test('should render MainPage with mocked data and true UserState', () => {
         netReputation: 30,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        hasBanner: false,
     }
 
     const postData = {
@@ -84,12 +86,15 @@ test('should render MainPage with mocked data and true UserState', () => {
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData)
-    // expect(
-    //     screen.getByText(/community built on ideas, not identities./i)
-    // ).toBeInTheDocument()
-    // expect(
-    //     screen.getByText(/stay up to date & share everything with everyone./i)
-    // ).toBeInTheDocument()
+    const bannerText1 = screen.queryByText(
+        /community built on ideas, not identities./i
+    )
+    expect(bannerText1).toBeNull()
+    const bannerText2 = screen.queryByText(
+        /stay up to date & share everything with everyone./i
+    )
+    expect(bannerText2).toBeNull()
+
     // userState is *true*
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
     expect(screen.getByText(userData.netReputation)).toBeInTheDocument()
