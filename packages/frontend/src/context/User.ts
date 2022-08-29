@@ -26,8 +26,6 @@ export class User {
     latestProcessedBlock: any
     isInitialSyncing: any
 
-    hasBanner: boolean = true
-
     constructor() {
         makeObservable(this, {
             userState: observable,
@@ -42,7 +40,6 @@ export class User {
             // latestProcessedBlock: observable,
             // isInitialSyncing: observable,
             id: observable,
-            hasBanner: observable,
         })
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
@@ -72,11 +69,6 @@ export class User {
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
             })
-
-            const storedHasBanner = window.localStorage.getItem('hasBanner')
-            if (storedHasBanner) {
-                this.hasBanner = storedHasBanner === 'true'
-            }
         }
 
         // start listening for new epochs
@@ -441,11 +433,6 @@ export class User {
         await this.loadReputation()
         await this.calculateAllEpks()
         this.spent = 0
-    }
-
-    setHasBanner(input: boolean) {
-        this.hasBanner = input
-        window.localStorage.setItem('hasBanner', this.hasBanner.toString())
     }
 }
 

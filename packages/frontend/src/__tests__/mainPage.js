@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
+import UIContext from '../context/UI'
 import MainPage from '../pages/mainPage/mainPage'
 
 jest.mock('react-router-dom', () => ({
@@ -13,15 +14,17 @@ jest.mock('react-router-dom', () => ({
 }))
 
 // abstracted render function
-const renderMainPage = (userData, unirepData, postData) => {
+const renderMainPage = (userData, unirepData, postData, UIData) => {
     return render(
-        <UserContext.Provider value={userData}>
-            <UnirepContext.Provider value={unirepData}>
-                <PostContext.Provider value={postData}>
-                    <MainPage />
-                </PostContext.Provider>
-            </UnirepContext.Provider>
-        </UserContext.Provider>
+        <UIContext.Provider value={UIData}>
+            <UserContext.Provider value={userData}>
+                <UnirepContext.Provider value={unirepData}>
+                    <PostContext.Provider value={postData}>
+                        <MainPage />
+                    </PostContext.Provider>
+                </UnirepContext.Provider>
+            </UserContext.Provider>
+        </UIContext.Provider>
     )
 }
 
@@ -36,6 +39,9 @@ test('should render MainPage with mocked data and false UserState', () => {
         netReputation: 30,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+    }
+
+    const UIData = {
         hasBanner: true,
     }
 
@@ -48,7 +54,7 @@ test('should render MainPage with mocked data and false UserState', () => {
         },
         loadFeed: jest.fn(),
     }
-    renderMainPage(userData, unirepData, postData)
+    renderMainPage(userData, unirepData, postData, UIData)
     expect(
         screen.getByText(/community built on ideas, not identities./i)
     ).toBeInTheDocument()
@@ -73,6 +79,9 @@ test('should render MainPage with mocked data and true UserState', () => {
         netReputation: 30,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+    }
+
+    const UIData = {
         hasBanner: false,
     }
 
@@ -85,7 +94,7 @@ test('should render MainPage with mocked data and true UserState', () => {
         },
         loadFeed: jest.fn(),
     }
-    renderMainPage(userData, unirepData, postData)
+    renderMainPage(userData, unirepData, postData, UIData)
     const bannerText1 = screen.queryByText(
         /community built on ideas, not identities./i
     )
@@ -127,7 +136,12 @@ test('should page rerender after user clicks create post button', async () => {
         },
         loadFeed: jest.fn(),
     }
-    renderMainPage(userData, unirepData, postData)
+
+    const uiData = {
+        hasBanner: false,
+    }
+
+    renderMainPage(userData, unirepData, postData, uiData)
     // simulate user clicking on the 'create post' link
     const createPostLink = screen.getByText(/create post/i)
     await userEvent.click(createPostLink)
