@@ -20,6 +20,13 @@ async function loadSignups(req, res) {
 
 async function loadRecordsForEpk(req, res) {
     const epks = req.params.epks.split('_')
+    for (const epk of epks) {
+        if (!/^\d+$/.test(epk)) {
+            return res.status(422).json({
+                error: 'epk must be base 10',
+            })
+        }
+    }
     const records = await req.db.findMany('Record', {
         where: {
             OR: [
