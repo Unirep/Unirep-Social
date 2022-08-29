@@ -118,7 +118,7 @@ jobs:
                   command: yarn
             - run:
                   name: Build
-                  command: yarn build --scope @unirep-social/core --scope @unirep-social/frontend
+                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/frontend
             - run:
                   name: E2E Test
                   command: cd packages/frontend && yarn test:e2e
