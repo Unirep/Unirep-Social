@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
 const webpack = require('webpack')
 
-module.exports = {
+module.exports = (env) => ({
     entry: ['./src/index.tsx'],
     mode: 'development',
     devServer: {
@@ -113,6 +113,11 @@ module.exports = {
                 versions: {},
                 cwd: '(() => "")',
             },
+            ...(env.CYPRESS
+                ? {
+                      ['process.env.CYPRESS']: 'true',
+                  }
+                : {}),
         }),
         new webpack.ProvidePlugin({
             Buffer: path.resolve(__dirname, 'externals', 'buffer.js'),
@@ -132,4 +137,4 @@ module.exports = {
         //   new CssMinimizerPlugin(),
         // ],
     },
-}
+})

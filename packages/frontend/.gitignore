@@ -129,3 +129,7 @@ privateKey.ts
 
 # local config file
 src/localConfig.ts
+
+# Cypress
+cypress/videos
+cypress/screenshots

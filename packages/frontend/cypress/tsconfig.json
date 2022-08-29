@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "lib": ["esnext", "dom"],
+        "baseUrl": "./",
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "noImplicitAny": false,
+        "types": ["cypress", "@testing-library/cypress"]
+    },
+    "include": ["**/*.ts"]
+}
