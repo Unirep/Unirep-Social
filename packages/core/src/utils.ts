@@ -18,7 +18,7 @@ import { Unirep } from '../typechain/Unirep'
 const deployUnirepSocial = async (
     deployer: ethers.Signer,
     UnirepAddr: string,
-    _settings?: any
+    _settings: any = {}
 ): Promise<UnirepSocial> => {
     const settings = {
         airdropReputation: defaultAirdroppedReputation,
