@@ -10,7 +10,7 @@ export default defineConfig({
         video: false,
         setupNodeEvents(on, config) {
             on('task', {
-                deployUnirep(forceRedeploy) {
+                deployUnirep() {
                     if (deployed) return deployed
                     deployed = startServer()
                     return deployed
@@ -21,4 +21,5 @@ export default defineConfig({
     env: {
         serverUrl: 'http://testurl.invalidtld',
     },
+    defaultCommandTimeout: 10000,
 })
