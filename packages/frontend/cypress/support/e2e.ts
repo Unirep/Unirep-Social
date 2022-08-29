@@ -19,7 +19,8 @@ import { ethers } from 'ethers'
 
 // import unirep social json abi
 import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
-import { deployUnirep } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
+import { deployUnirepSocial } from '@unirep-social/core'
 
 const GANACHE_URL = 'http://localhost:18545'
 const FUNDED_PRIVATE_KEY =
@@ -40,21 +41,16 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
     console.log('deploying unirep in e2e')
     const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
     const unirep = await deployUnirep(wallet)
-    const UnirepSocialF = new ethers.ContractFactory(
-        UnirepSocial.abi,
-        UnirepSocial.bytecode,
-        wallet
-    )
     const postReputation = 5
     const commentReputation = 3
-    const airdrop = 30
-    const unirepSocialF = await UnirepSocialF.deploy(
-        unirep.address,
+    const airdropReputation = 30
+    const unirepSocial = await deployUnirepSocial(wallet, unirep.address, {
         postReputation,
         commentReputation,
-        airdrop
-    )
-    const unirepSocial = await unirepSocialF.deployed()
+        airdropReputation,
+        ...overrides,
+    })
+    await unirepSocial.deployed()
     return { unirep, unirepSocial, provider }
 }
 

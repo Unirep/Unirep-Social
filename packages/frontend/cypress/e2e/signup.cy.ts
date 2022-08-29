@@ -77,7 +77,7 @@ describe('visit and interact with home page', () => {
         cy.location('pathname').should('eq', '/new')
         cy.get('.rep-info').contains('30')
         cy.get('#inputTextArea').type(loremPost)
-        cy.get('.switch > input').click()
+        cy.get('.button-border').contains('Preview').click()
         cy.get('.block-content').should('exist')
         // submit post and check for reputation
         cy.get('.submit-btn').click()

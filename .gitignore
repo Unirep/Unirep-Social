@@ -9,4 +9,6 @@ typechain
 # .env file
 .env
 build
-**/cypress/downloads
+packages/frontend/cypress/downloads
+packages/frontend/cypress/screenshots
+*.swp
