@@ -1,8 +1,6 @@
 import '@testing-library/cypress/add-commands'
 import 'cypress-real-events/support'
 import '../support/commands'
-import { ethers } from 'ethers'
-import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 
 describe('visit and interact with home page', () => {
     const serverUrl = Cypress.env('serverUrl')
@@ -26,4 +24,3 @@ describe('visit and interact with home page', () => {
         cy.get('*[class^="loading-btn"]').click()
     })
 })
-

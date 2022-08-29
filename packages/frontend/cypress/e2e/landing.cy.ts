@@ -1,4 +1,5 @@
 import '@testing-library/cypress/add-commands'
+import '../support/commands'
 
 describe('Landing Page', () => {
     const serverUrl = Cypress.env('serverUrl')
@@ -6,6 +7,12 @@ describe('Landing Page', () => {
     beforeEach(() => {
         // deploy unirep and unirep social contract
         cy.deployUnirep()
+        cy.intercept('GET', `${serverUrl}/api/post?*`, {
+            body: [],
+        }).as('getApiContent')
+        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
+            fixture: 'genInvitationCode.json',
+        }).as('genInvitationCode')
     })
     it('loads the landing page', () => {
         cy.visit('/')

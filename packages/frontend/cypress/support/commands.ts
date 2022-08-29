@@ -52,8 +52,6 @@ Cypress.Commands.add('deployUnirep', () => {
 })
 
 Cypress.Commands.add('signupNewUser', () => {
-    cy.log('Signing up')
-
     cy.visit('/')
     cy.findByText('Join').click()
     cy.findByRole('textbox').type('invitationcode')
@@ -69,23 +67,6 @@ Cypress.Commands.add('signupNewUser', () => {
         cy.findByText('Submit').click()
         cy.findByText('Generate').click()
     })
-})
-
-Cypress.Commands.add('airdrop', () => {
-    cy.intercept(
-        'GET',
-        'http://testurl.invalidtld/build/proveUserSignUp.wasm',
-        {
-            body: [],
-        }
-    ).as('getProveUserSignUpWasm')
-    cy.intercept(
-        'GET',
-        'http://testurl.invalidtld/build/proveUserSignUp.zkey',
-        {
-            body: [],
-        }
-    ).as('getProveUserSignUpZkey')
 })
 
 export {}
