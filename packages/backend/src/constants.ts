@@ -2,7 +2,7 @@ import UnirepSocial from '@unirep-social/core/abi/UnirepSocial.json'
 import Unirep from '@unirep/contracts/abi/Unirep.json'
 import { ethers } from 'ethers'
 import randomstring from 'randomstring'
-import { NUM_EPOCH_KEY_NONCE_PER_EPOCH } from '@unirep/circuits/config'
+import { NUM_EPOCH_KEY_NONCE_PER_EPOCH } from '@unirep/circuits'
 
 // Provide default values for process.env
 Object.assign(process.env, {

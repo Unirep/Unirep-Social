@@ -160,17 +160,6 @@ async function createPost(req, res) {
         status: 0,
         transactionHash: hash,
     })
-    await req.db.create(
-        'Nullifier',
-        reputationProof.repNullifiers
-            .filter((n) => n.toString() !== '0')
-            .map((n) => ({
-                nullifier: n.toString(),
-                epoch: currentEpoch,
-                transactionHash: hash,
-                confirmed: false,
-            }))
-    )
     await req.db.create('Record', {
         to: epochKey,
         from: epochKey,
@@ -180,7 +169,7 @@ async function createPost(req, res) {
         action: ActionType.Post,
         data: hash,
         transactionHash: hash,
-        confirmed: false,
+        confirmed: 0,
     })
 
     res.json({

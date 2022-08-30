@@ -149,18 +149,6 @@ async function createComment(req, res) {
         status: 0,
         transactionHash: hash,
     })
-
-    await req.db.create(
-        'Nullifier',
-        reputationProof.repNullifiers
-            .filter((n) => n.toString() !== '0')
-            .map((n) => ({
-                epoch: currentEpoch,
-                transactionHash: hash,
-                nullifier: n.toString(),
-                confirmed: false,
-            }))
-    )
     await req.db.create('Record', {
         to: epochKey,
         from: epochKey,
@@ -170,7 +158,7 @@ async function createComment(req, res) {
         action: ActionType.Comment,
         data: hash,
         transactionHash: hash,
-        confirmed: false,
+        confirmed: 0,
     })
 
     res.json({

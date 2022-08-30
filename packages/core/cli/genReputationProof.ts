@@ -154,47 +154,13 @@ const genReputationProof = async (args: any) => {
     const nonceList: BigInt[] = []
     const rep = await userState.getRepByAttester(attesterId)
     const epoch = await userState.getUnirepStateCurrentEpoch()
-    let nonceStarter: number = -1
-    if (proveReputationAmount > 0) {
-        // find valid nonce starter
-        for (let n = 0; n < Number(rep.posRep) - Number(rep.negRep); n++) {
-            const reputationNullifier = genReputationNullifier(
-                id.identityNullifier,
-                epoch,
-                n,
-                attesterId
-            )
-            if (!(await userState.nullifierExist(reputationNullifier))) {
-                nonceStarter = n
-                break
-            }
-        }
-        if (nonceStarter == -1) {
-            console.error('Error: All nullifiers are spent')
-            return
-        }
-        if (
-            nonceStarter + proveReputationAmount >
-            Number(rep.posRep) - Number(rep.negRep)
-        ) {
-            console.error('Error: Not enough reputation to spend')
-            return
-        }
-        for (let i = 0; i < proveReputationAmount; i++) {
-            nonceList.push(BigInt(nonceStarter + i))
-        }
-    }
-
-    for (let i = proveReputationAmount; i < MAX_REPUTATION_BUDGET; i++) {
-        nonceList.push(BigInt(-1))
-    }
     const reputationProof = await userState.genProveReputationProof(
         attesterId,
         epkNonce,
         minRep,
         proveGraffiti,
         graffitiPreImage,
-        nonceList
+        proveReputationAmount
     )
 
     // TODO: Not sure if this validation is necessary

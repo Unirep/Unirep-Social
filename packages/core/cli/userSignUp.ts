@@ -69,9 +69,7 @@ const userSignUp = async (args: any) => {
     // Submit the user sign up transaction
     let tx
     try {
-        tx = await unirepSocialContract
-            .connect(wallet)
-            .userSignUp(commitment, { gasLimit: 100000 })
+        tx = await unirepSocialContract.connect(wallet).userSignUp(commitment)
     } catch (error) {
         console.log('Transaction Error', error)
         return

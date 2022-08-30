@@ -147,27 +147,14 @@ const genReputationProof = async (t, iden, proveAmount) => {
     )
     // find valid nonce starter
     // gen proof
-    const nonceList = [] as any[]
     const epkNonce = 0
-    const nonceStarter: number = await getSpent(t, iden)
-
-    for (let i = 0; i < proveAmount; i++) {
-        nonceList.push(BigInt(nonceStarter + i))
-    }
-    for (
-        let i = proveAmount;
-        i < t.context.constants.maxReputationBudget;
-        i++
-    ) {
-        nonceList.push(BigInt(-1))
-    }
     const repProof = await userState.genProveReputationProof(
         t.context.attesterId,
         epkNonce,
         proveAmount,
         BigInt(0),
         BigInt(0),
-        nonceList
+        proveAmount
     )
     const isValid = await repProof.verify()
     t.true(isValid)

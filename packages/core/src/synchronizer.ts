@@ -133,75 +133,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         // })
     }
 
-    private async verifyAttestationProof(
-        index: number,
-        _epoch: number,
-        db: TransactionDB
-    ) {
-        const proof = await this._db.findOne('Proof', {
-            where: {
-                epoch: _epoch,
-                index,
-            },
-        })
-        if (!proof) throw new Error(`Unable to find attestation proof ${index}`)
-        if (proof.event === 'IndexedEpochKeyProof') {
-            const publicSignals = decodeBigIntArray(proof.publicSignals)
-            const _proof = JSON.parse(proof.proof)
-            const valid = await this.prover.verifyProof(
-                Circuit.verifyEpochKey,
-                publicSignals,
-                formatProofForSnarkjsVerification(_proof)
-            )
-            if (!valid) return { isProofValid: false }
-        } else if (proof.event === 'IndexedReputationProof') {
-            const publicSignals = decodeBigIntArray(proof.publicSignals)
-            const _proof = JSON.parse(proof.proof)
-            const valid = await this.prover.verifyProof(
-                Circuit.proveReputation,
-                publicSignals,
-                formatProofForSnarkjsVerification(_proof)
-            )
-            if (!valid) return { isProofValid: false }
-        } else if (proof.event === 'IndexedUserSignedUpProof') {
-            const publicSignals = decodeBigIntArray(proof.publicSignals)
-            const _proof = JSON.parse(proof.proof)
-            const valid = await this.prover.verifyProof(
-                Circuit.proveUserSignUp,
-                publicSignals,
-                formatProofForSnarkjsVerification(_proof)
-            )
-            if (!valid) return { isProofValid: false }
-        } else {
-            console.log(
-                `proof index ${index} matches wrong event ${proof.event}`
-            )
-            return { isProofValid: false }
-        }
-        const epoch = Number(_epoch)
-        const root = BigInt(proof.globalStateTree).toString()
-        const rootEntry = await this._db.findOne('GSTRoot', {
-            where: {
-                epoch,
-                root,
-            },
-        })
-        if (!rootEntry) {
-            console.log('Global state tree root does not exist')
-            db.update('Proof', {
-                where: {
-                    epoch,
-                    index,
-                },
-                update: {
-                    valid: false,
-                },
-            })
-            return { isProofValid: false }
-        }
-        return { isProofValid: true }
-    }
-
     async commentSubmittedEvent(event: ethers.Event, db: TransactionDB) {
         const decodedData = this.unirepSocialContract.interface.decodeEventLog(
             'CommentSubmitted',
@@ -217,41 +148,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 transactionHash: commentId,
             },
         })
-
-        const repProof = new ReputationProof(
-            decodedData.publicSignals,
-            decodedData.proof
-        )
-        const _minRep = Number(repProof.minRep)
-        const proofNullifier = repProof.hash()
-        const proofIndex = Number(
-            await this.unirepContract.getProofIndex(proofNullifier)
-        )
-
-        const findValidProof = await this._db.findOne('Proof', {
-            where: {
-                index: proofIndex,
-                epoch: _epoch,
-            },
-        })
-        if (!findValidProof) {
-            throw new Error('unable to find proof for comment')
-        }
-        if (findValidProof.valid === false) {
-            console.log(`proof index ${proofIndex} is invalid`)
-            return
-        }
-        {
-            const { isProofValid } = await this.verifyAttestationProof(
-                proofIndex,
-                _epoch,
-                db
-            )
-            if (isProofValid === false) {
-                console.log(`proof index ${proofIndex} is invalid`)
-                return
-            }
-        }
+        const minRep = decodedData.minRep.toNumber()
 
         if (findComment) {
             db.update('Comment', {
@@ -261,7 +158,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 update: {
                     status: 1,
                     transactionHash: _transactionHash,
-                    proofIndex,
                 },
             })
         } else {
@@ -270,10 +166,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 postId,
                 content: decodedData?.commentContent, // TODO: hashedContent
                 epochKey: _epochKey,
-                proofIndex: proofIndex,
                 epoch: _epoch,
-                proveMinRep: _minRep !== 0 ? true : false,
-                minRep: _minRep,
+                proveMinRep: minRep !== 0 ? true : false,
+                minRep,
                 posRep: 0,
                 negRep: 0,
                 status: 1,
@@ -296,7 +191,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -348,44 +243,10 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'PostSubmitted',
             event.data
         )
-        const repProof = new ReputationProof(
-            decodedData.publicSignals,
-            decodedData.proof
-        )
-        const proofNullifier = repProof.hash()
-        const proofIndex = Number(
-            await this.unirepContract.getProofIndex(proofNullifier)
-        )
-
         const _transactionHash = event.transactionHash
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[2]).toString(16)
-        const _minRep = Number(repProof.minRep)
-
-        const findValidProof = await this._db.findOne('Proof', {
-            where: {
-                index: proofIndex,
-                epoch: _epoch,
-            },
-        })
-        if (!findValidProof) {
-            throw new Error('unable to find proof for post')
-        }
-        if (findValidProof.valid === false) {
-            console.log(`proof index ${proofIndex} is invalid`)
-            return
-        }
-        {
-            const { isProofValid } = await this.verifyAttestationProof(
-                proofIndex,
-                _epoch,
-                db
-            )
-            if (isProofValid === false) {
-                console.log(`proof index ${proofIndex} is invalid`)
-                return
-            }
-        }
+        const minRep = decodedData.minRep.toNumber()
 
         if (findPost) {
             db.update('Post', {
@@ -395,7 +256,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 update: {
                     status: 1,
                     transactionHash: _transactionHash,
-                    proofIndex,
                 },
             })
         } else {
@@ -425,9 +285,8 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 content,
                 epochKey: _epochKey,
                 epoch: _epoch,
-                proofIndex: proofIndex,
-                proveMinRep: _minRep !== null ? true : false,
-                minRep: _minRep,
+                proveMinRep: minRep !== 0 ? true : false,
+                minRep,
                 posRep: 0,
                 negRep: 0,
                 status: 1,
@@ -436,7 +295,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -488,71 +347,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _epoch = Number(event.topics[1])
         const _fromEpochKey = BigInt(event.topics[2]).toString(16)
         const _toEpochKey = BigInt(event.topics[3]).toString(16)
-        const _toEpochKeyProofIndex = Number(
-            decodedData.toEpochKeyProofIndex._hex
-        )
 
         const _posRep = Number(decodedData.upvoteValue._hex)
         const _negRep = Number(decodedData.downvoteValue._hex)
-
-        const repProof = new ReputationProof(
-            decodedData.publicSignals,
-            decodedData.proof
-        )
-        const proofNullifier = repProof.hash()
-        const fromProofIndex = Number(
-            await this.unirepContract.getProofIndex(proofNullifier)
-        )
-
-        const proof = await this._db.findOne('Proof', {
-            where: {
-                index: _toEpochKeyProofIndex,
-                epoch: _epoch,
-            },
-        })
-        if (!proof) {
-            throw new Error('Unable to find proof for vote')
-        }
-        if (proof.valid === false) {
-            console.log(`proof index ${_toEpochKeyProofIndex} is invalid`)
-            return
-        }
-        {
-            const { isProofValid } = await this.verifyAttestationProof(
-                _toEpochKeyProofIndex,
-                _epoch,
-                db
-            )
-            if (isProofValid === false) {
-                console.log(`proof index ${_toEpochKeyProofIndex} is invalid`)
-                return
-            }
-        }
-
-        const fromValidProof = await this._db.findOne('Proof', {
-            where: {
-                epoch: _epoch,
-                index: fromProofIndex,
-            },
-        })
-        if (!fromValidProof) {
-            throw new Error('Unable to find from valid proof vote')
-        }
-        if (fromValidProof.valid === false) {
-            console.log(`proof index ${fromProofIndex} is invalid`)
-            return
-        }
-        {
-            const { isProofValid } = await this.verifyAttestationProof(
-                fromProofIndex,
-                _epoch,
-                db
-            )
-            if (isProofValid === false) {
-                console.log(`proof index ${fromProofIndex} is invalid`)
-                return
-            }
-        }
 
         const findVote = await this._db.findOne('Vote', {
             where: { transactionHash: voteId },
@@ -614,7 +411,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {
@@ -691,34 +488,10 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[2]).toString(16)
 
-        const _signUpProof = new SignUpProof(
-            decodedData.publicSignals,
-            decodedData.proof
-        )
-        const proofNullifier = _signUpProof.hash()
-        const proofIndex = Number(
-            await this.unirepContract.getProofIndex(proofNullifier)
-        )
-
-        const proof = await this._db.findOne('Proof', {
-            where: {
-                epoch: _epoch,
-                index: proofIndex,
-            },
-        })
-        if (!proof) throw new Error('Unable to find airdrop proof')
-        const { isProofValid } = await this.verifyAttestationProof(
-            proofIndex,
-            _epoch,
-            db
-        )
-        if (isProofValid === false)
-            return console.log(`proof ${proofIndex} is invalid`)
-
         db.delete('Record', {
             where: {
                 transactionHash: _transactionHash,
-                confirmed: false,
+                confirmed: 0,
             },
         })
         db.create('Record', {

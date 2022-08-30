@@ -62,7 +62,7 @@ async function userStateTransition(req, res) {
         await TransactionManager.wait(hash)
     }
 
-    const txPromises = [] as Promise<any>[]
+    const transactionPromises = [] as any
     for (let i = 0; i < processAttestationProofs.length; i++) {
         const { publicSignals, proof } = processAttestationProofs[i]
         const calldata = unirepSocialContract.interface.encodeFunctionData(
@@ -71,35 +71,18 @@ async function userStateTransition(req, res) {
         )
         const hash = await TransactionManager.queueTransaction(
             unirepSocialContract.address,
-            calldata
+            {
+                data: calldata,
+                gasLimit: 500000,
+            }
         )
-        txPromises.push(TransactionManager.wait(hash))
+        transactionPromises.push(TransactionManager.wait(hash))
     }
-    await Promise.all(txPromises)
+    await Promise.all(transactionPromises)
 
-    const proofIndexes: number[] = []
-    {
-        const proofNullifier = _startTransitionProof.hash()
-        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(Number(proofIndex))
-    }
-    for (let i = 0; i < processAttestationProofs.length; i++) {
-        const _proof = new ProcessAttestationsProof(
-            processAttestationProofs[i].publicSignals,
-            processAttestationProofs[i].proof
-        )
-        const proofNullifier = _proof.hash()
-        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(Number(proofIndex))
-    }
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'updateUserStateRoot',
-        [
-            finalTransitionProof.publicSignals,
-            finalTransitionProof.proof,
-
-            proofIndexes,
-        ]
+        [finalTransitionProof.publicSignals, finalTransitionProof.proof]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

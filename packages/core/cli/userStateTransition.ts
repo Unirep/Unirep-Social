@@ -109,6 +109,7 @@ const userStateTransition = async (args: any) => {
         )
         return
     }
+    const fromEpoch = await userState.latestTransitionedEpoch()
 
     // submit user state transition proofs
     const txPromises = [] as Promise<any>[]
@@ -133,32 +134,20 @@ const userStateTransition = async (args: any) => {
     }
     await Promise.all(txPromises)
 
-    const proofIndexes: number[] = []
-    {
-        const proofNullifier = startTransitionProof.hash()
-        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(Number(proofIndex))
-    }
-    for (let i = 0; i < processAttestationProofs.length; i++) {
-        const proofNullifier = processAttestationProofs[i].hash()
-        const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-        proofIndexes.push(Number(proofIndex))
-    }
     try {
         const tx = await unirepSocialContract
             .connect(wallet)
             .updateUserStateRoot(
                 finalTransitionProof.publicSignals,
-                finalTransitionProof.proof,
-                proofIndexes
+                finalTransitionProof.proof
             )
         await tx.wait()
     } catch (error) {
         console.log('Transaction error: ', error)
     }
+    await userState.waitForSync()
 
-    const fromEpoch = await userState.latestTransitionedEpoch()
-    const toEpoch = await userState.getUnirepStateCurrentEpoch()
+    const toEpoch = await userState.latestTransitionedEpoch()
 
     console.log(`User transitioned from epoch ${fromEpoch} to epoch ${toEpoch}`)
 }

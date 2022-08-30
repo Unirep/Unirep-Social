@@ -3,7 +3,7 @@ import { ethers } from 'hardhat'
 import { BigNumber } from 'ethers'
 import { expect } from 'chai'
 import * as config from '@unirep/circuits'
-import { deployUnirep } from '@unirep/contracts'
+import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity } from '@unirep/crypto'
 
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
