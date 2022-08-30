@@ -1,12 +1,10 @@
 const { deployUnirep } = require('@unirep/contracts/deploy')
-const UnirepSocial = require('../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json')
+const { deployUnirepSocial } = require('../src/utils')
 const {
     GLOBAL_STATE_TREE_DEPTH,
     USER_STATE_TREE_DEPTH,
     EPOCH_TREE_DEPTH,
 } = require('@unirep/circuits')
-const NegativeRepVerifier = require('../artifacts/contracts/NegativeRepVerifier.sol/Verifier.json')
-const SubsidyKeyVerifier = require('../artifacts/contracts/SubsidyKeyVerifier.sol/Verifier.json')
 
 const attestingFee = ethers.utils.parseEther('0.000000000001')
 const numEpochKeyNoncePerEpoch = 3
@@ -30,41 +28,14 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
         maxUsers,
         maxAttesters,
     })
-    console.log('Deploying NegativeRepVerifier')
-    const NegativeRepVerifierF = new ethers.ContractFactory(
-        NegativeRepVerifier.abi,
-        NegativeRepVerifier.bytecode,
-        signer
-    )
-    const negativeRepVerifier = await NegativeRepVerifierF.deploy()
-    await negativeRepVerifier.deployed()
-    console.log('Deploying SubsidyKeyVerifier')
-    const SubsidyKeyVerifierF = new ethers.ContractFactory(
-        SubsidyKeyVerifier.abi,
-        SubsidyKeyVerifier.bytecode,
-        signer
-    )
-    const subsidyKeyVerifier = await SubsidyKeyVerifierF.deploy()
-    await subsidyKeyVerifier.deployed()
-    console.log('Deploying UnirepSocial')
-    const UnirepSocialF = new ethers.ContractFactory(
-        UnirepSocial.abi,
-        UnirepSocial.bytecode,
-        signer
-    )
     const postReputation = 5
     const commentReputation = 3
-    const airdrop = 0
-    const epkSubsidy = 10
-    const unirepSocial = await UnirepSocialF.deploy(
-        unirep.address,
-        negativeRepVerifier.address,
-        subsidyKeyVerifier.address,
+    const airdropReputation = 0
+    const unirepSocial = await deployUnirepSocial(signer, unirep.address, {
         postReputation,
         commentReputation,
-        airdrop,
-        epkSubsidy
-    )
+        airdropReputation,
+    })
     await unirepSocial.deployed()
     console.log(`Unirep address: ${unirep.address}`)
     console.log(`Unirep social address: ${unirepSocial.address}`)
