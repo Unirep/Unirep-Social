@@ -281,24 +281,27 @@ contract UnirepSocial {
         uint256 oldUsername,
         uint256 newUsername
      ) external {
+        (,,,,,,,uint attestingFee,,) = unirep.config();
+
         // check if the new username is taken
         require(usernames[newUsername] == false, "This user name is already taken");
 
         // only admin can call this function
         require(msg.sender == admin);
 
+        usernames[oldUsername] = false;
+        usernames[newUsername] = true;
+
         // attest to the epoch key to give the key the username
         Unirep.Attestation memory attestation;
         attestation.attesterId = attesterId;
-        attestation.posRep = 0;
-        attestation.negRep = 0;
+        attestation.posRep = 1;
+        attestation.negRep = 1;
         attestation.graffiti = newUsername;
+
         unirep.submitAttestation{value: attestingFee}(
             attestation,
             epochKey
         );
-
-        usernames[oldUsername] = false;
-        usernames[newUsername] = true;
      }
 }
