@@ -40,7 +40,7 @@ async function vote(req, res) {
         formatProofForSnarkjsVerification(proof)
     )
     const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
-    const receiver = BigInt('0x' + req.body.receiver)
+    const receiver = BigInt(`0x${req.body.receiver.replace('0x', '')}`)
 
     const { dataId } = req.body
     const [post, comment] = await Promise.all([
