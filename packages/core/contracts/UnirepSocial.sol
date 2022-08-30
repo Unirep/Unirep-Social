@@ -244,7 +244,7 @@ contract UnirepSocial is zkSNARKHelper {
         require(publicSignals[4] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[3];
         require(verifySubsidyKeyProof(publicSignals, proof));
-        trySpendSubsidy(epoch, publicSignals[1], postReputation);
+        trySpendSubsidy(epoch, publicSignals[1], commentReputation);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
         emit CommentSubmitted(
             unirep.currentEpoch(),
