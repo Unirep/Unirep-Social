@@ -5,15 +5,28 @@ export class UI {
     loadingPromise
 
     hasBanner: boolean = true
+    showBackBtn: boolean = false
 
     constructor() {
         makeObservable(this, {
             hasBanner: observable,
+            showBackBtn: observable,
         })
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
         } else {
             this.loadingPromise = Promise.resolve()
+        }
+
+        window.onscroll = () => {
+            if (
+                document.documentElement.scrollTop >
+                104 + window.innerHeight / 2
+            ) {
+                this.showBackBtn = true
+            } else {
+                this.showBackBtn = false
+            }
         }
     }
 

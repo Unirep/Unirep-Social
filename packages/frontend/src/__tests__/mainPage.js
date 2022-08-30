@@ -43,6 +43,7 @@ test('should render MainPage with mocked data and false UserState', () => {
 
     const UIData = {
         hasBanner: true,
+        showBackBtn: true,
     }
 
     const postData = {
@@ -65,6 +66,7 @@ test('should render MainPage with mocked data and false UserState', () => {
     expect(
         screen.getByText(/you must join or login to create post/i)
     ).toBeInTheDocument()
+    expect(screen.getByText(/back to top/i)).toBeInTheDocument()
 })
 
 test('should render MainPage with mocked data and true UserState', () => {
@@ -83,6 +85,7 @@ test('should render MainPage with mocked data and true UserState', () => {
 
     const UIData = {
         hasBanner: false,
+        showBackBtn: false,
     }
 
     const postData = {
@@ -110,7 +113,8 @@ test('should render MainPage with mocked data and true UserState', () => {
     expect(
         screen.getByText(/in this cycle, my personas are/i)
     ).toBeInTheDocument()
-    // expect(screen.getByText(/back to top/i)).toBeInTheDocument()
+    const back2top = screen.queryByText(/back to top/i)
+    expect(back2top).toBeNull()
 })
 
 test('should page rerender after user clicks create post button', async () => {
