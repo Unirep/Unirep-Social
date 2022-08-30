@@ -38,11 +38,6 @@ describe('Signup', function () {
             accounts[0],
             unirepContract.address
         )
-        unirepSocialContract.setUsername(
-            config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-            oldUsername,
-            newUsername
-        )
     })
 
     describe('User sign-ups', () => {
@@ -91,7 +86,17 @@ describe('Signup', function () {
         })
 
         it('setUsername should succeed', async () => {
+            const tx = await unirepSocialContract.setUsername(
+                config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
+                oldUsername,
+                newUsername,
+                { value: DEFAULT_ATTESTING_FEE }
+            )
+            const receipt = await tx.wait()
+
+            expect(receipt.status).equal(1)
             const isClaimed = await unirepSocialContract.usernames(newUsername)
+
             expect(isClaimed, 'This username has not been updated').to.be.true
         })
 
@@ -102,7 +107,8 @@ describe('Signup', function () {
                 .setUsername(
                     config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
                     newUsername,
-                    newUsername2
+                    newUsername2,
+                    { value: DEFAULT_ATTESTING_FEE }
                 )
                 .then((t) => t.wait())
         })

@@ -280,7 +280,7 @@ contract UnirepSocial {
         uint256 epochKey,
         uint256 oldUsername,
         uint256 newUsername
-     ) external {
+     ) external payable {
         (,,,,,,,uint attestingFee,,) = unirep.config();
 
         // check if the new username is taken
