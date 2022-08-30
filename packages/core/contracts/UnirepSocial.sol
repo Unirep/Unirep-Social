@@ -287,6 +287,17 @@ contract UnirepSocial {
         // only admin can call this function
         require(msg.sender == admin);
 
+        // attest to the epoch key to give the key the username
+        Unirep.Attestation memory attestation;
+        attestation.attesterId = attesterId;
+        attestation.posRep = 0;
+        attestation.negRep = 0;
+        attestation.graffiti = newUsername;
+        unirep.submitAttestation{value: attestingFee}(
+            attestation,
+            epochKey
+        );
+
         usernames[oldUsername] = false;
         usernames[newUsername] = true;
      }
