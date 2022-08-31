@@ -1,10 +1,12 @@
 import { useHistory } from 'react-router-dom'
 import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
+import queryString from 'query-string'
 
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 import { ABOUT_URL } from '../../config'
+import { makeURL} from '../../utils'
 
 import LoadingCover from '../../components/loadingCover'
 import LoadingButton from '../../components/loadingButton'
@@ -49,20 +51,22 @@ const SignupPage = () => {
         if (step === 0) {
             // send to server to check if invitation code does exist
             // if exists, get identity and commitment
-            setButtonLoading(true)
-            const ret = await userContext.checkInvitationCode(invitationCode)
-            if (ret) {
-                const p = userContext
-                    .signUp(invitationCode)
-                    .catch((err) => setSignupError(err.toString()))
-                setSignupPromise(p)
-                setStep(1)
-            } else {
-                setErrorMsg(
-                    'Umm...this is not working. Try again or request a new code.'
-                )
-            }
-            setButtonLoading(false)
+            // setButtonLoading(true)
+            // const ret = await userContext.checkInvitationCode(invitationCode)
+            // if (ret) {
+            //     const p = userContext
+            //         .signUp(invitationCode)
+            //         .catch((err) => setSignupError(err.toString()))
+            //     setSignupPromise(p)
+            //     setStep(1)
+            // } else {
+            //     setErrorMsg(
+            //         'Umm...this is not working. Try again or request a new code.'
+            //     )
+            // }
+            // setButtonLoading(false)
+
+
         } else if (step === 1) {
             if (isDownloaded) {
                 navigator.clipboard?.writeText(userContext.identity || '')
@@ -85,9 +89,10 @@ const SignupPage = () => {
     }
 
     const handleInput = (event: any) => {
-        if (step === 0) {
-            setInvitationCode(event.target.value)
-        } else if (step === 2) {
+        // if (step === 0) {
+        //     setInvitationCode(event.target.value)
+        // } else 
+        if (step === 2) {
             setUserEnterIdentity(event.target.value)
         }
     }
@@ -103,6 +108,48 @@ const SignupPage = () => {
 
         setIsDownloaded(true)
     }
+
+    const twitterLogin = async () => {
+        try {
+            const apiURL = makeURL('/twitter/oauth/request_token', {})
+            const r = await fetch(apiURL, {
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({}),
+                method: 'POST',
+            }).then(res => res.json())
+            const { oauth_token } = r.data
+    
+            window.location.href = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`
+        } catch(e) {
+            console.error(e)
+        }
+    }
+
+    useEffect(() => {
+        (async() => {
+      
+            const {oauth_token, oauth_verifier} = queryString.parse(window.location.search);  
+            
+            if (oauth_token && oauth_verifier) {
+             try {
+                //Oauth Step 3
+                const apiURL = makeURL('/twitter/oauth/access_token', {})
+                await fetch(apiURL, {
+                    headers: {
+                        'content-type': 'application/json',
+                    },
+                    body: JSON.stringify({oauth_token, oauth_verifier}),
+                    method: 'POST',
+                });
+                setStep(step+1)
+             } catch (error) {
+              console.error(error); 
+             }
+            }
+        })();
+    }, [])
 
     return (
         <div className="signup-page">
@@ -146,14 +193,16 @@ const SignupPage = () => {
                     </div>
                     {step === 3 ? (
                         <div></div>
+                    ) : step === 0 ? (
+                        <div>
+                            <button onClick={twitterLogin}>twitter</button>
+                        </div>
                     ) : (
                         <textarea
-                            className={step === 0 ? '' : 'larger'}
+                            className='larger'
                             onChange={handleInput}
                             value={
-                                step === 0
-                                    ? invitationCode
-                                    : step === 1
+                                step === 1
                                     ? userContext.identity
                                     : step === 2
                                     ? userEnterIdentity

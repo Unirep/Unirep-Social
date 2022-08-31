@@ -6,8 +6,8 @@ import { NUM_EPOCH_KEY_NONCE_PER_EPOCH } from '@unirep/circuits'
 
 // Provide default values for process.env
 Object.assign(process.env, {
-    UNIREP: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-    UNIREP_SOCIAL: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
+    UNIREP: '0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e',
+    UNIREP_SOCIAL: '0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0',
     DEFAULT_ETH_PROVIDER_URL: 'http://localhost:8545',
     ADMIN_SESSION_CODE: randomstring.generate(20),
     DB_PATH: ':memory:',
