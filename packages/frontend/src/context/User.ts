@@ -402,6 +402,7 @@ export class User {
         console.log('log out')
         if (this.userState) {
             await this.userState.stop()
+            this.userState = undefined
         }
         this.id = undefined
         this.allEpks = [] as string[]
