@@ -39,7 +39,9 @@ const SideColumn = () => {
             ) : (
                 <div></div>
             )}
-            {userContext.userState && page !== Page.Setting ? (
+            {userContext.identity &&
+            userContext.userState &&
+            page !== Page.Setting ? (
                 <UserInfoWidget />
             ) : (
                 <div></div>

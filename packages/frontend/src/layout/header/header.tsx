@@ -53,7 +53,7 @@ const Header = () => {
                     <input type="text" name="searchInput" placeholder="Search by keyword, user names or epoch key" onChange={handleSearchInput} />
                 </form>
             </div> */}
-            {userContext.userState ? (
+            {userContext.identity && userContext.userState ? (
                 <div className="navButtons">
                     <div id="rep" onClick={gotoUserPage}>
                         <img

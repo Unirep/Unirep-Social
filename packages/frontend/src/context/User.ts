@@ -92,6 +92,8 @@ export class User {
     save() {
         if (this.id) {
             window.localStorage.setItem('identity', this.id.serializeIdentity())
+        } else {
+            window.localStorage.removeItem('identity')
         }
     }
 
