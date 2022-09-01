@@ -287,7 +287,7 @@ contract UnirepSocial {
         require(usernames[newUsername] == false, "This username is already taken");
 
         // only admin can call this function
-        require(msg.sender == admin);
+        require(msg.sender == admin, "Only admin can send transactions to this contract");
 
         usernames[oldUsername] = false;
         usernames[newUsername] = true;

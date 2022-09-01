@@ -89,8 +89,8 @@ describe('Signup', function () {
                 epoch,
                 epkNonce
             ).valueOf()
-            const oldUsername = 0
-            const newUsername = 1
+            const oldUsername = genRandomSalt().valueOf()
+            const newUsername = genRandomSalt().valueOf()
             const accounts = await ethers.getSigners()
 
             const tx = await unirepSocialContract
@@ -106,6 +106,29 @@ describe('Signup', function () {
             expect(isClaimed, 'This username has not been updated').to.be.true
         })
 
+        it('should fail if the contract call was not called by admin', async () => {
+            const epoch = Number(await unirepContract.currentEpoch())
+            const epkNonce = 1
+            const randomEpochKey = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const oldUsername = genRandomSalt().valueOf()
+            const newUsername = genRandomSalt().valueOf()
+            const accounts = await ethers.getSigners()
+
+            await expect(
+                unirepSocialContract
+                    .connect(accounts[1])
+                    .setUsername(randomEpochKey, oldUsername, newUsername, {
+                        value: DEFAULT_ATTESTING_FEE,
+                    })
+            ).to.be.revertedWith(
+                'Only admin can send transactions to this contract'
+            )
+        })
+
         it('should fail if a username is double registered', async () => {
             const epoch = Number(await unirepContract.currentEpoch())
             const epkNonce = 1
@@ -114,33 +137,59 @@ describe('Signup', function () {
                 epoch,
                 epkNonce
             ).valueOf()
-            const randomEpochKey2 = genEpochKey(
-                genRandomSalt(),
-                epoch,
-                epkNonce
-            ).valueOf()
-            const oldUsername = 1
-            const newUsername = 2
+
+            const oldUsername2 = genRandomSalt().valueOf()
+            const newUsername2 = genRandomSalt().valueOf()
             const accounts = await ethers.getSigners()
 
             // set newUserName to randomEpochKey1
             await unirepSocialContract
                 .connect(accounts[0])
-                .setUsername(randomEpochKey1, oldUsername, newUsername, {
+                .setUsername(randomEpochKey1, oldUsername2, newUsername2, {
                     value: DEFAULT_ATTESTING_FEE,
                 })
                 .then((t) => t.wait())
 
-            const oldUsername2 = 3
+            const oldUsername3 = 0
+            const randomEpochKey2 = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
 
             // try to set the same newUserName to randomEpochKey2
             await expect(
                 unirepSocialContract
                     .connect(accounts[0])
-                    .setUsername(randomEpochKey2, oldUsername2, newUsername, {
+                    .setUsername(randomEpochKey2, oldUsername3, newUsername2, {
                         value: DEFAULT_ATTESTING_FEE,
                     })
             ).to.be.revertedWith('This username is already taken')
+        })
+
+        it('should mark old username as not claimed', async () => {
+            const epoch = Number(await unirepContract.currentEpoch())
+            const epkNonce = 1
+            const randomEpochKey = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const oldUsername4 = genRandomSalt().valueOf()
+            const newUsername4 = genRandomSalt().valueOf()
+            const accounts = await ethers.getSigners()
+
+            const tx = await unirepSocialContract
+                .connect(accounts[0])
+                .setUsername(randomEpochKey, oldUsername4, newUsername4, {
+                    value: DEFAULT_ATTESTING_FEE,
+                })
+            const receipt = await tx.wait()
+
+            expect(receipt.status).equal(1)
+            const isClaimed = await unirepSocialContract.usernames(oldUsername4)
+
+            expect(isClaimed, 'The old username has not been free').to.be.false
         })
     })
 })
