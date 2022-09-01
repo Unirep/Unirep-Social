@@ -75,7 +75,6 @@ describe('visit and interact with home page', () => {
         }).as('getApiComment')
         cy.get('#new > img').click()
         cy.location('pathname').should('eq', '/new')
-        cy.get('.rep-info').contains('30')
         cy.get('#inputTextArea').type(loremPost)
         cy.get('.button-border').contains('Preview').click()
         cy.get('.block-content').should('exist')
