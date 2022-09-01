@@ -273,7 +273,7 @@ contract UnirepSocial {
      /*
      * Set new user name for an epochKey
      * @param epochKey epoch key that attempts to set a new uername
-     * @param oldUsername
+     * @param oldUsername oldusername that the eppch key previously claimed
      * @param newUsername requested new user name
      */
      function setUsername(
@@ -281,10 +281,10 @@ contract UnirepSocial {
         uint256 oldUsername,
         uint256 newUsername
      ) external payable {
-        (,,,,,,,uint attestingFee,,) = unirep.config();
+        uint attestingFee = unirep.attestingFee();
 
-        // check if the new username is taken
-        require(usernames[newUsername] == false, "This user name is already taken");
+        // check if the new username is not taken
+        require(usernames[newUsername] == false, "This username is already taken");
 
         // only admin can call this function
         require(msg.sender == admin);
@@ -295,8 +295,8 @@ contract UnirepSocial {
         // attest to the epoch key to give the key the username
         Unirep.Attestation memory attestation;
         attestation.attesterId = attesterId;
-        attestation.posRep = 1;
-        attestation.negRep = 1;
+        attestation.posRep = 0;
+        attestation.negRep = 0;
         attestation.graffiti = newUsername;
 
         unirep.submitAttestation{value: attestingFee}(

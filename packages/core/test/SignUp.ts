@@ -4,8 +4,8 @@ import { BigNumber } from 'ethers'
 import { expect } from 'chai'
 import * as config from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts/deploy'
-import { ZkIdentity } from '@unirep/crypto'
-
+import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
+import { genEpochKey } from '@unirep/core'
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
@@ -17,10 +17,6 @@ describe('Signup', function () {
 
     const maxUsers = 3
     const maxAttesters = 3
-
-    const oldUsername = 0
-    const newUsername = 1
-    const newUsername2 = 2
 
     before(async () => {
         const accounts = await ethers.getSigners()
@@ -86,12 +82,22 @@ describe('Signup', function () {
         })
 
         it('setUsername should succeed', async () => {
-            const tx = await unirepSocialContract.setUsername(
-                config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-                oldUsername,
-                newUsername,
-                { value: DEFAULT_ATTESTING_FEE }
-            )
+            const epoch = Number(await unirepContract.currentEpoch())
+            const epkNonce = 1
+            const randomEpochKey = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const oldUsername = 0
+            const newUsername = 1
+            const accounts = await ethers.getSigners()
+
+            const tx = await unirepSocialContract
+                .connect(accounts[0])
+                .setUsername(randomEpochKey, oldUsername, newUsername, {
+                    value: DEFAULT_ATTESTING_FEE,
+                })
             const receipt = await tx.wait()
 
             expect(receipt.status).equal(1)
@@ -101,21 +107,40 @@ describe('Signup', function () {
         })
 
         it('should fail if a username is double registered', async () => {
+            const epoch = Number(await unirepContract.currentEpoch())
+            const epkNonce = 1
+            const randomEpochKey1 = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const randomEpochKey2 = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const oldUsername = 1
+            const newUsername = 2
             const accounts = await ethers.getSigners()
+
+            // set newUserName to randomEpochKey1
             await unirepSocialContract
                 .connect(accounts[0])
-                .setUsername(
-                    config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-                    newUsername,
-                    newUsername2,
-                    { value: DEFAULT_ATTESTING_FEE }
-                )
+                .setUsername(randomEpochKey1, oldUsername, newUsername, {
+                    value: DEFAULT_ATTESTING_FEE,
+                })
                 .then((t) => t.wait())
-        })
 
-        it('should fail if the old username is not freed', async () => {
-            const isClaimed = await unirepSocialContract.usernames(oldUsername)
-            expect(isClaimed, 'The old username is not freed').to.be.false
+            const oldUsername2 = 3
+
+            // try to set the same newUserName to randomEpochKey2
+            await expect(
+                unirepSocialContract
+                    .connect(accounts[0])
+                    .setUsername(randomEpochKey2, oldUsername2, newUsername, {
+                        value: DEFAULT_ATTESTING_FEE,
+                    })
+            ).to.be.revertedWith('This username is already taken')
         })
     })
 })
