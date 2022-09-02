@@ -94,7 +94,7 @@ async function createComment(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
+    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(10)
     const minRep = Number(reputationProof.minRep)
 
     const error = await verifyReputationProof(
