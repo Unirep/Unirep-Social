@@ -180,17 +180,36 @@ describe('Signup', function () {
             const newUsername4 = genRandomSalt().valueOf()
             const accounts = await ethers.getSigners()
 
-            const tx = await unirepSocialContract
+            const tx1 = await unirepSocialContract
                 .connect(accounts[0])
                 .setUsername(randomEpochKey, oldUsername4, newUsername4, {
                     value: DEFAULT_ATTESTING_FEE,
                 })
-            const receipt = await tx.wait()
 
-            expect(receipt.status).equal(1)
-            const isClaimed = await unirepSocialContract.usernames(oldUsername4)
+            const receipt1 = await tx1.wait()
+            expect(receipt1.status).equal(1)
 
-            expect(isClaimed, 'The old username has not been free').to.be.false
+            const isClaimedBefore = await unirepSocialContract.usernames(
+                newUsername4
+            )
+            expect(isClaimedBefore, 'The old username has not been free').to.be
+                .true
+
+            const newUsername5 = genRandomSalt().valueOf()
+
+            const tx2 = await unirepSocialContract
+                .connect(accounts[0])
+                .setUsername(randomEpochKey, newUsername4, newUsername5, {
+                    value: DEFAULT_ATTESTING_FEE,
+                })
+            const receipt2 = await tx2.wait()
+            expect(receipt2.status).equal(1)
+
+            const isClaimedAfter = await unirepSocialContract.usernames(
+                newUsername4
+            )
+            expect(isClaimedAfter, 'The old username has not been free').to.be
+                .false
         })
 
         it('should emit attestation event with graffiti matching the new username', async () => {
