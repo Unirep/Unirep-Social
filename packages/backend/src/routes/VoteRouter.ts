@@ -39,8 +39,7 @@ async function vote(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
-    const receiver = BigInt(`0x${req.body.receiver.replace('0x', '')}`)
+    const epochKey = reputationProof.epochKey
 
     const { dataId } = req.body
     const [post, comment] = await Promise.all([
@@ -81,7 +80,7 @@ async function vote(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData('vote', [
         req.body.upvote,
         req.body.downvote,
-        ethers.BigNumber.from(`0x${req.body.receiver.replace('0x', '')}`),
+        req.body.receiver,
         reputationProof.publicSignals,
         reputationProof.proof,
     ])
@@ -213,11 +212,12 @@ async function voteSubsidy(req, res) {
         [
             req.body.upvote,
             req.body.downvote,
-            ethers.BigNumber.from(`0x${req.body.receiver.replace('0x', '')}`),
+            req.body.receiver,
             reputationProof.publicSignals,
             reputationProof.proof,
         ]
     )
+
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,
         {
