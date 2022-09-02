@@ -7,6 +7,7 @@ import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
+import { Attestation } from '@unirep/contracts'
 
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 
@@ -190,6 +191,40 @@ describe('Signup', function () {
             const isClaimed = await unirepSocialContract.usernames(oldUsername4)
 
             expect(isClaimed, 'The old username has not been free').to.be.false
+        })
+
+        it('should emit attestation event with graffiti matching the new username', async () => {
+            const epoch = Number(await unirepContract.currentEpoch())
+            const epkNonce = 1
+            const randomEpochKey = genEpochKey(
+                genRandomSalt(),
+                epoch,
+                epkNonce
+            ).valueOf()
+            const oldUsername5 = genRandomSalt().valueOf()
+            const newUsername5 = genRandomSalt().valueOf()
+            const accounts = await ethers.getSigners()
+
+            const tx = await unirepSocialContract
+                .connect(accounts[0])
+                .setUsername(randomEpochKey, oldUsername5, newUsername5, {
+                    value: DEFAULT_ATTESTING_FEE,
+                })
+            const receipt = await tx.wait()
+
+            expect(receipt.status).equal(1)
+
+            const attesterId = Number(await unirepSocialContract.attesterId())
+
+            await expect(tx)
+                .to.emit(unirepContract, 'AttestationSubmitted')
+                .withArgs(epoch, randomEpochKey, unirepSocialContract.address, [
+                    BigInt(attesterId),
+                    BigInt(0),
+                    BigInt(0),
+                    newUsername5,
+                    BigInt(0),
+                ])
         })
     })
 })
