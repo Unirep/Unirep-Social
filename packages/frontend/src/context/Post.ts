@@ -277,13 +277,13 @@ export class Data {
     vote(
         postId: string = '',
         commentId: string = '',
-        receiver: string, // base-16
+        _receiver: string,
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
         minRep = 0
     ) {
-        const receiverIn10 = BigInt('0x' + receiver).toString(10)
+        const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
@@ -298,7 +298,7 @@ export class Data {
                       )
                     : userContext.genSubsidyProof(
                           minRep,
-                          `0x${receiver.replace('0x', '')}`
+                          `0x${_receiver.replace('0x', '')}`
                       ))
                 updateStatus({
                     title: 'Creating Vote',

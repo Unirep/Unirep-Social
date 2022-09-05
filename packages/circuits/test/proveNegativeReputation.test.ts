@@ -1,6 +1,7 @@
 import * as path from 'path'
 import { expect } from 'chai'
 import { genRandomSalt, ZkIdentity, hashOne } from '@unirep/crypto'
+import { genEpochKey } from '@unirep/core'
 import * as crypto from '@unirep/crypto'
 import * as circom from 'circom'
 import * as snarkjs from 'snarkjs'
@@ -96,20 +97,6 @@ const verifyProof = async (publicSignals, proof): Promise<boolean> => {
     return snarkjs.groth16.verify(vkey, publicSignals, proof)
 }
 
-const genEpochKey = (
-    identityNullifier: BigInt,
-    epoch: number,
-    nonce: number,
-    _epochTreeDepth: number = EPOCH_TREE_DEPTH
-): BigInt => {
-    const epochKey = crypto
-        .hash2([(identityNullifier as any) + BigInt(nonce), epoch])
-        .valueOf()
-    // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = epochKey % BigInt(2 ** _epochTreeDepth)
-    return epochKeyModed
-}
-
 describe('Prove reputation from attester circuit', function () {
     this.timeout(300000)
 
@@ -167,7 +154,7 @@ describe('Prove reputation from attester circuit', function () {
         expect(isValid).to.be.true
 
         const epk = genEpochKey(id.identityNullifier, epoch, 0)
-        expect(publicSignals[2]).to.equal(epk.toString())
+        expect(publicSignals[1]).to.equal(epk.toString())
     })
 
     it('successfully fail to prove negative reputation with equal positive and negative repuataion', async () => {

@@ -14,3 +14,4 @@ build
 packages/frontend/cypress/downloads
 packages/frontend/cypress/screenshots
 *.swp
+packages/core/contracts/*Verifier.sol

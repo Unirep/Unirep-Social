@@ -183,7 +183,7 @@ async function voteSubsidy(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = publicSignals[2]
+    const epochKey = publicSignals[1]
 
     const { dataId } = req.body
     const [post, comment] = await Promise.all([

@@ -245,12 +245,12 @@ export class User {
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
         // it uses nonce == maxNonce + 1
-        const subsidyKey = hash2([
-            BigInt(this.id.identityNullifier) +
-                BigInt(this.unirepConfig.numEpochKeyNoncePerEpoch),
+        const subsidyKey = genEpochKey(
+            this.id.identityNullifier,
             currentEpoch,
-        ])
-        console.log(subsidyKey)
+            0,
+            this.unirepConfig.epochTreeDepth
+        )
         const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
             currentEpoch,
             subsidyKey
