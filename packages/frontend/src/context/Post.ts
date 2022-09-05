@@ -277,7 +277,7 @@ export class Data {
     vote(
         postId: string = '',
         commentId: string = '',
-        receiver: string, // base-16
+        _receiver: string,
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
@@ -304,6 +304,9 @@ export class Data {
                     title: 'Creating Vote',
                     details: 'Broadcasting vote...',
                 })
+                const receiver = _receiver.startsWith('0x')
+                    ? parseInt(_receiver, 16).toString()
+                    : _receiver
                 const url = makeURL(epkNonce >= 0 ? 'vote' : 'vote/subsidy')
                 const r = await fetch(url, {
                     headers: {
