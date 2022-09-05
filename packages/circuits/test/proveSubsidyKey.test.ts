@@ -1,6 +1,7 @@
 import * as path from 'path'
 import { expect } from 'chai'
 import { genRandomSalt, ZkIdentity, hashOne } from '@unirep/crypto'
+import { genEpochKey } from '@unirep/core'
 import * as crypto from '@unirep/crypto'
 import * as circom from 'circom'
 import * as snarkjs from 'snarkjs'
@@ -17,20 +18,6 @@ const circuitPath = path.join(
     __dirname,
     `../circuits/test/${circuitName}_test.circom`
 )
-
-const genEpochKey = (
-    identityNullifier: BigInt,
-    epoch: number,
-    nonce: number,
-    _epochTreeDepth: number = EPOCH_TREE_DEPTH
-): BigInt => {
-    const epochKey = crypto
-        .hash2([(identityNullifier as any) + BigInt(nonce), epoch])
-        .valueOf()
-    // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = epochKey % BigInt(2 ** _epochTreeDepth)
-    return epochKeyModed
-}
 
 const genCircuitInput = (
     id: crypto.ZkIdentity,
@@ -113,13 +100,6 @@ const verifyProof = async (publicSignals, proof): Promise<boolean> => {
     return snarkjs.groth16.verify(vkey, publicSignals, proof)
 }
 
-const calcSubsidyKey = (id, epoch) => {
-    return crypto.hash2([
-        BigInt(id.identityNullifier) + BigInt(NUM_EPOCH_KEY_NONCE_PER_EPOCH),
-        BigInt(epoch),
-    ])
-}
-
 describe('Prove subsidy key and minrep', function () {
     this.timeout(300000)
 
@@ -152,7 +132,7 @@ describe('Prove subsidy key and minrep', function () {
         expect(isValid).to.be.true
     })
 
-    it('successfully prove subsidy key reputation', async () => {
+    it('successfully prove epoch key reputation', async () => {
         const attesterId = 1
         const reputationRecords = {
             [attesterId]: new Reputation(
@@ -177,7 +157,9 @@ describe('Prove subsidy key and minrep', function () {
         )
         const isValid = await verifyProof(publicSignals, proof)
         expect(isValid).to.be.true
-        expect(publicSignals[1]).to.equal(calcSubsidyKey(id, epoch).toString())
+        expect(publicSignals[1]).to.equal(
+            genEpochKey(id.identityNullifier, epoch, 0).toString()
+        )
     })
 
     it('should fail to prove more reputation than has', async () => {

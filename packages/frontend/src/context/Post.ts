@@ -273,7 +273,7 @@ export class Data {
     vote(
         postId: string = '',
         commentId: string = '',
-        receiver: string,
+        _receiver: string,
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
@@ -293,12 +293,15 @@ export class Data {
                       )
                     : userContext.genSubsidyProof(
                           minRep,
-                          `0x${receiver.replace('0x', '')}`
+                          `0x${_receiver.replace('0x', '')}`
                       ))
                 updateStatus({
                     title: 'Creating Vote',
                     details: 'Broadcasting vote...',
                 })
+                const receiver = _receiver.startsWith('0x')
+                    ? parseInt(_receiver, 16).toString()
+                    : _receiver
                 const url = makeURL(epkNonce >= 0 ? 'vote' : 'vote/subsidy')
                 const r = await fetch(url, {
                     headers: {

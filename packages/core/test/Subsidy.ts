@@ -128,10 +128,11 @@ describe('Subsidy', function () {
             toEpochKey
         )
         expect(await subsidyProof.verify()).to.be.true
-        await unirepSocialContract
+        const voteAmount = 3
+        const tx = await unirepSocialContract
             .connect(accounts[1])
             .voteSubsidy(
-                3,
+                voteAmount,
                 0,
                 toEpochKey,
                 subsidyProof.publicSignals,
@@ -140,7 +141,26 @@ describe('Subsidy', function () {
                     value: attestingFee.mul(2),
                 }
             )
-            .then((t) => t.wait())
+        expect(tx)
+            .to.emit(unirepContract, 'AttestationSubmitted')
+            .withArgs(epoch, toEpochKey, unirepSocialContract.address, [
+                BigInt(voteAmount),
+                BigInt(0),
+                BigInt(0),
+                BigInt(0),
+                BigInt(0),
+            ])
+        expect(tx)
+            .to.emit(unirepSocialContract, 'VoteSubmitted')
+            .withArgs(
+                epoch,
+                subsidyProof.publicSignals[1],
+                toEpochKey,
+                voteAmount,
+                0,
+                subsidyProof.publicSignals[4]
+            )
+        await tx.wait()
         await userState.stop()
     })
 
@@ -226,5 +246,123 @@ describe('Subsidy', function () {
                 )
         ).to.be.revertedWith('Unirep Social: must prove non-ownership of epk')
         await userState.stop()
+    })
+
+    it('should claim neg rep airdrop', async () => {
+        const accounts = await ethers.getSigners()
+        const attesterId = await unirepContract.attesters(
+            unirepSocialContract.address
+        )
+        const voteAmount = 10
+        const receivingId = new ZkIdentity()
+        {
+            // now create a vote
+            const id = new ZkIdentity()
+            await unirepSocialContract
+                .connect(accounts[0])
+                .userSignUp(id.genIdentityCommitment())
+                .then((t) => t.wait())
+            await unirepSocialContract
+                .connect(accounts[0])
+                .userSignUp(receivingId.genIdentityCommitment())
+                .then((t) => t.wait())
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id
+            )
+            const epoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                receivingId.identityNullifier,
+                epoch.toNumber(),
+                0
+            )
+            const subsidyProof = await userState.genSubsidyProof(
+                attesterId.toBigInt(),
+                BigInt(0),
+                toEpochKey
+            )
+            expect(await subsidyProof.verify()).to.be.true
+            await unirepSocialContract
+                .connect(accounts[1])
+                .voteSubsidy(
+                    0,
+                    voteAmount,
+                    toEpochKey,
+                    subsidyProof.publicSignals,
+                    subsidyProof.proof,
+                    {
+                        value: attestingFee.mul(2),
+                    }
+                )
+                .then((t) => t.wait())
+            await userState.stop()
+        }
+        // now do a UST
+        await ethers.provider.send('evm_increaseTime', [config.EPOCH_LENGTH])
+        await unirepContract
+            .connect(accounts[0])
+            .beginEpochTransition()
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            receivingId
+        )
+        const {
+            startTransitionProof,
+            processAttestationProofs,
+            finalTransitionProof,
+        } = await userState.genUserStateTransitionProofs()
+        await unirepSocialContract
+            .startUserStateTransition(
+                startTransitionProof.publicSignals,
+                startTransitionProof.proof
+            )
+            .then((t) => t.wait())
+        for (const p of processAttestationProofs) {
+            await unirepSocialContract
+                .processAttestations(p.publicSignals, p.proof)
+                .then((t) => t.wait())
+        }
+        await unirepContract
+            .updateUserStateRoot(
+                finalTransitionProof.publicSignals,
+                finalTransitionProof.proof
+            )
+            .then((t) => t.wait())
+        await userState.waitForSync()
+        // should now have -10 rep
+        {
+            const proof = await userState.genNegativeRepProof(
+                attesterId.toBigInt(),
+                BigInt(voteAmount + 1)
+            )
+            const isValid = await proof.verify()
+            expect(isValid).to.be.false
+        }
+        const negRepProof = await userState.genNegativeRepProof(
+            attesterId.toBigInt(),
+            BigInt(10)
+        )
+        const epoch = await unirepContract.currentEpoch()
+        const tx = await unirepSocialContract
+            .connect(accounts[0])
+            .getSubsidyAirdrop(negRepProof.publicSignals, negRepProof.proof)
+        expect(tx)
+            .to.emit(unirepContract, 'AttestationSubmitted')
+            .withArgs(
+                epoch,
+                negRepProof.publicSignals[1],
+                unirepSocialContract.address,
+                [BigInt(voteAmount), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]
+            )
+        await tx.wait()
+        // should fail to double claim
+        await expect(
+            unirepSocialContract
+                .connect(accounts[0])
+                .getSubsidyAirdrop(negRepProof.publicSignals, negRepProof.proof)
+        ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
     })
 })

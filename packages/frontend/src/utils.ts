@@ -153,6 +153,7 @@ export const convertDataToPost = (data: any) => {
         commentCount: data.commentCount,
         current_epoch: data.epoch,
         proofIndex: data.proofIndex,
+        transactionHash: data.transactionHash,
     }
 
     return post

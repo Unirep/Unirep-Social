@@ -94,7 +94,7 @@ async function createComment(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
+    const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
 
     const error = await verifyReputationProof(
@@ -141,7 +141,7 @@ async function createComment(req, res) {
     const comment = await req.db.create('Comment', {
         postId: req.body.postId,
         content: req.body.content, // TODO: hashedContent
-        epochKey: epochKey,
+        epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== 0 ? true : false,
         minRep: Number(minRep),
@@ -189,8 +189,8 @@ async function createCommentSubsidy(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = publicSignals[2]
-    const minRep = publicSignals[5]
+    const epochKey = publicSignals[1]
+    const minRep = publicSignals[4]
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
