@@ -36,17 +36,7 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     signal private input sign_up;
     signal private input UST_path_elements[user_state_tree_depth][1];
     signal input maxRep;
-    signal output subsidyKey;
     signal output epochKey;
-
-    /* 1. Calculate subsidy key */
-
-    component subsidyKeyHasher = Poseidon(2);
-
-    subsidyKeyHasher.inputs[0] <== identity_nullifier + EPOCH_KEY_NONCE_PER_EPOCH;
-    subsidyKeyHasher.inputs[1] <== epoch;
-    subsidyKey <== subsidyKeyHasher.out;
-    /* End of check 1 */
 
     /* 2. Check if user exists in the Global State Tree */
 
