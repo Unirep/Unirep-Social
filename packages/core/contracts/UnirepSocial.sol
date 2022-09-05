@@ -32,6 +32,9 @@ contract UnirepSocial {
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
 
+    // A mapping between username and if they're already claimed;
+    mapping(uint256 => bool) public usernames;
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -66,6 +69,7 @@ contract UnirepSocial {
         uint256 downvoteValue,
         uint256 minRep
     );
+
 
     constructor(
         Unirep _unirepContract,
@@ -265,4 +269,39 @@ contract UnirepSocial {
     ) external {
         unirep.updateUserStateRoot(publicSignals, proof);
     }
+
+     /*
+     * Set new user name for an epochKey
+     * @param epochKey epoch key that attempts to set a new uername
+     * @param oldUsername oldusername that the eppch key previously claimed
+     * @param newUsername requested new user name
+     */
+     function setUsername(
+        uint256 epochKey,
+        uint256 oldUsername,
+        uint256 newUsername
+     ) external payable {
+        uint attestingFee = unirep.attestingFee();
+
+        // check if the new username is not taken
+        require(usernames[newUsername] == false, "This username is already taken");
+
+        // only admin can call this function
+        require(msg.sender == admin, "Only admin can send transactions to this contract");
+
+        usernames[oldUsername] = false;
+        usernames[newUsername] = true;
+
+        // attest to the epoch key to give the key the username
+        Unirep.Attestation memory attestation;
+        attestation.attesterId = attesterId;
+        attestation.posRep = 0;
+        attestation.negRep = 0;
+        attestation.graffiti = newUsername;
+
+        unirep.submitAttestation{value: attestingFee}(
+            attestation,
+            epochKey
+        );
+     }
 }

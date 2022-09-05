@@ -12,3 +12,5 @@ build
 packages/frontend/cypress/downloads
 packages/frontend/cypress/screenshots
 *.swp
+
+.node-version
