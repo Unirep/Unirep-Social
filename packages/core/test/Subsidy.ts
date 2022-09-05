@@ -128,10 +128,11 @@ describe('Subsidy', function () {
             toEpochKey
         )
         expect(await subsidyProof.verify()).to.be.true
-        await unirepSocialContract
+        const voteAmount = 3
+        const tx = await unirepSocialContract
             .connect(accounts[1])
             .voteSubsidy(
-                3,
+                voteAmount,
                 0,
                 toEpochKey,
                 subsidyProof.publicSignals,
@@ -140,7 +141,26 @@ describe('Subsidy', function () {
                     value: attestingFee.mul(2),
                 }
             )
-            .then((t) => t.wait())
+        expect(tx)
+            .to.emit(unirepContract, 'AttestationSubmitted')
+            .withArgs(epoch, toEpochKey, unirepSocialContract.address, [
+                BigInt(voteAmount),
+                BigInt(0),
+                BigInt(0),
+                BigInt(0),
+                BigInt(0),
+            ])
+        expect(tx)
+            .to.emit(unirepSocialContract, 'VoteSubmitted')
+            .withArgs(
+                epoch,
+                subsidyProof.publicSignals[1],
+                toEpochKey,
+                voteAmount,
+                0,
+                subsidyProof.publicSignals[4]
+            )
+        await tx.wait()
         await userState.stop()
     })
 
