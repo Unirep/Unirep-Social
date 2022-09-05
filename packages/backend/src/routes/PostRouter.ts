@@ -215,8 +215,8 @@ async function createPostSubsidy(req, res) {
             subsidyProof.proof,
         ]
     )
-    const epochKey = publicSignals[2]
-    const minRep = publicSignals[5]
+    const epochKey = publicSignals[1]
+    const minRep = publicSignals[4]
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,
         {

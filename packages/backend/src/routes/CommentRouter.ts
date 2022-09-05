@@ -189,8 +189,8 @@ async function createCommentSubsidy(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = publicSignals[2]
-    const minRep = publicSignals[5]
+    const epochKey = publicSignals[1]
+    const minRep = publicSignals[4]
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
