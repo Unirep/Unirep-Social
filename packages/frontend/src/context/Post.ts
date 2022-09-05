@@ -283,7 +283,7 @@ export class Data {
         downvote: number = 0,
         minRep = 0
     ) {
-        const receiverIn10 = BigInt('0x' + receiver).toString(10)
+        const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
