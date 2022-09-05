@@ -100,13 +100,6 @@ const verifyProof = async (publicSignals, proof): Promise<boolean> => {
     return snarkjs.groth16.verify(vkey, publicSignals, proof)
 }
 
-const calcSubsidyKey = (id, epoch) => {
-    return crypto.hash2([
-        BigInt(id.identityNullifier) + BigInt(NUM_EPOCH_KEY_NONCE_PER_EPOCH),
-        BigInt(epoch),
-    ])
-}
-
 describe('Prove subsidy key and minrep', function () {
     this.timeout(300000)
 
@@ -139,7 +132,7 @@ describe('Prove subsidy key and minrep', function () {
         expect(isValid).to.be.true
     })
 
-    it('successfully prove subsidy key reputation', async () => {
+    it('successfully prove epoch key reputation', async () => {
         const attesterId = 1
         const reputationRecords = {
             [attesterId]: new Reputation(
@@ -164,7 +157,9 @@ describe('Prove subsidy key and minrep', function () {
         )
         const isValid = await verifyProof(publicSignals, proof)
         expect(isValid).to.be.true
-        expect(publicSignals[1]).to.equal(calcSubsidyKey(id, epoch).toString())
+        expect(publicSignals[1]).to.equal(
+            genEpochKey(id.identityNullifier, epoch, 0).toString()
+        )
     })
 
     it('should fail to prove more reputation than has', async () => {

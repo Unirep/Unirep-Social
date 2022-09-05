@@ -154,7 +154,7 @@ describe('Prove reputation from attester circuit', function () {
         expect(isValid).to.be.true
 
         const epk = genEpochKey(id.identityNullifier, epoch, 0)
-        expect(publicSignals[2]).to.equal(epk.toString())
+        expect(publicSignals[1]).to.equal(epk.toString())
     })
 
     it('successfully fail to prove negative reputation with equal positive and negative repuataion', async () => {
