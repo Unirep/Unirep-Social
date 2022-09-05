@@ -130,18 +130,12 @@ async function createPost(req, res) {
 
     const { title, content } = req.body
     const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(content)
+        ethers.utils.toUtf8Bytes(title + content)
     )
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishPost',
-        [
-            title !== undefined && title.length > 0
-                ? `${titlePrefix}${title}${titlePostfix}${content}`
-                : content,
-            reputationProof.publicSignals,
-            reputationProof.proof,
-        ]
+        [hashedContent, reputationProof.publicSignals, reputationProof.proof]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

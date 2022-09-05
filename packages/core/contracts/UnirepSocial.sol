@@ -46,7 +46,7 @@ contract UnirepSocial {
     event PostSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
-        string _postContent,
+        bytes32 _postContent,
         uint256 minRep
     );
 
@@ -54,7 +54,7 @@ contract UnirepSocial {
         uint256 indexed _epoch,
         uint256 indexed _postId,
         uint256 indexed _epochKey,
-        string _commentContent,
+        bytes32 _commentContent,
         uint256 minRep
     );
 
@@ -107,7 +107,7 @@ contract UnirepSocial {
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
      */
     function publishPost(
-        string memory content,
+        bytes32 content,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
@@ -134,7 +134,7 @@ contract UnirepSocial {
      */
     function leaveComment(
         uint256 postId,
-        string memory content,
+        bytes32 content,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {

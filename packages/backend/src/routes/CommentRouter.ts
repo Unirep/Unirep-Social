@@ -127,7 +127,7 @@ async function createComment(req, res) {
         'leaveComment',
         [
             post.transactionHash,
-            content,
+            hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
         ]
