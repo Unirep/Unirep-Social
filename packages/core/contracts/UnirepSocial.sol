@@ -194,6 +194,7 @@ contract UnirepSocial is zkSNARKHelper {
         uint receivedSubsidy = subsidy < requestedSubsidy ? subsidy : requestedSubsidy;
         uint epoch = publicSignals[3];
         trySpendSubsidy(epoch, publicSignals[2], receivedSubsidy);
+        subsidies[epoch][subsidyKey] = subsidy; // don't allow a user to double request or spend more
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
 
         // Submit attestation to receiver's first epoch key
