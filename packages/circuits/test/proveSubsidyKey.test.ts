@@ -1,6 +1,7 @@
 import * as path from 'path'
 import { expect } from 'chai'
 import { genRandomSalt, ZkIdentity, hashOne } from '@unirep/crypto'
+import { genEpochKey } from '@unirep/core'
 import * as crypto from '@unirep/crypto'
 import * as circom from 'circom'
 import * as snarkjs from 'snarkjs'
@@ -17,20 +18,6 @@ const circuitPath = path.join(
     __dirname,
     `../circuits/test/${circuitName}_test.circom`
 )
-
-const genEpochKey = (
-    identityNullifier: BigInt,
-    epoch: number,
-    nonce: number,
-    _epochTreeDepth: number = EPOCH_TREE_DEPTH
-): BigInt => {
-    const epochKey = crypto
-        .hash2([(identityNullifier as any) + BigInt(nonce), epoch])
-        .valueOf()
-    // Adjust epoch key size according to epoch tree depth
-    const epochKeyModed = epochKey % BigInt(2 ** _epochTreeDepth)
-    return epochKeyModed
-}
 
 const genCircuitInput = (
     id: crypto.ZkIdentity,
