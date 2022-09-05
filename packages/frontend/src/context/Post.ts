@@ -293,7 +293,7 @@ export class Data {
                       )
                     : userContext.genSubsidyProof(
                           minRep,
-                          `0x${receiver.replace('0x', '')}`
+                          `0x${_receiver.replace('0x', '')}`
                       ))
                 updateStatus({
                     title: 'Creating Vote',
