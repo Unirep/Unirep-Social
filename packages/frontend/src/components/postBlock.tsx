@@ -101,7 +101,7 @@ const PostBlock = ({ postId, page }: Props) => {
                 <a
                     className="etherscan"
                     target="_blank"
-                    href={`${EXPLORER_URL}/tx/${post.id}`}
+                    href={`${EXPLORER_URL}/tx/${post.transactionHash}`}
                 >
                     <span>Etherscan</span>
                     <img src={require('../../public/images/etherscan.svg')} />
