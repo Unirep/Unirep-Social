@@ -129,6 +129,9 @@ async function createPost(req, res) {
     const { attestingFee } = await unirepContract.config()
 
     const { title, content } = req.body
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishPost',
@@ -150,6 +153,7 @@ async function createPost(req, res) {
 
     const post = await req.db.create('Post', {
         content,
+        hashedContent,
         title,
         epochKey,
         epoch: currentEpoch,
