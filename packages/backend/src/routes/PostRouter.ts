@@ -110,7 +110,7 @@ async function createPost(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(10)
+    const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
 
     const error = await verifyReputationProof(
