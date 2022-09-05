@@ -27,6 +27,8 @@ export class User {
     isInitialSyncing = true
     initialSyncFinalBlock = Infinity
 
+    private _db?: IndexedDBConnector
+
     constructor() {
         makeObservable(this, {
             userState: observable,
@@ -89,11 +91,12 @@ export class User {
         await this.loadCurrentEpoch()
     }
 
-    save() {
+    async save() {
         if (this.id) {
             window.localStorage.setItem('identity', this.id.serializeIdentity())
         } else {
             window.localStorage.removeItem('identity')
+            if (this._db) await this._db.close()
         }
     }
 
@@ -171,9 +174,9 @@ export class User {
         } else {
             this.id = identity
         }
-        const db = await IndexedDBConnector.create(schema, 1)
+        this._db = await IndexedDBConnector.create(schema, 1)
         this.userState = new SocialUserState(
-            db,
+            this._db,
             prover as any,
             this.unirepConfig.unirep,
             this.id

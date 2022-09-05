@@ -81,5 +81,6 @@ describe('visit and interact with home page', () => {
         // submit post and check for reputation
         cy.get('.submit-btn').click()
         cy.location('pathname').should('eq', '/')
+        cy.get('.rep-info').contains('30')
     })
 })
