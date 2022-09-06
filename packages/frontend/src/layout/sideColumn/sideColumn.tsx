@@ -57,7 +57,7 @@ const SideColumn = () => {
                 <div></div>
             )}
             <DefaultWidget />
-            {uiContext.showBackBtn && (
+            {uiContext.scrollTop > 104 + window.innerHeight / 2 && (
                 <div
                     className="back-to-top"
                     onClick={() => window.scrollTo(0, 0)}

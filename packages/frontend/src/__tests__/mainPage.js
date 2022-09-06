@@ -43,7 +43,7 @@ test('should render MainPage with mocked data and false UserState', () => {
 
     const UIData = {
         hasBanner: true,
-        showBackBtn: true,
+        scrollTop: 500,
     }
 
     const postData = {
@@ -86,7 +86,7 @@ test('should render MainPage with mocked data and true UserState', () => {
 
     const UIData = {
         hasBanner: false,
-        showBackBtn: false,
+        scrollTop: 0,
     }
 
     const postData = {
