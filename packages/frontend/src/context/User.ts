@@ -486,28 +486,6 @@ export class User {
         return { error, transaction }
     }
 
-    // async attestationSubmitted(event: any) {
-    //     const epochKey = ethers.BigNumber.from(event.topics[2])
-    //     const decodedData = this.unirepConfig.unirep.interface.decodeEventLog(
-    //         'AttestationSubmitted',
-    //         event.data
-    //     )
-    //     const attestation = new Attestation(
-    //         BigInt(decodedData.attestation.attesterId),
-    //         BigInt(decodedData.attestation.posRep),
-    //         BigInt(decodedData.attestation.negRep),
-    //         BigInt(decodedData.attestation.graffiti),
-    //         BigInt(decodedData.attestation.signUp)
-    //     )
-    //     const normalizedEpk = epochKey
-    //         .toHexString()
-    //         .replace('0x', '')
-    //         .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
-    //     if (this.currentEpochKeys.indexOf(normalizedEpk) !== -1) {
-    //         this.spent += Number(attestation.negRep)
-    //     }
-    // }
-
     async epochEnded(event: any) {
         await this.loadReputation()
         await this.calculateAllEpks()

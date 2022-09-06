@@ -165,9 +165,13 @@ export class Data {
 
     async loadVotesForPostId(postId: string) {
         const r = await fetch(makeURL(`post/${postId}/votes`))
-        const votes = await r.json()
-        if (votes === null) return
-        this.ingestVotes(votes as Vote[])
+        const votesResult = await r.json()
+        if (votesResult === null) return
+
+        const votes = (votesResult as Vote[]).map((vote) => {
+            return { ...vote, voter: `${(+vote.voter).toString(16)}` }
+        })
+        this.ingestVotes(votes)
         this.votesByPostId[postId] = votes.map((v: Vote) => v._id)
     }
 
@@ -279,6 +283,7 @@ export class Data {
         downvote: number = 0,
         minRep = 0
     ) {
+        const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
@@ -313,7 +318,7 @@ export class Data {
                         proof,
                         minRep,
                         publicSignals,
-                        receiver,
+                        receiver: receiverIn10,
                         dataId: postId.length > 0 ? postId : commentId,
                         isPost: !!postId,
                     }),

@@ -117,5 +117,9 @@ template ProveSubsidyKey(GST_tree_depth, user_state_tree_depth, epoch_tree_depth
       not_equal_check[i].out === 0;
     }
 
-    /* End of check 6 */
+    /* End of check 5 */
+
+    // check if a user is signed up
+
+    sign_up === 1;
 }
