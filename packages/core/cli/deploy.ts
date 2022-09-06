@@ -117,7 +117,7 @@ const deploy = async (args: any) => {
             : socialMediaConfig.defaultCommentReputation
 
     const _airdropReputation =
-        args.airdrop != undefined
+        args.airdrop_reputation != undefined
             ? args.airdrop_reputation
             : socialMediaConfig.defaultAirdroppedReputation
 

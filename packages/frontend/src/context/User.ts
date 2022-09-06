@@ -2,10 +2,10 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy } from '@unirep/crypto'
-import { Attestation } from '@unirep/contracts'
+import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
 import { makeURL } from '../utils'
-import { genEpochKey, UserState, schema } from '@unirep/core'
+import { genEpochKey, schema } from '@unirep/core'
+import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
@@ -14,23 +14,26 @@ export class User {
     id?: ZkIdentity
     allEpks = [] as string[]
     currentEpoch = 0
-    reputation = 30
+    reputation = 0
+    subsidyReputation = 0
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
     latestTransitionedEpoch?: number
     loadingPromise
-    userState?: UserState
+    userState?: SocialUserState
 
+    syncStartBlock: any
     latestProcessedBlock: any
     isInitialSyncing = true
     initialSyncFinalBlock = Infinity
-    syncStartBlock: any
 
     constructor() {
         makeObservable(this, {
             userState: observable,
             currentEpoch: observable,
             reputation: observable,
+            netReputation: computed,
+            subsidyReputation: observable,
             spent: observable,
             currentEpochKeys: computed,
             allEpks: observable,
@@ -46,6 +49,10 @@ export class User {
         } else {
             this.loadingPromise = Promise.resolve()
         }
+    }
+
+    get spendableReputation() {
+        return this.reputation - this.spent + this.subsidyReputation
     }
 
     get netReputation() {
@@ -97,9 +104,19 @@ export class User {
     }
 
     get currentEpochKeys() {
-        return this.allEpks.slice(
-            -1 * this.unirepConfig.numEpochKeyNoncePerEpoch
-        )
+        return Array(this.unirepConfig.numEpochKeyNoncePerEpoch)
+            .fill(null)
+            .map((_, i) => {
+                if (!this.id) throw new Error('No id set')
+                return genEpochKey(
+                    this.id.identityNullifier,
+                    this.currentEpoch,
+                    i,
+                    this.unirepConfig.epochTreeDepth
+                )
+                    .toString(16)
+                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
+            })
     }
 
     get identity() {
@@ -153,7 +170,7 @@ export class User {
             this.id = identity
         }
         const db = await IndexedDBConnector.create(schema, 1)
-        this.userState = new UserState(
+        this.userState = new SocialUserState(
             db,
             prover as any,
             this.unirepConfig.unirep,
@@ -161,14 +178,14 @@ export class User {
         )
         const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
             .topics as string[]
-        const [AttestationSubmitted] =
-            this.unirepConfig.unirep.filters.AttestationSubmitted()
-                .topics as string[]
+        // const [AttestationSubmitted] =
+        //     this.unirepConfig.unirep.filters.AttestationSubmitted()
+        //         .topics as string[]
         this.userState.on(EpochEnded, this.epochEnded.bind(this))
-        this.userState.on(
-            AttestationSubmitted,
-            this.attestationSubmitted.bind(this)
-        )
+        // this.userState.on(
+        //     AttestationSubmitted,
+        //     this.attestationSubmitted.bind(this)
+        // )
     }
 
     async updateLatestTransitionedEpoch() {
@@ -222,6 +239,24 @@ export class User {
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
+        const { number: currentEpoch } =
+            await this.userState?.loadCurrentEpoch()
+        const subsidy = await this.unirepConfig.unirepSocial.subsidy()
+        // see the unirep social circuits for more info about this
+        // the subsidy key is an epoch key that doesn't have the modulus applied
+        // it uses nonce == maxNonce + 1
+        const subsidyKey = genEpochKey(
+            this.id.identityNullifier,
+            currentEpoch,
+            0,
+            this.unirepConfig.epochTreeDepth
+        )
+        const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
+            currentEpoch,
+            subsidyKey
+        )
+        console.log(subsidy, spentSubsidy)
+        this.subsidyReputation = subsidy.sub(spentSubsidy).toNumber()
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
@@ -333,6 +368,7 @@ export class User {
         await this.calculateAllEpks()
         // start the daemon later so the signup ui isn't slow
         await this.startSync()
+        await this.loadReputation()
         return {
             i: serializedIdentity,
             c: commitment,
@@ -370,6 +406,17 @@ export class User {
         this.reputation = 0
         this.spent = 0
         this.save()
+    }
+
+    async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
+        const currentEpoch = await this.loadCurrentEpoch()
+        if (!this.userState) throw new Error('User state not initialized')
+        const { proof, publicSignals } = await this.userState.genSubsidyProof(
+            BigInt(this.unirepConfig.attesterId),
+            BigInt(minRep),
+            BigInt(notEpochKey)
+        )
+        return { proof, publicSignals, currentEpoch }
     }
 
     async genRepProof(proveKarma: number, epkNonce: number, minRep = 0) {
@@ -431,28 +478,6 @@ export class User {
         } // store user state in local storage
 
         return { error, transaction }
-    }
-
-    async attestationSubmitted(event: any) {
-        const epochKey = ethers.BigNumber.from(event.topics[2])
-        const decodedData = this.unirepConfig.unirep.interface.decodeEventLog(
-            'AttestationSubmitted',
-            event.data
-        )
-        const attestation = new Attestation(
-            BigInt(decodedData.attestation.attesterId),
-            BigInt(decodedData.attestation.posRep),
-            BigInt(decodedData.attestation.negRep),
-            BigInt(decodedData.attestation.graffiti),
-            BigInt(decodedData.attestation.signUp)
-        )
-        const normalizedEpk = epochKey
-            .toHexString()
-            .replace('0x', '')
-            .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
-        if (this.currentEpochKeys.indexOf(normalizedEpk) !== -1) {
-            this.spent += Number(attestation.negRep)
-        }
     }
 
     async epochEnded(event: any) {

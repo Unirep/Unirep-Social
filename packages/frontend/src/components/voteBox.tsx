@@ -148,6 +148,12 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         </div>
                     </div>
                     <div className="epks">
+                        <div
+                            className={epkNonce === -1 ? 'epk chosen' : 'epk'}
+                            onClick={() => setEpkNonce(-1)}
+                        >
+                            Subsidy
+                        </div>
                         {userContext.currentEpochKeys.map((key, i) => (
                             <div
                                 className={

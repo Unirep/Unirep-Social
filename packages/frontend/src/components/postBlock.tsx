@@ -81,11 +81,13 @@ const PostBlock = ({ postId, page }: Props) => {
                         onClick={() => setEpkHovered(!isEpkHovered)}
                         // title={post.reputation === DEFAULT_POST_KARMA? `This person is very modest, showing off only ${DEFAULT_POST_KARMA} Rep.` : `This person is showing off ${post.reputation} Rep.`}
                     >
-                        Post by {post.epoch_key}{' '}
-                        <img
-                            src={require('../../public/images/lighting.svg')}
-                        />
-                        {isEpkHovered ? (
+                        Post by {post.epoch_key}
+                        {post.reputation > 0 && (
+                            <img
+                                src={require('../../public/images/lighting.svg')}
+                            />
+                        )}
+                        {isEpkHovered && post.reputation > 0 ? (
                             <span className="show-off-rep">
                                 {post.reputation === unirepConfig.postReputation
                                     ? `This person is very modest, showing off only ${unirepConfig.postReputation} Rep.`
@@ -99,7 +101,7 @@ const PostBlock = ({ postId, page }: Props) => {
                 <a
                     className="etherscan"
                     target="_blank"
-                    href={`${EXPLORER_URL}/tx/${post.id}`}
+                    href={`${EXPLORER_URL}/tx/${post.transactionHash}`}
                 >
                     <span>Etherscan</span>
                     <img src={require('../../public/images/etherscan.svg')} />
@@ -146,7 +148,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     <div className="comment-block">
                         {!userContext.userState ? (
                             <AlertBox type={AlertType.commentNotLogin} />
-                        ) : userContext.netReputation <
+                        ) : userContext.spendableReputation <
                           unirepConfig.commentReputation ? (
                             <AlertBox type={AlertType.commentNotEnoughPoints} />
                         ) : showCommentField ? (

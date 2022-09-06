@@ -73,7 +73,7 @@ async function userStateTransition(req, res) {
             unirepSocialContract.address,
             {
                 data: calldata,
-                gasLimit: 500000,
+                gasLimit: 1000000,
             }
         )
         transactionPromises.push(TransactionManager.wait(hash))

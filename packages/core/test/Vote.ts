@@ -35,7 +35,10 @@ describe('Vote', function () {
         unirepContract = await deployUnirep(accounts[0], _settings)
         unirepSocialContract = await deployUnirepSocial(
             accounts[0],
-            unirepContract.address
+            unirepContract.address,
+            {
+                airdropReputation: 30,
+            }
         )
     })
 
