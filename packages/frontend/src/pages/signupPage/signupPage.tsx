@@ -127,7 +127,7 @@ const SignupPage = () => {
     useEffect(() => {
         (async() => {
       
-            const {oauth_token, oauth_verifier} = queryString.parse(window.location.search);  
+            const {oauth_token, oauth_verifier} = queryString.parse(window.location.search)
             
             if (oauth_token && oauth_verifier) {
              try {

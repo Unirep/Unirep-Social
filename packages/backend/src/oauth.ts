@@ -17,7 +17,7 @@ const OAuth = (oauthCallback: string) => {
         return new Promise((resolve, reject) => {
           _oauth.getOAuthRequestToken((error, oauth_token, oauth_token_secret, results) => {
             if(error) {
-              reject(error);  
+              throw new Error(error) 
             } else {
               resolve({oauth_token, oauth_token_secret, results});  
             }
