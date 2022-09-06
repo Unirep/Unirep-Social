@@ -105,13 +105,16 @@ async function createPost(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, title, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(title + content)
+    )
 
     const error = await verifyReputationProof(
         req.db,
@@ -128,11 +131,6 @@ async function createPost(req, res) {
     }
 
     const { attestingFee } = await unirepContract.config()
-
-    const { title, content } = req.body
-    const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
-    )
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishPost',
@@ -193,25 +191,19 @@ async function createPostSubsidy(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, title, content } = req.body
     const subsidyProof = new BaseProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(title + content)
+    )
     const { attestingFee } = await unirepContract.config()
-
-    const { title, content } = req.body
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishPostSubsidy',
-        [
-            title !== undefined && title.length > 0
-                ? `${titlePrefix}${title}${titlePostfix}${content}`
-                : content,
-            subsidyProof.publicSignals,
-            subsidyProof.proof,
-        ]
+        [hashedContent, subsidyProof.publicSignals, subsidyProof.proof]
     )
     const epochKey = publicSignals[1]
     const minRep = publicSignals[4]
@@ -224,6 +216,7 @@ async function createPostSubsidy(req, res) {
     )
     const post = await req.db.create('Post', {
         content,
+        hashedContent,
         title,
         epochKey,
         epoch: currentEpoch,
