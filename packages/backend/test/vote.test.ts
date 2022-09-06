@@ -24,7 +24,7 @@ test('should vote on a post', async (t: any) => {
     {
         const upvote = 5
         const downvote = 0
-        const receiver = post.epochKey.toString(16)
+        const receiver = post.epochKey.toString()
         await vote(t, user2.iden, receiver, post._id, true, upvote, downvote)
     }
 
@@ -32,7 +32,7 @@ test('should vote on a post', async (t: any) => {
     {
         const upvote = 0
         const downvote = 2
-        const receiver = post.epochKey.toString(16)
+        const receiver = post.epochKey.toString()
         await vote(t, user2.iden, receiver, post._id, true, upvote, downvote)
     }
     t.pass()
@@ -62,7 +62,7 @@ test('should vote on comment', async (t: any) => {
     {
         const upvote = 4
         const downvote = 0
-        const receiver = comment.epochKey.toString(16)
+        const receiver = comment.epochKey.toString()
         await vote(
             t,
             user2.iden,
@@ -78,7 +78,7 @@ test('should vote on comment', async (t: any) => {
     {
         const upvote = 0
         const downvote = 1
-        const receiver = comment.epochKey.toString(16)
+        const receiver = comment.epochKey.toString()
         await vote(
             t,
             user2.iden,

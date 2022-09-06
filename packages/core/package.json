@@ -4,11 +4,12 @@
     "description": "",
     "main": "build/src/index.js",
     "scripts": {
-        "build": "hardhat typechain && tsc && yarn abi",
+        "build": "yarn buildVerifier && hardhat typechain && tsc && yarn abi",
+        "buildVerifier": "sh scripts/genVerifiers.sh",
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
         "test-cli": "./scripts/testCLI.sh",
-        "test": "hardhat test --parallel",
+        "test": "hardhat test",
         "deploy": "hardhat run scripts/deploy.js"
     },
     "repository": {
@@ -38,6 +39,7 @@
     "dependencies": {
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
+        "@unirep-social/circuits": "^0.0.1",
         "@unirep/circuits": "1.0.0-alpha-8",
         "@unirep/contracts": "1.0.0-alpha-10",
         "@unirep/core": "1.0.0-alpha-14",
@@ -50,6 +52,7 @@
         "ethers": "^5.5.4",
         "nanoid": "3",
         "path-browserify": "^1.0.1",
+        "snarkjs": "^0.4.24",
         "typescript": "^4.0.5"
     }
 }

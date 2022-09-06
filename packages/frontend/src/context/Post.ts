@@ -165,9 +165,13 @@ export class Data {
 
     async loadVotesForPostId(postId: string) {
         const r = await fetch(makeURL(`post/${postId}/votes`))
-        const votes = await r.json()
-        if (votes === null) return
-        this.ingestVotes(votes as Vote[])
+        const votesResult = await r.json()
+        if (votesResult === null) return
+
+        const votes = (votesResult as Vote[]).map((vote) => {
+            return { ...vote, voter: `${(+vote.voter).toString(16)}` }
+        })
+        this.ingestVotes(votes)
         this.votesByPostId[postId] = votes.map((v: Vote) => v._id)
     }
 
@@ -215,24 +219,29 @@ export class Data {
         epkNonce: number = 0,
         minRep = 0
     ) {
-        const user = (UserContext as any)._currentValue
-
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
                     title: 'Creating post',
                     details: 'Generating zk proof...',
                 })
-                const { proof, publicSignals } = await user.genRepProof(
-                    unirepConfig.postReputation,
-                    epkNonce,
-                    minRep
-                )
+                // if the epk nonce is a positive value then we generate a rep
+                // proof, otherwise we generate a subsidy proof
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          unirepConfig.postReputation,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(minRep))
                 updateStatus({
                     title: 'Creating post',
                     details: 'Waiting for TX inclusion...',
                 })
-                const apiURL = makeURL('post', {})
+                const apiURL = makeURL(
+                    epkNonce >= 0 ? 'post' : 'post/subsidy',
+                    {}
+                )
                 const r = await fetch(apiURL, {
                     headers: {
                         'content-type': 'application/json',
@@ -254,6 +263,7 @@ export class Data {
                 this.feedsByQuery[QueryType.New].unshift(post.id)
                 this.postDraft = { title: '', content: '' }
                 this.save()
+                await userContext.loadReputation()
 
                 return { id: transaction, transactionId: transaction }
             },
@@ -267,28 +277,38 @@ export class Data {
     vote(
         postId: string = '',
         commentId: string = '',
-        receiver: string,
+        _receiver: string,
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
         minRep = 0
     ) {
+        const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
                     title: 'Creating Vote',
                     details: 'Generating ZK proof...',
                 })
-                const { proof, publicSignals } = await userContext.genRepProof(
-                    upvote + downvote,
-                    epkNonce,
-                    Math.max(upvote + downvote, minRep)
-                )
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          upvote + downvote,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(
+                          minRep,
+                          `0x${_receiver.replace('0x', '')}`
+                      ))
                 updateStatus({
                     title: 'Creating Vote',
                     details: 'Broadcasting vote...',
                 })
-                const r = await fetch(makeURL('vote'), {
+                const receiver = _receiver.startsWith('0x')
+                    ? parseInt(_receiver, 16).toString()
+                    : _receiver
+                const url = makeURL(epkNonce >= 0 ? 'vote' : 'vote/subsidy')
+                const r = await fetch(url, {
                     headers: {
                         'content-type': 'application/json',
                     },
@@ -296,9 +316,9 @@ export class Data {
                         upvote,
                         downvote,
                         proof,
-                        minRep: Math.max(upvote + downvote, minRep),
+                        minRep,
                         publicSignals,
-                        receiver,
+                        receiver: receiverIn10,
                         dataId: postId.length > 0 ? postId : commentId,
                         isPost: !!postId,
                     }),
@@ -314,6 +334,7 @@ export class Data {
 
                 if (postId) await this.loadPost(postId)
                 if (commentId) await this.loadComment(commentId)
+                await userContext.loadReputation()
 
                 return {
                     id: postId ? postId : commentId,
@@ -339,16 +360,21 @@ export class Data {
                     title: 'Creating comment',
                     details: 'Generating ZK proof...',
                 })
-                const { proof, publicSignals } = await userContext.genRepProof(
-                    unirepConfig.commentReputation,
-                    epkNonce,
-                    minRep
-                )
+                const { proof, publicSignals } = await (epkNonce >= 0
+                    ? userContext.genRepProof(
+                          unirepConfig.commentReputation,
+                          epkNonce,
+                          minRep
+                      )
+                    : userContext.genSubsidyProof(minRep))
                 updateStatus({
                     title: 'Creating comment',
                     details: 'Waiting for transaction...',
                 })
-                const r = await fetch(makeURL('comment'), {
+                const url = makeURL(
+                    epkNonce >= 0 ? 'comment' : 'comment/subsidy'
+                )
+                const r = await fetch(url, {
                     headers: {
                         'content-type': 'application/json',
                     },
@@ -371,6 +397,7 @@ export class Data {
 
                 this.commentDraft = { title: '', content: '' }
                 this.save()
+                await userContext.loadReputation()
 
                 return {
                     id: postId + '#' + transaction,

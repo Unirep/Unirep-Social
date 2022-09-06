@@ -1,5 +1,5 @@
 const { deployUnirep } = require('@unirep/contracts/deploy')
-const UnirepSocial = require('../artifacts/contracts/UnirepSocial.sol/UnirepSocial.json')
+const { deployUnirepSocial } = require('../src/utils')
 const {
     GLOBAL_STATE_TREE_DEPTH,
     USER_STATE_TREE_DEPTH,
@@ -28,20 +28,14 @@ const maxAttesters = 2 ** USER_STATE_TREE_DEPTH - 1
         maxUsers,
         maxAttesters,
     })
-    const UnirepSocialF = new ethers.ContractFactory(
-        UnirepSocial.abi,
-        UnirepSocial.bytecode,
-        signer
-    )
     const postReputation = 5
     const commentReputation = 3
-    const airdrop = 30
-    const unirepSocial = await UnirepSocialF.deploy(
-        unirep.address,
+    const airdropReputation = 0
+    const unirepSocial = await deployUnirepSocial(signer, unirep.address, {
         postReputation,
         commentReputation,
-        airdrop
-    )
+        airdropReputation,
+    })
     await unirepSocial.deployed()
     console.log(`Unirep address: ${unirep.address}`)
     console.log(`Unirep social address: ${unirepSocial.address}`)
