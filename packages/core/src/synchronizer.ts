@@ -149,11 +149,13 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             },
         })
         const minRep = decodedData.minRep.toNumber()
+        const hashedContent = decodedData._contentHash
 
         if (findComment) {
             db.update('Comment', {
                 where: {
                     _id: findComment._id,
+                    hashedContent,
                 },
                 update: {
                     status: 1,
@@ -161,7 +163,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 },
             })
         } else {
-            const hashedContent: string = decodedData._postContent ?? ''
             db.create('Comment', {
                 transactionHash,
                 postId,
@@ -248,11 +249,13 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const epoch = Number(event.topics[1])
         const epochKey = BigInt(event.topics[2]).toString(10)
         const minRep = decodedData.minRep.toNumber()
+        const hashedContent = decodedData._contentHash
 
         if (findPost) {
             db.update('Post', {
                 where: {
                     _id: findPost._id,
+                    hashedContent,
                 },
                 update: {
                     status: 1,
@@ -260,7 +263,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 },
             })
         } else {
-            const hashedContent: string = decodedData._postContent ?? ''
             db.create('Post', {
                 transactionHash,
                 hashedContent,
