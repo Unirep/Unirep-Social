@@ -1,8 +1,9 @@
 import { BigNumberish, ethers } from 'ethers'
 import { ZkIdentity } from '@unirep/crypto'
-import { defaultProver } from '@unirep/circuits/provers/defaultProver'
+import { defaultProver } from '@unirep-social/circuits/provers/defaultProver'
 import * as config from '@unirep/circuits'
-import { schema, UserState } from '@unirep/core'
+import { schema } from '@unirep/core'
+import { SocialUserState } from '../src/UserState'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
 
@@ -34,7 +35,7 @@ export const genUserState = async (
 ) => {
     const unirepContract = getUnirepContract(address, provider)
     let db: DB = _db ?? (await SQLiteConnector.create(schema, ':memory:'))
-    const userState = new UserState(
+    const userState = new SocialUserState(
         db,
         defaultProver,
         unirepContract,
