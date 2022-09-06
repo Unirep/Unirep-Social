@@ -3,8 +3,8 @@ import catchError from '../catchError'
 import { ethers } from 'ethers'
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof } from '@unirep/contracts'
-import { verifyReputationProof } from '../utils'
+import { EpochKeyProof, ReputationProof } from '@unirep/contracts'
+import { verifyEpochKeyProof, verifyReputationProof } from '../utils'
 import {
     UNIREP,
     UNIREP_SOCIAL_ABI,
@@ -23,6 +23,7 @@ export default (app: Express) => {
     app.get('/api/comment/:commentId/votes', catchError(loadVotesByCommentId))
     app.get('/api/comment/', catchError(listComments))
     app.post('/api/comment', catchError(createComment))
+    app.post('/api/comment/:id', catchError(editComment))
 }
 
 async function loadComment(req, res, next) {
@@ -115,7 +116,7 @@ async function createComment(req, res) {
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
-        _id: postId,
+        postId,
     })
     if (!post) {
         res.status(400).json({
@@ -169,6 +170,72 @@ async function createComment(req, res) {
         error: error,
         transaction: hash,
         currentEpoch: currentEpoch,
+        comment,
+    })
+}
+
+async function editComment(req, res) {
+    const commentId = req.params.id
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+
+    // Parse Inputs
+    const { publicSignals, proof, content } = req.body
+    const epkProof = new EpochKeyProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const newHashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
+
+    const error = await verifyEpochKeyProof(req.db, epkProof)
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
+    const { hashedContent: oldHashedContent } = await req.db.findOne(
+        'Comment',
+        {
+            commentId,
+        }
+    )
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+        commentId,
+        oldHashedContent,
+        newHashedContent,
+        epkProof.publicSignals,
+        epkProof.proof,
+    ])
+
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+        }
+    )
+
+    const comment = await req.db.update('Comment', {
+        where: {
+            commentId,
+            hashedContent: oldHashedContent,
+        },
+        update: {
+            content,
+            hashedContent: newHashedContent,
+        },
+    })
+
+    res.json({
+        error: error,
+        transaction: hash,
         comment,
     })
 }

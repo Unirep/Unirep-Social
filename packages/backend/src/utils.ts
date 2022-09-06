@@ -6,6 +6,7 @@ import {
     UserTransitionProof,
     StartTransitionProof,
     ProcessAttestationsProof,
+    EpochKeyProof,
 } from '@unirep/contracts'
 import { DB } from 'anondb'
 import { UNIREP, UNIREP_ABI, DEFAULT_ETH_PROVIDER } from './constants'
@@ -77,6 +78,31 @@ const verifyReputationProof = async (
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
+    }
+}
+
+const verifyEpochKeyProof = async (
+    db: DB,
+    epochKeyProof: EpochKeyProof
+): Promise<string | undefined> => {
+    const epoch = Number(epochKeyProof.epoch)
+    const gstRoot = epochKeyProof.globalStateTree.toString()
+
+    // check GST root
+    {
+        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        if (!exists) {
+            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
+        }
+    }
+
+    const isProofValid = await Prover.verifyProof(
+        Circuit.verifyEpochKey,
+        (epochKeyProof as any).publicSignals,
+        formatProofForSnarkjsVerification(epochKeyProof.proof as string[])
+    )
+    if (!isProofValid) {
+        return 'Error: invalid epoch key proof'
     }
 }
 
@@ -211,4 +237,9 @@ const verifyUSTProof = async (
     }
 }
 
-export { verifyReputationProof, verifyUSTProof, verifyAirdropProof }
+export {
+    verifyReputationProof,
+    verifyUSTProof,
+    verifyEpochKeyProof,
+    verifyAirdropProof,
+}

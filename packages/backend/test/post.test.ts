@@ -1,7 +1,7 @@
 import test from 'ava'
 import { startServer } from './environment'
 
-import { createPost, queryPost, signIn, signUp } from './utils'
+import { createPost, editPost, queryPost, signIn, signUp } from './utils'
 
 test.before(async (t: any) => {
     const context = await startServer()
@@ -15,4 +15,16 @@ test('should create a post', async (t: any) => {
     const { transaction } = await createPost(t, iden)
     const exist = await queryPost(t, transaction)
     t.true(exist)
+})
+
+test('should edit a post', async (t: any) => {
+    const { iden } = await signUp(t)
+    await signIn(t, iden)
+
+    const { transaction } = await createPost(t, iden)
+    const exist = await queryPost(t, transaction)
+    t.true(exist)
+
+    const postId = 2
+    await editPost(t, iden, postId)
 })

@@ -213,6 +213,106 @@ export const createPost = async (t, iden) => {
     return data
 }
 
+export const editPost = async (t, iden, postId) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const epkProof = await userState.genVerifyEpochKeyProof(epkNonce)
+    const isValid = await epkProof.verify()
+    t.true(isValid)
+    const publicSignals = epkProof.publicSignals
+    const proof = epkProof.proof
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/post/${postId}`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: 'new content',
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const editComment = async (t, iden, commentId) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const epkProof = await userState.genVerifyEpochKeyProof(epkNonce)
+    const isValid = await epkProof.verify()
+    t.true(isValid)
+    const publicSignals = epkProof.publicSignals
+    const proof = epkProof.proof
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/comment/${commentId}`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: 'new content',
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/comment error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
 export const queryPost = async (t, postId) => {
     for (;;) {
         await new Promise((r) => setTimeout(r, 1000))
