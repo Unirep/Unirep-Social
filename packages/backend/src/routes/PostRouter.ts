@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { EpochKeyProof, ReputationProof } from '@unirep/contracts'
+import { ReputationProof, BaseProof, EpochKeyProof } from '@unirep/contracts'
 import { ethers } from 'ethers'
 import {
     UNIREP_SOCIAL,
@@ -26,6 +26,7 @@ export default (app: Express) => {
     app.get('/api/post/:postId/comments', catchError(loadCommentsByPostId))
     app.get('/api/post/:postId/votes', catchError(loadVotesByPostId))
     app.post('/api/post', catchError(createPost))
+    app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/:id', catchError(editPost))
 }
 
@@ -105,13 +106,16 @@ async function createPost(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, title, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
+    const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(title + content)
+    )
 
     const error = await verifyReputationProof(
         req.db,
@@ -128,11 +132,6 @@ async function createPost(req, res) {
     }
 
     const { attestingFee } = await unirepContract.config()
-
-    const { title, content } = req.body
-    const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
-    )
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishPost',
@@ -171,6 +170,64 @@ async function createPost(req, res) {
         confirmed: 0,
     })
 
+    res.json({
+        transaction: hash,
+        currentEpoch: currentEpoch,
+        post,
+    })
+}
+
+async function createPostSubsidy(req, res) {
+    // should have content, epk, proof, minRep, nullifiers, publicSignals
+    const unirepContract = new ethers.Contract(
+        UNIREP,
+        UNIREP_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+    const currentEpoch = Number(await unirepContract.currentEpoch())
+
+    // Parse Inputs
+    const { publicSignals, proof, title, content } = req.body
+    const subsidyProof = new BaseProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(title + content)
+    )
+    const { attestingFee } = await unirepContract.config()
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData(
+        'publishPostSubsidy',
+        [hashedContent, subsidyProof.publicSignals, subsidyProof.proof]
+    )
+    const epochKey = publicSignals[1]
+    const minRep = publicSignals[4]
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+            value: attestingFee,
+        }
+    )
+    const post = await req.db.create('Post', {
+        content,
+        hashedContent,
+        title,
+        epochKey,
+        epoch: currentEpoch,
+        proveMinRep: minRep !== null ? true : false,
+        minRep: Number(minRep),
+        posRep: 0,
+        negRep: 0,
+        status: 0,
+        transactionHash: hash,
+    })
     res.json({
         transaction: hash,
         currentEpoch: currentEpoch,

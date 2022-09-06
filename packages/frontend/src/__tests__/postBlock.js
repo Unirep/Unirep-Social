@@ -102,5 +102,4 @@ test("should display commentField when user's net reputation > unirep commentRep
 
     renderPostBlock(userData, unirepData, postId, postData, page)
     expect(screen.getByText(postData.commentDraft.content)).toBeInTheDocument()
-    // todo: add more assertions here after textEditor is done
 })

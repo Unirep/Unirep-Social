@@ -149,7 +149,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const transactionHash = event.transactionHash
         const postId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
-        const epochKey = BigInt(event.topics[3]).toString(16)
+        const epochKey = BigInt(event.topics[3]).toString(10)
         const commentId = decodedData._commentId.toString()
         const findComment = await this._db.findOne('Comment', {
             where: {
@@ -258,7 +258,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         )
         const postId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
-        const epochKey = BigInt(event.topics[3]).toString(16)
+        const epochKey = BigInt(event.topics[3]).toString(10)
         const minRep = decodedData.minRep.toNumber()
         const hashedContent = decodedData._contentHash
 
@@ -368,8 +368,8 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         )
         const _transactionHash = event.transactionHash
         const _epoch = Number(event.topics[1])
-        const _fromEpochKey = BigInt(event.topics[2]).toString(16)
-        const _toEpochKey = BigInt(event.topics[3]).toString(16)
+        const _fromEpochKey = BigInt(event.topics[2]).toString(10)
+        const _toEpochKey = BigInt(event.topics[3]).toString(10)
 
         const _posRep = Number(decodedData.upvoteValue._hex)
         const _negRep = Number(decodedData.downvoteValue._hex)
@@ -509,7 +509,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         )
         const _transactionHash = event.transactionHash
         const _epoch = Number(event.topics[1])
-        const _epochKey = BigInt(event.topics[2]).toString(16)
+        const _epochKey = BigInt(event.topics[2]).toString(10)
 
         db.delete('Record', {
             where: {
