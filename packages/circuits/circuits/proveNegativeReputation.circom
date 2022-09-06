@@ -88,6 +88,10 @@ template ProveNegativeReputation(GST_tree_depth, user_state_tree_depth, epoch_tr
     max_rep_check.in[1] <== maxRep;
     max_rep_check.out === 1;
 
+    // check if user is signed up
+
+    sign_up === 1;
+
     /* End of check 4 */
 
     /* 5. Output an epoch key */
