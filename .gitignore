@@ -1,6 +1,8 @@
 node_modules
 .DS_Store
 
+zksnarkBuild
+
 #Buidler files
 artifacts
 cache
@@ -14,3 +16,4 @@ packages/frontend/cypress/screenshots
 *.swp
 
 .node-version
+packages/core/contracts/*Verifier.sol

@@ -77,6 +77,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     const userData = {
         userState: true,
         netReputation: 30,
+        subsidyReputation: 20,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
     }
@@ -106,7 +107,11 @@ test('should render MainPage with mocked data and true UserState', () => {
 
     // userState is *true*
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
-    expect(screen.getByText(userData.netReputation)).toBeInTheDocument()
+    expect(
+        screen.getByText(
+            `${userData.netReputation} | ${userData.subsidyReputation}`
+        )
+    ).toBeInTheDocument()
     expect(
         screen.getByText(/in this cycle, my personas are/i)
     ).toBeInTheDocument()
@@ -123,6 +128,7 @@ test('should page rerender after user clicks create post button', async () => {
     const userData = {
         userState: true,
         netReputation: 30,
+        subsidyReputation: 20,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
     }
@@ -146,7 +152,11 @@ test('should page rerender after user clicks create post button', async () => {
     const createPostLink = screen.getByText(/create post/i)
     await userEvent.click(createPostLink)
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
-    expect(screen.getByText(userData.netReputation)).toBeInTheDocument()
+    expect(
+        screen.getByText(
+            `${userData.netReputation} | ${userData.subsidyReputation}`
+        )
+    ).toBeInTheDocument()
     expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
     expect(screen.getByText(/remaining time/i)).toBeInTheDocument()

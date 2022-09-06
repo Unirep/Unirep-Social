@@ -62,6 +62,7 @@ export interface Post {
     commentCount: number
     current_epoch: number
     proofIndex: number
+    transactionHash: string
 }
 
 export enum ButtonType {

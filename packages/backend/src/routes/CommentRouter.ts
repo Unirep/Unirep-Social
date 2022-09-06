@@ -3,7 +3,7 @@ import catchError from '../catchError'
 import { ethers } from 'ethers'
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof } from '@unirep/contracts'
+import { ReputationProof, BaseProof } from '@unirep/contracts'
 import { verifyReputationProof } from '../utils'
 import {
     UNIREP,
@@ -23,6 +23,7 @@ export default (app: Express) => {
     app.get('/api/comment/:commentId/votes', catchError(loadVotesByCommentId))
     app.get('/api/comment/', catchError(listComments))
     app.post('/api/comment', catchError(createComment))
+    app.post('/api/comment/subsidy', catchError(createCommentSubsidy))
 }
 
 async function loadComment(req, res, next) {
@@ -93,7 +94,7 @@ async function createComment(req, res) {
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    const epochKey = BigInt(reputationProof.epochKey.toString()).toString(16)
+    const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
 
     const error = await verifyReputationProof(
@@ -140,7 +141,7 @@ async function createComment(req, res) {
     const comment = await req.db.create('Comment', {
         postId: req.body.postId,
         content: req.body.content, // TODO: hashedContent
-        epochKey: epochKey,
+        epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== 0 ? true : false,
         minRep: Number(minRep),
@@ -163,6 +164,75 @@ async function createComment(req, res) {
 
     res.json({
         error: error,
+        transaction: hash,
+        currentEpoch: currentEpoch,
+        comment,
+    })
+}
+
+async function createCommentSubsidy(req, res) {
+    const unirepContract = new ethers.Contract(
+        UNIREP,
+        UNIREP_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+    const currentEpoch = Number(await unirepContract.currentEpoch())
+
+    // Parse Inputs
+    const { publicSignals, proof } = req.body
+    const reputationProof = new BaseProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const epochKey = publicSignals[1]
+    const minRep = publicSignals[4]
+
+    const { attestingFee } = await unirepContract.config()
+    const post = await req.db.findOne('Post', {
+        _id: req.body.postId,
+    })
+    if (!post) {
+        res.status(400).json({
+            error: 'Post does not exist',
+        })
+        return
+    }
+    const calldata = unirepSocialContract.interface.encodeFunctionData(
+        'publishCommentSubsidy',
+        [
+            post.transactionHash,
+            req.body.content,
+            reputationProof.publicSignals,
+            reputationProof.proof,
+        ]
+    )
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+            value: attestingFee,
+        }
+    )
+
+    const comment = await req.db.create('Comment', {
+        postId: req.body.postId,
+        content: req.body.content, // TODO: hashedContent
+        epochKey,
+        epoch: currentEpoch,
+        proveMinRep: minRep !== 0 ? true : false,
+        minRep: Number(minRep),
+        posRep: 0,
+        negRep: 0,
+        status: 0,
+        transactionHash: hash,
+    })
+
+    res.json({
         transaction: hash,
         currentEpoch: currentEpoch,
         comment,

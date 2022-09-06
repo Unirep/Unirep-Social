@@ -10,6 +10,10 @@ try {
     const localConfig = require(`./localConfig.ts${TERMINATOR}`)
     Object.assign(config, localConfig.default)
 } catch (_) {}
+try {
+    const localConfig = (window as any).__DEV_CONFIG__
+    Object.assign(config, localConfig)
+} catch (_) {}
 
 if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
     config.SERVER = 'http://testurl.invalidtld'
