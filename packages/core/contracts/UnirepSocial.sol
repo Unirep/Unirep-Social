@@ -32,6 +32,12 @@ contract UnirepSocial {
     // One epoch key is allowed to get airdrop once an epoch
     mapping(uint256 => bool) public isEpochKeyGotAirdrop;
 
+    // assign posts/comments with an id
+    uint256 public contentId = 1;
+
+    // post/comment id => hashed content => epoch key
+    mapping(uint256 => mapping(bytes32 => uint256)) public hashedContentMapping;
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -45,8 +51,9 @@ contract UnirepSocial {
 
     event PostSubmitted(
         uint256 indexed _epoch,
+        uint256 indexed _postId,
         uint256 indexed _epochKey,
-        bytes32 _postContent,
+        bytes32 _contentHash,
         uint256 minRep
     );
 
@@ -54,8 +61,14 @@ contract UnirepSocial {
         uint256 indexed _epoch,
         uint256 indexed _postId,
         uint256 indexed _epochKey,
-        bytes32 _commentContent,
+        uint256 _commentId,
+        bytes32 _contentHash,
         uint256 minRep
+    );
+
+    event ContentUpdated(
+        uint256 indexed _id,
+        bytes32 _newContent
     );
 
     event VoteSubmitted(
@@ -103,55 +116,100 @@ contract UnirepSocial {
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
-     * @param content The text content of the post
+     * @param contentHash The hashed content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
      */
     function publishPost(
-        bytes32 content,
+        bytes32 contentHash,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        uint256 epochKey = publicSignals[0];
         require(publicSignals[maxReputationBudget + 4] == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
+        // saved post id and hashed content
+        uint256 postId = contentId;
+        hashedContentMapping[postId][content] = epochKey;
+
         emit PostSubmitted(
             unirep.currentEpoch(),
-            publicSignals[0], // epoch key
-            content,
+            postId,
+            epochKey,
+            contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
+
+        // update content Id
+        contentId ++;
     }
 
     /*
      * Leave a comment on chain with a reputation proof to prove that the user has enough karma to spend
      * @param postId The transaction hash of the post
-     * @param content The text content of the post
+     * @param contentHash The hashed content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to comment
      */
     function leaveComment(
         uint256 postId,
-        bytes32 content,
+        bytes32 contentHash,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        uint256 epochKey = publicSignals[0];
         require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(postId < contentId, "Unirep Social: the post id is not valid");
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
+        // saved post id and hashed content
+        uint256 commentId = contentId;
+        hashedContentMapping[commentId][content] = epochKey;
+
         emit CommentSubmitted(
             unirep.currentEpoch(),
             postId,
-            publicSignals[0], // epoch key
-            content,
+            epochKey, // epoch key
+            commentId,
+            contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
+
+        // update comment Id
+        contentId ++;
+    }
+
+    /*
+     * Update a published post/comment content
+     * @param id The post ID or the comment ID
+     * @param oleContent The old hashed content of the post/comment
+     * @param newContent The new hashed content of the post/comment
+     * @param publicSignals The public signals of the epoch key proof of the author of the post/comment
+     * @param proof The epoch key proof of the author of the post/comment
+     */
+    function edit(
+        uint256 id,
+        bytes32 oldContent,
+        bytes32 newContent,
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
+    ) external payable {
+        uint256 epochKey = publicSignals[0];
+        require(unirep.verifyEpochKeyValidity(publicSignals, proof), "Unirep Social: The epoch key proof is invalid");
+        require(unirep.globalStateTreeRoots(publicSignals[2], publicSignals[1]) == true, "Unirep Social: Invalid global state tree root");
+        require(hashedContentMapping[id][oldContent] == epochKey, "Unirep Social: Mismatched epoch key proof to the post or the comment id");
+
+        hashedContentMapping[id][oldContent] = 0;
+        hashedContentMapping[id][newContent] = epochKey;
+
+        emit ContentUpdated(id, newContent);
     }
 
     /*

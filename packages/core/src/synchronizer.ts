@@ -80,6 +80,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const [_CommentSubmitted] =
             this.unirepSocialContract.filters.CommentSubmitted()
                 .topics as string[]
+        const [_ContentUpdated] =
+            this.unirepSocialContract.filters.ContentUpdated()
+                .topics as string[]
         const [_VoteSubmitted] =
             this.unirepSocialContract.filters.VoteSubmitted().topics as string[]
         const [_AirdropSubmitted] =
@@ -90,6 +93,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             [_UserSignedUp]: this.socialUserSignedUp.bind(this),
             [_PostSubmitted]: this.postSubmittedEvent.bind(this),
             [_CommentSubmitted]: this.commentSubmittedEvent.bind(this),
+            [_ContentUpdated]: this.contentUpdatedEvent.bind(this),
             [_VoteSubmitted]: this.voteSubmittedEvent.bind(this),
             [_AirdropSubmitted]: this.airdropSubmittedEvent.bind(this),
         }
@@ -102,6 +106,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             this.unirepSocialContract.filters.PostSubmitted().topics as string[]
         const [_CommentSubmitted] =
             this.unirepSocialContract.filters.CommentSubmitted()
+                .topics as string[]
+        const [_ContentUpdated] =
+            this.unirepSocialContract.filters.ContentUpdated()
                 .topics as string[]
         const [_VoteSubmitted] =
             this.unirepSocialContract.filters.VoteSubmitted().topics as string[]
@@ -116,6 +123,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                     _UserSignedUp,
                     _PostSubmitted,
                     _CommentSubmitted,
+                    _ContentUpdated,
                     _VoteSubmitted,
                     _AirdropSubmitted,
                 ],
@@ -139,32 +147,35 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             event.data
         )
         const transactionHash = event.transactionHash
-        const commentId = event.transactionHash
-        const postId = event.topics[2]
+        const postId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
         const epochKey = BigInt(event.topics[3]).toString(16)
+        const commentId = decodedData._commentId.toString()
         const findComment = await this._db.findOne('Comment', {
             where: {
-                transactionHash: commentId,
+                transactionHash,
             },
         })
         const minRep = decodedData.minRep.toNumber()
+        const hashedContent = decodedData._contentHash
 
         if (findComment) {
             db.update('Comment', {
                 where: {
                     _id: findComment._id,
+                    hashedContent,
                 },
                 update: {
                     status: 1,
                     transactionHash,
+                    commentId,
                 },
             })
         } else {
-            const hashedContent: string = decodedData._postContent ?? ''
             db.create('Comment', {
                 transactionHash,
                 postId,
+                commentId,
                 hashedContent,
                 epochKey,
                 epoch,
@@ -182,7 +193,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         })
         db.update('Post', {
             where: {
-                transactionHash: postId,
+                postId,
             },
             update: {
                 // add one for the current comment we're updating
@@ -202,6 +213,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             downvote: this.socialConfig.commentRep,
             epoch,
             action: ActionType.Comment,
+            commentId,
             data: transactionHash,
             transactionHash,
         })
@@ -233,10 +245,10 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         }
     }
     async postSubmittedEvent(event: ethers.Event, db: TransactionDB) {
-        const postId = event.transactionHash
+        const transactionHash = event.transactionHash
         const findPost = await this._db.findOne('Post', {
             where: {
-                transactionHash: postId,
+                transactionHash,
             },
         })
 
@@ -244,24 +256,26 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'PostSubmitted',
             event.data
         )
-        const transactionHash = event.transactionHash
+        const postId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
-        const epochKey = BigInt(event.topics[2]).toString(16)
+        const epochKey = BigInt(event.topics[3]).toString(16)
         const minRep = decodedData.minRep.toNumber()
+        const hashedContent = decodedData._contentHash
 
         if (findPost) {
             db.update('Post', {
                 where: {
                     _id: findPost._id,
+                    hashedContent,
                 },
                 update: {
                     status: 1,
-                    transactionHash,
+                    postId,
                 },
             })
         } else {
-            const hashedContent: string = decodedData._postContent ?? ''
             db.create('Post', {
+                postId,
                 transactionHash,
                 hashedContent,
                 epochKey,
@@ -286,6 +300,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             downvote: this.socialConfig.postRep,
             epoch,
             action: ActionType.Post,
+            postId,
             data: transactionHash,
             transactionHash: transactionHash,
         })
@@ -315,6 +330,33 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 negRep: 0,
             })
         }
+    }
+
+    async contentUpdatedEvent(event: ethers.Event, db: TransactionDB) {
+        const decodedData = this.unirepSocialContract.interface.decodeEventLog(
+            'ContentUpdated',
+            event.data
+        )
+        const id = event.topics[1].toString()
+        const newContent = decodedData._newContent
+
+        db.update('Post', {
+            where: {
+                postId: id,
+            },
+            update: {
+                hashedContent: newContent,
+            },
+        })
+
+        db.update('Comment', {
+            where: {
+                commentId: id,
+            },
+            update: {
+                hashedContent: newContent,
+            },
+        })
     }
 
     async voteSubmittedEvent(event: ethers.Event, db: TransactionDB) {
