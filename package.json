@@ -13,6 +13,7 @@
         "lerna": "^5.1.6"
     },
     "dependencies": {
+        "oauth": "^0.10.0",
         "prettier": "^2.7.1"
     },
     "prettier": {

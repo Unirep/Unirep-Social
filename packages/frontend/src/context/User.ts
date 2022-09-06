@@ -325,7 +325,7 @@ export class User {
         return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
 
-    async signUp(invitationCode: string) {
+    async signUp() {
         if (this.id) {
             throw new Error('Identity already exists!')
         }
@@ -353,7 +353,6 @@ export class User {
         const apiURL = makeURL('signup', {
             commitment: commitment,
             epk: epk1,
-            invitationCode,
         })
         const r = await fetch(apiURL)
         const { epoch, transaction, error } = await r.json()

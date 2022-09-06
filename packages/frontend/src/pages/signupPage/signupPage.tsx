@@ -6,7 +6,7 @@ import queryString from 'query-string'
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 import { ABOUT_URL } from '../../config'
-import { makeURL} from '../../utils'
+import { makeURL } from '../../utils'
 
 import LoadingCover from '../../components/loadingCover'
 import LoadingButton from '../../components/loadingButton'
@@ -48,26 +48,7 @@ const SignupPage = () => {
     }, [step, invitationCode, userEnterIdentity])
 
     const nextStep = async () => {
-        if (step === 0) {
-            // send to server to check if invitation code does exist
-            // if exists, get identity and commitment
-            // setButtonLoading(true)
-            // const ret = await userContext.checkInvitationCode(invitationCode)
-            // if (ret) {
-            //     const p = userContext
-            //         .signUp(invitationCode)
-            //         .catch((err) => setSignupError(err.toString()))
-            //     setSignupPromise(p)
-            //     setStep(1)
-            // } else {
-            //     setErrorMsg(
-            //         'Umm...this is not working. Try again or request a new code.'
-            //     )
-            // }
-            // setButtonLoading(false)
-
-
-        } else if (step === 1) {
+        if (step === 1) {
             if (isDownloaded) {
                 navigator.clipboard?.writeText(userContext.identity || '')
                 setStep(2)
@@ -86,9 +67,6 @@ const SignupPage = () => {
     }
 
     const handleInput = (event: any) => {
-        // if (step === 0) {
-        //     setInvitationCode(event.target.value)
-        // } else 
         if (step === 2) {
             setUserEnterIdentity(event.target.value)
         }
@@ -115,37 +93,52 @@ const SignupPage = () => {
                 },
                 body: JSON.stringify({}),
                 method: 'POST',
-            }).then(res => res.json())
-            const { oauth_token } = r.data
-    
-            window.location.href = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauth_token}`
-        } catch(e) {
+            }).then((res) => {
+                return res.json()
+            })
+            console.log('twitter login request token r:', r)
+            window.location.href = `https://api.twitter.com/oauth/authenticate?oauth_token=${r.oauth_token}`
+        } catch (e) {
             console.error(e)
         }
     }
 
     useEffect(() => {
-        (async() => {
-      
-            const {oauth_token, oauth_verifier} = queryString.parse(window.location.search)
-            
+        ;(async () => {
+            const { oauth_token, oauth_verifier } = queryString.parse(
+                window.location.search
+            )
+            console.log(
+                'oauth_token:',
+                oauth_token,
+                'oauth_verifier:',
+                oauth_verifier
+            )
+
             if (oauth_token && oauth_verifier) {
-             try {
-                //Oauth Step 3
-                const apiURL = makeURL('/twitter/oauth/access_token', {})
-                await fetch(apiURL, {
-                    headers: {
-                        'content-type': 'application/json',
-                    },
-                    body: JSON.stringify({oauth_token, oauth_verifier}),
-                    method: 'POST',
-                });
-                setStep(step+1)
-             } catch (error) {
-              console.error(error); 
-             }
+                try {
+                    //Oauth Step 3
+                    const apiURL = makeURL('/twitter/oauth/access_token', {})
+                    await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({ oauth_token, oauth_verifier }),
+                        method: 'POST',
+                    })
+
+                    // backend check if the user is able to signup, if true, then approve sign up
+                    const p = userContext
+                        .signUp()
+                        .catch((err) => setSignupError(err.toString()))
+                    setSignupPromise(p)
+
+                    setStep(step + 1)
+                } catch (error) {
+                    console.error(error)
+                }
             }
-        })();
+        })()
     }, [])
 
     return (
@@ -196,7 +189,7 @@ const SignupPage = () => {
                         </div>
                     ) : (
                         <textarea
-                            className='larger'
+                            className="larger"
                             onChange={handleInput}
                             value={
                                 step === 1

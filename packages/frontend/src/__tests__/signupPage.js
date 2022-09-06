@@ -52,8 +52,4 @@ test('should render SignupPage correctly with user typing into textbox', async (
         )
     ).toBeInTheDocument()
     expect(screen.getByText(/join us/i)).toBeInTheDocument()
-    // generate text on signup page
-    const textbox = screen.getByRole('textbox')
-    await userEvent.type(textbox, fakeText)
-    expect(screen.getByText(fakeText)).toBeInTheDocument()
 })

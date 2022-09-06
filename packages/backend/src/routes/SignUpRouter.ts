@@ -7,7 +7,6 @@ import {
     DEFAULT_ETH_PROVIDER,
     UNIREP_SOCIAL,
     UNIREP_SOCIAL_ABI,
-    ADMIN_SESSION_CODE,
 } from '../constants'
 import TransactionManager from '../daemons/TransactionManager'
 
@@ -32,13 +31,6 @@ async function signup(req, res) {
         res.status(400).json({
             error: 'Commitment must be exactly 64 hex characters with an optional 0x prefix',
         })
-        return
-    }
-
-    const code = req.query.invitationCode.toString()
-    const deleted = await req.db.delete('InvitationCode', { where: { code } })
-    if (deleted !== 1 && code !== ADMIN_SESSION_CODE) {
-        res.status(403).json({ error: 'Invalid invitation code' })
         return
     }
 

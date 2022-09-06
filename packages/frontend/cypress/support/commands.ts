@@ -54,8 +54,7 @@ Cypress.Commands.add('deployUnirep', () => {
 Cypress.Commands.add('signupNewUser', () => {
     cy.visit('/')
     cy.findByText('Join').click()
-    cy.findByRole('textbox').type('invitationcode')
-    cy.findByText('Let me in').click()
+    cy.findByText('twitter').click() // how to test this?
     cy.wait(3000)
     cy.findByRole('textbox').then((e) => {
         const iden = e[0].value
