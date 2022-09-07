@@ -90,7 +90,7 @@ async function createComment(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, postId, content } = req.body
+    const { publicSignals, proof, transactionHash, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -116,10 +116,10 @@ async function createComment(req, res) {
     }
 
     const { attestingFee } = await unirepContract.config()
-    const post = await req.db.findOne('Post', {
-        postId,
+    const { postId } = await req.db.findOne('Post', {
+        transactionHash,
     })
-    if (!post) {
+    if (!postId) {
         res.status(400).json({
             error: 'Post does not exist',
         })
@@ -128,7 +128,7 @@ async function createComment(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
         [
-            post.transactionHash,
+            postId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -249,7 +249,7 @@ async function createCommentSubsidy(req, res) {
 }
 
 async function editComment(req, res) {
-    const commentId = req.params.id
+    const transactionHash = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -274,10 +274,12 @@ async function editComment(req, res) {
         return
     }
 
-    const { hashedContent: oldHashedContent } = await req.db.findOne(
+    const { hashedContent: oldHashedContent, commentId } = await req.db.findOne(
         'Comment',
         {
-            commentId,
+            where: {
+                transactionHash,
+            },
         }
     )
 

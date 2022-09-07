@@ -236,7 +236,7 @@ async function createPostSubsidy(req, res) {
 }
 
 async function editPost(req, res) {
-    const postId = req.params.id
+    const transactionHash = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -261,9 +261,14 @@ async function editPost(req, res) {
         return
     }
 
-    const { hashedContent: oldHashedContent } = await req.db.findOne('Post', {
-        postId,
-    })
+    const { hashedContent: oldHashedContent, postId } = await req.db.findOne(
+        'Post',
+        {
+            where: {
+                transactionHash,
+            },
+        }
+    )
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
         postId,

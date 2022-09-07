@@ -11,7 +11,6 @@ test.before(async (t: any) => {
 test('should create a post', async (t: any) => {
     const { iden } = await signUp(t)
     await signIn(t, iden)
-
     const { transaction } = await createPost(t, iden)
     const exist = await queryPost(t, transaction)
     t.true(exist)
@@ -20,11 +19,10 @@ test('should create a post', async (t: any) => {
 test('should edit a post', async (t: any) => {
     const { iden } = await signUp(t)
     await signIn(t, iden)
-
     const { transaction } = await createPost(t, iden)
     const exist = await queryPost(t, transaction)
     t.true(exist)
 
-    const postId = 2
-    await editPost(t, iden, postId)
+    await editPost(t, iden, transaction)
+    t.pass()
 })

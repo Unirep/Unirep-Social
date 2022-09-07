@@ -41,11 +41,9 @@ test('should edit a comment', async (t: any) => {
     t.true(exist)
 
     // leave a comment
-    const postId = '4'
-    await createComment(t, iden, postId)
-    t.pass()
+    const comment = await createComment(t, iden, transaction)
 
     // edit a comment
-    const commentId = '5'
-    await editComment(t, iden, commentId)
+    await editComment(t, iden, comment.transaction)
+    t.pass()
 })

@@ -50,7 +50,6 @@ describe('test all CLI subcommands', function () {
         minRepDiff = 15
     let userRepProof, repPublicSignals
     let airdropProof, airdropPublicSignals
-    let transactionHash
     let proofIdx
 
     before(async () => {
@@ -333,7 +332,6 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(postRegMatch).not.equal(null)
-            transactionHash = postRegMatch[0].split('Transaction hash: ')[1]
 
             const proofIndexRegMatch = stdout
                 .trim()
@@ -402,7 +400,7 @@ describe('test all CLI subcommands', function () {
             const command =
                 `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${transactionHash} ` +
+                ` -pid ${1} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
@@ -516,7 +514,6 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(txRegMatch).not.equal(null)
-            transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
     })
 

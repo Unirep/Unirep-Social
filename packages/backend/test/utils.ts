@@ -212,7 +212,7 @@ export const createPost = async (t, iden) => {
     return data
 }
 
-export const editPost = async (t, iden, postId) => {
+export const editPost = async (t, iden, transactionHash) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
@@ -231,7 +231,7 @@ export const editPost = async (t, iden, postId) => {
     const blockNumber = await t.context.provider.getBlockNumber()
     await waitForBackendBlock(t, blockNumber)
 
-    const r = await fetch(`${t.context.url}/api/post/${postId}`, {
+    const r = await fetch(`${t.context.url}/api/post/${transactionHash}`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
@@ -262,7 +262,7 @@ export const editPost = async (t, iden, postId) => {
     return data
 }
 
-export const editComment = async (t, iden, commentId) => {
+export const editComment = async (t, iden, transactionHash) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
@@ -281,7 +281,7 @@ export const editComment = async (t, iden, commentId) => {
     const blockNumber = await t.context.provider.getBlockNumber()
     await waitForBackendBlock(t, blockNumber)
 
-    const r = await fetch(`${t.context.url}/api/comment/${commentId}`, {
+    const r = await fetch(`${t.context.url}/api/comment/${transactionHash}`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
