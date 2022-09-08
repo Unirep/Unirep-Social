@@ -41,7 +41,6 @@ describe('Synchronzier processes events', function () {
             }
         )
         const db = await SQLiteConnector.create(schema, ':memory:')
-        console.log(db)
         synchronizer = new UnirepSocialSynchronizer(
             db,
             defaultProver,
@@ -103,7 +102,7 @@ describe('Synchronzier processes events', function () {
         await synchronizer.waitForSync()
         await ust
     })
-    
+
     it('submit post should succeed', async () => {
         const attesterId = BigInt(
             await unirepContract.attesters(unirepSocialContract.address)
@@ -131,7 +130,6 @@ describe('Synchronzier processes events', function () {
             graffitiPreImage,
             defaultPostReputation
         )
-        console.log('hello')
         const isValid = await reputationProof.verify()
         expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
 
@@ -151,5 +149,88 @@ describe('Synchronzier processes events', function () {
         expect(receipt.status, 'Submit post failed').to.equal(1)
         // const post = await db.findOne('Post', { where:{hashedContent}})
         // expect(post.hashedContent === hashedContent)
+    })
+
+    it('submit comment should succeed', async () => {
+        const attesterId = BigInt(
+            await unirepContract.attesters(unirepSocialContract.address)
+        )
+        let postId
+        {
+            const id = new ZkIdentity()
+            await unirepSocialContract
+                .userSignUp(id.genIdentityCommitment())
+                .then((t) => t.wait())
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = 0
+            const graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            const defaultPostReputation = 5
+            const reputationProof = await userState.genProveReputationProof(
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
+                defaultPostReputation
+            )
+            const isValid = await reputationProof.verify()
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be
+                .true
+
+            const receipt = await unirepSocialContract
+                .publishPost(
+                    'some post text',
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    { value: attestingFee }
+                )
+                .then((t) => t.wait())
+            postId = receipt.transactionHash
+        }
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .userSignUp(id.genIdentityCommitment())
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const proveGraffiti = BigInt(0)
+        const minPosRep = 20,
+            graffitiPreImage = BigInt(0)
+        const epkNonce = 0
+        const defaultCommentReputation = 3
+        const reputationProof = await userState.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            minPosRep,
+            proveGraffiti,
+            graffitiPreImage,
+            defaultCommentReputation
+        )
+        const isValid = await reputationProof.verify()
+        expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+        const isProofValid = await unirepContract.verifyReputation(
+            reputationProof.publicSignals,
+            reputationProof.proof
+        )
+        expect(isProofValid, 'proof is not valid').to.be.true
+        const tx = await unirepSocialContract.leaveComment(
+            postId,
+            'some comment text',
+            reputationProof.publicSignals,
+            reputationProof.proof,
+            { value: attestingFee }
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status, 'Submit comment failed').to.equal(1)
     })
 })
