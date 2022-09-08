@@ -7,7 +7,6 @@ import {
     DEFAULT_ETH_PROVIDER,
     UNIREP_SOCIAL,
     UNIREP_SOCIAL_ABI,
-    ADMIN_SESSION_CODE,
 } from '../constants'
 import TransactionManager from '../daemons/TransactionManager'
 
@@ -35,11 +34,22 @@ async function signup(req, res) {
         return
     }
 
-    const code = req.query.invitationCode.toString()
-    const deleted = await req.db.delete('InvitationCode', { where: { code } })
-    if (deleted !== 1 && code !== ADMIN_SESSION_CODE) {
-        res.status(403).json({ error: 'Invalid invitation code' })
+    const code = req.query.signupCode.toString()
+    const existingCode = await req.db.findOne('SignupCode', {
+        where: {
+            _id: code,
+        },
+    })
+    if (!existingCode) {
+        res.json({
+            error: 'Invalid signup code',
+        })
         return
+    }
+    if (existingCode.usedAt) {
+        res.json({
+            error: 'This code has already been used',
+        })
     }
 
     const commitment = `0x${uploadedCommitment.replace('0x', '')}`
@@ -55,6 +65,14 @@ async function signup(req, res) {
 
     const epoch = await unirepContract.currentEpoch()
     console.log('transaction: ' + hash + ', sign up epoch: ' + epoch.toString())
+    await req.db.update('SignupCode', {
+        where: {
+            _id: code,
+        },
+        update: {
+            usedAt: +new Date(),
+        },
+    })
 
     res.json({
         transaction: hash,

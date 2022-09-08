@@ -16,6 +16,18 @@ const _schema = [
         ],
     },
     {
+        name: 'SignupCode',
+        rows: [
+            ['signupId', 'String'],
+            ['usedAt', 'Int', { optional: true }],
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+        ],
+    },
+    {
         name: 'AccountNonce',
         primaryKey: 'address',
         rows: [

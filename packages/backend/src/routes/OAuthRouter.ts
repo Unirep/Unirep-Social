@@ -7,7 +7,6 @@ import {
     GITHUB_REDIRECT_URI,
 } from '../constants'
 import fetch from 'node-fetch'
-import { nanoid } from 'nanoid'
 import crypto from 'crypto'
 
 export default (app) => {
@@ -55,7 +54,23 @@ async function completeTwitterAuth(req, res) {
             authorization: `Bearer ${auth.access_token}`,
         },
     }).then((r) => r.json())
-    res.json(user)
+    // generate a signup code and give it to the user
+    // prevent double signup
+    console.log(user)
+    const signupId = `twitter-${user.id}`
+    const existingSignup = await req.db.findOne('SignupCode', {
+        signupId,
+    })
+    if (existingSignup && existingSignup.usedAt) {
+        res.json({
+            error: 'You have already signed up with this account',
+        })
+        return
+    }
+    const signupCode = await req.db.create('SignupCode', {
+        signupId: `twitter-${user.id}`,
+    })
+    res.json(signupCode)
 }
 
 async function twitterAuth(req, res) {
@@ -120,9 +135,18 @@ async function completeGithubAuth(req, res, next) {
             authorization: `token ${access_token}`,
         },
     }).then((r) => r.json())
-    const { id, followers } = user
-    /*
-    {"login":"vimwitch","id":631020,"node_id":"MDQ6VXNlcjYzMTAyMA==","avatar_url":"https://avatars.githubusercontent.com/u/631020?v=4","gravatar_id":"","url":"https://api.github.com/users/vimwitch","html_url":"https://github.com/vimwitch","followers_url":"https://api.github.com/users/vimwitch/followers","following_url":"https://api.github.com/users/vimwitch/following{/other_user}","gists_url":"https://api.github.com/users/vimwitch/gists{/gist_id}","starred_url":"https://api.github.com/users/vimwitch/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/vimwitch/subscriptions","organizations_url":"https://api.github.com/users/vimwitch/orgs","repos_url":"https://api.github.com/users/vimwitch/repos","events_url":"https://api.github.com/users/vimwitch/events{/privacy}","received_events_url":"https://api.github.com/users/vimwitch/received_events","type":"User","site_admin":false,"name":"Chance","company":"Ethereum Foundation","blog":"","location":"Austin","email":"jchancehud@gmail.com","hireable":null,"bio":"^void(){ return; }();","twitter_username":null,"public_repos":134,"public_gists":24,"followers":16,"following":2,"created_at":"2011-02-22T00:57:54Z","updated_at":"2022-08-02T23:33:09Z"}
-    */
-    res.json(user)
+    const signupId = `github-${user.id}`
+    const existingSignup = await req.db.findOne('SignupCode', {
+        signupId,
+    })
+    if (existingSignup && existingSignup.usedAt) {
+        res.json({
+            error: 'You have already signed up with this account',
+        })
+        return
+    }
+    const signupCode = await req.db.create('SignupCode', {
+        signupId: `twitter-${user.id}`,
+    })
+    res.json(signupCode)
 }
