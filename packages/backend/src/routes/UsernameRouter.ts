@@ -39,14 +39,14 @@ async function setUsername(req, res) {
     const epochKey = usernameProof.epochKey.toString()
     const currentUsername = Number(usernameProof.graffitiPreImage)
 
-    // check if the new username is free
+    // check if the requested new username is free
     const isClaimed = await unirepSocialContract.usernames(newUsername)
 
     if (isClaimed) {
         res.status(409).json({ error: 'Usernmae already exists' })
         return
     } else {
-        // hash username and claim username calling setUsername func in unirep social
+        // hash username and claim username via Unirep Social contract
         const hashedNewUsername = hashOne(newUsername)
 
         const calldata = unirepSocialContract.interface.encodeFunctionData(

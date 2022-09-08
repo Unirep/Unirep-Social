@@ -346,3 +346,37 @@ export const userStateTransition = async (t, iden) => {
     await waitForBackendBlock(t, receipt.blockNumber)
     t.pass()
 }
+
+export const setUsername = async (t, iden) => {
+    const preImage = 'oldUsername'
+    const { proof, publicSignals, blockNumber } = await genReputationProof(
+        t,
+        iden,
+        preImage
+    )
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/usernames`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            newUsername: 'newUsername',
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
+    t.pass()
+}
