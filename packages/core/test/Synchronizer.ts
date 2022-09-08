@@ -22,13 +22,18 @@ import { SQLiteConnector } from 'anondb/node'
 let synchronizer: UnirepSocialSynchronizer
 const attestingFee = BigNumber.from(1)
 
-describe('Synchronzier processes events', () => {
+describe('Synchronzier processes events', function () {
+    this.timeout(0)
+
+    let unirepContract
+    let unirepSocialContract: UnirepSocial
+
     before(async () => {
         const accounts = await ethers.getSigners()
-        const unirepContract = await deployUnirep(accounts[0], {
+        unirepContract = await deployUnirep(accounts[0], {
             attestingFee,
         })
-        const unirepSocialContract = await deployUnirepSocial(
+        unirepSocialContract = await deployUnirepSocial(
             accounts[0],
             unirepContract.address,
             {
@@ -36,6 +41,7 @@ describe('Synchronzier processes events', () => {
             }
         )
         const db = await SQLiteConnector.create(schema, ':memory:')
+        console.log(db)
         synchronizer = new UnirepSocialSynchronizer(
             db,
             defaultProver,
@@ -59,7 +65,7 @@ describe('Synchronzier processes events', () => {
         )
         await state.stop()
     })
-    it('should process ust events', async () => {
+    it.skip('should process ust events', async () => {
         const accounts = await ethers.getSigners()
         const id = new ZkIdentity()
         const commitment = id.genIdentityCommitment()
@@ -96,5 +102,54 @@ describe('Synchronzier processes events', () => {
         await submitUSTProofs(synchronizer.unirepContract, proofs)
         await synchronizer.waitForSync()
         await ust
+    })
+    
+    it('submit post should succeed', async () => {
+        const attesterId = BigInt(
+            await unirepContract.attesters(unirepSocialContract.address)
+        )
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .userSignUp(id.genIdentityCommitment())
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const proveGraffiti = BigInt(0)
+        const minPosRep = 0
+        const graffitiPreImage = BigInt(0)
+        const epkNonce = 0
+        const defaultPostReputation = 5
+
+        const reputationProof = await userState.genProveReputationProof(
+            attesterId,
+            epkNonce,
+            minPosRep,
+            proveGraffiti,
+            graffitiPreImage,
+            defaultPostReputation
+        )
+        console.log('hello')
+        const isValid = await reputationProof.verify()
+        expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+        const isProofValid = await unirepContract.verifyReputation(
+            reputationProof.publicSignals,
+            reputationProof.proof
+        )
+
+        expect(isProofValid, 'proof is not valid').to.be.true
+        const tx = await unirepSocialContract.publishPost(
+            'some post text',
+            reputationProof.publicSignals,
+            reputationProof.proof,
+            { value: attestingFee }
+        )
+        const receipt = await tx.wait()
+        expect(receipt.status, 'Submit post failed').to.equal(1)
+        // const post = await db.findOne('Post', { where:{hashedContent}})
+        // expect(post.hashedContent === hashedContent)
     })
 })
