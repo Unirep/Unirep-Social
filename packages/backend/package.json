@@ -9,7 +9,6 @@
         "build": "tsc && yarn keys",
         "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose",
         "test-username": "sh scripts/pretest.sh && ava test/username.test.ts -T 10m --verbose"
-
     },
     "keywords": [],
     "author": "",
