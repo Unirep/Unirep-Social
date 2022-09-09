@@ -64,44 +64,6 @@ describe('Synchronzier processes events', function () {
         )
         await state.stop()
     })
-    it.skip('should process ust events', async () => {
-        const accounts = await ethers.getSigners()
-        const id = new ZkIdentity()
-        const commitment = id.genIdentityCommitment()
-
-        const receipt = await synchronizer.unirepContract
-            .connect(accounts[1])
-            ['userSignUp(uint256)'](commitment)
-            .then((t) => t.wait())
-        expect(receipt.status, 'User sign up failed').to.equal(1)
-        await ethers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
-        await synchronizer.unirepContract
-            .beginEpochTransition()
-            .then((t) => t.wait())
-
-        const userState = await genUserState(
-            ethers.provider,
-            synchronizer.unirepContract.address,
-            id
-        )
-        await ethers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
-
-        await synchronizer.unirepContract
-            .beginEpochTransition()
-            .then((t) => t.wait())
-        await synchronizer.waitForSync()
-        const proofs = await userState.genUserStateTransitionProofs()
-
-        const [UserStateTransitioned] =
-            synchronizer.unirepContract.filters.UserStateTransitioned()
-                .topics as string[]
-        const ust = new Promise((rs, rj) =>
-            synchronizer.once(UserStateTransitioned, (event) => rs(event))
-        )
-        await submitUSTProofs(synchronizer.unirepContract, proofs)
-        await synchronizer.waitForSync()
-        await ust
-    })
 
     it('submit post should succeed', async () => {
         const attesterId = BigInt(
@@ -151,7 +113,7 @@ describe('Synchronzier processes events', function () {
         // expect(post.hashedContent === hashedContent)
     })
 
-    it('submit comment should succeed', async () => {
+    it.skip('submit comment should succeed', async () => {
         const attesterId = BigInt(
             await unirepContract.attesters(unirepSocialContract.address)
         )
