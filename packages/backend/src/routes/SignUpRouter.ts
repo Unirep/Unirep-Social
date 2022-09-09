@@ -50,6 +50,7 @@ async function signup(req, res) {
         res.json({
             error: 'This code has already been used',
         })
+        return
     }
 
     const commitment = `0x${uploadedCommitment.replace('0x', '')}`

@@ -1,4 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+
+import { SERVER } from '../../config'
 
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
@@ -13,13 +16,23 @@ type Props = {
 }
 
 const Signup = ({ onboarded, getStarted }: Props) => {
+    const location = useLocation()
+    const params = new URLSearchParams(location.search)
     const userContext = useContext(UserContext)
-    const postContext = useContext(PostContext)
 
     const [step, setStep] = useState<number>(0)
     const [pwd, setPwd] = useState<string>('')
     const [confirmPwd, setConfirmPwd] = useState<string>('')
     const [isDownloaded, setIsDownloaded] = useState<boolean>(false)
+
+    useEffect(() => {
+        if (params.get('signupCode')) {
+            // we have a signup code, register and make an identity
+            userContext
+                .signUp(params.get('signupCode') as string)
+                .then(() => setStep(step + 1))
+        }
+    }, [])
 
     const onPwdChange = (event: any) => {
         setPwd(event.target.value)
@@ -43,9 +56,29 @@ const Signup = ({ onboarded, getStarted }: Props) => {
         setIsDownloaded(true)
     }
 
+    const twitterSignup = () => {
+        // redirect to a signup page
+        // then come back and resume once we have a signup code
+        const url = new URL('/api/oauth/twitter', SERVER)
+        const currentUrl = new URL(window.location.href)
+        const dest = new URL('/start', currentUrl.origin)
+        url.searchParams.set('redirectDestination', dest.toString())
+        window.location.replace(url.toString())
+    }
+
+    const githubSignup = () => {
+        // redirect to a signup page
+        // then come back and resume once we have a signup code
+        const url = new URL('/api/oauth/github', SERVER)
+        const currentUrl = new URL(window.location.href)
+        const dest = new URL('/start', currentUrl.origin)
+        url.searchParams.set('redirectDestination', dest.toString())
+        window.location.replace(url.toString())
+    }
+
     const copy = () => {
         if (isDownloaded) {
-            navigator.clipboard.writeText(
+            navigator.clipboard?.writeText(
                 userContext.identity || 'something is wrong'
             )
             setStep(step + 1)
@@ -74,19 +107,19 @@ const Signup = ({ onboarded, getStarted }: Props) => {
             currentStep={step}
             bottomBtns={buttomBtnsCount[step]}
         >
-            {step === 0 ? (
+            {step === 0 && !params.get('signupCode') ? (
                 <>
                     <h2 className="title">Sign up</h2>
                     <CustomGap times={2} />
                     <p>
-                        UniRep Social uses Interep for authentication. You can
-                        sign up easily while maintaining your anonymity.
+                        UniRep Social uses OAuth authentication. You can sign up
+                        easily while maintaining your anonymity.
                     </p>
                     <CustomGap times={3} />
                     <div className="box-buttons box-buttons-smaller">
                         <button
                             className="button-dark-transparent button-with-img"
-                            onClick={() => setStep(step + 1)}
+                            onClick={() => twitterSignup()}
                         >
                             Twitter{' '}
                             <img
@@ -96,7 +129,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         <CustomGap times={1} />
                         <button
                             className="button-dark-transparent button-with-img"
-                            onClick={() => setStep(step + 1)}
+                            onClick={() => githubSignup()}
                         >
                             Github{' '}
                             <img
@@ -120,7 +153,15 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         generate a proof that you have an identity.
                     </div>
                 </>
-            ) : step === 1 ? (
+            ) : null}
+            {step === 0 && params.get('signupCode') ? (
+                <>
+                    <h2 className="title">Signing up...</h2>
+                    <CustomGap times={2} />
+                    <p>Success, we're signing you up now!</p>
+                </>
+            ) : null}
+            {step === 1 ? (
                 <>
                     <h2>Password for encryption</h2>
                     <CustomGap times={2} />
@@ -158,7 +199,8 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         </button>
                     </div>
                 </>
-            ) : step === 2 ? (
+            ) : null}
+            {step === 2 ? (
                 <>
                     <h2>The most important, private key</h2>
                     <CustomGap times={2} />
@@ -169,7 +211,10 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         Social and Rep points.{' '}
                     </p>
                     <CustomGap times={1} />
-                    <textarea />
+                    <textarea
+                        contentEditable={false}
+                        value={userContext.id?.serializeIdentity()}
+                    />
                     <CustomGap times={2} />
                     <p>
                         <strong>
@@ -214,7 +259,8 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         </button>
                     </div>
                 </>
-            ) : step === 3 ? (
+            ) : null}
+            {step === 3 ? (
                 <>
                     <h2>Have a practice</h2>
                     <CustomGap times={2} />

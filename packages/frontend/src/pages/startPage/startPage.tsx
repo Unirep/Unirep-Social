@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
+import { useLocation } from 'react-router-dom'
 
 import GetStarted from './getStarted'
 import Signup from './signup'
@@ -15,7 +15,11 @@ enum StepType {
 }
 
 const StartPage = () => {
-    const [step, setStep] = useState<StepType>(StepType.getstarted)
+    const location = useLocation()
+    const params = new URLSearchParams(location.search)
+    const [step, setStep] = useState<StepType>(
+        params.get('signupCode') ? StepType.signup : StepType.getstarted
+    )
 
     return (
         <div

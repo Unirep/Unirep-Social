@@ -12,6 +12,7 @@ const _schema = [
                 default: () => +new Date(),
             },
             ['type', 'String'],
+            ['redirectDestination', 'String'],
             ['data', 'String', { optional: true }],
         ],
     },

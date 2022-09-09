@@ -44,6 +44,7 @@ const AppRouter = () => {
                     <Switch>
                         <Route component={MainPage} path="/" exact={true} />
                         <Route component={StartPage} path="/start" />
+                        <Route component={StartPage} path="/start/callback" />
                         <Route component={PostPage} path="/post/:id" />
                         <Route component={UserPage} path="/user" />
                         <Route component={LoginPage} path="/login" />

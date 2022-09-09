@@ -54,23 +54,28 @@ async function completeTwitterAuth(req, res) {
             authorization: `Bearer ${auth.access_token}`,
         },
     }).then((r) => r.json())
+    // end oauth logic
     // generate a signup code and give it to the user
     // prevent double signup
-    console.log(user)
-    const signupId = `twitter-${user.id}`
+    const signupId = `twitter-${user.data.id}`
     const existingSignup = await req.db.findOne('SignupCode', {
-        signupId,
+        where: {
+            signupId,
+        },
     })
-    if (existingSignup && existingSignup.usedAt) {
+    if (existingSignup || existingSignup?.usedAt) {
         res.json({
             error: 'You have already signed up with this account',
         })
         return
     }
     const signupCode = await req.db.create('SignupCode', {
-        signupId: `twitter-${user.id}`,
+        signupId,
     })
-    res.json(signupCode)
+    // now go back to the frontend signup flow
+    const url = new URL(_state.redirectDestination)
+    url.searchParams.append('signupCode', signupCode._id)
+    res.redirect(url.toString())
 }
 
 async function twitterAuth(req, res) {
@@ -78,6 +83,7 @@ async function twitterAuth(req, res) {
     const _state = await req.db.create('OAuthState', {
         type: 'twitter',
         data: challenge,
+        redirectDestination: req.query.redirectDestination,
     })
     const url = new URL('https://twitter.com/i/oauth2/authorize')
     url.searchParams.append('response_type', 'code')
@@ -94,6 +100,7 @@ async function twitterAuth(req, res) {
 async function githubAuth(req, res) {
     const state = await req.db.create('OAuthState', {
         type: 'github',
+        redirectDestination: req.query.redirectDestination,
     })
     const url = new URL('https://github.com/login/oauth/authorize')
     url.searchParams.append('client_id', GITHUB_CLIENT_ID)
@@ -135,18 +142,24 @@ async function completeGithubAuth(req, res, next) {
             authorization: `token ${access_token}`,
         },
     }).then((r) => r.json())
+    // end oauth logic
     const signupId = `github-${user.id}`
     const existingSignup = await req.db.findOne('SignupCode', {
-        signupId,
+        where: {
+            signupId,
+        },
     })
-    if (existingSignup && existingSignup.usedAt) {
+    if (existingSignup || existingSignup?.usedAt) {
         res.json({
             error: 'You have already signed up with this account',
         })
         return
     }
     const signupCode = await req.db.create('SignupCode', {
-        signupId: `twitter-${user.id}`,
+        signupId,
     })
-    res.json(signupCode)
+    // now go back to the frontend signup flow
+    const _url = new URL(_state.redirectDestination)
+    _url.searchParams.append('signupCode', signupCode._id)
+    res.redirect(_url.toString())
 }
