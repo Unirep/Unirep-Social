@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import { defaultProver } from '@unirep/circuits/provers/defaultProver'
-import { ZkIdentity } from '@unirep/crypto'
+import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 import { genEpochKey, schema, UserState } from '@unirep/core'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
@@ -347,9 +347,40 @@ export const userStateTransition = async (t, iden) => {
     t.pass()
 }
 
+const genUsernameProof = async (t, iden, graffitiPreImage) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+
+    const epkNonce = 0
+    const usernameProof = await userState.genProveReputationProof(
+        t.context.attesterId,
+        epkNonce,
+        0,
+        BigInt(0),
+        graffitiPreImage,
+        BigInt(0)
+    )
+
+    const isValid = await usernameProof.verify()
+    t.true(isValid)
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    return {
+        proof: usernameProof.proof,
+        publicSignals: usernameProof.publicSignals,
+        blockNumber,
+    }
+}
+
 export const setUsername = async (t, iden) => {
-    const preImage = 'oldUsername'
-    const { proof, publicSignals, blockNumber } = await genReputationProof(
+    const preImage = genRandomSalt().valueOf()
+    const { proof, publicSignals, blockNumber } = await genUsernameProof(
         t,
         iden,
         preImage
@@ -362,7 +393,7 @@ export const setUsername = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            newUsername: 'newUsername',
+            newUsername: 15,
             publicSignals,
             proof,
         }),

@@ -15,7 +15,7 @@ import { ReputationProof, BaseProof } from '@unirep/contracts'
 import { hashOne } from '@unirep/crypto'
 
 export default (app: Express) => {
-    app.get('/api/usernames', catchError(setUsername))
+    app.post('/api/usernames', catchError(setUsername))
 }
 
 async function setUsername(req, res) {
@@ -30,25 +30,25 @@ async function setUsername(req, res) {
         DEFAULT_ETH_PROVIDER
     )
 
-    // accept a requested new username and ZK proof proving the epoch key and current graffiti pre-image
+    // accept a requested new username and ZK proof proving the epoch key and current username (graffiti pre-image)
     const { newUsername, publicSignals, proof } = req.body
     const usernameProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
+
     const epochKey = usernameProof.epochKey.toString()
-    const currentUsername = Number(usernameProof.graffitiPreImage)
+    const currentUsername = usernameProof.graffitiPreImage.toString()
 
     // check if the requested new username is free
-    const isClaimed = await unirepSocialContract.usernames(newUsername)
+    const hashedNewUsername = hashOne(newUsername).toString()
+    const isClaimed = await unirepSocialContract.usernames(hashedNewUsername)
 
     if (isClaimed) {
         res.status(409).json({ error: 'Usernmae already exists' })
         return
     } else {
-        // hash username and claim username via Unirep Social contract
-        const hashedNewUsername = hashOne(newUsername)
-
+        // claim username via Unirep Social contract
         const calldata = unirepSocialContract.interface.encodeFunctionData(
             'setUsername',
             [epochKey, currentUsername, hashedNewUsername]
