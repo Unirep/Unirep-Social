@@ -18,7 +18,9 @@ const StartPage = () => {
     const location = useLocation()
     const params = new URLSearchParams(location.search)
     const [step, setStep] = useState<StepType>(
-        params.get('signupCode') ? StepType.signup : StepType.getstarted
+        params.get('signupCode') || params.get('signupError')
+            ? StepType.signup
+            : StepType.getstarted
     )
 
     return (

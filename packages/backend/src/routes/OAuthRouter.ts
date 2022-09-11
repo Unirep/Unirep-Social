@@ -63,17 +63,19 @@ async function completeTwitterAuth(req, res) {
             signupId,
         },
     })
+    const url = new URL(_state.redirectDestination)
     if (existingSignup || existingSignup?.usedAt) {
-        res.json({
-            error: 'You have already signed up with this account',
-        })
+        url.searchParams.append(
+            'signupError',
+            'You have already signed up with this account'
+        )
+        res.redirect(url.toString())
         return
     }
     const signupCode = await req.db.create('SignupCode', {
         signupId,
     })
     // now go back to the frontend signup flow
-    const url = new URL(_state.redirectDestination)
     url.searchParams.append('signupCode', signupCode._id)
     res.redirect(url.toString())
 }
@@ -149,17 +151,19 @@ async function completeGithubAuth(req, res, next) {
             signupId,
         },
     })
+    const _url = new URL(_state.redirectDestination)
     if (existingSignup || existingSignup?.usedAt) {
-        res.json({
-            error: 'You have already signed up with this account',
-        })
+        _url.searchParams.append(
+            'signupError',
+            'You have already signed up with this account'
+        )
+        res.redirect(_url.toString())
         return
     }
     const signupCode = await req.db.create('SignupCode', {
         signupId,
     })
     // now go back to the frontend signup flow
-    const _url = new URL(_state.redirectDestination)
     _url.searchParams.append('signupCode', signupCode._id)
     res.redirect(_url.toString())
 }

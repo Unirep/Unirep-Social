@@ -115,6 +115,11 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         UniRep Social uses OAuth authentication. You can sign up
                         easily while maintaining your anonymity.
                     </p>
+                    {params.get('signupError') && (
+                        <p style={{ color: 'red' }}>
+                            {params.get('signupError')}
+                        </p>
+                    )}
                     <CustomGap times={3} />
                     <div className="box-buttons box-buttons-smaller">
                         <button
