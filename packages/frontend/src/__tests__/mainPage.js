@@ -107,14 +107,11 @@ test('should render MainPage with mocked data and true UserState', () => {
 
     // userState is *true*
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
+    expect(screen.getByText(`${userData.netReputation}`)).toBeInTheDocument()
     expect(
-        screen.getByText(
-            `${userData.netReputation} | ${userData.subsidyReputation}`
-        )
+        screen.getByText(`${userData.subsidyReputation}`)
     ).toBeInTheDocument()
-    expect(
-        screen.getByText(/in this cycle, my personas are/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Personas/i)).toBeInTheDocument()
     expect(screen.getByText(/back to top/i)).toBeInTheDocument()
 })
 
@@ -152,12 +149,11 @@ test('should page rerender after user clicks create post button', async () => {
     const createPostLink = screen.getByText(/create post/i)
     await userEvent.click(createPostLink)
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
+    expect(screen.getByText(`${userData.netReputation}`)).toBeInTheDocument()
     expect(
-        screen.getByText(
-            `${userData.netReputation} | ${userData.subsidyReputation}`
-        )
+        screen.getByText(`${userData.subsidyReputation}`)
     ).toBeInTheDocument()
     expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
-    expect(screen.getByText(/remaining time/i)).toBeInTheDocument()
+    expect(screen.getByText(/Transition at/i)).toBeInTheDocument()
 })

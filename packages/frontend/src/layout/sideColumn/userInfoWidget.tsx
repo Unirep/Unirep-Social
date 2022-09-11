@@ -20,7 +20,7 @@ const UserInfoWidget = () => {
     const [diffTime, setDiffTime] = useState<number>(0)
     const nextUSTTimeString = dateformat(
         new Date(epochManager.nextTransition),
-        'dd/mm/yyyy hh:MM TT'
+        'mmm/dd, hh:MM TT'
     )
 
     const makeCountdownText = () => {
@@ -65,7 +65,7 @@ const UserInfoWidget = () => {
 
     return (
         <div>
-            {userContext.userState ? (
+            {userContext.userState && (
                 <div className="user-info-widget widget">
                     <div className="rep-info">
                         <h4>My Rep</h4>
@@ -76,70 +76,18 @@ const UserInfoWidget = () => {
                             {userContext.netReputation}
                         </h3>
                     </div>
-                    <div className="ust-info">
-                        <div className="info-row">
+                    {userContext.userState &&
+                    !userContext.isInitialSyncing &&
+                    (epochManager.readyToTransition || userContext.needsUST) &&
+                    !queue.queuedOp(ActionType.UST) ? (
+                        <div className="ust-info">
                             <h4>
-                                Rep-Handout
-                                <HelpWidget type={InfoType.repHandout} />
+                                Previous cycle was ended at {nextUSTTimeString}
                             </h4>
-                            <div className="rep-handout">
-                                <strong>{userContext.subsidyReputation}</strong>
-                                <div className="interline"></div>
-                                {userContext.currentEpochKeys[0]}
-                            </div>
-                        </div>
-
-                        <div className="info-row">
-                            <h4>
-                                Personas
-                                <HelpWidget type={InfoType.persona} />
-                            </h4>
-                            <div className="epks">
-                                {userContext.currentEpochKeys.map((key) => (
-                                    <div className="epk" key={key}>
-                                        {shortenEpochKey(key)}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* <div className="info-row">
-                            <h4>
-                                Remaining time:{' '}
-                                <HelpWidget type={InfoType.countdown} />
-                            </h4>
-                            <div className="countdown">{countdownText}</div>
-                        </div> */}
-
-                        <div className="info-row">
-                            <h4>
-                                Transition at:
-                                <HelpWidget type={InfoType.countdown} />
-                            </h4>
-                            <div className="countdown">{nextUSTTimeString}</div>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div></div>
-            )}
-            {userContext.userState &&
-                !userContext.isInitialSyncing &&
-                (epochManager.readyToTransition || userContext.needsUST) &&
-                !queue.queuedOp(ActionType.UST) && (
-                    <div className="custom-ui">
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                maxWidth: '400px',
-                                alignSelf: 'center',
-                            }}
-                        >
-                            <p>User State Transition</p>
-                            <h2>It’s time to move on to the new cycle!</h2>
+                            <div className="margin"></div>
+                            <h4>A new cycle is required.</h4>
+                            <div className="margin"></div>
                             <button
-                                className="custom-btn"
                                 onClick={() => {
                                     queue.addOp(
                                         async (updateStatus) => {
@@ -172,11 +120,54 @@ const UserInfoWidget = () => {
                                     )
                                 }}
                             >
-                                Let's go
+                                Refresh
                             </button>
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="ust-info">
+                            <div className="info-row">
+                                <h4>
+                                    Rep-Handout
+                                    <HelpWidget type={InfoType.repHandout} />
+                                </h4>
+                                <div className="rep-handout">
+                                    <strong>
+                                        {userContext.subsidyReputation}
+                                    </strong>
+                                    <div className="interline"></div>
+                                    {userContext.currentEpochKeys[0]}
+                                </div>
+                            </div>
+
+                            <div className="info-row">
+                                <h4>
+                                    Personas
+                                    <HelpWidget type={InfoType.persona} />
+                                </h4>
+                                <div className="epks">
+                                    {userContext.currentEpochKeys.map((key) => (
+                                        <div className="epk" key={key}>
+                                            {shortenEpochKey(key)}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="info-row">
+                                <h4>
+                                    Transition at:
+                                    <HelpWidget type={InfoType.countdown} />
+                                </h4>
+                                <div className="countdown">
+                                    {diffTime < 60
+                                        ? countdownText
+                                        : nextUSTTimeString}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
