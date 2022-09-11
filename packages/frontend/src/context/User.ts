@@ -400,6 +400,8 @@ export class User {
         console.log('log out')
         if (this.userState) {
             await this.userState.stop()
+            await (this.userState as any)._db.closeAndWipe()
+            this.userState = undefined
         }
         runInAction(() => {
             this.id = undefined

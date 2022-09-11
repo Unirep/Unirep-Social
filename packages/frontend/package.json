@@ -29,7 +29,7 @@
         "@unirep/circuits": "1.0.0-alpha-8",
         "@unirep/core": "1.0.0-alpha-14",
         "@unirep/crypto": "1.0.0-alpha-5",
-        "anondb": "^0.0.12",
+        "anondb": "^0.0.13",
         "babel-preset-env": "^1.7.0",
         "bootstrap": "^5.0.2",
         "cypress-real-events": "^1.7.1",
