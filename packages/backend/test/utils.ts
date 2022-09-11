@@ -190,6 +190,7 @@ export const createPost = async (t, iden) => {
     )
 
     for (;;) {
+        console.log('waiting for post')
         await new Promise((r) => setTimeout(r, 1000))
         const currentSpent = await getSpent(t, iden)
         if (prevSpent + proveAmount !== currentSpent) continue
@@ -208,6 +209,7 @@ export const queryPost = async (t, postId) => {
     for (;;) {
         await new Promise((r) => setTimeout(r, 1000))
         const r = await fetch(`${t.context.url}/api/post/${postId}`)
+        console.log('post does not exist')
         if (r.status === 404) continue
         t.is(r.status, 200)
         return true
