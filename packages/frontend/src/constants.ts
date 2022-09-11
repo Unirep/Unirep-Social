@@ -81,6 +81,7 @@ export enum InfoType {
     rep = 'Show off or be modest. This might influence how other people perceive your content.',
     countdown = 'You will be able to boost or squash the posts that are created during this cycle until it ends. When a  cycle is over, content from that cycle becomes read-only.',
     persona = 'Each cycle, the system gives you new personas. It would take a million years to associate your identity with any content you post here. You have all the freedom to be who you are, but let’s be nice to each other :)',
+    repHandout = 'Rep-Handout is designed for you to interact with UniResp Social for free. Use it wisely.',
 }
 
 export interface Record {

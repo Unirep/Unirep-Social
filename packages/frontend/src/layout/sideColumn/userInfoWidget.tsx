@@ -68,37 +68,55 @@ const UserInfoWidget = () => {
             {userContext.userState ? (
                 <div className="user-info-widget widget">
                     <div className="rep-info">
-                        <p>My Rep</p>
+                        <h4>My Rep</h4>
                         <h3>
                             <img
                                 src={require('../../../public/images/lighting.svg')}
                             />
-                            {userContext.netReputation} |{' '}
-                            {userContext.subsidyReputation}
+                            {userContext.netReputation}
                         </h3>
                     </div>
                     <div className="ust-info">
-                        <div className="block-title">
-                            In this cycle, my personas are{' '}
-                            <HelpWidget type={InfoType.persona} />
+                        <div className="info-row">
+                            <h4>
+                                Rep-Handout
+                                <HelpWidget type={InfoType.repHandout} />
+                            </h4>
+                            <div className="rep-handout">
+                                <strong>{userContext.subsidyReputation}</strong>
+                                <div className="interline"></div>
+                                {userContext.currentEpochKeys[0]}
+                            </div>
                         </div>
-                        <div className="epks">
-                            {userContext.currentEpochKeys.map((key) => (
-                                <div className="epk" key={key}>
-                                    {shortenEpochKey(key)}
-                                </div>
-                            ))}
+
+                        <div className="info-row">
+                            <h4>
+                                Personas
+                                <HelpWidget type={InfoType.persona} />
+                            </h4>
+                            <div className="epks">
+                                {userContext.currentEpochKeys.map((key) => (
+                                    <div className="epk" key={key}>
+                                        {shortenEpochKey(key)}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="margin"></div>
-                        <div className="block-title">
-                            Remaining time:{' '}
-                            <HelpWidget type={InfoType.countdown} />
-                        </div>
-                        <div className="countdown">{countdownText}</div>
-                        <div className="margin"></div>
-                        <div className="block-title">Transition at:</div>
-                        <div className="countdown small">
-                            {nextUSTTimeString}
+
+                        {/* <div className="info-row">
+                            <h4>
+                                Remaining time:{' '}
+                                <HelpWidget type={InfoType.countdown} />
+                            </h4>
+                            <div className="countdown">{countdownText}</div>
+                        </div> */}
+
+                        <div className="info-row">
+                            <h4>
+                                Transition at:
+                                <HelpWidget type={InfoType.countdown} />
+                            </h4>
+                            <div className="countdown">{nextUSTTimeString}</div>
                         </div>
                     </div>
                 </div>
@@ -152,7 +170,6 @@ const UserInfoWidget = () => {
                                             type: ActionType.UST,
                                         }
                                     )
-                                    // postContext.getAirdrop()
                                 }}
                             >
                                 Let's go
