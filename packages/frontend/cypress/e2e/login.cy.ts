@@ -12,9 +12,6 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
     })
 
     it.skip('navigate to the login page and login a user', () => {
