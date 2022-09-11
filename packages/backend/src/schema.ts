@@ -46,17 +46,6 @@ const _schema = [
         ],
     },
     {
-        name: 'InvitationCode',
-        rows: [
-            {
-                name: 'createdAt',
-                type: 'Int',
-                default: () => +new Date(),
-            },
-            ['code', 'String'],
-        ],
-    },
-    {
         name: 'Report',
         rows: [
             {
