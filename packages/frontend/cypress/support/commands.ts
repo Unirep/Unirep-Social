@@ -38,6 +38,7 @@ Cypress.Commands.add('deployUnirep', () => {
                 },
             }).as('getApiConfig')
             cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
+                expect(req.query.signupCode === 'test_signup_code')
                 const { commitment } = req.query
                 const tx = await unirepSocial
                     .connect(wallet)
@@ -47,16 +48,25 @@ Cypress.Commands.add('deployUnirep', () => {
                     transaction: tx.hash,
                 })
             })
+            cy.intercept(`${serverUrl}/api/oauth/twitter?*`, {
+                statusCode: 301,
+                headers: {
+                    Location:
+                        'http://localhost:3000/start?signupCode=test_signup_code',
+                },
+            })
         }
     )
 })
 
 Cypress.Commands.add('signupNewUser', () => {
-    cy.visit('/')
-    cy.findByText('Join').click()
-    cy.findByRole('textbox').type('invitationcode')
-    cy.findByText('Let me in').click()
-    cy.wait(3000)
+    cy.visit('/start')
+    cy.findByText('Sign Up').click()
+    cy.findByText('Twitter').click()
+    cy.wait(15000)
+    cy.findByText('Skip this').click()
+
+    // cy.findByText('Let me in').click()
     cy.findByRole('textbox').then((e) => {
         const iden = e[0].value
         cy.findByText('Download').click()
@@ -65,7 +75,7 @@ Cypress.Commands.add('signupNewUser', () => {
             parseSpecialCharSequences: false,
         })
         cy.findByText('Submit').click()
-        cy.findByText('Generate').click()
+        cy.findByText('Get in').click()
     })
 })
 
