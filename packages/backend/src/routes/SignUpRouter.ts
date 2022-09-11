@@ -40,13 +40,13 @@ async function signup(req, res) {
             _id: code,
         },
     })
-    if (!existingCode) {
+    if (!existingCode && process.env.NODE_ENV !== 'test') {
         res.json({
             error: 'Invalid signup code',
         })
         return
     }
-    if (existingCode.usedAt) {
+    if (existingCode?.usedAt) {
         res.json({
             error: 'This code has already been used',
         })
