@@ -7,8 +7,7 @@
         "synct": "ts-node src/sync-test.ts",
         "keys": "sh scripts/loadKeys.sh",
         "build": "tsc && yarn keys",
-        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose",
-        "test-username": "sh scripts/pretest.sh && ava test/username.test.ts -T 10m --verbose"
+        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose"
     },
     "keywords": [],
     "author": "",
