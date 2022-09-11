@@ -38,56 +38,81 @@
         }
     }
 
-    .info-row {
+    .info {
         width: 100%;
-        display: flex;
-        flex-wrap: wrap;
         margin-top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
 
-        .element {
-            flex: 1;
+        .choose-from {
+            width: 100%;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-bottom: 32px;
+            justify-content: space-between;
 
-            .name {
-                color: $grey-700;
-                font-size: $text-sm;
-                font-weight: 600;
+            .choices {
                 display: flex;
-                flex-direction: row;
-            }
+                gap: 24px;
+                color: $black;
+                font-size: $text-base;
 
-            .epks {
-                display: flex;
-                flex-direction: row;
-                align-items: flex-start;
-                margin-top: 16px;
-
-                .epk {
-                    @include myButton(
-                        $height: 32px,
-                        $font-size: $text-sm,
-                        $color: $black,
-                        $radius: 8px,
-                        $border: 1px,
-                        $border-color: $black,
-                        $margin-horizontal: 0px
-                    );
-                    margin-right: 8px;
-                    padding: 7px 16px;
+                strong {
+                    cursor: pointer;
                 }
 
                 .chosen {
-                    background-color: $black;
-                    color: $white;
+                    border-bottom: 4px solid $black;
                 }
+            }
+
+            .help {
+                width: 200px;
+                text-align: right;
+            }
+        }
+
+        .info-detail {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid $grey-200;
+            padding: 16px;
+            margin-bottom: 32px;
+
+            display: flex;
+            justify-content: space-between;
+
+            .epks {
+                display: flex;
+                gap: 8px;
+            }
+
+            .epk {
+                @include myButton(
+                    $height: 32px,
+                    $font-size: $text-sm,
+                    $color: $black,
+                    $radius: 8px,
+                    $border: 1px,
+                    $border-color: $black,
+                    $margin-horizontal: 0px
+                );
+                padding: 7px 16px;
+
+                .interline {
+                    width: 1px;
+                    height: 100%;
+                    background-color: $white;
+                    margin: 0px 8px;
+                }
+            }
+
+            .chosen {
+                background-color: $black;
+                color: $white;
             }
 
             .rep-chooser {
                 display: flex;
-                margin-top: 16px;
                 align-items: center;
 
                 input[type='range'] {
@@ -158,6 +183,55 @@
                     font-weight: 400;
                     text-align: center;
                     padding: 0px;
+                }
+            }
+        }
+    }
+
+    .info-row {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 40px;
+
+        .element {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 32px;
+
+            .name {
+                color: $grey-700;
+                font-size: $text-sm;
+                font-weight: 600;
+                display: flex;
+                flex-direction: row;
+            }
+
+            .epks {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                margin-top: 16px;
+
+                .epk {
+                    @include myButton(
+                        $height: 32px,
+                        $font-size: $text-sm,
+                        $color: $black,
+                        $radius: 8px,
+                        $border: 1px,
+                        $border-color: $black,
+                        $margin-horizontal: 0px
+                    );
+                    margin-right: 8px;
+                    padding: 7px 16px;
+                }
+
+                .chosen {
+                    background-color: $black;
+                    color: $white;
                 }
             }
         }

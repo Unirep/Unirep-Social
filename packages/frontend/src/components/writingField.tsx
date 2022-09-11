@@ -27,6 +27,7 @@ const WritingField = (props: Props) => {
     const unirepConfig = useContext(UnirepContext)
     const user = useContext(UserContext)
     const postContext = useContext(PostContext)
+    const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
 
     const [title, setTitle] = useState<string>(() => {
         if (props.type === DataType.Post && postContext.postDraft) {
@@ -45,7 +46,7 @@ const WritingField = (props: Props) => {
         }
         return ''
     })
-    const [epkNonce, setEpkNonce] = useState<number>(0)
+    const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
     const defaultRep =
@@ -88,6 +89,16 @@ const WritingField = (props: Props) => {
         }
     }
 
+    const chooseToUseSubsidy = () => {
+        setUseSubsidy(true)
+        setEpkNonce(-1)
+    }
+
+    const chooseToUsePersona = () => {
+        setUseSubsidy(false)
+        setEpkNonce(0)
+    }
+
     return (
         <div className="writing-field" onClick={onClickField}>
             {props.type === DataType.Post ? (
@@ -112,7 +123,117 @@ const WritingField = (props: Props) => {
                     autoFocus={true}
                 />
             )}
-            <div className="info-row">
+            <div className="info">
+                <div className="choose-from">
+                    <div className="choices">
+                        <strong
+                            className={useSubsidy ? 'chosen' : ''}
+                            onClick={chooseToUseSubsidy}
+                        >
+                            Rep-Handout
+                        </strong>
+                        <strong
+                            className={useSubsidy ? '' : 'chosen'}
+                            onClick={chooseToUsePersona}
+                        >
+                            Personas
+                        </strong>
+                    </div>
+                    <div className="help">
+                        <HelpWidget type={InfoType.subsidy} />
+                    </div>
+                </div>
+                {!user.userState ? (
+                    <div className="info-detail">somethings wrong...</div>
+                ) : useSubsidy ? (
+                    user.subsidyReputation > defaultRep ? (
+                        <div className="info-detail">
+                            <div className="epk chosen">
+                                <strong>{user.subsidyReputation}</strong>
+                                <span className="interline"></span>
+                                {user.allEpks[0]}
+                            </div>
+                            <div
+                                className="rep-chooser"
+                                style={{
+                                    display:
+                                        user.netReputation > defaultRep
+                                            ? 'flex'
+                                            : 'none',
+                                }}
+                            >
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={
+                                        user.userState
+                                            ? user.netReputation
+                                            : defaultRep
+                                    }
+                                    onChange={handleRepInput}
+                                    value={reputation}
+                                />
+                                <input
+                                    type="text"
+                                    value={reputation}
+                                    onChange={handleRepInput}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="info-detail">
+                            Oh well, you have used all the Rep-Handout ;)
+                        </div>
+                    )
+                ) : user.netReputation > defaultRep ? (
+                    <div className="info-detail">
+                        <div className="epks">
+                            {user.currentEpochKeys.map((epk, i) => (
+                                <div
+                                    className={
+                                        i === epkNonce ? 'epk chosen' : 'epk'
+                                    }
+                                    onClick={() => setEpkNonce(i)}
+                                    key={epk}
+                                >
+                                    {shortenEpochKey(epk)}
+                                </div>
+                            ))}
+                        </div>
+                        <div
+                            className="rep-chooser"
+                            style={{
+                                display:
+                                    user.netReputation > defaultRep
+                                        ? 'flex'
+                                        : 'none',
+                            }}
+                        >
+                            <input
+                                type="range"
+                                min={0}
+                                max={
+                                    user.userState
+                                        ? user.netReputation
+                                        : defaultRep
+                                }
+                                onChange={handleRepInput}
+                                value={reputation}
+                            />
+                            <input
+                                type="text"
+                                value={reputation}
+                                onChange={handleRepInput}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="info-detail">
+                        Sorry, you don’t have any Rep to use persona yet....
+                    </div>
+                )}
+            </div>
+            {/* <div className="info-row">
                 <div className="element">
                     <div className="name">
                         Post as <HelpWidget type={InfoType.epk4Post} />
@@ -164,7 +285,7 @@ const WritingField = (props: Props) => {
                         />
                     </div>
                 </div>
-            </div>
+            </div> */}
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}
             </div>
