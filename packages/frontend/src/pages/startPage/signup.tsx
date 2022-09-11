@@ -24,6 +24,8 @@ const Signup = ({ onboarded, getStarted }: Props) => {
     const [pwd, setPwd] = useState<string>('')
     const [confirmPwd, setConfirmPwd] = useState<string>('')
     const [isDownloaded, setIsDownloaded] = useState<boolean>(false)
+    const [pwdError, setPwdError] = useState('')
+    const [serializedIden, setSerializedIden] = useState('')
 
     useEffect(() => {
         if (params.get('signupCode')) {
@@ -33,28 +35,6 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                 .then(() => setStep(step + 1))
         }
     }, [])
-
-    const onPwdChange = (event: any) => {
-        setPwd(event.target.value)
-    }
-
-    const onConfirmPwdChange = (event: any) => {
-        setConfirmPwd(event.target.value)
-    }
-
-    const download = () => {
-        // if (!userContext.identity) throw new Error('Identity not initialized')
-        const element = document.createElement('a')
-        // const file = new Blob([userContext.identity], { type: 'text/plain' })
-        const file = new Blob(['something test'], { type: 'text/plain' })
-
-        element.href = URL.createObjectURL(file)
-        element.download = 'unirep-social-identity.txt'
-        document.body.appendChild(element)
-        element.click()
-
-        setIsDownloaded(true)
-    }
 
     const twitterSignup = () => {
         // redirect to a signup page
@@ -76,11 +56,45 @@ const Signup = ({ onboarded, getStarted }: Props) => {
         window.location.replace(url.toString())
     }
 
+    const onPwdChange = (event: any) => {
+        setPwd(event.target.value)
+    }
+
+    const onConfirmPwdChange = (event: any) => {
+        setConfirmPwd(event.target.value)
+    }
+
+    const onConfirmPwd = async () => {
+        if (pwd !== confirmPwd) {
+            setPwdError('Passwords do not match')
+        } else {
+            setPwdError('')
+            const encrypted = await userContext.encrypt(pwd)
+            setSerializedIden(JSON.stringify(encrypted))
+            setStep(step + 1)
+        }
+    }
+
+    const onSkipPwd = () => {
+        setSerializedIden(userContext.id?.serializeIdentity() as string)
+        setStep(step + 1)
+    }
+
+    const download = () => {
+        const element = document.createElement('a')
+        const file = new Blob([serializedIden], { type: 'text/plain' })
+
+        element.href = URL.createObjectURL(file)
+        element.download = 'unirep-social-identity.txt'
+        document.body.appendChild(element)
+        element.click()
+
+        setIsDownloaded(true)
+    }
+
     const copy = () => {
         if (isDownloaded) {
-            navigator.clipboard?.writeText(
-                userContext.identity || 'something is wrong'
-            )
+            navigator.clipboard?.writeText(serializedIden)
             setStep(step + 1)
         }
     }
@@ -170,6 +184,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                 <>
                     <h2>Password for encryption</h2>
                     <CustomGap times={2} />
+                    {pwdError && <p style={{ color: 'red' }}>{pwdError}</p>}
                     <p>
                         This is optional and only for your local environment.
                         The password is use for adding an extra layer of
@@ -177,9 +192,14 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         the next step.
                     </p>
                     <CustomGap times={2} />
-                    <CustomInput title="Password" onChange={onPwdChange} />
+                    <CustomInput
+                        id="passwordInput"
+                        title="Password"
+                        onChange={onPwdChange}
+                    />
                     <CustomGap times={2} />
                     <CustomInput
+                        id="passwordConfirmInput"
                         title="Confirm password"
                         onChange={onConfirmPwdChange}
                     />
@@ -192,14 +212,11 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                     <div className="box-buttons box-buttons-horizontal box-buttons-bottom">
                         <button
                             className="button-dark-transparent"
-                            onClick={() => setStep(step + 1)}
+                            onClick={onSkipPwd}
                         >
                             Skip this
                         </button>
-                        <button
-                            className="button-dark"
-                            onClick={() => setStep(step + 1)}
-                        >
+                        <button className="button-dark" onClick={onConfirmPwd}>
                             Encrypt it
                         </button>
                     </div>
@@ -216,10 +233,7 @@ const Signup = ({ onboarded, getStarted }: Props) => {
                         Social and Rep points.{' '}
                     </p>
                     <CustomGap times={1} />
-                    <textarea
-                        contentEditable={false}
-                        value={userContext.id?.serializeIdentity()}
-                    />
+                    <textarea contentEditable={false} value={serializedIden} />
                     <CustomGap times={2} />
                     <p>
                         <strong>

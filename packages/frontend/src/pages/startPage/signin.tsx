@@ -15,20 +15,29 @@ const Signin = ({ getStarted }: Props) => {
     const userContext = useContext(UserContext)
     const [input, setInput] = useState<string>('')
     const [pwd, setPwd] = useState<string>('')
+    const [error, setError] = useState('')
     const history = useHistory()
 
     const onInputChange = (event: any) => {
         setInput(event.target.value)
-        console.log(event.target.value)
     }
 
     const onPwdChange = (event: any) => {
         setPwd(event.target.value)
-        console.log(event.target.value)
     }
 
     const gotoHomePage = async () => {
-        await userContext.login(input)
+        if (pwd) {
+            try {
+                const id = await userContext.decrypt(pwd, JSON.parse(input))
+                await userContext.login(id)
+            } catch (err) {
+                console.log(err)
+                setError('There was a problem decrypting your identity')
+            }
+        } else {
+            await userContext.login(input)
+        }
         history.push('/')
     }
 
@@ -49,9 +58,11 @@ const Signin = ({ getStarted }: Props) => {
                 the private key is no longer valid.
             </p>
             <p>Please paste the newly registered private key below</p>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
             <textarea onChange={onInputChange} />
             <CustomGap times={2} />
             <CustomInput
+                id="passwordInput"
                 title="Password (Only if you need to decrypt)"
                 onChange={onPwdChange}
             />

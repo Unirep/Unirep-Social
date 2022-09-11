@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
 type Props = {
+    id?: string
     title: string
     onChange: (event: any) => void
 }
 
-const CustomInput = ({ title, onChange }: Props) => {
+const CustomInput = ({ id, title, onChange }: Props) => {
     const [visible, setVisible] = useState<boolean>(false)
 
     return (
@@ -13,6 +14,7 @@ const CustomInput = ({ title, onChange }: Props) => {
             <label>{title}</label>
             <div className="custom-input">
                 <input
+                    id={id}
                     onChange={onChange}
                     type={visible ? 'text' : 'password'}
                 />

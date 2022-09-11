@@ -59,13 +59,19 @@ Cypress.Commands.add('deployUnirep', () => {
     )
 })
 
-Cypress.Commands.add('signupNewUser', () => {
+Cypress.Commands.add('signupNewUser', (password) => {
     cy.visit('/')
     cy.findByText('Get started').click()
     cy.findByText('Sign Up').click()
     cy.findByText('Twitter').click()
     cy.wait(20000)
-    cy.findByText('Skip this').click()
+    if (!password) {
+        cy.findByText('Skip this').click()
+    } else {
+        cy.get('#passwordInput').type(password)
+        cy.get('#passwordConfirmInput').type(password)
+        cy.findByText('Encrypt it').click()
+    }
 
     // cy.findByText('Let me in').click()
     return cy
