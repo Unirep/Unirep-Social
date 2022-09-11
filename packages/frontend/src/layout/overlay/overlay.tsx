@@ -24,11 +24,9 @@ const Overlay = () => {
     }
 
     const signout = async () => {
-        if (!queue.isLoading) {
-            await userContext.logout()
-            setIsMenuOpen(false)
-            history.push('/')
-        }
+        await userContext.logout()
+        history.push('/')
+        window.location.reload()
     }
 
     return (

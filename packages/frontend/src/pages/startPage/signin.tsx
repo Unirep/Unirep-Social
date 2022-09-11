@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useHistory } from 'react-router-dom'
+
+import UserContext from '../../context/User'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomInput from '../../components/customInput'
@@ -10,6 +12,7 @@ type Props = {
 }
 
 const Signin = ({ getStarted }: Props) => {
+    const userContext = useContext(UserContext)
     const [input, setInput] = useState<string>('')
     const [pwd, setPwd] = useState<string>('')
     const history = useHistory()
@@ -24,7 +27,8 @@ const Signin = ({ getStarted }: Props) => {
         console.log(event.target.value)
     }
 
-    const gotoHomePage = () => {
+    const gotoHomePage = async () => {
+        await userContext.login(input)
         history.push('/')
     }
 
@@ -53,7 +57,11 @@ const Signin = ({ getStarted }: Props) => {
             />
             <CustomGap times={4} />
             <div className="box-buttons box-buttons-bottom">
-                <button className="button-dark" onClick={gotoHomePage}>
+                <button
+                    id="signin"
+                    className="button-dark"
+                    onClick={gotoHomePage}
+                >
                     Sign in
                 </button>
             </div>

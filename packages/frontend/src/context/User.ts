@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { makeObservable, observable, computed } from 'mobx'
+import { makeObservable, observable, computed, runInAction } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
 import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
@@ -401,11 +401,13 @@ export class User {
         if (this.userState) {
             await this.userState.stop()
         }
-        this.id = undefined
-        this.allEpks = [] as string[]
-        this.reputation = 0
-        this.spent = 0
-        this.save()
+        runInAction(() => {
+            this.id = undefined
+            this.allEpks = [] as string[]
+            this.reputation = 0
+            this.spent = 0
+        })
+        window.localStorage.removeItem('identity')
     }
 
     async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {

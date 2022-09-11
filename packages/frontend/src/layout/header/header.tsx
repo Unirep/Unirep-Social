@@ -87,7 +87,7 @@ const Header = () => {
                             onClick={gotoUserPage}
                         />
                     </div>
-                    <div className="navBtn">
+                    <div id="menu" className="navBtn">
                         <img
                             src={require('../../../public/images/menu.svg')}
                             onClick={openMenu}

@@ -60,23 +60,28 @@ Cypress.Commands.add('deployUnirep', () => {
 })
 
 Cypress.Commands.add('signupNewUser', () => {
-    cy.visit('/start')
+    cy.visit('/')
+    cy.findByText('Get started').click()
     cy.findByText('Sign Up').click()
     cy.findByText('Twitter').click()
-    cy.wait(15000)
+    cy.wait(20000)
     cy.findByText('Skip this').click()
 
     // cy.findByText('Let me in').click()
-    cy.findByRole('textbox').then((e) => {
-        const iden = e[0].value
-        cy.findByText('Download').click()
-        cy.findByText('Copy').realClick()
-        cy.get('textarea').type(iden, {
-            parseSpecialCharSequences: false,
+    return cy
+        .findByRole('textbox')
+        .then((e) => {
+            const iden = e[0].value
+            cy.findByText('Download').click()
+            cy.findByText('Copy').realClick()
+            cy.get('textarea').type(iden, {
+                parseSpecialCharSequences: false,
+            })
+            cy.findByText('Submit').click()
+            cy.findByText('Get in').click()
+            return Promise.resolve(iden)
         })
-        cy.findByText('Submit').click()
-        cy.findByText('Get in').click()
-    })
+        .as('iden')
 })
 
 export {}
