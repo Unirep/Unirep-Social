@@ -93,7 +93,8 @@ contract UnirepSocial is zkSNARKHelper {
 
     event ContentUpdated(
         uint256 indexed _id,
-        bytes32 _newContent
+        bytes32 _oldContentHash,
+        bytes32 _newContentHash
     );
 
     event VoteSubmitted(
@@ -408,27 +409,27 @@ contract UnirepSocial is zkSNARKHelper {
     /*
      * Update a published post/comment content
      * @param id The post ID or the comment ID
-     * @param oleContent The old hashed content of the post/comment
-     * @param newContent The new hashed content of the post/comment
+     * @param oldContentHash The old hashed content of the post/comment
+     * @param newContentHash The new hashed content of the post/comment
      * @param publicSignals The public signals of the epoch key proof of the author of the post/comment
      * @param proof The epoch key proof of the author of the post/comment
      */
     function edit(
         uint256 id,
-        bytes32 oldContent,
-        bytes32 newContent,
+        bytes32 oldContentHash,
+        bytes32 newContentHash,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         uint256 epochKey = publicSignals[0];
         require(unirep.verifyEpochKeyValidity(publicSignals, proof), "Unirep Social: The epoch key proof is invalid");
         require(unirep.globalStateTreeRoots(publicSignals[2], publicSignals[1]) == true, "Unirep Social: Invalid global state tree root");
-        require(hashedContentMapping[id][oldContent] == epochKey, "Unirep Social: Mismatched epoch key proof to the post or the comment id");
+        require(hashedContentMapping[id][oldContentHash] == epochKey, "Unirep Social: Mismatched epoch key proof to the post or the comment id");
 
-        hashedContentMapping[id][oldContent] = 0;
-        hashedContentMapping[id][newContent] = epochKey;
+        hashedContentMapping[id][oldContentHash] = 0;
+        hashedContentMapping[id][newContentHash] = epochKey;
 
-        emit ContentUpdated(id, newContent);
+        emit ContentUpdated(id, oldContentHash, newContentHash);
     }
 
     /*

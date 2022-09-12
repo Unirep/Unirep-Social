@@ -338,23 +338,26 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             event.data
         )
         const id = event.topics[1].toString()
-        const newContent = decodedData._newContent
+        const oldContentHash = decodedData._oldContentHash
+        const newContentHash = decodedData._newContentHash
 
         db.update('Post', {
             where: {
                 postId: id,
+                hashedContent: oldContentHash,
             },
             update: {
-                hashedContent: newContent,
+                hashedContent: newContentHash,
             },
         })
 
         db.update('Comment', {
             where: {
                 commentId: id,
+                hashedContent: oldContentHash,
             },
             update: {
-                hashedContent: newContent,
+                hashedContent: newContentHash,
             },
         })
     }
