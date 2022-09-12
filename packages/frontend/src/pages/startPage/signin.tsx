@@ -27,18 +27,19 @@ const Signin = ({ getStarted }: Props) => {
     }
 
     const gotoHomePage = async () => {
-        if (pwd) {
-            try {
-                const id = await userContext.decrypt(pwd, JSON.parse(input))
-                await userContext.login(id)
-            } catch (err) {
-                console.log(err)
-                setError('There was a problem decrypting your identity')
-            }
-        } else {
+        if (!pwd) {
             await userContext.login(input)
+            history.push('/')
+            return
         }
-        history.push('/')
+        try {
+            const id = await userContext.decrypt(pwd, JSON.parse(input))
+            await userContext.login(id)
+            history.push('/')
+        } catch (err) {
+            console.log(err)
+            setError('There was a problem decrypting your identity')
+        }
     }
 
     return (
