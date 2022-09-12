@@ -24,6 +24,7 @@ Cypress.Commands.add('deployUnirep', () => {
             ganacheUrl,
             fundedKey,
         }) => {
+            const signupCode = 'test_signup_code'
             const provider = new ethers.providers.JsonRpcProvider(ganacheUrl)
             const wallet = new ethers.Wallet(fundedKey, provider)
             const unirepSocial = new ethers.Contract(
@@ -38,7 +39,7 @@ Cypress.Commands.add('deployUnirep', () => {
                 },
             }).as('getApiConfig')
             cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
-                expect(req.query.signupCode === 'test_signup_code')
+                expect(req.query.signupCode === signupCode)
                 const { commitment } = req.query
                 const tx = await unirepSocial
                     .connect(wallet)
@@ -51,8 +52,7 @@ Cypress.Commands.add('deployUnirep', () => {
             cy.intercept(`${serverUrl}/api/oauth/twitter?*`, {
                 statusCode: 301,
                 headers: {
-                    Location:
-                        'http://localhost:3000/start?signupCode=test_signup_code',
+                    Location: `http://localhost:3000/start?signupCode=${signupCode}`,
                 },
             })
         }
