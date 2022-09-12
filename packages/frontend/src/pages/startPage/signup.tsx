@@ -67,6 +67,8 @@ const Signup = ({ onboarded, getStarted }: Props) => {
     const onConfirmPwd = async () => {
         if (pwd !== confirmPwd) {
             setPwdError('Passwords do not match')
+        } else if (pwd.length < 6) {
+            setPwdError('Password must be at least 6 characters')
         } else {
             setPwdError('')
             const encrypted = await userContext.encrypt(pwd)
