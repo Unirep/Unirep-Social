@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import { defaultProver } from '@unirep/circuits/provers/defaultProver'
-import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
+import { ZkIdentity } from '@unirep/crypto'
 import { genEpochKey, schema, UserState } from '@unirep/core'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
@@ -353,16 +353,17 @@ const genUsernameProof = async (t, iden, graffitiPreImage) => {
         t.context.unirep.address,
         iden
     )
-    // find valid nonce starter
-    // gen proof
 
     const epkNonce = 0
+
     const usernameProof = await userState.genProveReputationProof(
         t.context.attesterId,
         epkNonce,
         0,
-        BigInt(0),
-        graffitiPreImage,
+        BigInt(1),
+        BigInt(
+            ethers.utils.hexlify(ethers.utils.toUtf8Bytes(graffitiPreImage))
+        ),
         BigInt(0)
     )
 
@@ -379,7 +380,7 @@ const genUsernameProof = async (t, iden, graffitiPreImage) => {
 }
 
 export const setUsername = async (t, iden) => {
-    const preImage = genRandomSalt().valueOf()
+    const preImage = 'initial-username123'
     const { proof, publicSignals, blockNumber } = await genUsernameProof(
         t,
         iden,
@@ -393,7 +394,7 @@ export const setUsername = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            newUsername: 15,
+            newUsername: 'testusername123',
             publicSignals,
             proof,
         }),

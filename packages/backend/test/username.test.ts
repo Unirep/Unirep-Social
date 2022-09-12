@@ -16,5 +16,6 @@ test('should set a username', async (t: any) => {
 
     // first set a username
     await setUsername(t, iden)
+
     t.pass()
 })
