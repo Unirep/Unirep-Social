@@ -50,10 +50,14 @@ describe('Subsidy', function () {
         )
         expect(await subsidyProof.verify()).to.be.true
         // now create a post
+        const text = 'test post'
+        const contentHash = ethers.utils.keccak256(
+            ethers.utils.toUtf8Bytes(text)
+        )
         await unirepSocialContract
             .connect(accounts[0])
             .publishPostSubsidy(
-                'test post',
+                contentHash,
                 subsidyProof.publicSignals,
                 subsidyProof.proof,
                 {
@@ -84,11 +88,15 @@ describe('Subsidy', function () {
         )
         expect(await subsidyProof.verify()).to.be.true
         // now create a post
+        const text = 'test comment'
+        const contentHash = ethers.utils.keccak256(
+            ethers.utils.toUtf8Bytes(text)
+        )
         await unirepSocialContract
             .connect(accounts[0])
             .publishCommentSubsidy(
                 '0x000001', // dummy post id
-                'test comment',
+                contentHash,
                 subsidyProof.publicSignals,
                 subsidyProof.proof,
                 {
