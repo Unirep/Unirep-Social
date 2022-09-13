@@ -57,7 +57,7 @@ describe('visit and interact with home page', () => {
         cy.get('#user > img').click()
         cy.location('pathname').should('eq', '/user')
         cy.get('.my-reps > .white-block').contains('0')
-        cy.get('.user-info-widget > .rep-info').contains('30')
+        cy.get('.user-info-widget > .rep-info').contains('0')
         cy.go('back')
     })
     it('ensures that user can submit a post', () => {
