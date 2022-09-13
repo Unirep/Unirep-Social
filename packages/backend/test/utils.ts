@@ -347,7 +347,7 @@ export const userStateTransition = async (t, iden) => {
     t.pass()
 }
 
-const genUsernameProof = async (t, iden, graffitiPreImage) => {
+const genUsernameProof = async (t, iden, preImage) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
@@ -361,10 +361,8 @@ const genUsernameProof = async (t, iden, graffitiPreImage) => {
         epkNonce,
         0,
         BigInt(1),
-        BigInt(
-            ethers.utils.hexlify(ethers.utils.toUtf8Bytes(graffitiPreImage))
-        ),
-        BigInt(0)
+        preImage,
+        0
     )
 
     const isValid = await usernameProof.verify()
@@ -379,14 +377,22 @@ const genUsernameProof = async (t, iden, graffitiPreImage) => {
     }
 }
 
-export const setUsername = async (t, iden) => {
-    const preImage = 'initial-username123'
+export const setUsername = async (t, iden, preImage, newUsername) => {
+    const hexlifiedPreImage =
+        preImage == 0
+            ? 0
+            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+    console.log('hexlifiedPreImage: ' + hexlifiedPreImage)
     const { proof, publicSignals, blockNumber } = await genUsernameProof(
         t,
         iden,
-        preImage
+        hexlifiedPreImage
     )
     await waitForBackendBlock(t, blockNumber)
+
+    console.log('proof: ' + proof)
+    console.log('publicSignals: ' + publicSignals)
+    console.log('blockNumber: ' + blockNumber)
 
     const r = await fetch(`${t.context.url}/api/usernames`, {
         method: 'POST',
@@ -394,7 +400,7 @@ export const setUsername = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            newUsername: 'testusername123',
+            newUsername,
             publicSignals,
             proof,
         }),

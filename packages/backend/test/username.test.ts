@@ -1,6 +1,8 @@
 import test from 'ava'
 import { startServer } from './environment'
 import fetch from 'node-fetch'
+import { hashOne } from '@unirep/crypto'
+import { ethers } from 'ethers'
 
 import { signIn, signUp, setUsername } from './utils'
 
@@ -15,7 +17,16 @@ test('should set a username', async (t: any) => {
     await signIn(t, commitment)
 
     // first set a username
-    await setUsername(t, iden)
+    // pre-image by default is 0
+    await setUsername(t, iden, 0, 'initial-test-username123')
+
+    // change the username to something else
+    await setUsername(
+        t,
+        iden,
+        'initial-test-username123',
+        'second-test-username123'
+    )
 
     t.pass()
 })
