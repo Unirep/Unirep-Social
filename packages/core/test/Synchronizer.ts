@@ -18,10 +18,11 @@ import { genUserState, submitUSTProofs } from './utils'
 import { UnirepSocialSynchronizer } from '../src/synchronizer'
 import { schema } from '../src/schema'
 
-import { SQLiteConnector } from 'anondb/node'
+import { SQLiteConnector, DB } from 'anondb/node'
 
 let synchronizer: UnirepSocialSynchronizer
 const attestingFee = BigNumber.from(1)
+let db: DB
 
 describe('Synchronzier processes events', function () {
     this.timeout(0)
@@ -41,7 +42,8 @@ describe('Synchronzier processes events', function () {
                 airdropReputation: 30,
             }
         )
-        const db = await SQLiteConnector.create(schema, ':memory:')
+        db = await SQLiteConnector.create(schema, ':memory:')
+        console.log(db)
         synchronizer = new UnirepSocialSynchronizer(
             db,
             defaultProver,
@@ -110,6 +112,7 @@ describe('Synchronzier processes events', function () {
         )
         const receipt = await tx.wait()
         expect(receipt.status, 'Submit post failed').to.equal(1)
+        await userState.waitForSync()
         // const post = await db.findOne('Post', { where:{hashedContent}})
         // expect(post.hashedContent === hashedContent)
     })
