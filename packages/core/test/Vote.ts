@@ -279,5 +279,63 @@ describe('Vote', function () {
                 'Unirep Social: submit a proof with different attester ID from Unirep Social'
             )
         })
+
+        it('submit upvote proof twice should fail', async () => {
+            const currentEpoch = await unirepContract.currentEpoch()
+            const toEpochKey = genEpochKey(
+                genRandomSalt(),
+                currentEpoch,
+                0
+            ) as BigNumberish
+            const attesterId = BigInt(
+                await unirepContract.attesters(unirepSocialContract.address)
+            )
+            const id = new ZkIdentity()
+            await unirepSocialContract
+                .userSignUp(id.genIdentityCommitment())
+                .then((t) => t.wait())
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = 0
+            const graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            const upvoteValue = 3
+            const reputationProof = await userState.genProveReputationProof(
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
+                upvoteValue
+            )
+            await unirepSocialContract
+                .vote(
+                    upvoteValue,
+                    0,
+                    toEpochKey,
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    { value: DEFAULT_ATTESTING_FEE.mul(2) }
+                )
+                .then((t) => t.wait())
+
+            await expect(
+                unirepSocialContract
+                .vote(
+                    upvoteValue,
+                    0,
+                    toEpochKey,
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    { value: DEFAULT_ATTESTING_FEE.mul(2) }
+                )
+            ).to.be.revertedWith(
+                'Unirep Social: the proof is submitted before'
+            )
+        })
     })
 })

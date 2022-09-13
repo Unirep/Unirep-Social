@@ -359,10 +359,176 @@ describe('Subsidy', function () {
             )
         await tx.wait()
         // should fail to double claim
+        const { publicSignals, proof } = await userState.genNegativeRepProof(
+            attesterId.toBigInt(),
+            BigInt(10)
+        )
         await expect(
             unirepSocialContract
                 .connect(accounts[0])
-                .getSubsidyAirdrop(negRepProof.publicSignals, negRepProof.proof)
+                .getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
+    })
+
+    it('should fail to post with the same proof using subsidy', async () => {
+        const accounts = await ethers.getSigners()
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .connect(accounts[0])
+            .userSignUp(id.genIdentityCommitment())
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const attesterId = await unirepContract.attesters(
+            unirepSocialContract.address
+        )
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt()
+        )
+        expect(await subsidyProof.verify()).to.be.true
+        // now create a post
+        await unirepSocialContract
+            .connect(accounts[0])
+            .publishPostSubsidy(
+                'test post',
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
+            .then((t) => t.wait())
+
+        // reuse proof
+        await expect(unirepSocialContract
+            .connect(accounts[0])
+            .publishPostSubsidy(
+                'new post',
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
+        ).to.be.revertedWith(
+            'Unirep Social: the proof is submitted before'
+        )
+        await userState.stop()
+    })
+
+    it('should fail to create a comment with the same proof using subsidy', async () => {
+        const accounts = await ethers.getSigners()
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .connect(accounts[0])
+            .userSignUp(id.genIdentityCommitment())
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const attesterId = await unirepContract.attesters(
+            unirepSocialContract.address
+        )
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt()
+        )
+        expect(await subsidyProof.verify()).to.be.true
+        // now create a post
+        await unirepSocialContract
+            .connect(accounts[0])
+            .publishCommentSubsidy(
+                '0x000001', // dummy post id
+                'test comment',
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
+            .then((t) => t.wait())
+
+        // reuse proof
+        await expect(unirepSocialContract
+            .connect(accounts[0])
+            .publishCommentSubsidy(
+                '0x000001', // dummy post id
+                'new comment',
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee,
+                }
+            )
+        ).to.be.revertedWith(
+            'Unirep Social: the proof is submitted before'
+        )
+        await userState.stop()
+    })
+
+    it('should fail to create a vote with the same proof using subsidy', async () => {
+        const accounts = await ethers.getSigners()
+        const attesterId = await unirepContract.attesters(
+            unirepSocialContract.address
+        )
+        const receivingId = new ZkIdentity()
+        // now create a vote
+        const id = new ZkIdentity()
+        await unirepSocialContract
+            .connect(accounts[0])
+            .userSignUp(id.genIdentityCommitment())
+            .then((t) => t.wait())
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id
+        )
+        const epoch = await unirepContract.currentEpoch()
+        const toEpochKey = genEpochKey(
+            receivingId.identityNullifier,
+            epoch.toNumber(),
+            0
+        )
+        const subsidyProof = await userState.genSubsidyProof(
+            attesterId.toBigInt(),
+            BigInt(0),
+            toEpochKey
+        )
+        expect(await subsidyProof.verify()).to.be.true
+        const voteAmount = 3
+        await unirepSocialContract
+            .connect(accounts[1])
+            .voteSubsidy(
+                voteAmount,
+                0,
+                toEpochKey,
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee.mul(2),
+                }
+            ).then((t) => t.wait())
+
+        // reuse proof
+        await expect(unirepSocialContract
+            .connect(accounts[1])
+            .voteSubsidy(
+                voteAmount,
+                0,
+                toEpochKey,
+                subsidyProof.publicSignals,
+                subsidyProof.proof,
+                {
+                    value: attestingFee.mul(2),
+                }
+            )
+        ).to.be.revertedWith(
+            'Unirep Social: the proof is submitted before'
+        )
+        await userState.stop()
     })
 })
