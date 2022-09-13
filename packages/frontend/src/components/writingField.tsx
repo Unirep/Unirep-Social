@@ -25,7 +25,7 @@ type Props = {
 
 const WritingField = (props: Props) => {
     const unirepConfig = useContext(UnirepContext)
-    const user = useContext(UserContext)
+    const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
 
@@ -78,7 +78,7 @@ const WritingField = (props: Props) => {
     }
 
     const submit = () => {
-        if (!user.userState) {
+        if (!userContext.userState) {
             setErrorMsg('Please sign up or sign in')
         } else {
             if (title.length === 0 && content.length === 0) {
@@ -143,21 +143,21 @@ const WritingField = (props: Props) => {
                         <HelpWidget type={InfoType.subsidy} />
                     </div>
                 </div>
-                {!user.userState ? (
+                {!userContext.userState ? (
                     <div className="info-detail">somethings wrong...</div>
                 ) : useSubsidy ? (
-                    user.subsidyReputation > defaultRep ? (
+                    userContext.subsidyReputation > defaultRep ? (
                         <div className="info-detail">
                             <div className="epk chosen">
-                                <strong>{user.subsidyReputation}</strong>
+                                <strong>{userContext.subsidyReputation}</strong>
                                 <span className="interline"></span>
-                                {user.allEpks[0]}
+                                {userContext.allEpks[0]}
                             </div>
                             <div
                                 className="rep-chooser"
                                 style={{
                                     display:
-                                        user.netReputation > defaultRep
+                                        userContext.netReputation > defaultRep
                                             ? 'flex'
                                             : 'none',
                                 }}
@@ -166,8 +166,8 @@ const WritingField = (props: Props) => {
                                     type="range"
                                     min={0}
                                     max={
-                                        user.userState
-                                            ? user.netReputation
+                                        userContext.userState
+                                            ? userContext.netReputation
                                             : defaultRep
                                     }
                                     onChange={handleRepInput}
@@ -185,10 +185,10 @@ const WritingField = (props: Props) => {
                             Oh well, you have used all the Rep-Handout ;)
                         </div>
                     )
-                ) : user.netReputation > defaultRep ? (
+                ) : userContext.netReputation > defaultRep ? (
                     <div className="info-detail">
                         <div className="epks">
-                            {user.currentEpochKeys.map((epk, i) => (
+                            {userContext.currentEpochKeys.map((epk, i) => (
                                 <div
                                     className={
                                         i === epkNonce ? 'epk chosen' : 'epk'
@@ -204,7 +204,7 @@ const WritingField = (props: Props) => {
                             className="rep-chooser"
                             style={{
                                 display:
-                                    user.netReputation > defaultRep
+                                    userContext.netReputation > defaultRep
                                         ? 'flex'
                                         : 'none',
                             }}
@@ -213,8 +213,8 @@ const WritingField = (props: Props) => {
                                 type="range"
                                 min={0}
                                 max={
-                                    user.userState
-                                        ? user.netReputation
+                                    userContext.userState
+                                        ? userContext.netReputation
                                         : defaultRep
                                 }
                                 onChange={handleRepInput}
@@ -233,59 +233,6 @@ const WritingField = (props: Props) => {
                     </div>
                 )}
             </div>
-            {/* <div className="info-row">
-                <div className="element">
-                    <div className="name">
-                        Post as <HelpWidget type={InfoType.epk4Post} />
-                    </div>
-                    <div className="epks">
-                        <div
-                            className={-1 === epkNonce ? 'epk chosen' : 'epk'}
-                            onClick={() => setEpkNonce(-1)}
-                            key={0}
-                        >
-                            Subsidy
-                        </div>
-
-                        {!user.userState ? (
-                            <div>somethings wrong...</div>
-                        ) : (
-                            user.currentEpochKeys.map((epk, i) => (
-                                <div
-                                    className={
-                                        i === epkNonce ? 'epk chosen' : 'epk'
-                                    }
-                                    onClick={() => setEpkNonce(i)}
-                                    key={epk}
-                                >
-                                    {shortenEpochKey(epk)}
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-                <div className="element">
-                    <div className="name">
-                        My Rep display <HelpWidget type={InfoType.rep} />
-                    </div>
-                    <div className="rep-chooser">
-                        <input
-                            type="range"
-                            min={0}
-                            max={
-                                user.userState ? user.netReputation : defaultRep
-                            }
-                            onChange={handleRepInput}
-                            value={reputation}
-                        />
-                        <input
-                            type="text"
-                            value={reputation}
-                            onChange={handleRepInput}
-                        />
-                    </div>
-                </div>
-            </div> */}
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}
             </div>

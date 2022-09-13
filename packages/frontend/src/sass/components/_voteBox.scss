@@ -121,40 +121,87 @@
                     }
                 }
             }
-
-            .epks {
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                margin-top: 32px;
-                justify-content: center;
-
-                .epk {
-                    @include myButton(
-                        $height: 32px,
-                        $radius: 8px,
-                        $border: 1px,
-                        $border-color: $black,
-                        $color: $black,
-                        $font-size: $text-sm,
-                        $margin-horizontal: 4px,
-                        $block-color: $grey-100
-                    );
-                    padding: 7px 16px;
-                }
-
-                .chosen {
-                    background-color: $black;
-                    color: $white;
-                }
-            }
         }
 
         .white-box {
-            padding: 32px;
+            padding: 16px 32px 32px 32px;
             width: 100%;
             background-color: $white;
             border-radius: 0px 0px 8px 8px;
+
+            .info {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+
+                .choose-from {
+                    width: 100%;
+                    display: flex;
+                    justify-content: space-between;
+
+                    .choices {
+                        display: flex;
+                        gap: 24px;
+                        color: $black;
+                        font-size: $text-base;
+
+                        strong {
+                            cursor: pointer;
+                            line-height: 22px;
+                        }
+
+                        .chosen {
+                            border-bottom: 4px solid $black;
+                        }
+                    }
+                }
+
+                .info-detail {
+                    width: 100%;
+                    margin-bottom: 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    line-height: 28px;
+
+                    .epks {
+                        display: flex;
+                        gap: 8px;
+                    }
+
+                    .epk {
+                        @include myButton(
+                            $height: 32px,
+                            $font-size: $text-sm,
+                            $color: $black,
+                            $radius: 8px,
+                            $border: 1px,
+                            $border-color: $black,
+                            $margin-horizontal: 0px
+                        );
+                        padding: 7px 16px;
+
+                        .interline {
+                            width: 1px;
+                            height: 100%;
+                            background-color: $white;
+                            margin: 0px 8px;
+                        }
+                    }
+
+                    .chosen {
+                        background-color: $black;
+                        color: $white;
+                    }
+                }
+            }
+
+            .error {
+                color: $red;
+                font-size: $text-md;
+                margin-top: 24px;
+                text-align: center;
+            }
 
             .submit {
                 @include myButton(
@@ -167,6 +214,7 @@
                 );
                 width: 100%;
                 padding: 17px auto;
+                margin: 0px;
             }
 
             .outdated {
