@@ -324,8 +324,7 @@ describe('Vote', function () {
                 .then((t) => t.wait())
 
             await expect(
-                unirepSocialContract
-                .vote(
+                unirepSocialContract.vote(
                     upvoteValue,
                     0,
                     toEpochKey,
@@ -333,9 +332,7 @@ describe('Vote', function () {
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE.mul(2) }
                 )
-            ).to.be.revertedWith(
-                'Unirep Social: the proof is submitted before'
-            )
+            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         })
     })
 })

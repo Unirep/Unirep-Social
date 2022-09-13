@@ -216,9 +216,7 @@ describe('Post', function () {
                         value: DEFAULT_ATTESTING_FEE,
                     }
                 )
-            ).to.be.revertedWith(
-                'Unirep Social: the proof is submitted before'
-            )
+            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         })
     })
 
@@ -473,9 +471,7 @@ describe('Post', function () {
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE }
                 )
-            ).to.be.revertedWith(
-                'Unirep Social: the proof is submitted before'
-            )
-        })      
+            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
+        })
     })
 })

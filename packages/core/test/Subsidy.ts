@@ -403,19 +403,18 @@ describe('Subsidy', function () {
             .then((t) => t.wait())
 
         // reuse proof
-        await expect(unirepSocialContract
-            .connect(accounts[0])
-            .publishPostSubsidy(
-                'new post',
-                subsidyProof.publicSignals,
-                subsidyProof.proof,
-                {
-                    value: attestingFee,
-                }
-            )
-        ).to.be.revertedWith(
-            'Unirep Social: the proof is submitted before'
-        )
+        await expect(
+            unirepSocialContract
+                .connect(accounts[0])
+                .publishPostSubsidy(
+                    'new post',
+                    subsidyProof.publicSignals,
+                    subsidyProof.proof,
+                    {
+                        value: attestingFee,
+                    }
+                )
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         await userState.stop()
     })
 
@@ -453,9 +452,8 @@ describe('Subsidy', function () {
             .then((t) => t.wait())
 
         // reuse proof
-        await expect(unirepSocialContract
-            .connect(accounts[0])
-            .publishCommentSubsidy(
+        await expect(
+            unirepSocialContract.connect(accounts[0]).publishCommentSubsidy(
                 '0x000001', // dummy post id
                 'new comment',
                 subsidyProof.publicSignals,
@@ -464,9 +462,7 @@ describe('Subsidy', function () {
                     value: attestingFee,
                 }
             )
-        ).to.be.revertedWith(
-            'Unirep Social: the proof is submitted before'
-        )
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         await userState.stop()
     })
 
@@ -511,24 +507,24 @@ describe('Subsidy', function () {
                 {
                     value: attestingFee.mul(2),
                 }
-            ).then((t) => t.wait())
+            )
+            .then((t) => t.wait())
 
         // reuse proof
-        await expect(unirepSocialContract
-            .connect(accounts[1])
-            .voteSubsidy(
-                voteAmount,
-                0,
-                toEpochKey,
-                subsidyProof.publicSignals,
-                subsidyProof.proof,
-                {
-                    value: attestingFee.mul(2),
-                }
-            )
-        ).to.be.revertedWith(
-            'Unirep Social: the proof is submitted before'
-        )
+        await expect(
+            unirepSocialContract
+                .connect(accounts[1])
+                .voteSubsidy(
+                    voteAmount,
+                    0,
+                    toEpochKey,
+                    subsidyProof.publicSignals,
+                    subsidyProof.proof,
+                    {
+                        value: attestingFee.mul(2),
+                    }
+                )
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         await userState.stop()
     })
 })
