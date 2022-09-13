@@ -4,7 +4,7 @@ import { BigNumberish, BigNumber } from 'ethers'
 import { expect } from 'chai'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import * as config from '@unirep/circuits'
-import { genEpochKey, schema } from '@unirep/core'
+import { genEpochKey } from '@unirep/core'
 import { EpochKeyProof } from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt, hashLeftRight } from '@unirep/crypto'
@@ -16,6 +16,7 @@ import { deployUnirepSocial, UnirepSocial } from '../src/utils'
 import { genUserState, submitUSTProofs } from './utils'
 
 import { UnirepSocialSynchronizer } from '../src/synchronizer'
+import { schema } from '../src/schema'
 
 import { SQLiteConnector } from 'anondb/node'
 
@@ -113,7 +114,7 @@ describe('Synchronzier processes events', function () {
         // expect(post.hashedContent === hashedContent)
     })
 
-    it.skip('submit comment should succeed', async () => {
+    it('submit comment should succeed', async () => {
         const attesterId = BigInt(
             await unirepContract.attesters(unirepSocialContract.address)
         )
