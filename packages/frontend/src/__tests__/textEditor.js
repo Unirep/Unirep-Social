@@ -24,7 +24,7 @@ const renderTextEditor = () => {
 test('type text into textbox', async () => {
     renderTextEditor()
     const textbox = screen.getByRole('textbox')
-    userEvent
+    return userEvent
         .type(textbox, loremText)
         .then(() => expect(textbox).toHaveValue(loremText))
 })
