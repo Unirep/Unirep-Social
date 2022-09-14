@@ -17,7 +17,7 @@ export default (app) => {
 }
 
 async function completeTwitterAuth(req, res) {
-    const { state, code } = req.query
+    const { state, code, error } = req.query
     const _state = await req.db.findOne('OAuthState', {
         where: { _id: state },
     })
@@ -32,6 +32,16 @@ async function completeTwitterAuth(req, res) {
             _id: state,
         },
     })
+    if (error) {
+        // access was denied
+        const url = new URL(_state.redirectDestination)
+        url.searchParams.append(
+            'signupError',
+            'There was a problem authenticating you'
+        )
+        res.redirect(url.toString())
+        return
+    }
     const args = {
         code,
         grant_type: 'authorization_code',
@@ -54,6 +64,12 @@ async function completeTwitterAuth(req, res) {
             authorization: `Bearer ${auth.access_token}`,
         },
     }).then((r) => r.json())
+    if (!user.data.id) {
+        const url = new URL(_state.redirectDestination)
+        url.searchParams.append('signupError', 'Unknown problem')
+        res.redirect(url.toString())
+        return
+    }
     // end oauth logic
     // generate a signup code and give it to the user
     // prevent double signup
@@ -113,7 +129,7 @@ async function githubAuth(req, res) {
 }
 
 async function completeGithubAuth(req, res, next) {
-    const { code, state } = req.query
+    const { code, state, error } = req.query
     const _state = await req.db.findOne('OAuthState', {
         where: { _id: state },
     })
@@ -128,6 +144,16 @@ async function completeGithubAuth(req, res, next) {
             _id: state,
         },
     })
+    if (error) {
+        // access was denied
+        const url = new URL(_state.redirectDestination)
+        url.searchParams.append(
+            'signupError',
+            'There was a problem authenticating you'
+        )
+        res.redirect(url.toString())
+        return
+    }
     const url = new URL('https://github.com/login/oauth/access_token')
     url.searchParams.append('client_id', GITHUB_CLIENT_ID)
     url.searchParams.append('client_secret', GITHUB_CLIENT_SECRET)
@@ -144,6 +170,12 @@ async function completeGithubAuth(req, res, next) {
             authorization: `token ${access_token}`,
         },
     }).then((r) => r.json())
+    if (!user.id) {
+        const _url = new URL(_state.redirectDestination)
+        _url.searchParams.append('signupError', 'Unknown problem')
+        res.redirect(_url.toString())
+        return
+    }
     // end oauth logic
     const signupId = `github-${user.id}`
     const existingSignup = await req.db.findOne('SignupCode', {
