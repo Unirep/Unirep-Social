@@ -37,10 +37,12 @@ async function setUsername(req, res) {
     // accept a requested new username and ZK proof proving the epoch key and current username (graffiti pre-image)
     const { newUsername, publicSignals, proof } = req.body
 
+    console.log('proof passed in router: ' + proof)
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
+    console.log('reputation proof: ' + reputationProof)
 
     // verify this reputation proof and return an error if it's invalid
     const error = await verifyReputationProof(
@@ -54,7 +56,7 @@ async function setUsername(req, res) {
         res.status(422).json({
             error,
         })
-        return
+        return `Error: Reputation proof is not verified`
     }
 
     // check that the glocalStateTree public signal exists in the current epoch
@@ -64,8 +66,11 @@ async function setUsername(req, res) {
         return `Error: Global state tree root ${gstRoot} is not in epoch ${currentEpoch}`
     }
 
-    // check that proveGraffiti is 1
-    if (reputationProof.proveGraffiti !== 1) {
+    // check that proveGraffiti is 1 if the preimage is not 0 (default value)
+    if (
+        reputationProof.graffitiPreImage !== 0 &&
+        reputationProof.proveGraffiti !== 1
+    ) {
         return `Error: prove graffiti ${reputationProof.proveGraffiti} is not 1`
     }
 

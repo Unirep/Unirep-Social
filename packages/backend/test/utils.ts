@@ -223,6 +223,10 @@ export const createComment = async (t, iden, postId) => {
     )
     await waitForBackendBlock(t, blockNumber)
 
+    console.log('comment proof: ' + proof)
+    console.log('comment publicSignals: ' + publicSignals)
+    console.log('comment blockNumber: ' + blockNumber)
+
     const r = await fetch(`${t.context.url}/api/comment`, {
         method: 'POST',
         headers: {
@@ -360,7 +364,7 @@ const genUsernameProof = async (t, iden, preImage) => {
         t.context.attesterId,
         epkNonce,
         0,
-        BigInt(1),
+        preImage == 0 ? BigInt(0) : BigInt(1),
         preImage,
         0
     )
@@ -393,6 +397,9 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
     console.log('proof: ' + proof)
     console.log('publicSignals: ' + publicSignals)
     console.log('blockNumber: ' + blockNumber)
+    console.log('newUsername: ' + newUsername)
+
+    console.log(`${t.context.url}/api/usernames`)
 
     const r = await fetch(`${t.context.url}/api/usernames`, {
         method: 'POST',
@@ -405,6 +412,8 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
             proof,
         }),
     })
+
+    console.log('post method sent to endpoint')
 
     const data = await r.json()
 
