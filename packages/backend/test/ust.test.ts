@@ -1,8 +1,9 @@
 import test from 'ava'
 import { startServer } from './environment'
 
-import { epochTransition, signUp, userStateTransition } from './utils'
+import { signUp, userStateTransition } from './utils'
 
+// Milliseconds
 const EPOCH_LENGTH = 20000
 
 test.before(async (t: any) => {
@@ -14,18 +15,18 @@ test('should do user state transition', async (t: any) => {
     // sign up user
     const { iden } = await signUp(t)
 
-    await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
-
-    // execute the epoch transition
     const prevEpoch = await t.context.unirep.currentEpoch()
-    await epochTransition(t)
+    const { EpochManager } = require('../src/daemons/EpochManager')
+
+    const epochManager = new EpochManager()
+    await epochManager.updateWatch()
+    // wait for epoch transition
     for (;;) {
+        const currentEpoch = await t.context.unirep.currentEpoch()
+        if (+currentEpoch === +prevEpoch + 1) break
         await new Promise((r) => setTimeout(r, 1000))
-        const findEpoch = await t.context.db.findOne('Epoch', {
-            where: { number: Number(prevEpoch) },
-        })
-        if (findEpoch) break
     }
+    epochManager.stop()
     // user state transition
     await userStateTransition(t, iden)
     t.pass()

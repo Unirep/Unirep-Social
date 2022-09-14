@@ -9,7 +9,6 @@ Object.assign(process.env, {
     UNIREP: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
     UNIREP_SOCIAL: '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853',
     DEFAULT_ETH_PROVIDER_URL: 'http://localhost:8545',
-    ADMIN_SESSION_CODE: randomstring.generate(20),
     DB_PATH: ':memory:',
     ...process.env,
 })
@@ -20,11 +19,14 @@ export const {
     UNIREP_SOCIAL,
     DEFAULT_ETH_PROVIDER_URL,
     MONGO_URL,
-    ADMIN_SESSION_CODE,
     DB_PATH,
+    GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET,
+    TWITTER_CLIENT_ID,
+    TWITTER_CLIENT_SECRET,
+    TWITTER_REDIRECT_URI,
+    GITHUB_REDIRECT_URI,
 } = process.env as any
-
-console.log(`Admin session code is "${ADMIN_SESSION_CODE}"`)
 
 if (!DEPLOYER_PRIV_KEY) {
     console.error('No DEPLOYER_PRIV_KEY specified')

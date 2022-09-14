@@ -10,6 +10,7 @@ import TransactionManager from './TransactionManager'
 
 export class EpochManager {
     timer: NodeJS.Timeout | null = null
+    active = false
     unirepContract = new ethers.Contract(
         UNIREP,
         UNIREP_ABI,
@@ -21,7 +22,16 @@ export class EpochManager {
         DEFAULT_ETH_PROVIDER
     )
 
+    stop() {
+        this.active = false
+        if (this.timer) {
+            clearTimeout(this.timer)
+            this.timer = null
+        }
+    }
+
     async updateWatch() {
+        this.active = true
         if (this.timer) {
             clearTimeout(this.timer)
             this.timer = null
@@ -58,7 +68,9 @@ export class EpochManager {
         }
         // wait for 10 seconds before trying again or rescheduling
         await new Promise((r) => setTimeout(r, 10000))
-        this.updateWatch()
+        if (this.active) {
+            this.updateWatch()
+        }
     }
 
     async doEpochTransition() {

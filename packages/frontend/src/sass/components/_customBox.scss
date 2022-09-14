@@ -1,0 +1,286 @@
+.custom-box-container {
+    position: fixed;
+    top: 0;
+    z-index: 15;
+    width: 100%;
+    height: 100%;
+
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .top-buttons {
+        position: fixed;
+        top: 0;
+        z-index: 16;
+        width: 100%;
+
+        img {
+            position: absolute;
+            top: 16px;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+        }
+
+        #back {
+            left: 48px;
+        }
+
+        #close {
+            right: 48px;
+        }
+    }
+
+    .steps {
+        width: 75%;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+
+    .step {
+        width: 100%;
+        height: 16px;
+        border-radius: 4px;
+        background-color: $grey-700;
+
+        background-repeat: repeat;
+        background-size: contain;
+    }
+
+    .download-steps {
+        width: 56%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .download-step {
+        width: 24px;
+        height: 24px;
+        background-color: $black;
+        color: $white;
+        font-size: $text-base;
+        font-weight: 700;
+        border-radius: 20px;
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
+    }
+
+    .line {
+        width: 75%;
+        height: 2px;
+        background-color: $grey-800;
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
+    }
+
+    .box {
+        position: relative;
+        width: 609px;
+        min-height: 658px;
+        padding: 48px 32px;
+        overflow-y: scroll;
+
+        border-radius: 8px;
+        border: $grey-100 solid 6px;
+
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        @media (max-width: 609px) {
+            width: 100%;
+        }
+    }
+
+    .box-with-bottom-btns {
+        padding-bottom: 120px;
+    }
+
+    textarea {
+        height: 172px;
+        border-radius: 8px;
+        border: $grey-200 1px solid;
+        padding: 8px 16px;
+        background-color: $white;
+        color: $grey-800;
+        font-size: $text-base;
+    }
+
+    p {
+        font-size: $text-md;
+
+        strong {
+            cursor: pointer;
+        }
+    }
+
+    h1 {
+        font-size: $title-lg;
+        font-weight: 700;
+    }
+
+    h2 {
+        font-size: $title-md;
+        font-weight: 600;
+    }
+
+    h3 {
+        font-size: $title-sm;
+        font-weight: 600;
+    }
+
+    .note {
+        font-size: $text-base;
+    }
+
+    .box-dark {
+        background-color: $grey-800;
+        color: $grey-100;
+    }
+
+    .box-light {
+        background-color: $grey-100;
+        color: $black;
+
+        p {
+            text-align: center;
+        }
+    }
+
+    .box-buttons {
+        width: 100%;
+        background-color: transparent;
+    }
+
+    button {
+        width: 100%;
+        font-size: $text-md;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 16px 24px;
+
+        &:disabled {
+            cursor: not-allowed;
+        }
+    }
+
+    .button-dark {
+        background-color: $black;
+        color: $white;
+        border: none;
+
+        &:hover {
+            background-color: $grey-400;
+        }
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
+    }
+
+    .button-light {
+        background-color: $grey-100;
+        color: $black;
+        border: none;
+
+        &:hover {
+            background-color: $grey-200;
+        }
+
+        &:disabled {
+            color: $grey-400;
+            background-color: $grey-300;
+        }
+    }
+
+    .button-light-transparent {
+        color: $white;
+        border: $white solid 1px;
+        background-color: transparent;
+
+        &:hover {
+            color: $grey-200;
+            border: $grey-200 solid 1px;
+            background-color: transparent;
+        }
+
+        &:disabled {
+            color: $grey-400;
+            border: $grey-400 solid 1px;
+            background-color: transparent;
+        }
+    }
+
+    .button-dark-transparent {
+        color: $black;
+        border: $black solid 1px;
+        background-color: transparent;
+
+        &:hover {
+            color: $grey-400;
+            border: $grey-400 solid 1px;
+            background-color: transparent;
+        }
+
+        &:disabled {
+            color: $grey-400;
+            border: $grey-400 solid 1px;
+            background-color: transparent;
+        }
+    }
+
+    .button-with-img {
+        display: flex;
+        align-items: center;
+
+        img {
+            width: 48px;
+            height: 48px;
+            margin-left: auto;
+        }
+
+        &:hover {
+            img {
+                filter: opacity(60%);
+            }
+        }
+    }
+
+    .box-buttons-smaller {
+        width: 320px;
+    }
+
+    .box-buttons-horizontal {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+    }
+
+    .box-buttons-bottom {
+        position: absolute;
+        bottom: 48px;
+        padding: 0px 32px;
+    }
+
+    .disabled {
+        @include disabled;
+    }
+}
