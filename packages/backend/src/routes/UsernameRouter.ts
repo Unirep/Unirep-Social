@@ -59,19 +59,19 @@ async function setUsername(req, res) {
         return `Error: Reputation proof is not verified`
     }
 
-    // check that the glocalStateTree public signal exists in the current epoch
-    const gstRoot = reputationProof.globalStateTree.toString()
-    const exists = await verifyGSTRoot(req.db, currentEpoch, gstRoot)
-    if (!exists) {
-        return `Error: Global state tree root ${gstRoot} is not in epoch ${currentEpoch}`
-    }
-
     // check that proveGraffiti is 1 if the preimage is not 0 (default value)
     if (
-        reputationProof.graffitiPreImage !== 0 &&
-        reputationProof.proveGraffiti !== 1
+        reputationProof.graffitiPreImage.toString() !== '0' &&
+        reputationProof.proveGraffiti.toString() !== '1'
     ) {
-        return `Error: prove graffiti ${reputationProof.proveGraffiti} is not 1`
+        console.log(
+            reputationProof.graffitiPreImage,
+            reputationProof.proveGraffiti
+        )
+        res.status(422).json({
+            error: `Error: prove graffiti ${reputationProof.proveGraffiti} is not 1`,
+        })
+        return
     }
 
     // username validation
