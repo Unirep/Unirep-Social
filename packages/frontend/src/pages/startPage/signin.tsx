@@ -54,8 +54,8 @@ const Signin = ({ getStarted }: Props) => {
             <h2 className="title">Sign in</h2>
             <CustomGap times={2} />
             <p>
-                We have deploy the contract on Optimism, that is different from
-                the previous release. If you have previously use UniRep Social,
+                We have deployed the contract on Optimism, that is different from
+                the previous release. If you have previously used UniRep Social,
                 the private key is no longer valid.
             </p>
             <p>Please paste the newly registered private key below</p>
