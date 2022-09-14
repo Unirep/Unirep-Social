@@ -16,7 +16,9 @@ test('should render getting started text', () => {
         'If you have previously used UniRep, you might need to re-sign up again, since we have change the network.'
 
     renderGetStarted(jest.fn(), jest.fn())
-    expect(screen.getByText(p1) && screen.getByText(p2) && screen.getByText(note)).toBeInTheDocument()
+    expect(
+        screen.getByText(p1) && screen.getByText(p2) && screen.getByText(note)
+    ).toBeInTheDocument()
 })
 
 test('should be able to click sign in and sign up buttons', async () => {

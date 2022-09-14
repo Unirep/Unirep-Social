@@ -34,7 +34,7 @@ test('should render signin text properly', () => {
     )
 })
 
-test('should simulate user clicking sign in *without* password', () => {
+test('should simulate user clicking sign in without password', () => {
     const userData = {
         login: jest.fn(),
     }
