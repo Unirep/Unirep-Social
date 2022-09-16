@@ -6,10 +6,9 @@ import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 
-import HelpWidget from './helpWidget'
 import TextEditor from './textEditor'
-import { DataType, InfoType } from '../constants'
-import { shortenEpochKey } from '../utils'
+import ActionDetail from './actionDetail'
+import { DataType } from '../constants'
 
 type Props = {
     type: DataType
@@ -68,10 +67,6 @@ const WritingField = (props: Props) => {
         postContext.setDraft(props.type, event.target.value, content)
     }
 
-    const handleRepInput = (event: any) => {
-        setReputation(+event.target.value)
-    }
-
     const handleTextEditorInput = (text: string) => {
         setContent(text)
         postContext.setDraft(props.type, title, text)
@@ -97,6 +92,7 @@ const WritingField = (props: Props) => {
     const chooseToUsePersona = () => {
         setUseSubsidy(false)
         setEpkNonce(0)
+        setReputation(defaultRep)
     }
 
     return (
@@ -123,116 +119,27 @@ const WritingField = (props: Props) => {
                     autoFocus={true}
                 />
             )}
-            <div className="info">
-                <div className="choose-from">
-                    <div className="choices">
-                        <strong
-                            className={useSubsidy ? 'chosen' : ''}
-                            onClick={chooseToUseSubsidy}
-                        >
-                            Rep-Handout
-                        </strong>
-                        <strong
-                            className={useSubsidy ? '' : 'chosen'}
-                            onClick={chooseToUsePersona}
-                        >
-                            Personas
-                        </strong>
-                    </div>
-                    <div className="help">
-                        <HelpWidget type={InfoType.subsidy} />
-                    </div>
-                </div>
-                {!userContext.userState ? (
-                    <div className="info-detail">somethings wrong...</div>
-                ) : useSubsidy ? (
-                    userContext.subsidyReputation > defaultRep ? (
-                        <div className="info-detail">
-                            <div className="epk chosen">
-                                <strong>{userContext.subsidyReputation}</strong>
-                                <span className="interline"></span>
-                                {userContext.allEpks[0]}
-                            </div>
-                            <div
-                                className="rep-chooser"
-                                style={{
-                                    display:
-                                        userContext.netReputation > defaultRep
-                                            ? 'flex'
-                                            : 'none',
-                                }}
-                            >
-                                <input
-                                    type="range"
-                                    min={0}
-                                    max={
-                                        userContext.userState
-                                            ? userContext.netReputation
-                                            : defaultRep
-                                    }
-                                    onChange={handleRepInput}
-                                    value={reputation}
-                                />
-                                <input
-                                    type="text"
-                                    value={reputation}
-                                    onChange={handleRepInput}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="info-detail">
-                            Oh well, you have used all the Rep-Handout ;)
-                        </div>
-                    )
-                ) : userContext.netReputation > defaultRep ? (
-                    <div className="info-detail">
-                        <div className="epks">
-                            {userContext.currentEpochKeys.map((epk, i) => (
-                                <div
-                                    className={
-                                        i === epkNonce ? 'epk chosen' : 'epk'
-                                    }
-                                    onClick={() => setEpkNonce(i)}
-                                    key={epk}
-                                >
-                                    {shortenEpochKey(epk)}
-                                </div>
-                            ))}
-                        </div>
-                        <div
-                            className="rep-chooser"
-                            style={{
-                                display:
-                                    userContext.netReputation > defaultRep
-                                        ? 'flex'
-                                        : 'none',
-                            }}
-                        >
-                            <input
-                                type="range"
-                                min={0}
-                                max={
-                                    userContext.userState
-                                        ? userContext.netReputation
-                                        : defaultRep
-                                }
-                                onChange={handleRepInput}
-                                value={reputation}
-                            />
-                            <input
-                                type="text"
-                                value={reputation}
-                                onChange={handleRepInput}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <div className="info-detail">
-                        Sorry, you don’t have any Rep to use persona yet....
-                    </div>
-                )}
-            </div>
+            <div style={{ marginBottom: '32px' }}></div>
+            <ActionDetail
+                showBorder={true}
+                showHelp={true}
+                showRep={true}
+                maxRep={userContext.netReputation}
+                defaultRep={defaultRep}
+                hasRep={
+                    useSubsidy
+                        ? userContext.subsidyReputation
+                        : userContext.netReputation
+                }
+                showoffRep={reputation}
+                setShowoffRep={setReputation}
+                allEpks={userContext.currentEpochKeys}
+                useSubsidy={useSubsidy}
+                chooseToUseSubsidy={chooseToUseSubsidy}
+                chooseToUsePersona={chooseToUsePersona}
+                epkNonce={epkNonce}
+                setEpkNonce={setEpkNonce}
+            />
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}
             </div>

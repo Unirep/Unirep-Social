@@ -3,7 +3,7 @@ import 'react-circular-progressbar/dist/styles.css'
 
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import { shortenEpochKey } from '../utils'
+import ActionDetail from './actionDetail'
 
 type Props = {
     isUpvote: boolean
@@ -161,65 +161,26 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                     </div>
                 </div>
                 <div className="white-box">
-                    <div className="info">
-                        <div className="choose-from">
-                            <div className="choices">
-                                <strong
-                                    className={useSubsidy ? 'chosen' : ''}
-                                    onClick={chooseToUseSubsidy}
-                                >
-                                    Rep-Handout
-                                </strong>
-                                <strong
-                                    className={useSubsidy ? '' : 'chosen'}
-                                    onClick={chooseToUsePersona}
-                                >
-                                    Personas
-                                </strong>
-                            </div>
-                        </div>
-                        {useSubsidy ? (
-                            userContext.subsidyReputation > 1 ? (
-                                <div className="info-detail">
-                                    <div className="epk chosen">
-                                        <strong>
-                                            {userContext.subsidyReputation}
-                                        </strong>
-                                        <span className="interline"></span>
-                                        {userContext.allEpks[0]}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="info-detail">
-                                    You have used all the Rep-Handout ;)
-                                </div>
-                            )
-                        ) : userContext.netReputation > 1 ? (
-                            <div className="info-detail">
-                                <div className="epks">
-                                    {userContext.currentEpochKeys.map(
-                                        (epk, i) => (
-                                            <div
-                                                className={
-                                                    i === epkNonce
-                                                        ? 'epk chosen'
-                                                        : 'epk'
-                                                }
-                                                onClick={() => setEpkNonce(i)}
-                                                key={epk}
-                                            >
-                                                {shortenEpochKey(epk)}
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="info-detail">
-                                You don’t have any Rep to use persona yet....
-                            </div>
-                        )}
-                    </div>
+                    <ActionDetail
+                        showBorder={false}
+                        showHelp={false}
+                        showRep={false}
+                        maxRep={userContext.netReputation}
+                        defaultRep={1}
+                        hasRep={
+                            useSubsidy
+                                ? userContext.subsidyReputation
+                                : userContext.netReputation
+                        }
+                        showoffRep={0}
+                        setShowoffRep={() => {}}
+                        allEpks={userContext.currentEpochKeys}
+                        useSubsidy={useSubsidy}
+                        chooseToUseSubsidy={chooseToUseSubsidy}
+                        chooseToUsePersona={chooseToUsePersona}
+                        epkNonce={epkNonce}
+                        setEpkNonce={setEpkNonce}
+                    />
                     <div
                         className={isAvailable ? 'submit' : 'submit outdated'}
                         onClick={doVote}
