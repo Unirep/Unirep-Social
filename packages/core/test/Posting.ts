@@ -116,8 +116,13 @@ describe('Post', function () {
                 reputationProof.proof
             )
             expect(isProofValid, 'proof is not valid').to.be.true
+
+            const content = 'some post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.publishPost(
-                'some post text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -155,9 +160,13 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
                 .true
 
+            const content = 'some other post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             await expect(
                 unirepSocialContract.publishPost(
-                    'some other post text',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     {
@@ -198,8 +207,12 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
                 .true
 
+            const content = 'some post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.publishPost(
-                'some post text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -209,7 +222,7 @@ describe('Post', function () {
 
             await expect(
                 unirepSocialContract.publishPost(
-                    'some other post text',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     {
@@ -252,9 +265,13 @@ describe('Post', function () {
                 expect(isValid, 'Verify reputation proof off-chain failed').to
                     .be.true
 
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
                 const receipt = await unirepSocialContract
                     .publishPost(
-                        'some post text',
+                        hashedContent,
                         reputationProof.publicSignals,
                         reputationProof.proof,
                         { value: DEFAULT_ATTESTING_FEE }
@@ -292,9 +309,14 @@ describe('Post', function () {
                 reputationProof.proof
             )
             expect(isProofValid, 'proof is not valid').to.be.true
+
+            const content = 'some comment text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.leaveComment(
                 postId,
-                'some comment text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -334,9 +356,13 @@ describe('Post', function () {
                 expect(isValid, 'Verify reputation proof off-chain failed').to
                     .be.true
 
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
                 const receipt = await unirepSocialContract
                     .publishPost(
-                        'some post text',
+                        hashedContent,
                         reputationProof.publicSignals,
                         reputationProof.proof,
                         { value: DEFAULT_ATTESTING_FEE }
@@ -369,10 +395,14 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
                 .true
 
+            const content = 'a comment that should fail'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             await expect(
                 unirepSocialContract.leaveComment(
                     postId,
-                    'a comment that should fail',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE }
@@ -413,9 +443,13 @@ describe('Post', function () {
                 expect(isValid, 'Verify reputation proof off-chain failed').to
                     .be.true
 
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
                 const receipt = await unirepSocialContract
                     .publishPost(
-                        'some post text',
+                        hashedContent,
                         reputationProof.publicSignals,
                         reputationProof.proof,
                         { value: DEFAULT_ATTESTING_FEE }
@@ -453,9 +487,13 @@ describe('Post', function () {
                 reputationProof.proof
             )
             expect(isProofValid, 'proof is not valid').to.be.true
+            const content = 'some comment text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.leaveComment(
                 postId,
-                'some comment text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -466,7 +504,7 @@ describe('Post', function () {
             await expect(
                 unirepSocialContract.leaveComment(
                     postId,
-                    'a comment that should fail',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE }

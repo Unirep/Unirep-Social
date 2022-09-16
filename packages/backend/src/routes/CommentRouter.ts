@@ -89,13 +89,16 @@ async function createComment(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, postId, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
 
     const error = await verifyReputationProof(
         req.db,
@@ -113,7 +116,7 @@ async function createComment(req, res) {
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
-        _id: req.body.postId,
+        _id: postId,
     })
     if (!post) {
         res.status(400).json({
@@ -125,7 +128,7 @@ async function createComment(req, res) {
         'leaveComment',
         [
             post.transactionHash,
-            req.body.content,
+            hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
         ]
@@ -139,8 +142,9 @@ async function createComment(req, res) {
     )
 
     const comment = await req.db.create('Comment', {
-        postId: req.body.postId,
-        content: req.body.content, // TODO: hashedContent
+        postId,
+        content,
+        hashedContent,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== 0 ? true : false,
@@ -184,13 +188,16 @@ async function createCommentSubsidy(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, content } = req.body
     const reputationProof = new BaseProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
     const epochKey = publicSignals[1]
     const minRep = publicSignals[4]
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
@@ -206,7 +213,7 @@ async function createCommentSubsidy(req, res) {
         'publishCommentSubsidy',
         [
             post.transactionHash,
-            req.body.content,
+            hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
         ]
@@ -221,7 +228,8 @@ async function createCommentSubsidy(req, res) {
 
     const comment = await req.db.create('Comment', {
         postId: req.body.postId,
-        content: req.body.content, // TODO: hashedContent
+        content,
+        hashedContent,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== 0 ? true : false,

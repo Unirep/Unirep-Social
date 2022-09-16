@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
+import UIContext from '../../context/UI'
 
 import DefaultWidget from './defaultWidget'
 import UserInfoWidget from './userInfoWidget'
@@ -13,7 +14,7 @@ import { Page } from '../../constants'
 const SideColumn = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
-
+    const uiContext = useContext(UIContext)
     const page = window.location.pathname as any
 
     const gotoSetting = () => {
@@ -56,9 +57,14 @@ const SideColumn = () => {
                 <div></div>
             )}
             <DefaultWidget />
-            <div className="back-to-top" onClick={() => window.scrollTo(0, 0)}>
-                Back to top
-            </div>
+            {uiContext.scrollTop > 104 + window.innerHeight / 2 && (
+                <div
+                    className="back-to-top"
+                    onClick={() => window.scrollTo(0, 0)}
+                >
+                    Back to top
+                </div>
+            )}
         </div>
     )
 }

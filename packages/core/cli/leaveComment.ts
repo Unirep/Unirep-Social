@@ -112,6 +112,11 @@ const leaveComment = async (args: any) => {
     const privKey = args.eth_privkey ? args.eth_privkey : DEFAULT_PRIVATE_KEY
     const wallet = new ethers.Wallet(privKey, provider)
 
+    // hash content
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(args.text)
+    )
+
     // Submit tx
     let tx
     try {
@@ -119,7 +124,7 @@ const leaveComment = async (args: any) => {
             .connect(wallet)
             .leaveComment(
                 args.post_id,
-                args.text,
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 {

@@ -5,15 +5,21 @@ export class UI {
     loadingPromise
 
     hasBanner: boolean = true
+    scrollTop: number = 0
 
     constructor() {
         makeObservable(this, {
             hasBanner: observable,
+            scrollTop: observable,
         })
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
         } else {
             this.loadingPromise = Promise.resolve()
+        }
+
+        window.onscroll = () => {
+            this.scrollTop = document.documentElement.scrollTop
         }
     }
 
