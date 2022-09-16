@@ -105,6 +105,7 @@ test('AppRouter should navigate to /admin', () => {
 test('AppRouter should navigate to /new', () => {
     window.history.pushState({}, '', '/new')
     renderAppRouter(<AppRouter />)
+    expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
 })
 
 test('AppRouter should navigate to /setting', () => {

@@ -120,26 +120,30 @@ const WritingField = (props: Props) => {
                 />
             )}
             <div style={{ marginBottom: '32px' }}></div>
-            <ActionDetail
-                showBorder={true}
-                showHelp={true}
-                showRep={true}
-                maxRep={userContext.netReputation}
-                defaultRep={defaultRep}
-                hasRep={
-                    useSubsidy
-                        ? userContext.subsidyReputation
-                        : userContext.netReputation
-                }
-                showoffRep={reputation}
-                setShowoffRep={setReputation}
-                allEpks={userContext.currentEpochKeys}
-                useSubsidy={useSubsidy}
-                chooseToUseSubsidy={chooseToUseSubsidy}
-                chooseToUsePersona={chooseToUsePersona}
-                epkNonce={epkNonce}
-                setEpkNonce={setEpkNonce}
-            />
+            {userContext.userState ? (
+                <ActionDetail
+                    showBorder={true}
+                    showHelp={true}
+                    showRep={true}
+                    maxRep={userContext.netReputation}
+                    defaultRep={defaultRep}
+                    hasRep={
+                        useSubsidy
+                            ? userContext.subsidyReputation
+                            : userContext.netReputation
+                    }
+                    showoffRep={reputation}
+                    setShowoffRep={setReputation}
+                    allEpks={userContext.currentEpochKeys}
+                    useSubsidy={useSubsidy}
+                    chooseToUseSubsidy={chooseToUseSubsidy}
+                    chooseToUsePersona={chooseToUsePersona}
+                    epkNonce={epkNonce}
+                    setEpkNonce={setEpkNonce}
+                />
+            ) : (
+                <>somethings wrong...</>
+            )}
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}
             </div>
