@@ -223,10 +223,6 @@ export const createComment = async (t, iden, postId) => {
     )
     await waitForBackendBlock(t, blockNumber)
 
-    console.log('comment proof: ' + proof)
-    console.log('comment publicSignals: ' + publicSignals)
-    console.log('comment blockNumber: ' + blockNumber)
-
     const r = await fetch(`${t.context.url}/api/comment`, {
         method: 'POST',
         headers: {
@@ -386,20 +382,12 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
         preImage == 0
             ? 0
             : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
-    console.log('hexlifiedPreImage: ' + hexlifiedPreImage)
     const { proof, publicSignals, blockNumber } = await genUsernameProof(
         t,
         iden,
         hexlifiedPreImage
     )
     await waitForBackendBlock(t, blockNumber)
-
-    console.log('proof: ' + proof)
-    console.log('publicSignals: ' + publicSignals)
-    console.log('blockNumber: ' + blockNumber)
-    console.log('newUsername: ' + newUsername)
-
-    console.log(`${t.context.url}/api/usernames`)
 
     const r = await fetch(`${t.context.url}/api/usernames`, {
         method: 'POST',
@@ -412,8 +400,6 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
             proof,
         }),
     })
-
-    console.log('post method sent to endpoint')
 
     const data = await r.json()
 

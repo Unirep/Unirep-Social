@@ -37,12 +37,10 @@ async function setUsername(req, res) {
     // accept a requested new username and ZK proof proving the epoch key and current username (graffiti pre-image)
     const { newUsername, publicSignals, proof } = req.body
 
-    console.log('proof passed in router: ' + proof)
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
-    console.log('reputation proof: ' + reputationProof)
 
     // verify this reputation proof and return an error if it's invalid
     const error = await verifyReputationProof(
@@ -75,7 +73,8 @@ async function setUsername(req, res) {
     }
 
     // username validation
-    const regex = new RegExp('^[a-zA-Z0-9_-]S*$')
+    const regex = new RegExp('^[a-zA-Z0-9_-]{3,40}$')
+
     if (!regex.test(newUsername)) {
         res.status(409).json({ error: 'Username invalid' })
         return
@@ -87,8 +86,9 @@ async function setUsername(req, res) {
     ).toString()
 
     const isClaimed = await unirepSocialContract.usernames(hashedNewUsername)
+
     if (isClaimed) {
-        res.status(409).json({ error: 'Usernmae already exists' })
+        res.status(409).json({ error: 'Username already exists' })
         return
     }
 
