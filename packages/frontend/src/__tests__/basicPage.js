@@ -31,5 +31,5 @@ test('should render BasicPage correctly true isMenuOpen with Overlay component r
     ).toBeInTheDocument()
     // overlay component rendering based on true isMenuOpen state
     expect(screen.getAllByText(/send feedback/i)[1]).toBeInTheDocument()
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument()
+    expect(screen.getByText(/Get started/i)).toBeInTheDocument()
 })

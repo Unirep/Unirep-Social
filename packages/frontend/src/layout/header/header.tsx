@@ -87,7 +87,7 @@ const Header = () => {
                             onClick={gotoUserPage}
                         />
                     </div>
-                    <div className="navBtn">
+                    <div id="menu" className="navBtn">
                         <img
                             src={require('../../../public/images/menu.svg')}
                             onClick={openMenu}
@@ -97,18 +97,11 @@ const Header = () => {
             ) : (
                 <div className="navButtons">
                     <div
-                        id="login"
-                        className="whiteButton"
-                        onClick={() => history.push('/login')}
-                    >
-                        Sign in
-                    </div>
-                    <div
-                        id="join"
+                        id="getstarted"
                         className="blackButton"
-                        onClick={() => history.push('/signup')}
+                        onClick={() => history.push('/start')}
                     >
-                        Join
+                        Get started
                     </div>
                     <div id="menu" className="navBtn">
                         <img

@@ -65,7 +65,7 @@ const UserInfoWidget = () => {
 
     return (
         <div>
-            {userContext.userState ? (
+            {userContext.userState && userContext.id ? (
                 <div className="user-info-widget widget">
                     <div className="rep-info">
                         <p>My Rep</p>

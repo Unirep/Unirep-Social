@@ -78,6 +78,7 @@ test('should render MainPage with mocked data and true UserState', () => {
 
     const userData = {
         userState: true,
+        id: {},
         netReputation: 30,
         subsidyReputation: 20,
         commentReputation: 30,
@@ -131,6 +132,7 @@ test('should page rerender after user clicks create post button', async () => {
 
     const userData = {
         userState: true,
+        id: {},
         netReputation: 30,
         subsidyReputation: 20,
         commentReputation: 30,

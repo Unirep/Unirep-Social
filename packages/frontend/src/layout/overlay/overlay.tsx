@@ -24,11 +24,9 @@ const Overlay = () => {
     }
 
     const signout = async () => {
-        if (!queue.isLoading) {
-            await userContext.logout()
-            setIsMenuOpen(false)
-            history.push('/')
-        }
+        await userContext.logout()
+        history.push('/')
+        window.location.reload()
     }
 
     return (
@@ -52,8 +50,7 @@ const Overlay = () => {
                 ) : (
                     <div className="dynamic-info">
                         <a href="/feedback">Send feedback</a>
-                        <a href="/login">Sign in</a>
-                        <a href="/signup">Join</a>
+                        <a href="/start">Get started</a>
                     </div>
                 )}
             </div>
