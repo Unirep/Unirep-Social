@@ -4,6 +4,31 @@ import { nanoid } from 'nanoid'
 
 const _schema = [
     {
+        name: 'OAuthState',
+        rows: [
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+            ['type', 'String'],
+            ['redirectDestination', 'String'],
+            ['data', 'String', { optional: true }],
+        ],
+    },
+    {
+        name: 'SignupCode',
+        rows: [
+            ['signupId', 'String'],
+            ['usedAt', 'Int', { optional: true }],
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+        ],
+    },
+    {
         name: 'AccountNonce',
         primaryKey: 'address',
         rows: [
@@ -18,17 +43,6 @@ const _schema = [
             ['signedData', 'String'],
             ['address', 'String'],
             ['nonce', 'Int'],
-        ],
-    },
-    {
-        name: 'InvitationCode',
-        rows: [
-            {
-                name: 'createdAt',
-                type: 'Int',
-                default: () => +new Date(),
-            },
-            ['code', 'String'],
         ],
     },
     {

@@ -2,7 +2,7 @@ import '@testing-library/cypress/add-commands'
 import 'cypress-real-events/support'
 import '../support/commands'
 
-describe('visit and interact with home page', () => {
+describe('sign up, log out, then sign in', () => {
     const serverUrl = Cypress.env('serverUrl')
 
     beforeEach(() => {
@@ -12,15 +12,39 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
     })
 
-    it.skip('navigate to the login page and login a user', () => {
+    it('should login without encryption', () => {
+        cy.signupNewUser()
         cy.visit('/')
-        cy.findByText('Sign in').click()
-        cy.findByRole('textbox').type('testprivatekey')
-        cy.get('*[class^="loading-btn"]').click()
+        cy.wait(3000) // wait for the synchronizer to get started
+        cy.get('#menu').click()
+        cy.findByText('Sign out').click()
+        cy.findByText('Get started').click()
+        cy.findByText('Sign In').click()
+        cy.get('@iden').then((iden) => {
+            cy.get('textarea').type(iden, {
+                parseSpecialCharSequences: false,
+            })
+        })
+        cy.get('#signin').click()
+    })
+
+    it('should login with encryption', () => {
+        const password = 'imalongpasswordlookatme'
+        cy.signupNewUser(password)
+        cy.visit('/')
+        cy.wait(3000) // wait for the synchronizer to get started
+        cy.get('#menu').click()
+        cy.findByText('Sign out').click()
+        cy.findByText('Get started').click()
+        cy.findByText('Sign In').click()
+        cy.get('@iden').then((iden) => {
+            cy.get('textarea').type(iden, {
+                parseSpecialCharSequences: false,
+            })
+        })
+        cy.get('#passwordInput').type(password)
+        cy.get('#signin').click()
     })
 })

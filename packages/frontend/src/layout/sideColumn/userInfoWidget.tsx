@@ -65,7 +65,7 @@ const UserInfoWidget = () => {
 
     return (
         <div>
-            {userContext.userState && (
+            {userContext.userState && userContext.id ? (
                 <div className="user-info-widget widget">
                     <div className="rep-info">
                         <h4>My Rep</h4>
@@ -167,7 +167,7 @@ const UserInfoWidget = () => {
                         </div>
                     )}
                 </div>
-            )}
+            ) : null}
         </div>
     )
 }

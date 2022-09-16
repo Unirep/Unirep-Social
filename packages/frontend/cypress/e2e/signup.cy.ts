@@ -11,9 +11,6 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
         cy.signupNewUser()
     })
 
@@ -21,9 +18,6 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
     })
 
     it('new user should navigate to all pages', () => {
