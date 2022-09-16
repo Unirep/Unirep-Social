@@ -190,6 +190,8 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
+
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // verify the proof
@@ -212,7 +214,6 @@ contract UnirepSocial is zkSNARKHelper {
             attestation,
             publicSignals[1] // first epoch key
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     /**
@@ -234,6 +235,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
         require(verifySubsidyKeyProof(publicSignals, proof));
@@ -245,7 +247,6 @@ contract UnirepSocial is zkSNARKHelper {
             contentHash,
             publicSignals[4] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     function publishCommentSubsidy(
@@ -259,6 +260,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
         require(verifySubsidyKeyProof(publicSignals, proof));
@@ -271,7 +273,6 @@ contract UnirepSocial is zkSNARKHelper {
             contentHash,
             publicSignals[4] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     function voteSubsidy(
@@ -287,6 +288,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         require(verifySubsidyKeyProof(publicSignals, proof));
         uint256 voteValue = upvoteValue + downvoteValue;
@@ -316,7 +318,6 @@ contract UnirepSocial is zkSNARKHelper {
             downvoteValue,
             publicSignals[4] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     /*
@@ -335,6 +336,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
@@ -351,7 +353,6 @@ contract UnirepSocial is zkSNARKHelper {
             contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     /*
@@ -372,6 +373,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
@@ -389,7 +391,6 @@ contract UnirepSocial is zkSNARKHelper {
             contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     /*
@@ -414,6 +415,7 @@ contract UnirepSocial is zkSNARKHelper {
             abi.encodePacked(publicSignals, proof)
         );
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
@@ -441,7 +443,6 @@ contract UnirepSocial is zkSNARKHelper {
             downvoteValue,
             publicSignals[maxReputationBudget + 5] // min rep
         );
-        usedProofNullifier[proofNullifier] = true;
     }
 
     /*
