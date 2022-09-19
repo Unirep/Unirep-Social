@@ -45,22 +45,20 @@ test('should render signup text correctly', () => {
     )
 })
 
-test('should simulate twitter signup', () => {
+test('should simulate twitter signup', async () => {
     const oboarded = jest.fn()
     const getStarted = jest.fn()
     renderSignup(oboarded, getStarted)
     const twitterButton = screen.getByText('Twitter')
-    return userEvent
-        .click(twitterButton)
-        .then(() => expect(location.replace).toHaveBeenCalled())
+    await userEvent.click(twitterButton)
+    expect(location.replace).toHaveBeenCalled()
 })
 
-test('should simulate github signup', () => {
+test('should simulate github signup', async () => {
     const oboarded = jest.fn()
     const getStarted = jest.fn()
     renderSignup(oboarded, getStarted)
     const githubButton = screen.getByText('Github')
-    return userEvent
-        .click(githubButton)
-        .then(() => expect(location.replace).toHaveBeenCalled())
+    await userEvent.click(githubButton)
+    expect(location.replace).toHaveBeenCalled()
 })

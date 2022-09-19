@@ -34,14 +34,13 @@ test('should render signin text properly', () => {
     )
 })
 
-test('should simulate user clicking sign in without password', () => {
+test('should simulate user clicking sign in without password', async () => {
     const userData = {
         login: jest.fn(),
     }
     const getStarted = jest.fn()
     renderSignin(userData, getStarted)
     const signinButton = document.getElementById('signin')
-    return userEvent
-        .click(signinButton)
-        .then(() => expect(userData.login).toHaveBeenCalled())
+    await userEvent.click(signinButton)
+    expect(userData.login).toHaveBeenCalled()
 })

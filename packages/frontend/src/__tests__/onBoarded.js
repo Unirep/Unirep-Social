@@ -27,10 +27,9 @@ test('should render component properly', () => {
     ).toBeInTheDocument()
 })
 
-test('should simulate "Get in" button click', () => {
+test('should simulate "Get in" button click', async () => {
     render(<Onboarded />)
     const button = screen.getByText(/get in/i)
-    return userEvent
-        .click(button)
-        .then(() => expect(mockHistoryPush.mock.calls.length).toEqual(1))
+    await userEvent.click(button)
+    expect(mockHistoryPush.mock.calls.length).toEqual(1)
 })

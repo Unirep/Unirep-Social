@@ -24,9 +24,8 @@ const renderTextEditor = () => {
 test('type text into textbox', async () => {
     renderTextEditor()
     const textbox = screen.getByRole('textbox')
-    return userEvent
-        .type(textbox, loremText)
-        .then(() => expect(textbox).toHaveValue(loremText))
+    await userEvent.type(textbox, loremText)
+    expect(textbox).toHaveValue(loremText)
 })
 
 test('should toggle the Preview and Edit functionality', async () => {
