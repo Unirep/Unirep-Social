@@ -358,7 +358,7 @@ export const userStateTransition = async (t, iden) => {
     t.pass()
 }
 
-const genUsernameProof = async (t, iden, preImage) => {
+export const genUsernameProof = async (t, iden, preImage) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
@@ -449,8 +449,6 @@ export const setSameUsername = async (t, iden, preImage, newUsername) => {
             proof,
         }),
     })
-
-    const data = await r.json()
 
     t.is(r.ok, false)
 }
