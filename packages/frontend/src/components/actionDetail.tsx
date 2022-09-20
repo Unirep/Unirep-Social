@@ -63,33 +63,17 @@ const ActionDetail = ({
                     </div>
                 )}
             </div>
-            {hasRep > defaultRep ? (
+            {hasRep >= defaultRep && useSubsidy && (
                 <div
                     className={
                         showBorder ? 'info-detail info-border' : 'info-detail'
                     }
                 >
-                    {useSubsidy ? (
-                        <div className="epk chosen">
-                            <div className="rep">{hasRep}</div>
-                            <span className="interline"></span>
-                            {allEpks[0]}
-                        </div>
-                    ) : (
-                        <>
-                            {allEpks.map((epk, i) => (
-                                <div
-                                    className={
-                                        i === epkNonce ? 'epk chosen' : 'epk'
-                                    }
-                                    onClick={() => setEpkNonce(i)}
-                                    key={epk}
-                                >
-                                    {shortenEpochKey(epk)}
-                                </div>
-                            ))}
-                        </>
-                    )}
+                    <div className="epk chosen">
+                        <div className="rep">{hasRep}</div>
+                        <span className="interline"></span>
+                        {allEpks[0]}
+                    </div>
                     {showRep && (
                         <div
                             className="rep-chooser"
@@ -112,15 +96,61 @@ const ActionDetail = ({
                         </div>
                     )}
                 </div>
-            ) : (
+            )}
+            {hasRep >= defaultRep && !useSubsidy && (
                 <div
                     className={
                         showBorder ? 'info-detail info-border' : 'info-detail'
                     }
                 >
-                    {useSubsidy
-                        ? 'You have used all the Rep-Handout ;)'
-                        : 'You don’t have any Rep to use persona yet....'}
+                    {allEpks.map((epk, i) => (
+                        <div
+                            className={i === epkNonce ? 'epk chosen' : 'epk'}
+                            onClick={() => setEpkNonce(i)}
+                            key={epk}
+                        >
+                            {shortenEpochKey(epk)}
+                        </div>
+                    ))}
+                    {showRep && (
+                        <div
+                            className="rep-chooser"
+                            style={{
+                                display: hasRep > defaultRep ? 'flex' : 'none',
+                            }}
+                        >
+                            <input
+                                type="range"
+                                min={0}
+                                max={maxRep}
+                                value={showoffRep}
+                                onChange={onRepChange}
+                            />
+                            <input
+                                type="text"
+                                value={showoffRep}
+                                onChange={onRepChange}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+            {hasRep < defaultRep && useSubsidy && (
+                <div
+                    className={
+                        showBorder ? 'info-detail info-border' : 'info-detail'
+                    }
+                >
+                    You have used all the Rep-Handout ;)
+                </div>
+            )}
+            {hasRep < defaultRep && !useSubsidy && (
+                <div
+                    className={
+                        showBorder ? 'info-detail info-border' : 'info-detail'
+                    }
+                >
+                    You don’t have any Rep to use persona yet....
                 </div>
             )}
         </div>
