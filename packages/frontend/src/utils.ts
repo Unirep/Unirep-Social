@@ -63,33 +63,15 @@ export const makeURL = (_action: string, data: any = {}) => {
 }
 
 export const getRecords = async (epks: string[], identity: string) => {
+    const epksBase10 = epks.map((epk) => Number('0x' + epk))
     const unirepConfig = (UnirepContext as any)._currentValue
     await unirepConfig.loadingPromise
-    const { commitment } = decodeIdentity(identity)
 
-    const commitmentAPIURL = makeURL(`records`, { commitment })
-    const paramStr = epks.join('_')
+    const paramStr = epksBase10.join('_')
     const apiURL = makeURL(`records/${paramStr}`, {})
     console.log(apiURL)
 
-    const getCommitment = fetch(commitmentAPIURL)
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.length === 0) return
-            const signupRecord: Record = {
-                action: ActionType.Signup,
-                from: 'SignUp Airdrop',
-                to: data[0].to,
-                upvote: unirepConfig.airdroppedReputation,
-                downvote: 0,
-                epoch: data[0].epoch,
-                time: Date.parse(data[0].created_at),
-                data_id: '',
-                content: '',
-            }
-            return signupRecord
-        }) as Promise<Record>
-
+    // bug: createdAt is NaN in backend
     const getGeneralRecords = fetch(apiURL)
         .then((response) => response.json())
         .then((data) => {
@@ -102,7 +84,9 @@ export const getRecords = async (epks: string[], identity: string) => {
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
-                    time: Date.parse(data[i].created_at),
+                    time: data[i].created_at
+                        ? Date.parse(data[i].created_at)
+                        : Date.now(),
                     data_id: data[i].data,
                     content: data[i].content,
                 }
@@ -111,7 +95,7 @@ export const getRecords = async (epks: string[], identity: string) => {
             return records
         }) as Promise<Record[]>
 
-    const allRecords = await Promise.all([getCommitment, getGeneralRecords])
+    const allRecords = await Promise.all([getGeneralRecords])
 
     return allRecords.flat()
 }

@@ -68,7 +68,7 @@ async function loadRecordsForEpk(req, res) {
                     })
                     if (!p) return
                     return {
-                        ...record.toObject(),
+                        ...record,
                         content: `${
                             p.title !== undefined && p.title.length > 0
                                 ? titlePrefix + p.title + titlePostfix
@@ -84,7 +84,7 @@ async function loadRecordsForEpk(req, res) {
                     })
                     if (!c) return
                     return {
-                        ...record.toObject(),
+                        ...record,
                         content: c.content,
                     }
                 }

@@ -88,10 +88,11 @@ export class Data {
     }
 
     async loadFeed(query: string, lastRead = '0', epks = [] as string[]) {
+        const epksBase10 = epks.map((epk) => Number('0x' + epk))
         const apiURL = makeURL(`post`, {
             query,
             lastRead,
-            epks: epks.join('_'),
+            epks: epksBase10.join('_'),
         })
         const r = await fetch(apiURL)
         const data = await r.json()
@@ -113,10 +114,11 @@ export class Data {
     }
 
     async loadComments(query: string, lastRead = '0', epks = [] as string[]) {
+        const epksBase10 = epks.map((epk) => Number('0x' + epk))
         const apiURL = makeURL(`comment`, {
             query,
             lastRead,
-            epks: epks.join('_'),
+            epks: epksBase10.join('_'),
         })
         const r = await fetch(apiURL)
         const data = await r.json()
