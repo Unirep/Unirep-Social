@@ -61,24 +61,6 @@ test('AppRouter component renders correct text', () => {
 // instead, use window.history.pushState({}, 'page', '/') to update url to intended route
 // then render the regular router with BrowserRouter
 
-test('AppRouter should navigate to /signup', async () => {
-    window.history.pushState({}, '', '/signup')
-    renderAppRouter(<AppRouter />)
-
-    expect(screen.getByText(/join us/i)).toBeInTheDocument()
-    expect(screen.getByText(/request here/i)).toBeInTheDocument()
-})
-
-test('AppRouter should navigate to /login', () => {
-    window.history.pushState({}, '', '/login')
-    renderAppRouter(<AppRouter />)
-    expect(
-        screen.getByText(
-            /To enter the app, please use the private key you got when you signed up./i
-        )
-    ).toBeInTheDocument()
-})
-
 test('AppRouter should navigate to /user ', () => {
     window.history.pushState({}, '', '/user')
     renderAppRouter(<AppRouter />)
