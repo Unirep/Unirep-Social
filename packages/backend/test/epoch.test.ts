@@ -9,17 +9,6 @@ test.before(async (t: any) => {
     Object.assign(t.context, context)
 })
 
-test.serial('should use api to epoch transition', async (t: any) => {
-    await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
-    const r = await fetch(`${t.context.url}/api/epochTransition`, {
-        method: 'POST',
-        headers: {
-            authorization: 'NLmKDUnJUpc6VzuPc7Wm',
-        },
-    })
-    t.is(r.status, 204)
-})
-
 test.serial('should use EpochManager to epoch transition', async (t: any) => {
     const { EpochManager } = require('../src/daemons/EpochManager')
     const { unirep } = t.context

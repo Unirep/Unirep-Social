@@ -21,5 +21,5 @@ export default defineConfig({
     env: {
         serverUrl: 'http://testurl.invalidtld',
     },
-    defaultCommandTimeout: 10000,
+    defaultCommandTimeout: 20000,
 })

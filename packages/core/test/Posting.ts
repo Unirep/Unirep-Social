@@ -116,8 +116,13 @@ describe('Post', function () {
                 reputationProof.proof
             )
             expect(isProofValid, 'proof is not valid').to.be.true
+
+            const content = 'some post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.publishPost(
-                'some post text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -155,9 +160,13 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
                 .true
 
+            const content = 'some other post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             await expect(
                 unirepSocialContract.publishPost(
-                    'some other post text',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     {
@@ -167,6 +176,60 @@ describe('Post', function () {
             ).to.be.revertedWith(
                 'Unirep Social: submit different nullifiers amount from the required amount for post'
             )
+        })
+
+        it('submit post with the same proof should fail', async () => {
+            const attesterId = BigInt(
+                await unirepContract.attesters(unirepSocialContract.address)
+            )
+            const id = new ZkIdentity()
+            await unirepSocialContract
+                .userSignUp(id.genIdentityCommitment())
+                .then((t) => t.wait())
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = 0,
+                graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            const reputationProof = await userState.genProveReputationProof(
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
+                defaultPostReputation
+            )
+            const isValid = await reputationProof.verify()
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be
+                .true
+
+            const content = 'some post text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
+            const tx = await unirepSocialContract.publishPost(
+                hashedContent,
+                reputationProof.publicSignals,
+                reputationProof.proof,
+                { value: DEFAULT_ATTESTING_FEE }
+            )
+            const receipt = await tx.wait()
+            expect(receipt.status, 'Submit post failed').to.equal(1)
+
+            await expect(
+                unirepSocialContract.publishPost(
+                    hashedContent,
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    {
+                        value: DEFAULT_ATTESTING_FEE,
+                    }
+                )
+            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         })
     })
 
@@ -202,9 +265,13 @@ describe('Post', function () {
                 expect(isValid, 'Verify reputation proof off-chain failed').to
                     .be.true
 
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
                 const receipt = await unirepSocialContract
                     .publishPost(
-                        'some post text',
+                        hashedContent,
                         reputationProof.publicSignals,
                         reputationProof.proof,
                         { value: DEFAULT_ATTESTING_FEE }
@@ -242,9 +309,14 @@ describe('Post', function () {
                 reputationProof.proof
             )
             expect(isProofValid, 'proof is not valid').to.be.true
+
+            const content = 'some comment text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             const tx = await unirepSocialContract.leaveComment(
                 postId,
-                'some comment text',
+                hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: DEFAULT_ATTESTING_FEE }
@@ -284,9 +356,13 @@ describe('Post', function () {
                 expect(isValid, 'Verify reputation proof off-chain failed').to
                     .be.true
 
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
                 const receipt = await unirepSocialContract
                     .publishPost(
-                        'some post text',
+                        hashedContent,
                         reputationProof.publicSignals,
                         reputationProof.proof,
                         { value: DEFAULT_ATTESTING_FEE }
@@ -319,10 +395,14 @@ describe('Post', function () {
             expect(isValid, 'Verify reputation proof off-chain failed').to.be
                 .true
 
+            const content = 'a comment that should fail'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
             await expect(
                 unirepSocialContract.leaveComment(
                     postId,
-                    'a comment that should fail',
+                    hashedContent,
                     reputationProof.publicSignals,
                     reputationProof.proof,
                     { value: DEFAULT_ATTESTING_FEE }
@@ -330,6 +410,106 @@ describe('Post', function () {
             ).to.be.revertedWith(
                 'Unirep Social: submit different nullifiers amount from the required amount for comment'
             )
+        })
+
+        it('submit comment with the same proof should fail', async () => {
+            const attesterId = BigInt(
+                await unirepContract.attesters(unirepSocialContract.address)
+            )
+            let postId
+            {
+                const id = new ZkIdentity()
+                await unirepSocialContract
+                    .userSignUp(id.genIdentityCommitment())
+                    .then((t) => t.wait())
+                const userState = await genUserState(
+                    ethers.provider,
+                    unirepContract.address,
+                    id
+                )
+                const proveGraffiti = BigInt(0)
+                const minPosRep = 0
+                const graffitiPreImage = BigInt(0)
+                const epkNonce = 0
+                const reputationProof = await userState.genProveReputationProof(
+                    attesterId,
+                    epkNonce,
+                    minPosRep,
+                    proveGraffiti,
+                    graffitiPreImage,
+                    defaultPostReputation
+                )
+                const isValid = await reputationProof.verify()
+                expect(isValid, 'Verify reputation proof off-chain failed').to
+                    .be.true
+
+                const content = 'some post text'
+                const hashedContent = ethers.utils.keccak256(
+                    ethers.utils.toUtf8Bytes(content)
+                )
+                const receipt = await unirepSocialContract
+                    .publishPost(
+                        hashedContent,
+                        reputationProof.publicSignals,
+                        reputationProof.proof,
+                        { value: DEFAULT_ATTESTING_FEE }
+                    )
+                    .then((t) => t.wait())
+                postId = receipt.transactionHash
+            }
+            const id = new ZkIdentity()
+            await unirepSocialContract
+                .userSignUp(id.genIdentityCommitment())
+                .then((t) => t.wait())
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id
+            )
+            const proveGraffiti = BigInt(0)
+            const minPosRep = 20,
+                graffitiPreImage = BigInt(0)
+            const epkNonce = 0
+            const reputationProof = await userState.genProveReputationProof(
+                attesterId,
+                epkNonce,
+                minPosRep,
+                proveGraffiti,
+                graffitiPreImage,
+                defaultCommentReputation
+            )
+            const isValid = await reputationProof.verify()
+            expect(isValid, 'Verify reputation proof off-chain failed').to.be
+                .true
+
+            const isProofValid = await unirepContract.verifyReputation(
+                reputationProof.publicSignals,
+                reputationProof.proof
+            )
+            expect(isProofValid, 'proof is not valid').to.be.true
+            const content = 'some comment text'
+            const hashedContent = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(content)
+            )
+            const tx = await unirepSocialContract.leaveComment(
+                postId,
+                hashedContent,
+                reputationProof.publicSignals,
+                reputationProof.proof,
+                { value: DEFAULT_ATTESTING_FEE }
+            )
+            const receipt = await tx.wait()
+            expect(receipt.status, 'Submit comment failed').to.equal(1)
+
+            await expect(
+                unirepSocialContract.leaveComment(
+                    postId,
+                    hashedContent,
+                    reputationProof.publicSignals,
+                    reputationProof.proof,
+                    { value: DEFAULT_ATTESTING_FEE }
+                )
+            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
         })
     })
 })

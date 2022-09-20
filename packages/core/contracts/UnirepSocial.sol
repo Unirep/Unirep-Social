@@ -54,6 +54,8 @@ contract UnirepSocial is zkSNARKHelper {
     mapping(uint256 => bool) public usernames;
     // epoch number to epoch key to amount spent
     mapping(uint256 => mapping(uint256 => uint256)) public subsidies;
+    // proof nullifier
+    mapping(bytes32 => bool) public usedProofNullifier;
 
     uint256 immutable public subsidy;
 
@@ -71,7 +73,7 @@ contract UnirepSocial is zkSNARKHelper {
     event PostSubmitted(
         uint256 indexed _epoch,
         uint256 indexed _epochKey,
-        string _postContent,
+        bytes32 _contentHash,
         uint256 minRep
     );
 
@@ -79,7 +81,7 @@ contract UnirepSocial is zkSNARKHelper {
         uint256 indexed _epoch,
         uint256 indexed _postId,
         uint256 indexed _epochKey,
-        string _commentContent,
+        bytes32 _contentHash,
         uint256 minRep
     );
 
@@ -182,7 +184,14 @@ contract UnirepSocial is zkSNARKHelper {
       uint256[5] memory publicSignals,
       uint256[8] memory proof
     ) public {
-        (,,,uint numEpochKeyNoncePerEpoch,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        (,,,,,,,uint attestingFee,,) = unirep.config();
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
+
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         // verify the proof
@@ -217,10 +226,16 @@ contract UnirepSocial is zkSNARKHelper {
      * publicSignals[5] - not epoch key
      **/
     function publishPostSubsidy(
-        string memory content,
+        bytes32 contentHash,
         uint256[6] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
         require(verifySubsidyKeyProof(publicSignals, proof));
@@ -229,17 +244,23 @@ contract UnirepSocial is zkSNARKHelper {
         emit PostSubmitted(
             unirep.currentEpoch(),
             publicSignals[1],
-            content,
+            contentHash,
             publicSignals[4] // min rep
         );
     }
 
     function publishCommentSubsidy(
         uint256 postId,
-        string memory content,
+        bytes32 contentHash,
         uint256[6] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
         require(verifySubsidyKeyProof(publicSignals, proof));
@@ -249,7 +270,7 @@ contract UnirepSocial is zkSNARKHelper {
             unirep.currentEpoch(),
             postId,
             publicSignals[1], // epoch key
-            content,
+            contentHash,
             publicSignals[4] // min rep
         );
     }
@@ -262,6 +283,12 @@ contract UnirepSocial is zkSNARKHelper {
         uint256[8] memory proof
     ) external payable {
         uint attestingFee = unirep.attestingFee();
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         require(verifySubsidyKeyProof(publicSignals, proof));
         uint256 voteValue = upvoteValue + downvoteValue;
@@ -295,15 +322,21 @@ contract UnirepSocial is zkSNARKHelper {
 
     /*
      * Publish a post on chain with a reputation proof to prove that the user has enough karma to spend
-     * @param content The text content of the post
+     * @param contentHash The hashed content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to post
      */
     function publishPost(
-        string memory content,
+        bytes32 contentHash,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
@@ -315,9 +348,9 @@ contract UnirepSocial is zkSNARKHelper {
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit PostSubmitted(
-            unirep.currentEpoch(),
+            epoch,
             epochKey,
-            content,
+            contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
     }
@@ -325,16 +358,22 @@ contract UnirepSocial is zkSNARKHelper {
     /*
      * Leave a comment on chain with a reputation proof to prove that the user has enough karma to spend
      * @param postId The transaction hash of the post
-     * @param content The text content of the post
+     * @param contentHash The hashed content of the post
      * @param _proofRelated The reputation proof that the user proves that he has enough karma to comment
      */
     function leaveComment(
         uint256 postId,
-        string memory content,
+        bytes32 contentHash,
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
@@ -346,10 +385,10 @@ contract UnirepSocial is zkSNARKHelper {
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
         emit CommentSubmitted(
-            unirep.currentEpoch(),
+            epoch,
             postId,
             epochKey, // epoch key
-            content,
+            contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
     }
@@ -371,6 +410,12 @@ contract UnirepSocial is zkSNARKHelper {
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
         uint256 voteValue = upvoteValue + downvoteValue;
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
+        usedProofNullifier[proofNullifier] = true;
         require(voteValue > 0, "Unirep Social: should submit a positive vote value");
         require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");

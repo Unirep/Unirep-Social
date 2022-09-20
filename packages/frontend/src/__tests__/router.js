@@ -30,7 +30,7 @@ const renderAppRouter = () => {
 
 test('AppRouter component renders correct text', () => {
     render(<AppRouter />)
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument()
+    expect(screen.getByText(/Get started/i)).toBeInTheDocument()
     expect(
         screen.getByText(/community built on ideas, not identities/i)
     ).toBeInTheDocument()
@@ -52,7 +52,7 @@ test('AppRouter component renders correct text', () => {
     expect(screen.getByText(/FAQ/i)).toBeInTheDocument()
     expect(screen.getByText(/about/i)).toBeInTheDocument()
     expect(screen.getByText(/send feedback/i)).toBeInTheDocument()
-    expect(screen.getByText(/back to top/i)).toBeInTheDocument()
+    // expect(screen.getByText(/back to top/i)).toBeInTheDocument()
     expect(screen.getByText(/all done./i)).toBeInTheDocument()
     expect(screen.getByText(/detail/i)).toBeInTheDocument()
 })
