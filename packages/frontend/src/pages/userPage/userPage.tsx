@@ -70,7 +70,7 @@ const UserPage = () => {
     const [sort, setSort] = useState<QueryType>(QueryType.Boost)
     const [isDropdown, setIsDropdown] = useState<boolean>(false)
 
-    const [received, setReceived] = useState<number[]>([0, 0, 0]) // airdrop, boost, squash
+    const [received, setReceived] = useState<number[]>([0, 0]) // boost, squash
     const [spent, setSpent] = useState<number[]>([0, 0, 0, 0]) // post, comment, boost, squash
 
     const getUserPosts = async (sort: QueryType, lastRead: string = '0') => {
@@ -99,12 +99,8 @@ const UserPage = () => {
                 const isSpent = user.currentEpochKeys.indexOf(h.from) !== -1
                 if (isReceived) {
                     // right stuff
-                    if (h.action === ActionType.UST) {
-                        r[0] += h.upvote
-                    } else if (h.action === ActionType.Vote) {
-                        r[1] += h.upvote
-                        r[2] += h.downvote
-                    }
+                    r[0] += h.upvote
+                    r[1] += h.downvote
                 }
 
                 if (isSpent) {
@@ -220,17 +216,43 @@ const UserPage = () => {
                             </div>
                         </div>
                         <div className="grey-block">
-                            <span>How I use my rep in this cycle</span>
-                            <br />
-                            <div className="rep-bar">
-                                {spent.map((s, i) => (
-                                    <RepPortion
-                                        spent={s}
-                                        total={user.reputation}
-                                        action={i}
-                                        key={i}
+                            <div className="title-sm">How I used it</div>
+                            <div className="rep-details">
+                                <div className="rep-bar-title">
+                                    <img
+                                        src={require('../../../public/images/lighting.svg')}
                                     />
-                                ))}
+                                    Rep
+                                </div>
+                                <div className="rep-bar">
+                                    {spent.map((s, i) => (
+                                        <RepPortion
+                                            spent={s}
+                                            total={user.reputation}
+                                            action={i}
+                                            key={i}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <div style={{ height: '8px' }}></div>
+                            <div className="rep-details">
+                                <div className="rep-bar-title">
+                                    <img
+                                        src={require('../../../public/images/unirep.svg')}
+                                    />
+                                    Rep-Handout
+                                </div>
+                                <div className="rep-bar">
+                                    {spent.map((s, i) => (
+                                        <RepPortion
+                                            spent={s}
+                                            total={user.reputation}
+                                            action={i}
+                                            key={i}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,7 +261,7 @@ const UserPage = () => {
                         <div className="grey-block">
                             <p>Received</p>
                             <div className="rep-received">
-                                {received[0] + received[1] - received[2]}
+                                {received[0] - received[1]}
                             </div>
                             <span>
                                 This Rep is in the vault. It will be yours in
@@ -250,21 +272,13 @@ const UserPage = () => {
                             <div className="received-info">
                                 <span>
                                     <img
-                                        src={require('../../../public/images/unirep.svg')}
-                                    />
-                                    System drop
-                                </span>
-                                <p>+{received[0]}</p>
-                            </div>
-                            <div className="received-info">
-                                <span>
-                                    <img
                                         src={require('../../../public/images/boost.svg')}
                                     />
                                     Boost
                                 </span>
-                                <p>+{received[1]}</p>
+                                <div className="amount">+{received[0]}</div>
                             </div>
+                            <div style={{ height: '16px' }}></div>
                             <div className="received-info">
                                 <span>
                                     <img
@@ -272,7 +286,7 @@ const UserPage = () => {
                                     />
                                     Squash
                                 </span>
-                                <p>-{received[2]}</p>
+                                <div className="amount">-{received[1]}</div>
                             </div>
                         </div>
                     </div>
