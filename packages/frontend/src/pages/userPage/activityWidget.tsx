@@ -32,7 +32,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
     const postContext = useContext(PostContext)
 
     const [date, setDate] = useState<string>(
-        dateformat(new Date(record.time), 'dd/mm/yyyy hh:MM TT')
+        dateformat(record.time, 'dd/mm/yyyy hh:MM TT')
     )
 
     const translateInfo = (h: Record) => {

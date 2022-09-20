@@ -84,9 +84,7 @@ export const getRecords = async (epks: string[], identity: string) => {
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
-                    time: data[i].created_at
-                        ? Date.parse(data[i].created_at)
-                        : Date.now(),
+                    time: Date.parse(data[i].createdAt),
                     data_id: data[i].data,
                     content: data[i].content,
                 }
