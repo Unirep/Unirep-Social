@@ -7,6 +7,7 @@ import { SocialUserState } from '../src/UserState'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
 import { expect } from 'chai'
+import { UnirepSocial } from '../typechain/UnirepSocial'
 
 export type Field = BigNumberish
 
@@ -130,4 +131,109 @@ export const submitUSTProofs = async (
             )
         ).to.be.revertedWithCustomError(contract, 'ProofAlreadyUsed')
     }
+}
+
+export const publishPost = async (
+    contract: UnirepSocial,
+    provider: ethers.providers.Provider
+) => {
+    const unirep = await contract.unirep()
+    const unirepContract = getUnirepContract(unirep, provider)
+    const attestingFee = await unirepContract.attestingFee()
+    const attesterId = (
+        await unirepContract.attesters(contract.address)
+    ).toBigInt()
+    const defaultPostReputation = (await contract.postReputation()).toBigInt()
+
+    const id = new ZkIdentity()
+    await contract.userSignUp(id.genIdentityCommitment()).then((t) => t.wait())
+    const userState = await genUserState(provider, unirepContract.address, id)
+    const proveGraffiti = BigInt(0)
+    const minPosRep = 0
+    const graffitiPreImage = BigInt(0)
+    const epkNonce = 0
+    const reputationProof = await userState.genProveReputationProof(
+        attesterId,
+        epkNonce,
+        minPosRep,
+        proveGraffiti,
+        graffitiPreImage,
+        defaultPostReputation
+    )
+    const isValid = await reputationProof.verify()
+    expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+    const isProofValid = await unirepContract.verifyReputation(
+        reputationProof.publicSignals,
+        reputationProof.proof
+    )
+    expect(isProofValid, 'proof is not valid').to.be.true
+
+    const content = 'some post text'
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
+    const tx = await contract.publishPost(
+        hashedContent,
+        reputationProof.publicSignals,
+        reputationProof.proof,
+        { value: attestingFee }
+    )
+    const receipt = await tx.wait()
+    expect(receipt.status, 'Submit post failed').to.equal(1)
+    return receipt
+}
+
+export const leaveComment = async (
+    contract: UnirepSocial,
+    provider: ethers.providers.Provider,
+    postId: string
+) => {
+    const unirep = await contract.unirep()
+    const unirepContract = getUnirepContract(unirep, provider)
+    const attestingFee = await unirepContract.attestingFee()
+    const attesterId = (
+        await unirepContract.attesters(contract.address)
+    ).toBigInt()
+    const defaultCommentReputation = (
+        await contract.commentReputation()
+    ).toBigInt()
+
+    const id = new ZkIdentity()
+    await contract.userSignUp(id.genIdentityCommitment()).then((t) => t.wait())
+    const userState = await genUserState(provider, unirepContract.address, id)
+    const proveGraffiti = BigInt(0)
+    const minPosRep = 20,
+        graffitiPreImage = BigInt(0)
+    const epkNonce = 0
+    const reputationProof = await userState.genProveReputationProof(
+        attesterId,
+        epkNonce,
+        minPosRep,
+        proveGraffiti,
+        graffitiPreImage,
+        defaultCommentReputation
+    )
+    const isValid = await reputationProof.verify()
+    expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
+
+    const isProofValid = await unirepContract.verifyReputation(
+        reputationProof.publicSignals,
+        reputationProof.proof
+    )
+    expect(isProofValid, 'proof is not valid').to.be.true
+
+    const content = 'some comment text'
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
+    const tx = await contract.leaveComment(
+        postId,
+        hashedContent,
+        reputationProof.publicSignals,
+        reputationProof.proof,
+        { value: attestingFee }
+    )
+    const receipt = await tx.wait()
+    expect(receipt.status, 'Submit comment failed').to.equal(1)
 }
