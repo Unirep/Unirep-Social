@@ -19,7 +19,8 @@ describe('Landing Page', () => {
     })
     it('loads the start menu on click', () => {
         cy.get('#getstarted').click()
-        cy.findByText('Sign Up').should('be.visible')
+        cy.findByText('Twitter').should('be.visible')
+        cy.findByText('Github').should('be.visible')
         cy.findByText('Sign In').should('be.visible')
     })
     it('loads the burger menu on click', () => {

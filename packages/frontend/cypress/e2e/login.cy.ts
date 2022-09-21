@@ -22,12 +22,13 @@ describe('sign up, log out, then sign in', () => {
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()
-        cy.get('@iden').then((iden) => {
-            cy.get('textarea').type(iden, {
-                parseSpecialCharSequences: false,
-            })
-        })
-        cy.get('#signin').click()
+        
+        // cy.get('@iden').then((iden) => {
+        //     cy.get('textarea').type(iden, {
+        //         parseSpecialCharSequences: false,
+        //     })
+        // })
+        // cy.get('#signin').click()
     })
 
     it('should login with encryption', () => {
@@ -39,11 +40,11 @@ describe('sign up, log out, then sign in', () => {
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()
-        cy.get('@iden').then((iden) => {
-            cy.get('textarea').type(iden, {
-                parseSpecialCharSequences: false,
-            })
-        })
+        // cy.get('@iden').then((iden) => {
+        //     cy.get('textarea').type(iden, {
+        //         parseSpecialCharSequences: false,
+        //     })
+        // })
         cy.get('#passwordInput').type(password)
         cy.get('#signin').click()
     })
