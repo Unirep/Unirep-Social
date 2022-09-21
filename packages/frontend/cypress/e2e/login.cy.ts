@@ -22,7 +22,7 @@ describe('sign up, log out, then sign in', () => {
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()
-        
+
         // cy.get('@iden').then((iden) => {
         //     cy.get('textarea').type(iden, {
         //         parseSpecialCharSequences: false,
