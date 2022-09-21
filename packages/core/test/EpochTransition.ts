@@ -1,17 +1,15 @@
 // @ts-ignore
 import { ethers as hardhatEthers } from 'hardhat'
-import { ethers, BigNumber } from 'ethers'
+import { ethers } from 'ethers'
 import { expect } from 'chai'
 import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
-import { Circuit } from '@unirep/circuits'
 import { getUnirepContract, Attestation } from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import * as config from '@unirep/circuits'
-import { genEpochKey, UserState } from '@unirep/core'
+import { genEpochKey } from '@unirep/core'
 import { genUserState } from './utils'
 
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
-import { getTreeDepthsForTesting } from './utils'
 
 describe('Epoch Transition', function () {
     this.timeout(1000000)
@@ -24,18 +22,14 @@ describe('Epoch Transition', function () {
 
     let attester, attesterAddress, attesterId, unirepContractCalledByAttester
 
-    let userState: UserState
     const signedUpInLeaf = 1
-    let epochKeyProofIndex
     const attestingFee = ethers.utils.parseEther('0.1') // to avoid VM Exception: 'Address: insufficient balance'
-    const fromProofIndex = 0
 
     const EPOCH_LENGTH = 10000
 
     before(async () => {
         accounts = await hardhatEthers.getSigners()
 
-        const _treeDepths = getTreeDepthsForTesting('circuit')
         const _settings = {
             maxUsers: config.MAX_USERS,
             maxAttesters: config.MAX_ATTESTERS,
@@ -223,8 +217,6 @@ describe('Epoch Transition', function () {
             'Gas cost of submit a start transition proof:',
             receipt.gasUsed.toString()
         )
-
-        const proofNullifier = startTransitionProof.hash()
 
         for (let i = 0; i < processAttestationProofs.length; i++) {
             expect(
