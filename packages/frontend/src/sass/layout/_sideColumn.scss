@@ -19,6 +19,20 @@
     height: 40px;
 }
 
+.private-key-detail {
+    border-radius: 8px;
+    padding: 16px 24px;
+    background-color: $grey-100;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    p {
+        margin-bottom: 0px;
+    }
+}
+
 .default-widget {
     height: 176px;
     border-radius: 8px;
