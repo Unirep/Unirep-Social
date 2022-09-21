@@ -2,10 +2,8 @@
 import { ethers } from 'hardhat'
 import { BigNumberish, BigNumber } from 'ethers'
 import { expect } from 'chai'
-import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import * as config from '@unirep/circuits'
 import { genEpochKey } from '@unirep/core'
-import { EpochKeyProof } from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 

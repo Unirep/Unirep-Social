@@ -53,11 +53,6 @@ describe('Epoch Transition', function () {
         let tx = await unirepSocialContract.userSignUp(userCommitment)
         let receipt = await tx.wait()
         expect(receipt.status).equal(1)
-        userState = await genUserState(
-            hardhatEthers.provider,
-            unirepContract.address,
-            userId
-        )
 
         console.log('Attester sign up')
         attester = accounts[1]
