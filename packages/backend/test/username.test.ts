@@ -87,6 +87,8 @@ test.serial(
 
         // try to change the username to the same one
         await setSameUsername(t, iden, 'username123', 'username123')
+
+        t.pass()
     }
 )
 

@@ -422,7 +422,6 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
     )
 
     await waitForBackendBlock(t, receipt.blockNumber)
-    t.pass()
 }
 
 export const setSameUsername = async (t, iden, preImage, newUsername) => {
