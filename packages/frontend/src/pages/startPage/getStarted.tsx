@@ -1,5 +1,3 @@
-import { useState, useContext, useEffect } from 'react'
-
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomGap from '../../components/customGap'
 import { SERVER } from '../../config'
