@@ -223,7 +223,7 @@ export const editPost = async (t, iden, transactionHash) => {
     const blockNumber = await t.context.provider.getBlockNumber()
     await waitForBackendBlock(t, blockNumber)
 
-    const r = await fetch(`${t.context.url}/api/post/${transactionHash}`, {
+    const r = await fetch(`${t.context.url}/api/post/edit/${transactionHash}`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
@@ -234,6 +234,58 @@ export const editPost = async (t, iden, transactionHash) => {
             proof,
         }),
     })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const deletePost = async (t, iden, transactionHash) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const epkProof = await userState.genVerifyEpochKeyProof(epkNonce)
+    const isValid = await epkProof.verify()
+    t.true(isValid)
+    const publicSignals = epkProof.publicSignals
+    const proof = epkProof.proof
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(
+        `${t.context.url}/api/post/delete/${transactionHash}`,
+        {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                publicSignals,
+                proof,
+            }),
+        }
+    )
 
     const data = await r.json()
     if (!r.ok) {
@@ -273,17 +325,72 @@ export const editComment = async (t, iden, transactionHash) => {
     const blockNumber = await t.context.provider.getBlockNumber()
     await waitForBackendBlock(t, blockNumber)
 
-    const r = await fetch(`${t.context.url}/api/comment/${transactionHash}`, {
-        method: 'POST',
-        headers: {
-            'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-            content: 'new content',
-            publicSignals,
-            proof,
-        }),
-    })
+    const r = await fetch(
+        `${t.context.url}/api/comment/edit/${transactionHash}`,
+        {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                content: 'new content',
+                publicSignals,
+                proof,
+            }),
+        }
+    )
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/comment error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const deleteComment = async (t, iden, transactionHash) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const epkProof = await userState.genVerifyEpochKeyProof(epkNonce)
+    const isValid = await epkProof.verify()
+    t.true(isValid)
+    const publicSignals = epkProof.publicSignals
+    const proof = epkProof.proof
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(
+        `${t.context.url}/api/comment/delete/${transactionHash}`,
+        {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                publicSignals,
+                proof,
+            }),
+        }
+    )
 
     const data = await r.json()
     if (!r.ok) {

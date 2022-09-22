@@ -10,8 +10,6 @@ import {
     QueryType,
     UNIREP_SOCIAL_ATTESTER_ID,
     LOAD_POST_COUNT,
-    titlePrefix,
-    titlePostfix,
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
@@ -27,7 +25,8 @@ export default (app: Express) => {
     app.get('/api/post/:postId/votes', catchError(loadVotesByPostId))
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
-    app.post('/api/post/:id', catchError(editPost))
+    app.post('/api/post/edit/:id', catchError(editPost))
+    app.post('/api/post/delete/:id', catchError(deletePost))
 }
 
 async function loadCommentsByPostId(req, res) {
@@ -292,6 +291,72 @@ async function editPost(req, res) {
         },
         update: {
             content,
+            hashedContent: newHashedContent,
+        },
+    })
+
+    res.json({
+        error: error,
+        transaction: hash,
+        post,
+    })
+}
+
+async function deletePost(req, res) {
+    const transactionHash = req.params.id
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+
+    // Parse Inputs
+    const { publicSignals, proof } = req.body
+    const epkProof = new EpochKeyProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const newHashedContent = ethers.utils.formatBytes32String('')
+
+    const error = await verifyEpochKeyProof(req.db, epkProof)
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
+    const { hashedContent: oldHashedContent, postId } = await req.db.findOne(
+        'Post',
+        {
+            where: {
+                transactionHash,
+            },
+        }
+    )
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+        postId,
+        oldHashedContent,
+        newHashedContent,
+        epkProof.publicSignals,
+        epkProof.proof,
+    ])
+
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+        }
+    )
+
+    const post = await req.db.update('Post', {
+        where: {
+            postId,
+            hashedContent: oldHashedContent,
+        },
+        update: {
+            content: undefined,
             hashedContent: newHashedContent,
         },
     })

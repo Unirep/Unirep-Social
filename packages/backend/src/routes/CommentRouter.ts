@@ -24,7 +24,8 @@ export default (app: Express) => {
     app.get('/api/comment/', catchError(listComments))
     app.post('/api/comment', catchError(createComment))
     app.post('/api/comment/subsidy', catchError(createCommentSubsidy))
-    app.post('/api/comment/:id', catchError(editComment))
+    app.post('/api/comment/edit/:id', catchError(editComment))
+    app.post('/api/comment/delete/:id', catchError(deleteComment))
 }
 
 async function loadComment(req, res, next) {
@@ -305,6 +306,72 @@ async function editComment(req, res) {
         },
         update: {
             content,
+            hashedContent: newHashedContent,
+        },
+    })
+
+    res.json({
+        error: error,
+        transaction: hash,
+        comment,
+    })
+}
+
+async function deleteComment(req, res) {
+    const transactionHash = req.params.id
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+
+    // Parse Inputs
+    const { publicSignals, proof } = req.body
+    const epkProof = new EpochKeyProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const newHashedContent = ethers.utils.formatBytes32String('')
+
+    const error = await verifyEpochKeyProof(req.db, epkProof)
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
+    const { hashedContent: oldHashedContent, commentId } = await req.db.findOne(
+        'Comment',
+        {
+            where: {
+                transactionHash,
+            },
+        }
+    )
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+        commentId,
+        oldHashedContent,
+        newHashedContent,
+        epkProof.publicSignals,
+        epkProof.proof,
+    ])
+
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+        }
+    )
+
+    const comment = await req.db.update('Comment', {
+        where: {
+            commentId,
+            hashedContent: oldHashedContent,
+        },
+        update: {
+            content: undefined,
             hashedContent: newHashedContent,
         },
     })
