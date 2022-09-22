@@ -118,8 +118,8 @@ test.serial('should fail to set with invalid proof', async (t: any) => {
         },
         body: JSON.stringify({
             newUsername: 'username456',
-            publicSignals: [publicSignals, 0],
-            proof: [proof, 0],
+            publicSignals: publicSignals.reverse(),
+            proof: proof.reverse(),
         }),
     })
 
