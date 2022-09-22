@@ -22,10 +22,10 @@ const Onboarded = () => {
             <h3>30 Rep + 3 personas await you! </h3>
             <CustomGap times={8} />
             <p>
-                Excellent! One huge difference of UniRep Social is that you don’t
-                have to interact with any wallet, we have come up with this
-                solution to smooth out the experience. If you are interested,
-                you can learn more from our developer document.
+                Excellent! One huge difference of UniRep Social is that you
+                don’t have to interact with any wallet, we have come up with
+                this solution to smooth out the experience. If you are
+                interested, you can learn more from our developer document.
             </p>
             <p>Enjoy your journey in UniRep Social!</p>
             <div className="gap"></div>
