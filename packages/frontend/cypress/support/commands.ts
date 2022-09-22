@@ -24,6 +24,7 @@ Cypress.Commands.add('deployUnirep', () => {
             ganacheUrl,
             fundedKey,
         }) => {
+            const signupCode = 'test_signup_code'
             const provider = new ethers.providers.JsonRpcProvider(ganacheUrl)
             const wallet = new ethers.Wallet(fundedKey, provider)
             const unirepSocial = new ethers.Contract(
@@ -38,6 +39,7 @@ Cypress.Commands.add('deployUnirep', () => {
                 },
             }).as('getApiConfig')
             cy.intercept(`${serverUrl}/api/signup?*`, async (req) => {
+                expect(req.query.signupCode === signupCode)
                 const { commitment } = req.query
                 const tx = await unirepSocial
                     .connect(wallet)
@@ -47,26 +49,45 @@ Cypress.Commands.add('deployUnirep', () => {
                     transaction: tx.hash,
                 })
             })
+            cy.intercept(`${serverUrl}/api/oauth/twitter?*`, {
+                statusCode: 301,
+                headers: {
+                    Location: `http://localhost:3000/start?signupCode=${signupCode}`,
+                },
+            })
         }
     )
 })
 
-Cypress.Commands.add('signupNewUser', () => {
+Cypress.Commands.add('signupNewUser', (password) => {
     cy.visit('/')
-    cy.findByText('Join').click()
-    cy.findByRole('textbox').type('invitationcode')
-    cy.findByText('Let me in').click()
-    cy.wait(3000)
-    cy.findByRole('textbox').then((e) => {
-        const iden = e[0].value
-        cy.findByText('Download').click()
-        cy.findByText('Copy').realClick()
-        cy.get('textarea').type(iden, {
-            parseSpecialCharSequences: false,
+    cy.findByText('Get started').click()
+    cy.findByText('Sign Up').click()
+    cy.findByText('Twitter').click()
+    cy.wait(20000)
+    if (!password) {
+        cy.findByText('Skip this').click()
+    } else {
+        cy.get('#passwordInput').type(password)
+        cy.get('#passwordConfirmInput').type(password)
+        cy.findByText('Encrypt it').click()
+    }
+
+    // cy.findByText('Let me in').click()
+    return cy
+        .findByRole('textbox')
+        .then((e) => {
+            const iden = e[0].value
+            cy.findByText('Download').click()
+            cy.findByText('Copy').realClick()
+            cy.get('textarea').type(iden, {
+                parseSpecialCharSequences: false,
+            })
+            cy.findByText('Submit').click()
+            cy.findByText('Get in').click()
+            return Promise.resolve(iden)
         })
-        cy.findByText('Submit').click()
-        cy.findByText('Generate').click()
-    })
+        .as('iden')
 })
 
 export {}

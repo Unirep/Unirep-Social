@@ -25,13 +25,6 @@ export const genUserState = async (
     return userState
 }
 
-export const getInvitationCode = async (t) => {
-    const r = await fetch(`${t.context.url}/api/genInvitationCode?code=ffff`)
-    t.is(r.status, 200)
-    const signupCode = await r.json()
-    return signupCode
-}
-
 export const waitForBackendBlock = async (t, blockNumber) => {
     for (;;) {
         const { blockNumber: latestBlock } = await fetch(
@@ -51,10 +44,9 @@ export const signUp = async (t) => {
         .padStart(64, '0')
     const currentEpoch = await t.context.unirep.currentEpoch()
 
-    const invitationCode = await getInvitationCode(t)
     const params = new URLSearchParams({
         commitment,
-        invitationCode,
+        signupCode: 'test',
     })
     const r = await fetch(`${t.context.url}/api/signup?${params}`)
     const data = await r.json()
@@ -421,16 +413,6 @@ export const vote = async (
         else break
     }
     t.pass()
-}
-
-export const epochTransition = async (t) => {
-    const r = await fetch(`${t.context.url}/api/epochTransition`, {
-        method: 'POST',
-        headers: {
-            authorization: 'NLmKDUnJUpc6VzuPc7Wm',
-        },
-    })
-    t.is(r.status, 204)
 }
 
 export const userStateTransition = async (t, iden) => {

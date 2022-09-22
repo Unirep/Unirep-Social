@@ -10,16 +10,17 @@ describe('Landing Page', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
-        cy.intercept('GET', `${serverUrl}/api/genInvitationCode/*`, {
-            fixture: 'genInvitationCode.json',
-        }).as('genInvitationCode')
     })
     it('loads the landing page', () => {
         cy.visit('/')
         cy.get('*[class^="main-content"]').should('be.visible')
         cy.get('*[class^="banner"]').should('be.visible')
-        cy.get('#join').should('be.visible')
-        cy.get('#login').should('be.visible')
+        cy.get('#getstarted').should('be.visible')
+    })
+    it('loads the start menu on click', () => {
+        cy.get('#getstarted').click()
+        cy.findByText('Sign Up').should('be.visible')
+        cy.findByText('Sign In').should('be.visible')
     })
     it('loads the burger menu on click', () => {
         cy.visit('/')

@@ -14,6 +14,7 @@ import NewPage from './pages/newPage/newPage'
 import FeedbackPage from './pages/feedbackPage/feedbackPage'
 import AdminPage from './pages/adminPage/adminPage'
 import SettingPage from './pages/settingPage/settingPage'
+import StartPage from './pages/startPage/startPage'
 
 import { WebContext } from './context/WebContext'
 import Favicon from 'react-favicon'
@@ -42,6 +43,8 @@ const AppRouter = () => {
 
                     <Switch>
                         <Route component={MainPage} path="/" exact={true} />
+                        <Route component={StartPage} path="/start" />
+                        <Route component={StartPage} path="/start/callback" />
                         <Route component={PostPage} path="/post/:id" />
                         <Route component={UserPage} path="/user" />
                         <Route component={LoginPage} path="/login" />

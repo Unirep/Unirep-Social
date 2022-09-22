@@ -73,7 +73,6 @@ export async function startServer(contractOverrides = {}) {
         UNIREP_SOCIAL: unirepSocial.address,
         DEPLOYER_PRIV_KEY: wallet.privateKey,
         DEFAULT_ETH_PROVIDER_URL: GANACHE_URL,
-        ADMIN_SESSION_CODE: 'ffff',
         ...process.env,
     })
 

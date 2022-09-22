@@ -17,6 +17,7 @@ jest.mock('react-router-dom', () => ({
 test('should render NewPage correctly with mocked .Provider data and props', async () => {
     const userData = {
         userState: true,
+        id: {},
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
     }
 

@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { makeObservable, observable, computed } from 'mobx'
+import { makeObservable, observable, computed, runInAction } from 'mobx'
 import * as config from '../config'
 import { ethers } from 'ethers'
 import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
@@ -9,6 +9,7 @@ import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
+import aes from 'aes-js'
 
 export class User {
     id?: ZkIdentity
@@ -317,15 +318,18 @@ export class User {
         return true
     }
 
-    private async _hasSignedUp(identity: string) {
+    private async _hasSignedUp(identity: string | ZkIdentity) {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
-        const id = new ZkIdentity(Strategy.SERIALIZED, identity)
+        const id =
+            typeof identity === 'string'
+                ? new ZkIdentity(Strategy.SERIALIZED, identity)
+                : identity
         const commitment = id.genIdentityCommitment()
         return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
 
-    async signUp(invitationCode: string) {
+    async signUp(signupCode: string) {
         if (this.id) {
             throw new Error('Identity already exists!')
         }
@@ -353,7 +357,7 @@ export class User {
         const apiURL = makeURL('signup', {
             commitment: commitment,
             epk: epk1,
-            invitationCode,
+            signupCode,
         })
         const r = await fetch(apiURL)
         const { epoch, transaction, error } = await r.json()
@@ -379,7 +383,7 @@ export class User {
         // return await this.updateUser(epoch)
     }
 
-    async login(idInput: string) {
+    async login(idInput: string | ZkIdentity) {
         const hasSignedUp = await this._hasSignedUp(idInput)
         if (!hasSignedUp) return false
 
@@ -400,12 +404,16 @@ export class User {
         console.log('log out')
         if (this.userState) {
             await this.userState.stop()
+            await (this.userState as any)._db.closeAndWipe()
+            this.userState = undefined
         }
-        this.id = undefined
-        this.allEpks = [] as string[]
-        this.reputation = 0
-        this.spent = 0
-        this.save()
+        runInAction(() => {
+            this.id = undefined
+            this.allEpks = [] as string[]
+            this.reputation = 0
+            this.spent = 0
+        })
+        window.localStorage.removeItem('identity')
     }
 
     async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
@@ -484,6 +492,64 @@ export class User {
         await this.loadReputation()
         await this.calculateAllEpks()
         this.spent = 0
+    }
+
+    async decrypt(password: string, { data, iv, salt }: any) {
+        const saltBytes = ethers.utils.arrayify(salt)
+        const ivBytes = ethers.utils.arrayify(iv)
+        const passwordBytes = aes.utils.utf8.toBytes(password)
+        const passwordHash = ethers.utils.sha256([
+            ...saltBytes,
+            ...passwordBytes,
+        ])
+        const passwordHashBytes = ethers.utils.arrayify(passwordHash)
+        const aesCbc = new aes.ModeOfOperation.cbc(passwordHashBytes, ivBytes)
+        const dataBytes = ethers.utils.arrayify(data)
+        const decryptedBytes = aesCbc.decrypt(dataBytes)
+        // now lets slice it up
+
+        const trapdoor = BigInt(
+            ethers.utils.hexlify(decryptedBytes.slice(0, 32))
+        )
+        const nullifier = BigInt(
+            ethers.utils.hexlify(decryptedBytes.slice(32, 64))
+        )
+        // now lets build a zk identity from it
+        const id = new ZkIdentity()
+        // TODO: add a new zk identity strategy for manually settings this more cleanly
+        ;(id as any)._identityNullifier = nullifier
+        ;(id as any)._identityTrapdoor = trapdoor
+        ;(id as any)._secret = [nullifier, trapdoor]
+        return id
+    }
+
+    // encrypt the current id using aes 256 cbc and bcrypt
+    async encrypt(password: string) {
+        if (!this.id) throw new Error('Iden is not set')
+        console.log(this.id)
+        const passwordBytes = aes.utils.utf8.toBytes(password)
+        const saltBytes = await ethers.utils.randomBytes(32)
+        const passwordHash = ethers.utils.sha256([
+            ...saltBytes,
+            ...passwordBytes,
+        ])
+        const passwordHashBytes = ethers.utils.arrayify(passwordHash)
+        const iv = ethers.utils.randomBytes(16)
+        const aesCbc = new aes.ModeOfOperation.cbc(passwordHashBytes, iv)
+        // encode as trapdoor, nullifier, secret
+        const hexString = [
+            '0x',
+            this.id.trapdoor.toString(16).padStart(64, '0'),
+            this.id.identityNullifier.toString(16).padStart(64, '0'),
+        ].join('')
+        const dataBytes = ethers.utils.arrayify(hexString)
+        const encryptedBytes = aesCbc.encrypt(dataBytes)
+        const encryptedHex = ethers.utils.hexlify(encryptedBytes)
+        return {
+            data: encryptedHex,
+            iv: ethers.utils.hexlify(iv),
+            salt: ethers.utils.hexlify(saltBytes),
+        }
     }
 }
 
