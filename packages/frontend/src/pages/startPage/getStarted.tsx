@@ -16,10 +16,10 @@ const GetStarted = ({ signin, signup }: Props) => {
         >
             <h1 className="title">GM!</h1>
             <p>
-                Great to have you here.Currently, UniRep Social is an
-                experimental & research use dApp. We are part of Privacy &
-                Scaling Explorations team that specialized in zero-knowledge
-                proof and advance blockchain technology.
+                Great to have you here. Currently, UniRep Social is an
+                experimental & research use dApp. We are part of the Privacy &
+                Scaling Explorations team that specializes in zero-knowledge
+                proof and advanced blockchain technology.
             </p>
             <p>
                 Our mission is to empower the general public to have full
