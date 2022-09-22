@@ -62,10 +62,6 @@ async function setUsername(req, res) {
         reputationProof.graffitiPreImage.toString() !== '0' &&
         reputationProof.proveGraffiti.toString() !== '1'
     ) {
-        console.log(
-            reputationProof.graffitiPreImage,
-            reputationProof.proveGraffiti
-        )
         res.status(422).json({
             error: `Error: prove graffiti ${reputationProof.proveGraffiti} is not 1`,
         })

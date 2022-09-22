@@ -323,7 +323,6 @@ export const epochTransition = async (t) => {
         },
     })
     t.is(r.status, 204)
-    console.log('status: ' + r.status)
 }
 
 export const userStateTransition = async (t, iden) => {
