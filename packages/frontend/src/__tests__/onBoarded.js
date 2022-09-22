@@ -15,7 +15,7 @@ test('should render component properly', () => {
     const title = '🎉 You’re in!'
     const rep = '30 Rep + 3 personas await you!'
     const p1 =
-        'Excllent! One huge difference of UniRep Social is that you don’t have to interact with any wallet, we have come up with this solution to smooth out the experience. If you are interested, you can learn more from our developer document.'
+        'Excellent! One huge difference of UniRep Social is that you don’t have to interact with any wallet, we have come up with this solution to smooth out the experience. If you are interested, you can learn more from our developer document.'
     const p2 = 'Enjoy your journey in UniRep Social!'
 
     render(<Onboarded />)
