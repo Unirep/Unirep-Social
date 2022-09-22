@@ -423,30 +423,3 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
 
     await waitForBackendBlock(t, receipt.blockNumber)
 }
-
-export const setSameUsername = async (t, iden, preImage, newUsername) => {
-    const hexlifiedPreImage =
-        preImage == 0
-            ? 0
-            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
-    const { proof, publicSignals, blockNumber } = await genUsernameProof(
-        t,
-        iden,
-        hexlifiedPreImage
-    )
-    await waitForBackendBlock(t, blockNumber)
-
-    const r = await fetch(`${t.context.url}/api/usernames`, {
-        method: 'POST',
-        headers: {
-            'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-            newUsername,
-            publicSignals,
-            proof,
-        }),
-    })
-
-    t.is(r.ok, false)
-}

@@ -10,7 +10,6 @@ import {
     setUsername,
     epochTransition,
     userStateTransition,
-    setSameUsername,
     waitForBackendBlock,
     genUsernameProof,
 } from './utils'
@@ -86,9 +85,12 @@ test.serial(
         await userStateTransition(t, iden)
 
         // try to change the username to the same one
-        await setSameUsername(t, iden, 'username123', 'username123')
-
-        t.pass()
+        try {
+            await setUsername(t, iden, 'username123', 'username123')
+            t.fail()
+        } catch (err: any) {
+            t.true(err.toString().startsWith('Error: /post error'))
+        }
     }
 )
 
