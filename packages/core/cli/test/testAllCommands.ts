@@ -50,7 +50,7 @@ describe('test all CLI subcommands', function () {
         minRepDiff = 15
     let userRepProof, repPublicSignals
     let airdropProof, airdropPublicSignals
-    let proofIdx
+    let postId
 
     before(async () => {
         deployerPrivKey = ethers.utils.solidityKeccak256(['uint'], [0])
@@ -333,10 +333,11 @@ describe('test all CLI subcommands', function () {
                 .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(postRegMatch).not.equal(null)
 
-            const proofIndexRegMatch = stdout
+            const postIdRegMatch = stdout
                 .trim()
-                .match(/Proof index: ([0-9]+)/) as any
-            proofIdx = proofIndexRegMatch[1]
+                .match(/Post ID: ([0-9]+)/) as any
+            expect(postIdRegMatch).not.equal(null)
+            postId = postIdRegMatch[1]
         })
     })
 
@@ -400,7 +401,7 @@ describe('test all CLI subcommands', function () {
             const command =
                 `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${1} ` +
+                ` -pid ${postId} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
