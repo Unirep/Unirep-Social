@@ -91,7 +91,7 @@ async function createComment(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, transactionHash, content } = req.body
+    const { publicSignals, proof, postId, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -117,10 +117,10 @@ async function createComment(req, res) {
     }
 
     const { attestingFee } = await unirepContract.config()
-    const { postId } = await req.db.findOne('Post', {
-        transactionHash,
+    const post = await req.db.findOne('Post', {
+        _id: postId,
     })
-    if (!postId) {
+    if (!post) {
         res.status(400).json({
             error: 'Post does not exist',
         })
@@ -129,7 +129,7 @@ async function createComment(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
         [
-            postId,
+            post.postId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -190,7 +190,7 @@ async function createCommentSubsidy(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
+    const { publicSignals, proof, postId, content } = req.body
     const reputationProof = new BaseProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -203,7 +203,7 @@ async function createCommentSubsidy(req, res) {
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
-        _id: req.body.postId,
+        _id: postId,
     })
     if (!post) {
         res.status(400).json({
@@ -214,7 +214,7 @@ async function createCommentSubsidy(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishCommentSubsidy',
         [
-            post.transactionHash,
+            post.postId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -229,7 +229,7 @@ async function createCommentSubsidy(req, res) {
     )
 
     const comment = await req.db.create('Comment', {
-        postId: req.body.postId,
+        postId,
         content,
         hashedContent,
         epochKey,
@@ -250,7 +250,7 @@ async function createCommentSubsidy(req, res) {
 }
 
 async function editComment(req, res) {
-    const transactionHash = req.params.id
+    const id = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -279,7 +279,7 @@ async function editComment(req, res) {
         'Comment',
         {
             where: {
-                transactionHash,
+                _id: id,
             },
         }
     )
@@ -299,8 +299,9 @@ async function editComment(req, res) {
         }
     )
 
-    const comment = await req.db.update('Comment', {
+    await req.db.update('Comment', {
         where: {
+            _id: id,
             commentId,
             hashedContent: oldHashedContent,
         },
@@ -310,6 +311,9 @@ async function editComment(req, res) {
         },
     })
 
+    const comment = await req.db.findOne('Comment', { where: { _id: id } })
+    console.log('edit', comment)
+
     res.json({
         error: error,
         transaction: hash,
@@ -318,7 +322,7 @@ async function editComment(req, res) {
 }
 
 async function deleteComment(req, res) {
-    const transactionHash = req.params.id
+    const id = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -345,7 +349,7 @@ async function deleteComment(req, res) {
         'Comment',
         {
             where: {
-                transactionHash,
+                _id: id,
             },
         }
     )
@@ -365,8 +369,9 @@ async function deleteComment(req, res) {
         }
     )
 
-    const comment = await req.db.update('Comment', {
+    await req.db.update('Comment', {
         where: {
+            _id: id,
             commentId,
             hashedContent: oldHashedContent,
         },
@@ -375,6 +380,7 @@ async function deleteComment(req, res) {
             hashedContent: newHashedContent,
         },
     })
+    const comment = await req.db.findOne('Comment', { where: { _id: id } })
 
     res.json({
         error: error,

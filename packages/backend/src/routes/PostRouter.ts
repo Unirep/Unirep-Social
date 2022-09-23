@@ -235,7 +235,7 @@ async function createPostSubsidy(req, res) {
 }
 
 async function editPost(req, res) {
-    const transactionHash = req.params.id
+    const id = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -264,7 +264,7 @@ async function editPost(req, res) {
         'Post',
         {
             where: {
-                transactionHash,
+                _id: id,
             },
         }
     )
@@ -284,8 +284,9 @@ async function editPost(req, res) {
         }
     )
 
-    const post = await req.db.update('Post', {
+    await req.db.update('Post', {
         where: {
+            _id: id,
             postId,
             hashedContent: oldHashedContent,
         },
@@ -295,6 +296,8 @@ async function editPost(req, res) {
         },
     })
 
+    const post = await req.db.findOne('Post', { where: { _id: id } })
+
     res.json({
         error: error,
         transaction: hash,
@@ -303,7 +306,7 @@ async function editPost(req, res) {
 }
 
 async function deletePost(req, res) {
-    const transactionHash = req.params.id
+    const id = req.params.id
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -330,7 +333,7 @@ async function deletePost(req, res) {
         'Post',
         {
             where: {
-                transactionHash,
+                _id: id,
             },
         }
     )
@@ -350,8 +353,9 @@ async function deletePost(req, res) {
         }
     )
 
-    const post = await req.db.update('Post', {
+    await req.db.update('Post', {
         where: {
+            _id: id,
             postId,
             hashedContent: oldHashedContent,
         },
@@ -360,6 +364,8 @@ async function deletePost(req, res) {
             hashedContent: newHashedContent,
         },
     })
+
+    const post = await req.db.findOne('Post', { where: { _id: id } })
 
     res.json({
         error: error,

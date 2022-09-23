@@ -18,29 +18,23 @@ test.before(async (t: any) => {
 test('should create a post', async (t: any) => {
     const { iden } = await signUp(t)
     await signIn(t, iden)
-    const { transaction } = await createPost(t, iden)
-    const exist = await queryPost(t, transaction)
-    t.true(exist)
+    const { post } = await createPost(t, iden)
+    const data = await queryPost(t, post._id)
+    t.is(post.content, data.content)
 })
 
 test('should edit a post', async (t: any) => {
     const { iden } = await signUp(t)
     await signIn(t, iden)
-    const { transaction } = await createPost(t, iden)
-    const exist = await queryPost(t, transaction)
-    t.true(exist)
-
-    await editPost(t, iden, transaction)
-    t.pass()
+    const { post } = await editPost(t, iden)
+    const data = await queryPost(t, post._id)
+    t.is(data.content, 'new content')
 })
 
 test('should delete a post', async (t: any) => {
     const { iden } = await signUp(t)
     await signIn(t, iden)
-    const { transaction } = await createPost(t, iden)
-    const exist = await queryPost(t, transaction)
-    t.true(exist)
-
-    await deletePost(t, iden, transaction)
-    t.pass()
+    const { post } = await deletePost(t, iden)
+    const data = await queryPost(t, post._id)
+    t.is(data.content, null)
 })
