@@ -151,9 +151,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const minRep = decodedData.minRep.toNumber()
         const hashedContent = decodedData._contentHash
 
-        // if comment router saved the comment before, commentCount should be 1
-        // otherwise, commentCount would be 0
-        let count = 0
         if (findComment) {
             db.update('Comment', {
                 where: {
@@ -178,7 +175,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 negRep: 0,
                 status: 1,
             })
-            count++
         }
         // we can safely increment the comment count by finding all comments
         // and setting the value here because we're in a tx lock
@@ -191,7 +187,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             },
             update: {
                 // add one for the current comment we're updating
-                commentCount: commentCount + count,
+                // if comment router saved the comment before, commentCount should be 1
+                // otherwise, commentCount would be 0
+                commentCount: commentCount + (findComment ? 0 : 1),
             },
         })
         db.delete('Record', {

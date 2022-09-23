@@ -163,14 +163,13 @@ describe('Synchronzier processes events', function () {
             ethers.utils.toUtf8Bytes(content)
         )
 
-        const { transactionHash } = await unirepSocialContract
-            .publishPost(
+        const { hash: transactionHash, wait } =
+            await unirepSocialContract.publishPost(
                 hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: attestingFee }
             )
-            .then((t) => t.wait())
 
         await db.create('Post', {
             content,
@@ -185,6 +184,7 @@ describe('Synchronzier processes events', function () {
             transactionHash,
         })
 
+        await wait()
         await userState.waitForSync()
         const post = await db.findOne('Post', {
             where: {
@@ -349,15 +349,14 @@ describe('Synchronzier processes events', function () {
             ethers.utils.toUtf8Bytes(content)
         )
 
-        const { transactionHash } = await unirepSocialContract
-            .leaveComment(
+        const { hash: transactionHash, wait } =
+            await unirepSocialContract.leaveComment(
                 postId,
                 hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: attestingFee }
             )
-            .then((t) => t.wait())
 
         await db.create('Comment', {
             postId,
@@ -373,6 +372,7 @@ describe('Synchronzier processes events', function () {
             transactionHash,
         })
 
+        await wait()
         await userState.waitForSync()
         const comment = await db.findOne('Comment', {
             where: {
@@ -548,16 +548,14 @@ describe('Synchronzier processes events', function () {
             graffitiPreImage,
             downvoteValue
         )
-        const { transactionHash } = await unirepSocialContract
-            .vote(
-                upvoteValue,
-                downvoteValue,
-                toEpochKey,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: attestingFee.mul(2) }
-            )
-            .then((t) => t.wait())
+        const { hash: transactionHash, wait } = await unirepSocialContract.vote(
+            upvoteValue,
+            downvoteValue,
+            toEpochKey,
+            reputationProof.publicSignals,
+            reputationProof.proof,
+            { value: attestingFee.mul(2) }
+        )
 
         await db.create('Vote', {
             transactionHash,
@@ -585,6 +583,7 @@ describe('Synchronzier processes events', function () {
             confirmed: 0,
         })
 
+        await wait()
         await userState.waitForSync()
         const vote = await db.findOne('Vote', {
             where: {
