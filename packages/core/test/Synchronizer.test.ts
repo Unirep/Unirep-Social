@@ -105,7 +105,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(post).not.to.be.null
-        const record = db.findOne('Record', {
+        const record = await db.findOne('Record', {
             where: {
                 to: reputationProof.epochKey,
                 from: reputationProof.epochKey,
@@ -118,7 +118,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = db.findOne('EpkRecord', {
+        const epkRecord = await db.findOne('EpkRecord', {
             where: {
                 epk: reputationProof.epochKey,
                 epoch: Number(reputationProof.epoch),
@@ -198,7 +198,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(post).not.to.be.null
-        const record = db.findOne('Record', {
+        const record = await db.findOne('Record', {
             where: {
                 to: reputationProof.epochKey,
                 from: reputationProof.epochKey,
@@ -211,7 +211,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = db.findOne('EpkRecord', {
+        const epkRecord = await db.findOne('EpkRecord', {
             where: {
                 epk: reputationProof.epochKey,
                 epoch: Number(reputationProof.epoch),
@@ -288,7 +288,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(post).not.to.be.null
-        const record = db.findOne('Record', {
+        const record = await db.findOne('Record', {
             where: {
                 to: reputationProof.epochKey,
                 from: reputationProof.epochKey,
@@ -301,7 +301,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = db.findOne('EpkRecord', {
+        const epkRecord = await db.findOne('EpkRecord', {
             where: {
                 epk: reputationProof.epochKey,
                 epoch: Number(reputationProof.epoch),
@@ -394,7 +394,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(post).not.to.be.null
-        const record = db.findOne('Record', {
+        const record = await db.findOne('Record', {
             where: {
                 to: reputationProof.epochKey,
                 from: reputationProof.epochKey,
@@ -407,7 +407,7 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = db.findOne('EpkRecord', {
+        const epkRecord = await db.findOne('EpkRecord', {
             where: {
                 epk: reputationProof.epochKey,
                 epoch: Number(reputationProof.epoch),
