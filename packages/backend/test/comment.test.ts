@@ -7,7 +7,6 @@ import {
     deleteComment,
     editComment,
     queryComment,
-    queryPost,
     signIn,
     signUp,
 } from './utils'

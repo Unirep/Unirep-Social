@@ -30,7 +30,9 @@ export default (app: Express) => {
 
 async function loadComment(req, res, next) {
     const comment = await req.db.findOne('Comment', {
-        _id: req.params.id,
+        where: {
+            _id: req.params.id,
+        },
     })
     res.json(comment)
 }
@@ -118,7 +120,9 @@ async function createComment(req, res) {
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
-        _id: postId,
+        where: {
+            _id: postId,
+        },
     })
     if (!post) {
         res.status(400).json({
@@ -203,7 +207,9 @@ async function createCommentSubsidy(req, res) {
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
-        _id: postId,
+        where: {
+            _id: postId,
+        },
     })
     if (!post) {
         res.status(400).json({
@@ -312,7 +318,6 @@ async function editComment(req, res) {
     })
 
     const comment = await req.db.findOne('Comment', { where: { _id: id } })
-    console.log('edit', comment)
 
     res.json({
         error: error,

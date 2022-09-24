@@ -1,7 +1,7 @@
 import test from 'ava'
 import { startServer } from './environment'
 
-import { createComment, createPost, queryPost, signUp, vote } from './utils'
+import { createComment, createPost, signUp, vote } from './utils'
 
 test.before(async (t: any) => {
     const context = await startServer()
@@ -13,9 +13,7 @@ test('should vote on a post', async (t: any) => {
     const user1 = await signUp(t)
 
     // first create a post
-    const { post, transaction } = await createPost(t, user1.iden)
-    const exist = await queryPost(t, transaction)
-    t.true(exist)
+    const { post } = await createPost(t, user1.iden)
 
     // sign up second user
     const user2 = await signUp(t)
@@ -43,17 +41,11 @@ test('should vote on comment', async (t: any) => {
     const user1 = await signUp(t)
 
     // first create a post
-    const post = await createPost(t, user1.iden)
-    const exist = await queryPost(t, post.transaction)
-    t.true(exist)
+    const { post } = await createPost(t, user1.iden)
 
     // leave a comment
     // Object.assign(t.context, { ...t.context, postId: post.transaction })
-    const { comment, transaction } = await createComment(
-        t,
-        user1.iden,
-        post.transaction
-    )
+    const { comment } = await createComment(t, user1.iden, post._id)
 
     // sign up second user
     const user2 = await signUp(t)
