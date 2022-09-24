@@ -1,6 +1,5 @@
 import test from 'ava'
 import { startServer } from './environment'
-import fetch from 'node-fetch'
 
 const EPOCH_LENGTH = 20000
 
@@ -17,7 +16,11 @@ test.serial('should use EpochManager to epoch transition', async (t: any) => {
     const waitTime = await epochManager.updateWatch()
     t.assert(waitTime < EPOCH_LENGTH)
     t.assert(waitTime >= 0)
-    await new Promise((r) => setTimeout(r, waitTime + 10000))
-    const currentEpoch = await unirep.currentEpoch()
-    t.is(currentEpoch.toNumber(), startEpoch + 1)
+    for (;;) {
+        await new Promise((r) => setTimeout(r, waitTime + 10000))
+        const currentEpoch = await unirep.currentEpoch()
+        if (currentEpoch.toNumber() !== startEpoch + 1) continue
+        t.is(currentEpoch.toNumber(), startEpoch + 1)
+        break
+    }
 })
