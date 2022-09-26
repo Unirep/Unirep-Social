@@ -21,6 +21,16 @@
     }
 }
 
+.setting-content {
+    border: 1px solid $grey-200;
+    border-radius: 8px;
+    padding: 8px 8px 40px 8px;
+    margin-top: 24px;
+
+    font-size: $text-base;
+    text-align: center;
+}
+
 .private-key {
     width: 100%;
     padding: 16px 24px 48px 24px;
