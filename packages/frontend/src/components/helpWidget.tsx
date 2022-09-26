@@ -16,7 +16,7 @@ const HelpWidget = ({ type }: Props) => {
                 onMouseOut={() => setHover(false)}
                 onClick={() => setHover(!isHover)}
             />
-            {isHover ? <div className="info">{type}</div> : <div></div>}
+            {isHover && <div className="info">{type}</div>}
         </div>
     )
 }

@@ -121,40 +121,20 @@
                     }
                 }
             }
-
-            .epks {
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                margin-top: 32px;
-                justify-content: center;
-
-                .epk {
-                    @include myButton(
-                        $height: 32px,
-                        $radius: 8px,
-                        $border: 1px,
-                        $border-color: $black,
-                        $color: $black,
-                        $font-size: $text-sm,
-                        $margin-horizontal: 4px,
-                        $block-color: $grey-100
-                    );
-                    padding: 7px 16px;
-                }
-
-                .chosen {
-                    background-color: $black;
-                    color: $white;
-                }
-            }
         }
 
         .white-box {
-            padding: 32px;
+            padding: 16px 32px 32px 32px;
             width: 100%;
             background-color: $white;
             border-radius: 0px 0px 8px 8px;
+
+            .error {
+                color: $red;
+                font-size: $text-md;
+                margin-top: 24px;
+                text-align: center;
+            }
 
             .submit {
                 @include myButton(
@@ -167,6 +147,7 @@
                 );
                 width: 100%;
                 padding: 17px auto;
+                margin: 0px;
             }
 
             .outdated {
