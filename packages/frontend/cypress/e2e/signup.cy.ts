@@ -47,11 +47,11 @@ describe('visit and interact with home page', () => {
             body: [],
         }).as('getApiComment')
         cy.location('pathname').should('eq', '/')
-        cy.get('.rep-info').contains('30')
+        cy.get('.rep-handout').contains('30')
         cy.get('#user > img').click()
         cy.location('pathname').should('eq', '/user')
         cy.get('.my-reps > .white-block').contains('0')
-        cy.get('.user-info-widget > .rep-info').contains('30')
+        cy.get('.user-info-widget > .rep-info').contains('0')
         cy.go('back')
     })
     it('ensures that user can submit a post', () => {
@@ -69,7 +69,7 @@ describe('visit and interact with home page', () => {
         }).as('getApiComment')
         cy.get('#new > img').click()
         cy.location('pathname').should('eq', '/new')
-        cy.get('.rep-info').contains('30')
+        cy.get('.rep-handout').contains('30')
         cy.get('#inputTextArea').type(loremPost)
         cy.get('.button-border').contains('Preview').click()
         cy.get('.block-content').should('exist')

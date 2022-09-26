@@ -20,7 +20,7 @@ const UserInfoWidget = () => {
     const [diffTime, setDiffTime] = useState<number>(0)
     const nextUSTTimeString = dateformat(
         new Date(epochManager.nextTransition),
-        'dd/mm/yyyy hh:MM TT'
+        'mmm/dd, hh:MM TT'
     )
 
     const makeCountdownText = () => {
@@ -68,60 +68,26 @@ const UserInfoWidget = () => {
             {userContext.userState && userContext.id ? (
                 <div className="user-info-widget widget">
                     <div className="rep-info">
-                        <p>My Rep</p>
+                        <h4>My Rep</h4>
                         <h3>
                             <img
                                 src={require('../../../public/images/lighting.svg')}
                             />
-                            {userContext.netReputation} |{' '}
-                            {userContext.subsidyReputation}
+                            {userContext.netReputation}
                         </h3>
                     </div>
-                    <div className="ust-info">
-                        <div className="block-title">
-                            In this cycle, my personas are{' '}
-                            <HelpWidget type={InfoType.persona} />
-                        </div>
-                        <div className="epks">
-                            {userContext.currentEpochKeys.map((key) => (
-                                <div className="epk" key={key}>
-                                    {shortenEpochKey(key)}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="margin"></div>
-                        <div className="block-title">
-                            Remaining time:{' '}
-                            <HelpWidget type={InfoType.countdown} />
-                        </div>
-                        <div className="countdown">{countdownText}</div>
-                        <div className="margin"></div>
-                        <div className="block-title">Transition at:</div>
-                        <div className="countdown small">
-                            {nextUSTTimeString}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div></div>
-            )}
-            {userContext.userState &&
-                !userContext.isInitialSyncing &&
-                (epochManager.readyToTransition || userContext.needsUST) &&
-                !queue.queuedOp(ActionType.UST) && (
-                    <div className="custom-ui">
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                maxWidth: '400px',
-                                alignSelf: 'center',
-                            }}
-                        >
-                            <p>User State Transition</p>
-                            <h2>It’s time to move on to the new cycle!</h2>
+                    {userContext.userState &&
+                    !userContext.isInitialSyncing &&
+                    (epochManager.readyToTransition || userContext.needsUST) &&
+                    !queue.queuedOp(ActionType.UST) ? (
+                        <div className="ust-info">
+                            <h4>
+                                Previous cycle was ended at {nextUSTTimeString}
+                            </h4>
+                            <div className="margin"></div>
+                            <h4>A new cycle is required.</h4>
+                            <div className="margin"></div>
                             <button
-                                className="custom-btn"
                                 onClick={() => {
                                     queue.addOp(
                                         async (updateStatus) => {
@@ -152,14 +118,56 @@ const UserInfoWidget = () => {
                                             type: ActionType.UST,
                                         }
                                     )
-                                    // postContext.getAirdrop()
                                 }}
                             >
-                                Let's go
+                                Refresh
                             </button>
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="ust-info">
+                            <div className="info-row">
+                                <h4>
+                                    Rep-Handout
+                                    <HelpWidget type={InfoType.repHandout} />
+                                </h4>
+                                <div className="rep-handout">
+                                    <strong>
+                                        {userContext.subsidyReputation}
+                                    </strong>
+                                    <div className="interline"></div>
+                                    {userContext.currentEpochKeys[0]}
+                                </div>
+                            </div>
+
+                            <div className="info-row">
+                                <h4>
+                                    Personas
+                                    <HelpWidget type={InfoType.persona} />
+                                </h4>
+                                <div className="epks">
+                                    {userContext.currentEpochKeys.map((key) => (
+                                        <div className="epk" key={key}>
+                                            {shortenEpochKey(key)}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="info-row">
+                                <h4>
+                                    Transition at:
+                                    <HelpWidget type={InfoType.countdown} />
+                                </h4>
+                                <div className="countdown">
+                                    {diffTime < 60
+                                        ? countdownText
+                                        : nextUSTTimeString}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : null}
         </div>
     )
 }
