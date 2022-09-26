@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import BasicPage from '../basicPage/basicPage'
 import PrivateKey from './privateKey'
-import MyButton, { ButtonType } from '../../components/myButton'
 
 enum SettingNav {
     PrivateKey,
@@ -45,17 +44,7 @@ const SettingPage = () => {
             </div>
             {nav === SettingNav.PrivateKey && (
                 <div className="setting-content">
-                    <img
-                        src={require('../../../public/images/reveal-key.svg')}
-                    />
-                    {/* !UIContext.downloadPrivateKey && <div>It seems like you haven’t download your private key yet, please do so soon.</div> */}
-                    <p>
-                        It seems like you haven’t download your private key yet,
-                        please do so soon.
-                    </p>
-                    <MyButton type={ButtonType.dark}>
-                        Reveal My Private Key
-                    </MyButton>
+                    <PrivateKey />
                 </div>
             )}
             {nav === SettingNav.Username && (
