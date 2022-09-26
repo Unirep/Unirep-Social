@@ -38,8 +38,24 @@
         background-color: $grey-200;
     }
 
+    .encrypt-choice {
+        margin: 16px 0px;
+        font-size: $text-md;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+
+        input[type='radio'] {
+            width: 24px;
+            height: 24px;
+            accent-color: $black;
+            margin-right: 8px;
+        }
+    }
+
     .reveal-private-key {
         text-align: left;
+        padding: 16px;
     }
 
     .encryption {
@@ -48,5 +64,10 @@
         padding: 24px;
 
         word-break: break-word;
+
+        .error-msg {
+            font-size: $text-xs;
+            color: $red;
+        }
     }
 }

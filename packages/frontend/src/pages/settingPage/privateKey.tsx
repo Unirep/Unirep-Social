@@ -4,6 +4,7 @@ import UIContext from '../../context/UI'
 import UserContext from '../../context/User'
 import MyButton, { ButtonType } from '../../components/myButton'
 import CustomInput from '../../components/customInput'
+import CustomGap from '../../components/customGap'
 
 const PrivateKey = () => {
     const [isRevealed, setRevealed] = useState<boolean>(false)
@@ -87,21 +88,22 @@ const PrivateKey = () => {
             {isRevealed ? (
                 <div className="reveal-private-key">
                     <MyButton
-                        type={ButtonType.light}
+                        type={ButtonType.darkTrans}
                         onClick={() => setRevealed(false)}
                     >
                         Hide
                     </MyButton>
+                    <CustomGap times={2} />
                     <p>{userContext.identity}</p>
                     <div className="dividing-line"></div>
-                    <div>
+                    <div className="encrypt-choice">
                         <input
                             type="radio"
                             checked={chooseEncryption}
                             value="true"
                             onChange={handleEncryptionRadio}
                         />
-                        <label>Add an encryption</label>
+                        <span>Add an encryption</span>
                     </div>
                     {chooseEncryption && (
                         <div className="encryption">
@@ -115,22 +117,25 @@ const PrivateKey = () => {
                                 title="Password"
                                 onChange={onPwdChange}
                             />
+                            <CustomGap times={1} />
                             <CustomInput
                                 id="passwordConfirmInput"
                                 title="Confirm password"
                                 onChange={onConfirmPwdChange}
                             />
+                            <CustomGap times={1} />
+
                             <div className="error-msg">{errorMsg}</div>
                         </div>
                     )}
-                    <div>
+                    <div className="encrypt-choice">
                         <input
                             type="radio"
                             checked={!chooseEncryption}
                             value="false"
                             onChange={handleEncryptionRadio}
                         />
-                        <label>Download without encryption</label>
+                        <span>Download without encryption</span>
                     </div>
                     <MyButton type={ButtonType.dark} onClick={onClickDownload}>
                         Download
@@ -147,6 +152,7 @@ const PrivateKey = () => {
                             yet, please do so soon.
                         </p>
                     )}
+                    <CustomGap times={2} />
                     <MyButton
                         type={ButtonType.dark}
                         onClick={() => setRevealed(true)}
