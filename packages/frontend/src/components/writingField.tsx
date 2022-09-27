@@ -6,10 +6,9 @@ import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 
-import HelpWidget from './helpWidget'
 import TextEditor from './textEditor'
-import { DataType, InfoType } from '../constants'
-import { shortenEpochKey } from '../utils'
+import ActionDetail from './actionDetail'
+import { DataType } from '../constants'
 
 type Props = {
     type: DataType
@@ -25,8 +24,9 @@ type Props = {
 
 const WritingField = (props: Props) => {
     const unirepConfig = useContext(UnirepContext)
-    const user = useContext(UserContext)
+    const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
+    const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
 
     const [title, setTitle] = useState<string>(() => {
         if (props.type === DataType.Post && postContext.postDraft) {
@@ -45,7 +45,7 @@ const WritingField = (props: Props) => {
         }
         return ''
     })
-    const [epkNonce, setEpkNonce] = useState<number>(0)
+    const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
     const defaultRep =
@@ -67,17 +67,13 @@ const WritingField = (props: Props) => {
         postContext.setDraft(props.type, event.target.value, content)
     }
 
-    const handleRepInput = (event: any) => {
-        setReputation(+event.target.value)
-    }
-
     const handleTextEditorInput = (text: string) => {
         setContent(text)
         postContext.setDraft(props.type, title, text)
     }
 
     const submit = () => {
-        if (!user.userState) {
+        if (!userContext.userState) {
             setErrorMsg('Please sign up or sign in')
         } else {
             if (title.length === 0 && content.length === 0) {
@@ -86,6 +82,17 @@ const WritingField = (props: Props) => {
                 props.submit(title, content, epkNonce, reputation)
             }
         }
+    }
+
+    const chooseToUseSubsidy = () => {
+        setUseSubsidy(true)
+        setEpkNonce(-1)
+    }
+
+    const chooseToUsePersona = () => {
+        setUseSubsidy(false)
+        setEpkNonce(0)
+        setReputation(defaultRep)
     }
 
     return (
@@ -112,59 +119,31 @@ const WritingField = (props: Props) => {
                     autoFocus={true}
                 />
             )}
-            <div className="info-row">
-                <div className="element">
-                    <div className="name">
-                        Post as <HelpWidget type={InfoType.epk4Post} />
-                    </div>
-                    <div className="epks">
-                        <div
-                            className={-1 === epkNonce ? 'epk chosen' : 'epk'}
-                            onClick={() => setEpkNonce(-1)}
-                            key={0}
-                        >
-                            Subsidy
-                        </div>
-
-                        {!user.userState ? (
-                            <div>somethings wrong...</div>
-                        ) : (
-                            user.currentEpochKeys.map((epk, i) => (
-                                <div
-                                    className={
-                                        i === epkNonce ? 'epk chosen' : 'epk'
-                                    }
-                                    onClick={() => setEpkNonce(i)}
-                                    key={epk}
-                                >
-                                    {shortenEpochKey(epk)}
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-                <div className="element">
-                    <div className="name">
-                        My Rep display <HelpWidget type={InfoType.rep} />
-                    </div>
-                    <div className="rep-chooser">
-                        <input
-                            type="range"
-                            min={0}
-                            max={
-                                user.userState ? user.netReputation : defaultRep
-                            }
-                            onChange={handleRepInput}
-                            value={reputation}
-                        />
-                        <input
-                            type="text"
-                            value={reputation}
-                            onChange={handleRepInput}
-                        />
-                    </div>
-                </div>
-            </div>
+            <div style={{ marginBottom: '32px' }}></div>
+            {userContext.userState ? (
+                <ActionDetail
+                    showBorder={true}
+                    showHelp={true}
+                    showRep={true}
+                    maxRep={userContext.netReputation}
+                    defaultRep={defaultRep}
+                    hasRep={
+                        useSubsidy
+                            ? userContext.subsidyReputation
+                            : userContext.netReputation
+                    }
+                    showoffRep={reputation}
+                    setShowoffRep={setReputation}
+                    allEpks={userContext.currentEpochKeys}
+                    useSubsidy={useSubsidy}
+                    chooseToUseSubsidy={chooseToUseSubsidy}
+                    chooseToUsePersona={chooseToUsePersona}
+                    epkNonce={epkNonce}
+                    setEpkNonce={setEpkNonce}
+                />
+            ) : (
+                <>somethings wrong...</>
+            )}
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}
             </div>

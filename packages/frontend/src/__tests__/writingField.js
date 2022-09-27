@@ -56,8 +56,6 @@ test('should render WritingField correctly with .Provider data', () => {
     }
 
     renderWritingField(userData, unirepData, postData, type, page)
-    expect(screen.getByText(/post as/i)).toBeInTheDocument()
-    expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
     expect(screen.getByText(/subbtn/i)).toBeInTheDocument()
 })
 
