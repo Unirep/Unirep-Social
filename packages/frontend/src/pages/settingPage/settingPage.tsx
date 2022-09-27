@@ -42,11 +42,7 @@ const SettingPage = () => {
                     User Name
                 </div>
             </div>
-            {nav === SettingNav.PrivateKey && (
-                <div className="setting-content">
-                    <PrivateKey />
-                </div>
-            )}
+            {nav === SettingNav.PrivateKey && <PrivateKey />}
             {nav === SettingNav.Username && (
                 <div className="setting-content"></div>
             )}

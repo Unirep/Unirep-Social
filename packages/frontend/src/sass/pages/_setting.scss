@@ -24,13 +24,16 @@
 .setting-content {
     border: 1px solid $grey-200;
     border-radius: 8px;
-    padding: 8px 8px 40px 8px;
+    padding: 16px;
     margin-top: 24px;
 
     font-size: $text-base;
     text-align: center;
-
     word-break: break-all;
+
+    img {
+        width: 100%;
+    }
 
     .dividing-line {
         width: 100%;
@@ -55,7 +58,6 @@
 
     .reveal-private-key {
         text-align: left;
-        padding: 16px;
     }
 
     .encryption {

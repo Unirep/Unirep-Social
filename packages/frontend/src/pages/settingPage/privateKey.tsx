@@ -84,7 +84,7 @@ const PrivateKey = () => {
     }
 
     return (
-        <div>
+        <div className="setting-content">
             {isRevealed ? (
                 <div className="reveal-private-key">
                     <MyButton
@@ -137,7 +137,11 @@ const PrivateKey = () => {
                         />
                         <span>Download without encryption</span>
                     </div>
-                    <MyButton type={ButtonType.dark} onClick={onClickDownload}>
+                    <MyButton
+                        type={ButtonType.dark}
+                        onClick={onClickDownload}
+                        fullSize={true}
+                    >
                         Download
                     </MyButton>
                 </div>
@@ -156,6 +160,7 @@ const PrivateKey = () => {
                     <MyButton
                         type={ButtonType.dark}
                         onClick={() => setRevealed(true)}
+                        fullSize={true}
                     >
                         Reveal My Private Key
                     </MyButton>
