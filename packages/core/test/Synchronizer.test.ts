@@ -92,7 +92,7 @@ describe('Synchronzier processes events', function () {
         )
 
         const { transactionHash } = await tx.wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const post = await db.findOne('Post', {
             where: {
                 transactionHash,
@@ -185,7 +185,7 @@ describe('Synchronzier processes events', function () {
         })
 
         await wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const post = await db.findOne('Post', {
             where: {
                 transactionHash,
@@ -267,7 +267,7 @@ describe('Synchronzier processes events', function () {
         )
 
         const { transactionHash } = await tx.wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const comment = await db.findOne('Comment', {
             where: {
                 transactionHash,
@@ -373,7 +373,7 @@ describe('Synchronzier processes events', function () {
         })
 
         await wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const comment = await db.findOne('Comment', {
             where: {
                 transactionHash,
@@ -462,7 +462,7 @@ describe('Synchronzier processes events', function () {
         )
 
         const { transactionHash } = await tx.wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const vote = await db.findOne('Vote', {
             where: {
                 transactionHash,
@@ -583,7 +583,7 @@ describe('Synchronzier processes events', function () {
         })
 
         await wait()
-        await userState.waitForSync()
+        await synchronizer.waitForSync()
         const vote = await db.findOne('Vote', {
             where: {
                 transactionHash,
