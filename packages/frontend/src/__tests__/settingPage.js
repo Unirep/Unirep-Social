@@ -19,10 +19,11 @@ jest.mock('react-router-dom', () => ({
 
 test('should render SettingPage properly with BasicPage and PrivateKey components', () => {
     render(<SettingPage />)
+
     expect(
         screen.getByText(
-            /uniRep social uses semaphore technology to generate the private key. it's a super dope string and it's very important for you to store it safely. this key will be used to regain access to your rep points./i
+            /It seems like you haven’t download your private key yet, please do so soon./i
         )
     ).toBeInTheDocument()
-    expect(screen.queryByText(/private key./i)).toBeInTheDocument()
+    expect(screen.getByText(/reveal my private key/i)).toBeInTheDocument()
 })

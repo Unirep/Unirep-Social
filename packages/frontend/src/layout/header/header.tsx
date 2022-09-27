@@ -92,7 +92,7 @@ const Header = () => {
                         />
                     </div>
                     <div
-                        id="user"
+                        id="setting"
                         className={
                             location.pathname === '/setting'
                                 ? 'navBtn chosen'
