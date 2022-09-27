@@ -26,7 +26,7 @@ const renderVoteBox = (
     )
 }
 
-test('should render VoteBox correctly with mocked .Provider data and props', () => {
+test('should render VoteBox correctly with mocked .Provider data and props', async () => {
     const isUpVote = false
     const closeVote = jest.fn()
     const dataId = '1'
@@ -35,6 +35,8 @@ test('should render VoteBox correctly with mocked .Provider data and props', () 
     const userData = {
         userState: true,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        subsidyReputation: 30,
+        netReputation: 10,
     }
 
     const postData = {
@@ -59,8 +61,15 @@ test('should render VoteBox correctly with mocked .Provider data and props', () 
         screen.getByText(/tune up the amount of Rep to squash this post/i)
     ).toBeInTheDocument()
     expect(screen.getByText(/squash this post/i)).toBeInTheDocument()
+
+    expect(screen.getByText(/rep-handout/i)).toBeInTheDocument()
+    const choosePersonas = screen.getByText(/personas/i)
+    expect(choosePersonas).toBeInTheDocument()
+    expect(screen.getByText('30')).toBeInTheDocument()
+    await userEvent.click(choosePersonas)
     expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
     expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
+
     expect(screen.getByText(/outdated/i)).toBeInTheDocument()
     expect(screen.getByText(/history/i)).toBeInTheDocument()
     expect(

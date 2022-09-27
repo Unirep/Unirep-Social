@@ -61,8 +61,6 @@ test('should render CommentField correctly with .Provider data', () => {
     }
 
     renderCommentField(userData, postData, page, post, jest.fn())
-    expect(screen.getByText(/post as/i)).toBeInTheDocument()
-    expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
 })
 
 test(`should display "somethings wrong..." if user's state is null`, () => {
@@ -87,7 +85,6 @@ test(`should display "somethings wrong..." if user's state is null`, () => {
     }
 
     renderCommentField(userData, postData, page.post, jest.fn())
-    expect(screen.getByText(/my rep display/i)).toBeInTheDocument()
     // checks users state is null
     expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
 })
