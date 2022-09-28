@@ -83,9 +83,11 @@ const verifyReputationProof = async (
 
 const verifyEpochKeyProof = async (
     db: DB,
-    epochKeyProof: EpochKeyProof
+    epochKeyProof: EpochKeyProof,
+    epoch: number,
+    epochKey: string
 ): Promise<string | undefined> => {
-    const epoch = Number(epochKeyProof.epoch)
+    const proofEpoch = Number(epochKeyProof.epoch)
     const gstRoot = epochKeyProof.globalStateTree.toString()
 
     // check GST root
@@ -94,6 +96,16 @@ const verifyEpochKeyProof = async (
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
+    }
+    // check post/comment epoch and epk proof epoch
+    {
+        if (proofEpoch !== epoch)
+            return `Proof epoch: ${proofEpoch} is not the post/comment epoch: ${epoch}`
+    }
+    // check post/comment epoch key and the proof
+    {
+        if (epochKey !== epochKeyProof.epochKey)
+            return `Proof epoch key: ${epochKeyProof.epochKey} is not the post/comment epoch: ${epochKey}`
     }
 
     const isProofValid = await Prover.verifyProof(

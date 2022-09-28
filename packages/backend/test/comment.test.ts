@@ -4,7 +4,6 @@ import { startServer } from './environment'
 import {
     createComment,
     createPost,
-    deleteComment,
     editComment,
     queryComment,
     signIn,
@@ -42,18 +41,4 @@ test('should edit a comment', async (t: any) => {
     const { comment } = await editComment(t, iden, post._id)
     const data = await queryComment(t, comment._id)
     t.is(data.content, 'new content')
-})
-
-test('should delete a comment', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
-
-    // first create a post
-    const { post } = await createPost(t, iden)
-
-    // delete a comment
-    const { comment } = await deleteComment(t, iden, post._id)
-    const data = await queryComment(t, comment._id)
-    t.is(data.content, null)
 })

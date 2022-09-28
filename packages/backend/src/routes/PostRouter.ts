@@ -26,7 +26,6 @@ export default (app: Express) => {
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
-    app.post('/api/post/delete/:id', catchError(deletePost))
 }
 
 async function loadCommentsByPostId(req, res) {
@@ -164,7 +163,7 @@ async function createPost(req, res) {
         downvote: DEFAULT_POST_KARMA,
         epoch: currentEpoch,
         action: ActionType.Post,
-        data: hash,
+        data: post._id,
         transactionHash: hash,
         confirmed: 0,
     })
@@ -227,6 +226,19 @@ async function createPostSubsidy(req, res) {
         status: 0,
         transactionHash: hash,
     })
+
+    await req.db.create('Record', {
+        to: epochKey,
+        from: epochKey,
+        upvote: 0,
+        downvote: DEFAULT_POST_KARMA,
+        epoch: currentEpoch,
+        action: ActionType.Post,
+        data: post._id,
+        transactionHash: hash,
+        confirmed: 0,
+    })
+
     res.json({
         transaction: hash,
         currentEpoch: currentEpoch,
@@ -252,7 +264,18 @@ async function editPost(req, res) {
         ethers.utils.toUtf8Bytes(content)
     )
 
-    const error = await verifyEpochKeyProof(req.db, epkProof)
+    const {
+        hashedContent: oldHashedContent,
+        onChainPostId,
+        epoch,
+        epochKey,
+    } = await req.db.findOne('Post', {
+        where: {
+            _id: id,
+        },
+    })
+
+    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
     if (error !== undefined) {
         res.status(422).json({
             error,
@@ -260,17 +283,8 @@ async function editPost(req, res) {
         return
     }
 
-    const { hashedContent: oldHashedContent, postId } = await req.db.findOne(
-        'Post',
-        {
-            where: {
-                _id: id,
-            },
-        }
-    )
-
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        postId,
+        onChainPostId,
         oldHashedContent,
         newHashedContent,
         epkProof.publicSignals,
@@ -287,80 +301,11 @@ async function editPost(req, res) {
     await req.db.update('Post', {
         where: {
             _id: id,
-            postId,
+            onChainPostId,
             hashedContent: oldHashedContent,
         },
         update: {
             content,
-            hashedContent: newHashedContent,
-        },
-    })
-
-    const post = await req.db.findOne('Post', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        post,
-    })
-}
-
-async function deletePost(req, res) {
-    const id = req.params.id
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
-    // Parse Inputs
-    const { publicSignals, proof } = req.body
-    const epkProof = new EpochKeyProof(
-        publicSignals,
-        formatProofForSnarkjsVerification(proof)
-    )
-    const newHashedContent = ethers.utils.formatBytes32String('')
-
-    const error = await verifyEpochKeyProof(req.db, epkProof)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
-
-    const { hashedContent: oldHashedContent, postId } = await req.db.findOne(
-        'Post',
-        {
-            where: {
-                _id: id,
-            },
-        }
-    )
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        postId,
-        oldHashedContent,
-        newHashedContent,
-        epkProof.publicSignals,
-        epkProof.proof,
-    ])
-
-    const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
-        {
-            data: calldata,
-        }
-    )
-
-    await req.db.update('Post', {
-        where: {
-            _id: id,
-            postId,
-            hashedContent: oldHashedContent,
-        },
-        update: {
-            content: undefined,
             hashedContent: newHashedContent,
         },
     })

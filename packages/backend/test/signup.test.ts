@@ -1,6 +1,5 @@
 import test from 'ava'
 import { startServer } from './environment'
-import fetch from 'node-fetch'
 
 import { airdrop, signIn, signUp } from './utils'
 

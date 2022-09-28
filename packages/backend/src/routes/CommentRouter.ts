@@ -25,7 +25,6 @@ export default (app: Express) => {
     app.post('/api/comment', catchError(createComment))
     app.post('/api/comment/subsidy', catchError(createCommentSubsidy))
     app.post('/api/comment/edit/:id', catchError(editComment))
-    app.post('/api/comment/delete/:id', catchError(deleteComment))
 }
 
 async function loadComment(req, res, next) {
@@ -133,7 +132,7 @@ async function createComment(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
         [
-            post.postId,
+            post.onChainPostId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -149,6 +148,7 @@ async function createComment(req, res) {
 
     const comment = await req.db.create('Comment', {
         postId,
+        onChainPostId: post.onChainPostId,
         content,
         hashedContent,
         epochKey,
@@ -167,7 +167,7 @@ async function createComment(req, res) {
         downvote: DEFAULT_COMMENT_KARMA,
         epoch: currentEpoch,
         action: ActionType.Comment,
-        data: hash,
+        data: comment._id,
         transactionHash: hash,
         confirmed: 0,
     })
@@ -220,7 +220,7 @@ async function createCommentSubsidy(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishCommentSubsidy',
         [
-            post.postId,
+            post.onChainPostId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -236,6 +236,7 @@ async function createCommentSubsidy(req, res) {
 
     const comment = await req.db.create('Comment', {
         postId,
+        onChainPostId: post.onChainPostId,
         content,
         hashedContent,
         epochKey,
@@ -246,6 +247,17 @@ async function createCommentSubsidy(req, res) {
         negRep: 0,
         status: 0,
         transactionHash: hash,
+    })
+    await req.db.create('Record', {
+        to: epochKey,
+        from: epochKey,
+        upvote: 0,
+        downvote: DEFAULT_COMMENT_KARMA,
+        epoch: currentEpoch,
+        action: ActionType.Comment,
+        data: comment._id,
+        transactionHash: hash,
+        confirmed: 0,
     })
 
     res.json({
@@ -273,7 +285,18 @@ async function editComment(req, res) {
         ethers.utils.toUtf8Bytes(content)
     )
 
-    const error = await verifyEpochKeyProof(req.db, epkProof)
+    const {
+        hashedContent: oldHashedContent,
+        onChainCommentId,
+        epoch,
+        epochKey,
+    } = await req.db.findOne('Comment', {
+        where: {
+            _id: id,
+        },
+    })
+
+    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
     if (error !== undefined) {
         res.status(422).json({
             error,
@@ -281,17 +304,8 @@ async function editComment(req, res) {
         return
     }
 
-    const { hashedContent: oldHashedContent, commentId } = await req.db.findOne(
-        'Comment',
-        {
-            where: {
-                _id: id,
-            },
-        }
-    )
-
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        commentId,
+        onChainCommentId,
         oldHashedContent,
         newHashedContent,
         epkProof.publicSignals,
@@ -308,7 +322,7 @@ async function editComment(req, res) {
     await req.db.update('Comment', {
         where: {
             _id: id,
-            commentId,
+            onChainCommentId,
             hashedContent: oldHashedContent,
         },
         update: {
@@ -317,74 +331,6 @@ async function editComment(req, res) {
         },
     })
 
-    const comment = await req.db.findOne('Comment', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        comment,
-    })
-}
-
-async function deleteComment(req, res) {
-    const id = req.params.id
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
-    // Parse Inputs
-    const { publicSignals, proof } = req.body
-    const epkProof = new EpochKeyProof(
-        publicSignals,
-        formatProofForSnarkjsVerification(proof)
-    )
-    const newHashedContent = ethers.utils.formatBytes32String('')
-
-    const error = await verifyEpochKeyProof(req.db, epkProof)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
-
-    const { hashedContent: oldHashedContent, commentId } = await req.db.findOne(
-        'Comment',
-        {
-            where: {
-                _id: id,
-            },
-        }
-    )
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        commentId,
-        oldHashedContent,
-        newHashedContent,
-        epkProof.publicSignals,
-        epkProof.proof,
-    ])
-
-    const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
-        {
-            data: calldata,
-        }
-    )
-
-    await req.db.update('Comment', {
-        where: {
-            _id: id,
-            commentId,
-            hashedContent: oldHashedContent,
-        },
-        update: {
-            content: undefined,
-            hashedContent: newHashedContent,
-        },
-    })
     const comment = await req.db.findOne('Comment', { where: { _id: id } })
 
     res.json({
