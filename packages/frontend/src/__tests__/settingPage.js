@@ -27,3 +27,13 @@ test('should render SettingPage properly with BasicPage and PrivateKey component
     ).toBeInTheDocument()
     expect(screen.getByText(/reveal my private key/i)).toBeInTheDocument()
 })
+
+test('should trigger Private Key onClick Event', async () => {
+    render(<SettingPage />)
+    const privateKeyButton = screen.getByText('Private Key')
+    await privateKeyButton.click()
+    expect(privateKeyButton).toHaveClass('setting-nav chosen')
+    const userNameButton = screen.getByText('User Name')
+    await userNameButton.click()
+    expect(userNameButton).toHaveClass('setting-nav chosen')
+})

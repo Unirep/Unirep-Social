@@ -109,7 +109,7 @@ const PrivateKey = () => {
                         <div className="encryption">
                             <p>
                                 Keep in mind, this password is{' '}
-                                <strong>NOT</strong> recoverable. If you lost
+                                <strong>NOT</strong> recoverable. If you lost it
                                 one day, we won’t be able to help you.
                             </p>
                             <CustomInput

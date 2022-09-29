@@ -11,7 +11,7 @@ const CustomInput = ({ id, title, onChange }: Props) => {
 
     return (
         <div className="custom-input-box">
-            <label>{title}</label>
+            <label htmlFor={id}>{title}</label>
             <div className="custom-input">
                 <input
                     id={id}
