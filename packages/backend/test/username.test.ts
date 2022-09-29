@@ -21,7 +21,7 @@ test.before(async (t: any) => {
     Object.assign(t.context, context)
 })
 
-test('should set a username', async (t: any) => {
+test.serial('should set a username', async (t: any) => {
     // sign up and sign in user
     const { iden, commitment } = await signUp(t)
 
@@ -56,38 +56,41 @@ test('should set a username', async (t: any) => {
     t.pass()
 })
 
-test('should fail to set the username that is already taken', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
+test.serial(
+    'should fail to set the username that is already taken',
+    async (t: any) => {
+        // sign up and sign in user
+        const { iden, commitment } = await signUp(t)
 
-    // first set a username
-    // pre-image by default is 0
-    await setUsername(t, iden, 0, 'username123')
+        // first set a username
+        // pre-image by default is 0
+        await setUsername(t, iden, 0, 'username123')
 
-    await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
+        await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
 
-    // execute the epoch transition
-    const prevEpoch = await t.context.unirep.currentEpoch()
-    await epochTransition(t)
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const findEpoch = await t.context.db.findOne('Epoch', {
-            where: { number: Number(prevEpoch) },
-        })
-        if (findEpoch) break
+        // execute the epoch transition
+        const prevEpoch = await t.context.unirep.currentEpoch()
+        await epochTransition(t)
+        for (;;) {
+            await new Promise((r) => setTimeout(r, 1000))
+            const findEpoch = await t.context.db.findOne('Epoch', {
+                where: { number: Number(prevEpoch) },
+            })
+            if (findEpoch) break
+        }
+
+        // user state transition
+        await userStateTransition(t, iden)
+
+        // try to change the username to the same one
+        try {
+            await setUsername(t, iden, 'username123', 'username123')
+            t.fail()
+        } catch (err: any) {
+            t.true(err.toString().startsWith('Error: /post error'))
+        }
     }
-
-    // user state transition
-    await userStateTransition(t, iden)
-
-    // try to change the username to the same one
-    try {
-        await setUsername(t, iden, 'username123', 'username123')
-        t.fail()
-    } catch (err: any) {
-        t.true(err.toString().startsWith('Error: /post error'))
-    }
-})
+)
 
 test('should fail to set with invalid proof', async (t: any) => {
     // sign up and sign in user

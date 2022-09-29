@@ -316,7 +316,10 @@ export const vote = async (
 }
 
 export const epochTransition = async (t) => {
-    await t.context.unirep.beginEpochTransition().then((t) => t.wait())
+    const { txManager, unirep } = t.context
+    const calldata = unirep.interface.encodeFunctionData('beginEpochTransition')
+    const hash = await txManager.queueTransaction(unirep.address, calldata)
+    await t.context.unirep.provider.waitForTransaction(hash)
 }
 
 export const userStateTransition = async (t, iden) => {
