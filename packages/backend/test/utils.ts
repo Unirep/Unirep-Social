@@ -316,13 +316,7 @@ export const vote = async (
 }
 
 export const epochTransition = async (t) => {
-    const r = await fetch(`${t.context.url}/api/epochTransition`, {
-        method: 'POST',
-        headers: {
-            authorization: 'NLmKDUnJUpc6VzuPc7Wm',
-        },
-    })
-    t.is(r.status, 204)
+    await t.context.unirep.beginEpochTransition().then((t) => t.wait())
 }
 
 export const userStateTransition = async (t, iden) => {
