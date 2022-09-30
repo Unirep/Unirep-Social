@@ -3,7 +3,7 @@ import 'react-circular-progressbar/dist/styles.css'
 
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import { shortenEpochKey } from '../utils'
+import ActionDetail from './actionDetail'
 
 type Props = {
     isUpvote: boolean
@@ -14,8 +14,10 @@ type Props = {
 const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
+
+    const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [givenAmount, setGivenAmount] = useState<number>(1)
-    const [epkNonce, setEpkNonce] = useState(0)
+    const [epkNonce, setEpkNonce] = useState(-1)
     const [isHistoriesOpen, setHistoriesOpen] = useState(false)
     const [voteHistories, setVoteHistories] = useState(() => {
         return [] as any[]
@@ -85,6 +87,16 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
     }
     if (!userContext.userState) return <div />
 
+    const chooseToUseSubsidy = () => {
+        setUseSubsidy(true)
+        setEpkNonce(-1)
+    }
+
+    const chooseToUsePersona = () => {
+        setUseSubsidy(false)
+        setEpkNonce(0)
+    }
+
     return (
         <div className="vote-overlay" onClick={close}>
             <div className="vote-box" onClick={preventClose}>
@@ -147,27 +159,28 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                             </div>
                         </div>
                     </div>
-                    <div className="epks">
-                        <div
-                            className={epkNonce === -1 ? 'epk chosen' : 'epk'}
-                            onClick={() => setEpkNonce(-1)}
-                        >
-                            Subsidy
-                        </div>
-                        {userContext.currentEpochKeys.map((key, i) => (
-                            <div
-                                className={
-                                    epkNonce === i ? 'epk chosen' : 'epk'
-                                }
-                                key={key}
-                                onClick={() => setEpkNonce(i)}
-                            >
-                                {shortenEpochKey(key)}
-                            </div>
-                        ))}
-                    </div>
                 </div>
                 <div className="white-box">
+                    <ActionDetail
+                        showBorder={false}
+                        showHelp={false}
+                        showRep={false}
+                        maxRep={userContext.netReputation}
+                        defaultRep={1}
+                        hasRep={
+                            useSubsidy
+                                ? userContext.subsidyReputation
+                                : userContext.netReputation
+                        }
+                        showoffRep={0}
+                        setShowoffRep={() => {}}
+                        allEpks={userContext.currentEpochKeys}
+                        useSubsidy={useSubsidy}
+                        chooseToUseSubsidy={chooseToUseSubsidy}
+                        chooseToUsePersona={chooseToUsePersona}
+                        epkNonce={epkNonce}
+                        setEpkNonce={setEpkNonce}
+                    />
                     <div
                         className={isAvailable ? 'submit' : 'submit outdated'}
                         onClick={doVote}

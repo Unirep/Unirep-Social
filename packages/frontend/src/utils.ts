@@ -6,7 +6,8 @@ import UnirepContext from './context/Unirep'
 import { ActionType } from './context/Queue'
 
 export const shortenEpochKey = (epk: string) => {
-    return `${epk.slice(0, 4)}...${epk.slice(-4)}`
+    if (epk.length > 8) return `${epk.slice(0, 4)}...${epk.slice(-4)}`
+    else return epk
 }
 
 const decodeIdentity = (identity: string) => {

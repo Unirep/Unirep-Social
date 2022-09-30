@@ -1,22 +1,15 @@
 import * as path from 'path'
 import { expect } from 'chai'
-import { genRandomSalt, ZkIdentity, hashOne } from '@unirep/crypto'
-import { genEpochKey } from '@unirep/core'
+import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
+import { genEpochKey, Reputation } from '@unirep/core'
 import * as crypto from '@unirep/crypto'
-import * as circom from 'circom'
 import * as snarkjs from 'snarkjs'
 import {
     USER_STATE_TREE_DEPTH,
     GLOBAL_STATE_TREE_DEPTH,
-    EPOCH_TREE_DEPTH,
 } from '@unirep/circuits'
-import { Reputation } from '../src/Reputation'
 
 const circuitName = 'proveNegativeReputation'
-const circuitPath = path.join(
-    __dirname,
-    `../circuits/test/${circuitName}_test.circom`
-)
 
 const genCircuitInput = (
     id: crypto.ZkIdentity,
