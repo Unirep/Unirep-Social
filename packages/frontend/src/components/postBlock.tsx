@@ -6,12 +6,15 @@ import { observer } from 'mobx-react-lite'
 import UserContext from '../context/User'
 import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
+import EpochContext from '../context/EpochManager'
+import QueueContext, { ActionType } from '../context/Queue'
 
 import { EXPLORER_URL } from '../config'
 import { Page, ButtonType, AlertType } from '../constants'
 import CommentField from './commentField'
 import CommentBlock from './commentBlock'
 import BlockButton from './blockButton'
+import RefreshReminder from './refreshReminder'
 import MarkdownIt from 'markdown-it'
 
 const markdown = new MarkdownIt({
@@ -48,9 +51,16 @@ const PostBlock = ({ postId, page }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
+    const epochManager = useContext(EpochContext)
+    const queue = useContext(QueueContext)
+
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
+
+    const disabled =
+        userContext.userState &&
+        (epochManager.readyToTransition || userContext.needsUST)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
 
@@ -67,6 +77,16 @@ const PostBlock = ({ postId, page }: Props) => {
     const gotoPostPage = () => {
         if (page === Page.Post) return
         history.push(`/post/${post.id}`, { commentId: '' })
+    }
+
+    const expandCommentField = () => {
+        if (
+            userContext.userState &&
+            (epochManager.readyToTransition || userContext.needsUST)
+        )
+            return
+
+        setShowCommentField(true)
     }
 
     return (
@@ -145,6 +165,13 @@ const PostBlock = ({ postId, page }: Props) => {
                 <div></div>
             ) : (
                 <div className="comment">
+                    {userContext.userState &&
+                        !userContext.isInitialSyncing &&
+                        (epochManager.readyToTransition ||
+                            userContext.needsUST) &&
+                        !queue.queuedOp(ActionType.UST) && (
+                            <RefreshReminder closeReminder={() => {}} />
+                        )}
                     <div className="comment-block">
                         {!userContext.userState ? (
                             <AlertBox type={AlertType.commentNotLogin} />
@@ -158,10 +185,12 @@ const PostBlock = ({ postId, page }: Props) => {
                                 closeComment={() => setShowCommentField(false)}
                             />
                         ) : (
-                            <textarea
-                                placeholder="What do you think?"
-                                onClick={() => setShowCommentField(true)}
-                            />
+                            <div
+                                onClick={expandCommentField}
+                                className="inactive-comment-field"
+                            >
+                                What do you think?
+                            </div>
                         )}
                     </div>
                     <div className="divider"></div>

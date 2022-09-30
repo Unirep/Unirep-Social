@@ -3,7 +3,6 @@ import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
-import PostContext from '../../context/Post'
 import EpochContext from '../../context/EpochManager'
 import QueueContext, { ActionType, Metadata } from '../../context/Queue'
 
@@ -14,7 +13,6 @@ import { shortenEpochKey } from '../../utils'
 const UserInfoWidget = () => {
     const epochManager = useContext(EpochContext)
     const userContext = useContext(UserContext)
-    const postContext = useContext(PostContext)
     const queue = useContext(QueueContext)
     const [countdownText, setCountdownText] = useState<string>('')
     const [diffTime, setDiffTime] = useState<number>(0)
