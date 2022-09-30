@@ -236,7 +236,8 @@ const UserPage = () => {
                                 </div>
                             </div>
                             <div style={{ height: '8px' }}></div>
-                            <div className="rep-details">
+                            {/* left after devcon
+                                <div className="rep-details">
                                 <div className="rep-bar-title">
                                     <img
                                         src={require('../../../public/images/unirep.svg')}
@@ -253,7 +254,7 @@ const UserPage = () => {
                                         />
                                     ))}
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                     <div style={{ width: '16px' }}></div>
