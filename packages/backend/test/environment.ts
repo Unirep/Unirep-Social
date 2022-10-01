@@ -111,5 +111,12 @@ export async function startServer(contractOverrides = {}) {
         (await unirep.attesters(unirepSocial.address)).toNumber()
     )
     await new Promise((r) => app.listen(port, r as any))
-    return { ...data, constants, url, attesterId, db: appDB }
+    return {
+        ...data,
+        constants,
+        url,
+        attesterId,
+        db: appDB,
+        txManager: appTxManager,
+    }
 }

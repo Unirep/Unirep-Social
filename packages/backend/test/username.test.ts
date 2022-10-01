@@ -21,10 +21,9 @@ test.before(async (t: any) => {
     Object.assign(t.context, context)
 })
 
-test('should set a username', async (t: any) => {
+test.serial('should set a username', async (t: any) => {
     // sign up and sign in user
     const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
 
     // first set a username
     // pre-image by default is 0
@@ -62,7 +61,6 @@ test.serial(
     async (t: any) => {
         // sign up and sign in user
         const { iden, commitment } = await signUp(t)
-        await signIn(t, commitment)
 
         // first set a username
         // pre-image by default is 0
@@ -94,10 +92,9 @@ test.serial(
     }
 )
 
-test.serial('should fail to set with invalid proof', async (t: any) => {
+test('should fail to set with invalid proof', async (t: any) => {
     // sign up and sign in user
     const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
 
     // first set a username
     // pre-image by default is 0

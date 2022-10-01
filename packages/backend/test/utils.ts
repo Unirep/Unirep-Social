@@ -316,13 +316,10 @@ export const vote = async (
 }
 
 export const epochTransition = async (t) => {
-    const r = await fetch(`${t.context.url}/api/epochTransition`, {
-        method: 'POST',
-        headers: {
-            authorization: 'NLmKDUnJUpc6VzuPc7Wm',
-        },
-    })
-    t.is(r.status, 204)
+    const { txManager, unirep } = t.context
+    const calldata = unirep.interface.encodeFunctionData('beginEpochTransition')
+    const hash = await txManager.queueTransaction(unirep.address, calldata)
+    await t.context.unirep.provider.waitForTransaction(hash)
 }
 
 export const userStateTransition = async (t, iden) => {
