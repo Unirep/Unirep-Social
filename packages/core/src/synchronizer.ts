@@ -144,6 +144,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         })
         const minRep = decodedData.minRep.toNumber()
         const hashedContent = decodedData._contentHash
+        const { _id: postId } = await this._db.findOne('Post', {
+            where: {
+                onChainId: onChainPostId,
+            },
+        })
 
         if (findComment) {
             db.update('Comment', {
@@ -154,14 +159,14 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 update: {
                     status: 1,
                     transactionHash,
-                    onChainCommentId,
+                    onChainId: onChainCommentId,
                 },
             })
         } else {
             db.create('Comment', {
                 transactionHash,
-                onChainPostId,
-                onChainCommentId,
+                postId,
+                onChainId: onChainCommentId,
                 hashedContent,
                 epochKey,
                 epoch,
@@ -175,11 +180,11 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         // we can safely increment the comment count by finding all comments
         // and setting the value here because we're in a tx lock
         const commentCount = await this._db.count('Comment', {
-            onChainPostId,
+            postId,
         })
         db.update('Post', {
             where: {
-                onChainPostId,
+                _id: postId,
             },
             update: {
                 // add one for the current comment we're updating
@@ -209,7 +214,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 epoch,
                 action: ActionType.Comment,
                 transactionHash,
-                data: '',
+                data: findComment?._id ?? '',
                 confirmed: 1,
             },
         })
@@ -252,7 +257,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'PostSubmitted',
             event.data
         )
-        const onChainPostId = BigInt(event.topics[2]).toString()
+        const onChainId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
         const epochKey = BigInt(event.topics[3]).toString(10)
         const minRep = decodedData.minRep.toNumber()
@@ -266,12 +271,12 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 },
                 update: {
                     status: 1,
-                    onChainPostId,
+                    onChainId,
                 },
             })
         } else {
             db.create('Post', {
-                onChainPostId,
+                onChainId,
                 transactionHash,
                 hashedContent,
                 epochKey,
@@ -304,7 +309,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 epoch,
                 action: ActionType.Post,
                 transactionHash,
-                data: '',
+                data: findPost?._id ?? '',
                 confirmed: 1,
             },
         })
@@ -341,13 +346,13 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'ContentUpdated',
             event.data
         )
-        const id = event.topics[1].toString()
+        const onChainId = event.topics[1].toString()
         const oldContentHash = decodedData._oldContentHash
         const newContentHash = decodedData._newContentHash
 
         db.update('Post', {
             where: {
-                onChainPostId: id,
+                onChainId,
                 hashedContent: oldContentHash,
             },
             update: {
@@ -357,7 +362,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
 
         db.update('Comment', {
             where: {
-                onChainCommentId: id,
+                onChainId,
                 hashedContent: oldContentHash,
             },
             update: {

@@ -132,7 +132,7 @@ async function createComment(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'leaveComment',
         [
-            post.onChainPostId,
+            post.onChainId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -148,7 +148,6 @@ async function createComment(req, res) {
 
     const comment = await req.db.create('Comment', {
         postId,
-        onChainPostId: post.onChainPostId,
         content,
         hashedContent,
         epochKey,
@@ -220,7 +219,7 @@ async function createCommentSubsidy(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'publishCommentSubsidy',
         [
-            post.onChainPostId,
+            post.onChainId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -236,7 +235,6 @@ async function createCommentSubsidy(req, res) {
 
     const comment = await req.db.create('Comment', {
         postId,
-        onChainPostId: post.onChainPostId,
         content,
         hashedContent,
         epochKey,
@@ -287,7 +285,7 @@ async function editComment(req, res) {
 
     const {
         hashedContent: oldHashedContent,
-        onChainCommentId,
+        onChainId,
         epoch,
         epochKey,
     } = await req.db.findOne('Comment', {
@@ -305,7 +303,7 @@ async function editComment(req, res) {
     }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        onChainCommentId,
+        onChainId,
         oldHashedContent,
         newHashedContent,
         epkProof.publicSignals,
@@ -322,7 +320,7 @@ async function editComment(req, res) {
     await req.db.update('Comment', {
         where: {
             _id: id,
-            onChainCommentId,
+            onChainId,
             hashedContent: oldHashedContent,
         },
         update: {

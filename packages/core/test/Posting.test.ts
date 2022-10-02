@@ -194,7 +194,10 @@ describe('Post', function () {
                 unirepSocialContract,
                 ethers.provider
             )
-            const postId = receipt.transactionHash
+            const data = unirepSocialContract.interface.parseLog(
+                receipt.logs[1]
+            )
+            const postId = data.args._postId
             await leaveComment(unirepSocialContract, ethers.provider, postId)
         })
 
@@ -202,10 +205,15 @@ describe('Post', function () {
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
-            const { transactionHash: postId } = await publishPost(
+            const receipt = await publishPost(
                 unirepSocialContract,
                 ethers.provider
             )
+            const data = unirepSocialContract.interface.parseLog(
+                receipt.logs[1]
+            )
+            const postId = data.args._postId
+
             const id = new ZkIdentity()
             await unirepSocialContract
                 .userSignUp(id.genIdentityCommitment())
@@ -252,10 +260,14 @@ describe('Post', function () {
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
-            const { transactionHash: postId } = await publishPost(
+
+            const { logs } = await publishPost(
                 unirepSocialContract,
                 ethers.provider
             )
+            const data = unirepSocialContract.interface.parseLog(logs[1])
+            const postId = data.args._postId
+
             const id = new ZkIdentity()
             await unirepSocialContract
                 .userSignUp(id.genIdentityCommitment())

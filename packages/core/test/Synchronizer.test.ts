@@ -113,7 +113,7 @@ describe('Synchronzier processes events', function () {
                 downvote: defaultPostReputation,
                 epoch: Number(reputationProof.epoch),
                 action: ActionType.Post,
-                data: transactionHash,
+                data: '',
                 transactionHash,
             },
         })
@@ -171,7 +171,7 @@ describe('Synchronzier processes events', function () {
                 { value: attestingFee }
             )
 
-        await db.create('Post', {
+        const savedPost = await db.create('Post', {
             content,
             hashedContent,
             epochKey: reputationProof.epochKey,
@@ -206,7 +206,7 @@ describe('Synchronzier processes events', function () {
                 downvote: defaultPostReputation,
                 epoch: Number(reputationProof.epoch),
                 action: ActionType.Post,
-                data: transactionHash,
+                data: savedPost._id,
                 transactionHash,
             },
         })
@@ -227,10 +227,10 @@ describe('Synchronzier processes events', function () {
         const attesterId = BigInt(
             await unirepContract.attesters(unirepSocialContract.address)
         )
-        const { transactionHash: postId } = await publishPost(
-            unirepSocialContract,
-            ethers.provider
-        )
+        const receipt = await publishPost(unirepSocialContract, ethers.provider)
+        const data = unirepSocialContract.interface.parseLog(receipt.logs[1])
+        const onChainPostId = data.args._postId.toString()
+
         const id = new ZkIdentity()
         await unirepSocialContract
             .userSignUp(id.genIdentityCommitment())
@@ -259,7 +259,7 @@ describe('Synchronzier processes events', function () {
             ethers.utils.toUtf8Bytes(content)
         )
         const tx = await unirepSocialContract.leaveComment(
-            postId,
+            onChainPostId,
             hashedContent,
             reputationProof.publicSignals,
             reputationProof.proof,
@@ -268,6 +268,12 @@ describe('Synchronzier processes events', function () {
 
         const { transactionHash } = await tx.wait()
         await synchronizer.waitForSync()
+
+        const { _id: postId } = await db.findOne('Post', {
+            where: {
+                onChainId: onChainPostId,
+            },
+        })
         const comment = await db.findOne('Comment', {
             where: {
                 transactionHash,
@@ -283,7 +289,7 @@ describe('Synchronzier processes events', function () {
         expect(comment).not.to.be.null
         const post = await db.findOne('Post', {
             where: {
-                transactionHash: postId,
+                onChainId: onChainPostId,
                 commentCount: 1,
             },
         })
@@ -296,7 +302,7 @@ describe('Synchronzier processes events', function () {
                 downvote: defaultCommentReputation,
                 epoch: Number(reputationProof.epoch),
                 action: ActionType.Comment,
-                data: transactionHash,
+                data: '',
                 transactionHash,
             },
         })
@@ -317,10 +323,10 @@ describe('Synchronzier processes events', function () {
         const attesterId = BigInt(
             await unirepContract.attesters(unirepSocialContract.address)
         )
-        const { transactionHash: postId } = await publishPost(
-            unirepSocialContract,
-            ethers.provider
-        )
+        const receipt = await publishPost(unirepSocialContract, ethers.provider)
+        const data = unirepSocialContract.interface.parseLog(receipt.logs[1])
+        const onChainPostId = data.args._postId.toString()
+
         const id = new ZkIdentity()
         await unirepSocialContract
             .userSignUp(id.genIdentityCommitment())
@@ -351,15 +357,20 @@ describe('Synchronzier processes events', function () {
 
         const { hash: transactionHash, wait } =
             await unirepSocialContract.leaveComment(
-                postId,
+                onChainPostId,
                 hashedContent,
                 reputationProof.publicSignals,
                 reputationProof.proof,
                 { value: attestingFee }
             )
 
-        await db.create('Comment', {
-            postId,
+        const post = await db.findOne('Post', {
+            where: {
+                onChainId: onChainPostId,
+            },
+        })
+        const savedComment = await db.create('Comment', {
+            postId: post._id,
             content,
             hashedContent,
             epochKey: reputationProof.epochKey,
@@ -374,10 +385,11 @@ describe('Synchronzier processes events', function () {
 
         await wait()
         await synchronizer.waitForSync()
+
         const comment = await db.findOne('Comment', {
             where: {
                 transactionHash,
-                postId,
+                postId: post._id,
                 hashedContent,
                 epochKey: reputationProof.epochKey,
                 epoch: Number(reputationProof.epoch),
@@ -387,13 +399,15 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(comment).not.to.be.null
-        const post = await db.findOne('Post', {
-            where: {
-                transactionHash: postId,
-                commentCount: 1,
-            },
-        })
-        expect(post).not.to.be.null
+        {
+            const post = await db.findOne('Post', {
+                where: {
+                    transactionHash: receipt.transactionHash,
+                    commentCount: 1,
+                },
+            })
+            expect(post).not.to.be.null
+        }
         const record = await db.findOne('Record', {
             where: {
                 to: reputationProof.epochKey,
@@ -402,7 +416,7 @@ describe('Synchronzier processes events', function () {
                 downvote: defaultCommentReputation,
                 epoch: Number(reputationProof.epoch),
                 action: ActionType.Comment,
-                data: transactionHash,
+                data: savedComment._id,
                 transactionHash,
             },
         })

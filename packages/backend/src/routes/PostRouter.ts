@@ -266,7 +266,7 @@ async function editPost(req, res) {
 
     const {
         hashedContent: oldHashedContent,
-        onChainPostId,
+        onChainId,
         epoch,
         epochKey,
     } = await req.db.findOne('Post', {
@@ -284,7 +284,7 @@ async function editPost(req, res) {
     }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        onChainPostId,
+        onChainId,
         oldHashedContent,
         newHashedContent,
         epkProof.publicSignals,
@@ -301,7 +301,7 @@ async function editPost(req, res) {
     await req.db.update('Post', {
         where: {
             _id: id,
-            onChainPostId,
+            onChainId,
             hashedContent: oldHashedContent,
         },
         update: {
