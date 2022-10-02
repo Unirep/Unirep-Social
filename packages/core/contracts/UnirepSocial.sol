@@ -197,7 +197,7 @@ contract UnirepSocial is zkSNARKHelper {
     function getSubsidyAirdrop(
       uint256[5] memory publicSignals,
       uint256[8] memory proof
-    ) public {
+    ) public payable {
         (,,,,,,,uint attestingFee,,) = unirep.config();
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(

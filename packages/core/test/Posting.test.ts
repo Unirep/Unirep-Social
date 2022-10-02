@@ -6,7 +6,7 @@ import * as config from '@unirep/circuits'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity } from '@unirep/crypto'
 
-import { genUserState } from './utils'
+import { genUserState, leaveComment, publishPost } from './utils'
 import {
     defaultCommentReputation,
     defaultPostReputation,
@@ -83,52 +83,7 @@ describe('Post', function () {
 
     describe('Publishing a post', () => {
         it('submit post should succeed', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0
-            const graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultPostReputation
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
-
-            const isProofValid = await unirepContract.verifyReputation(
-                reputationProof.publicSignals,
-                reputationProof.proof
-            )
-            expect(isProofValid, 'proof is not valid').to.be.true
-
-            const content = 'some post text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            const tx = await unirepSocialContract.publishPost(
-                hashedContent,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE }
-            )
-            const receipt = await tx.wait()
-            expect(receipt.status, 'Submit post failed').to.equal(1)
+            await publishPost(unirepSocialContract, ethers.provider)
         })
 
         it('submit post with different amount of nullifiers should fail', async () => {
@@ -235,143 +190,22 @@ describe('Post', function () {
 
     describe('Comment a post', () => {
         it('submit comment should succeed', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
+            const receipt = await publishPost(
+                unirepSocialContract,
+                ethers.provider
             )
-            let postId
-            {
-                const id = new ZkIdentity()
-                await unirepSocialContract
-                    .userSignUp(id.genIdentityCommitment())
-                    .then((t) => t.wait())
-                const userState = await genUserState(
-                    ethers.provider,
-                    unirepContract.address,
-                    id
-                )
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-                const epkNonce = 0
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const content = 'some post text'
-                const hashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(content)
-                )
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
-                postId = data.args._postId
-            }
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 20,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultCommentReputation
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
-
-            const isProofValid = await unirepContract.verifyReputation(
-                reputationProof.publicSignals,
-                reputationProof.proof
-            )
-            expect(isProofValid, 'proof is not valid').to.be.true
-
-            const content = 'some comment text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            const tx = await unirepSocialContract.leaveComment(
-                postId,
-                hashedContent,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE }
-            )
-            const receipt = await tx.wait()
-            expect(receipt.status, 'Submit comment failed').to.equal(1)
+            const postId = receipt.transactionHash
+            await leaveComment(unirepSocialContract, ethers.provider, postId)
         })
 
         it('submit comment with different amount of nullifiers should fail', async () => {
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
-            let postId
-            {
-                const id = new ZkIdentity()
-                await unirepSocialContract
-                    .userSignUp(id.genIdentityCommitment())
-                    .then((t) => t.wait())
-                const userState = await genUserState(
-                    ethers.provider,
-                    unirepContract.address,
-                    id
-                )
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-                const epkNonce = 0
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const content = 'some post text'
-                const hashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(content)
-                )
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
-                postId = data.args._postId
-            }
+            const { transactionHash: postId } = await publishPost(
+                unirepSocialContract,
+                ethers.provider
+            )
             const id = new ZkIdentity()
             await unirepSocialContract
                 .userSignUp(id.genIdentityCommitment())
@@ -418,48 +252,10 @@ describe('Post', function () {
             const attesterId = BigInt(
                 await unirepContract.attesters(unirepSocialContract.address)
             )
-            let postId
-            {
-                const id = new ZkIdentity()
-                await unirepSocialContract
-                    .userSignUp(id.genIdentityCommitment())
-                    .then((t) => t.wait())
-                const userState = await genUserState(
-                    ethers.provider,
-                    unirepContract.address,
-                    id
-                )
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-                const epkNonce = 0
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const content = 'some post text'
-                const hashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(content)
-                )
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
-                postId = data.args._postId
-            }
+            const { transactionHash: postId } = await publishPost(
+                unirepSocialContract,
+                ethers.provider
+            )
             const id = new ZkIdentity()
             await unirepSocialContract
                 .userSignUp(id.genIdentityCommitment())

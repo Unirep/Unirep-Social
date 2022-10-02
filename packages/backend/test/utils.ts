@@ -425,6 +425,13 @@ export const vote = async (
     t.pass()
 }
 
+export const epochTransition = async (t) => {
+    const { txManager, unirep } = t.context
+    const calldata = unirep.interface.encodeFunctionData('beginEpochTransition')
+    const hash = await txManager.queueTransaction(unirep.address, calldata)
+    await t.context.unirep.provider.waitForTransaction(hash)
+}
+
 export const userStateTransition = async (t, iden) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
@@ -455,4 +462,71 @@ export const userStateTransition = async (t, iden) => {
 
     await waitForBackendBlock(t, receipt.blockNumber)
     t.pass()
+}
+
+export const genUsernameProof = async (t, iden, preImage) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+
+    const epkNonce = 0
+
+    const usernameProof = await userState.genProveReputationProof(
+        t.context.attesterId,
+        epkNonce,
+        0,
+        preImage == 0 ? BigInt(0) : BigInt(1),
+        preImage,
+        0
+    )
+
+    const isValid = await usernameProof.verify()
+    t.true(isValid)
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+
+    return {
+        proof: usernameProof.proof,
+        publicSignals: usernameProof.publicSignals,
+        blockNumber,
+    }
+}
+
+export const setUsername = async (t, iden, preImage, newUsername) => {
+    const hexlifiedPreImage =
+        preImage == 0
+            ? 0
+            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+    const { proof, publicSignals, blockNumber } = await genUsernameProof(
+        t,
+        iden,
+        hexlifiedPreImage
+    )
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/usernames`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            newUsername,
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
 }

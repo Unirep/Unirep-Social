@@ -254,4 +254,5 @@ export {
     verifyUSTProof,
     verifyEpochKeyProof,
     verifyAirdropProof,
+    verifyGSTRoot,
 }

@@ -183,7 +183,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             },
             update: {
                 // add one for the current comment we're updating
-                commentCount: commentCount + 1,
+                // if comment router saved the comment before, commentCount should be 1
+                // otherwise, commentCount would be 0
+                commentCount: commentCount + (findComment ? 0 : 1),
             },
         })
         db.delete('Record', {
@@ -509,8 +511,8 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                     epk: _toEpochKey,
                     epoch: _epoch,
                     spent: 0,
-                    posRep: (epkRecord?.posRep ?? 0) + _posRep,
-                    negRep: (epkRecord?.negRep ?? 0) + _negRep,
+                    posRep: _posRep,
+                    negRep: _negRep,
                 })
             }
         }
