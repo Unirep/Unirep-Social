@@ -6,6 +6,7 @@ export class UI {
 
     hasBanner: boolean = true
     scrollTop: number = 0
+    downloadPrivateKey = false
 
     constructor() {
         makeObservable(this, {
@@ -34,6 +35,10 @@ export class UI {
     setHasBanner(input: boolean) {
         this.hasBanner = input
         window.localStorage.setItem('hasBanner', this.hasBanner.toString())
+    }
+
+    setDownloadPrivateKey() {
+        this.downloadPrivateKey = true
     }
 }
 

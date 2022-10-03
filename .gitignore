@@ -28,3 +28,4 @@ packages/core/contracts/*Verifier.sol
 */*.sqlite
 */*/*.sqlite
 */*/*/*.sqlite
+yarn-error.log
