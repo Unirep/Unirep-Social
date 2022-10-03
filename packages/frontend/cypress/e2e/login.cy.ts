@@ -14,21 +14,30 @@ describe('sign up, log out, then sign in', () => {
         }).as('getApiContent')
     })
 
+
     it('should login without encryption', () => {
         cy.signupNewUser()
         cy.visit('/')
         cy.wait(3000) // wait for the synchronizer to get started
+        
+        // private key setting page flow
+        cy.get('#setting > img').click()
+        cy.findByText('Reveal My Private Key').click()
+        
+        cy.get('.reveal-private-key > :nth-child(3)').invoke('text').as('privateKey')
+
         cy.get('#menu').click()
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()
+        
+        cy.get('@privateKey').then($elText => {
+            cy.get('textarea').type($elText, {
+                parseSpecialCharSequences: false
+            })
+        })
 
-        // cy.get('@iden').then((iden) => {
-        //     cy.get('textarea').type(iden, {
-        //         parseSpecialCharSequences: false,
-        //     })
-        // })
-        // cy.get('#signin').click()
+        cy.get('#signin').click()
     })
 
     it('should login with encryption', () => {
@@ -36,15 +45,27 @@ describe('sign up, log out, then sign in', () => {
         cy.signupNewUser(password)
         cy.visit('/')
         cy.wait(3000) // wait for the synchronizer to get started
+       
+        // private key setting page flow
+        cy.get('#setting > img').click()
+        cy.findByText('Reveal My Private Key').click()
+
+        cy.get('.reveal-private-key > :nth-child(3)').invoke('text').as('privateKey')
+        cy.get('#passwordInput').type(password)
+        cy.get('#passwordConfirmInput').type(password)
+        cy.findByText('Download').click()
+
         cy.get('#menu').click()
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()
-        // cy.get('@iden').then((iden) => {
-        //     cy.get('textarea').type(iden, {
-        //         parseSpecialCharSequences: false,
-        //     })
-        // })
+ 
+        cy.get('@privateKey').then($elText => {
+            cy.get('textarea').type($elText, {
+                parseSpecialCharSequences: false
+            })
+        })
+
         cy.get('#passwordInput').type(password)
         cy.get('#signin').click()
     })
