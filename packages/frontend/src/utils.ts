@@ -63,7 +63,7 @@ export const makeURL = (_action: string, data: any = {}) => {
     return `${config.SERVER}/api/${action}?${params}`
 }
 
-export const getRecords = async (epks: string[], identity: string) => {
+export const getRecords = async (epks: string[]) => {
     const epksBase10 = epks.map((epk) => Number('0x' + epk))
     const unirepConfig = (UnirepContext as any)._currentValue
     await unirepConfig.loadingPromise
@@ -80,8 +80,8 @@ export const getRecords = async (epks: string[], identity: string) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: data[i].from,
-                    to: data[i].to,
+                    from: parseInt(data[i].from).toString(16),
+                    to: parseInt(data[i].to).toString(16),
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,

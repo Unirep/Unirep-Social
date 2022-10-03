@@ -86,7 +86,7 @@ const UserPage = () => {
     const getUserRecords = async () => {
         if (!user.userState || !user.identity) return
 
-        const ret = await getRecords(user.allEpks, user.identity)
+        const ret = await getRecords(user.allEpks)
         const isParsable = !ret.some((h) => h === undefined)
         if (isParsable) {
             setRecords(ret)
@@ -104,6 +104,7 @@ const UserPage = () => {
                 }
 
                 if (isSpent) {
+                    // left stuff
                     if (h.action === ActionType.Post) {
                         s[0] += h.downvote
                     } else if (h.action === ActionType.Comment) {
@@ -111,6 +112,7 @@ const UserPage = () => {
                     } else if (h.action === ActionType.Vote) {
                         s[2] += h.upvote
                         s[3] += h.downvote
+                        r[1] += h.upvote + h.downvote // if all spent also recorded in the right side
                     }
                 }
             })
@@ -423,7 +425,7 @@ const UserPage = () => {
                     />
                 ) : (
                     <div>
-                        {records.map((h, i) => (
+                        {records.map((h) => (
                             <ActivityWidget
                                 key={h.time}
                                 record={h}
