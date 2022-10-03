@@ -103,7 +103,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
     return (
         <Link className="link" to={goto}>
             <div className="activity-widget">
-                {isSpent ? (
+                {isSpent && (
                     <div className="side">
                         <div className="amount">
                             {record.downvote + record.upvote}
@@ -121,8 +121,6 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                             Used
                         </div>
                     </div>
-                ) : (
-                    <div></div>
                 )}
                 <div className="main">
                     <div className="header">
@@ -143,12 +141,13 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                             {info.action}
                         </div>
                         {record.content !== undefined &&
-                        record.content.length > 0 ? (
-                            actionData.title.length > 1 ? (
+                            record.content.length > 0 && (
                                 <div className="data">
-                                    <div className="title">
-                                        {actionData.title}
-                                    </div>
+                                    {actionData.title.length > 1 && (
+                                        <div className="title">
+                                            {actionData.title}
+                                        </div>
+                                    )}
                                     <div
                                         className="content"
                                         dangerouslySetInnerHTML={{
@@ -156,24 +155,10 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                                         }}
                                     />
                                 </div>
-                            ) : (
-                                <div className="data">
-                                    <div
-                                        className="content"
-                                        dangerouslySetInnerHTML={{
-                                            __html: actionData.content,
-                                        }}
-                                    />
-                                </div>
-                            )
-                        ) : (
-                            <div></div>
-                        )}
+                            )}
                     </div>
                 </div>
-                {isSpent ? (
-                    <div></div>
-                ) : (
+                {!isSpent && (
                     <div className="side">
                         <div className="amount">
                             {record.action === ActionType.Vote
