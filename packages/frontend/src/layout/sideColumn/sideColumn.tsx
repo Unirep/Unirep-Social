@@ -10,6 +10,7 @@ import UserInfoWidget from './userInfoWidget'
 import ReminderWidget from './reminderWidget'
 import PostsWidget from './postsWidget'
 import { Page } from '../../constants'
+import PrivateKeyDetail from './privateKeyDetail'
 
 const SideColumn = () => {
     const history = useHistory()
@@ -25,37 +26,17 @@ const SideColumn = () => {
 
     return (
         <div>
-            {page === Page.Setting ? (
-                <div className="margin-top widget"></div>
-            ) : (
-                <div></div>
-            )}
-            {page === Page.User ? (
-                <div className="setting widget">
-                    <img
-                        src={require('../../../public/images/setting.svg')}
-                        onClick={gotoSetting}
-                    />
-                </div>
-            ) : (
-                <div></div>
-            )}
-            {userContext.userState && page !== Page.Setting ? (
+            {page === Page.User && <div style={{ height: '52px' }}></div>}
+            {page === Page.Setting && <div style={{ height: '72px' }}></div>}
+            {page === Page.Setting && <PrivateKeyDetail />}
+            {userContext.userState && page !== Page.Setting && (
                 <UserInfoWidget />
-            ) : (
-                <div></div>
             )}
             {userContext.userState &&
-            (page === Page.New || page === Page.Post) ? (
-                <ReminderWidget page={page} />
-            ) : (
-                <div></div>
-            )}
-            {userContext.userState && page === Page.User ? (
-                <PostsWidget />
-            ) : (
-                <div></div>
-            )}
+                (page === Page.New || page === Page.Post) && (
+                    <ReminderWidget page={page} />
+                )}
+            {userContext.userState && page === Page.User && <PostsWidget />}
             <DefaultWidget />
             {uiContext.scrollTop > 104 + window.innerHeight / 2 && (
                 <div

@@ -2,6 +2,7 @@ import { useState, useContext } from 'react'
 import { useHistory } from 'react-router-dom'
 
 import UserContext from '../../context/User'
+import UIContext from '../../context/UI'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomInput from '../../components/customInput'
@@ -13,6 +14,7 @@ type Props = {
 
 const Signin = ({ getStarted }: Props) => {
     const userContext = useContext(UserContext)
+    const uiContext = useContext(UIContext)
     const [input, setInput] = useState<string>('')
     const [pwd, setPwd] = useState<string>('')
     const [error, setError] = useState('')
@@ -35,6 +37,8 @@ const Signin = ({ getStarted }: Props) => {
         try {
             const id = await userContext.decrypt(pwd, JSON.parse(input))
             await userContext.login(id)
+            uiContext.setDownloadPrivateKey()
+
             history.push('/')
         } catch (err) {
             console.log(err)

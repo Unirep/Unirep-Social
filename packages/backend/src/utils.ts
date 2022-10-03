@@ -211,4 +211,9 @@ const verifyUSTProof = async (
     }
 }
 
-export { verifyReputationProof, verifyUSTProof, verifyAirdropProof }
+export {
+    verifyReputationProof,
+    verifyUSTProof,
+    verifyAirdropProof,
+    verifyGSTRoot,
+}

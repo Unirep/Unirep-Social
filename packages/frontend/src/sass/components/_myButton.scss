@@ -1,0 +1,88 @@
+.my-button {
+    padding: 10px 16px;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    &:hover {
+        img {
+            filter: opacity(60%);
+        }
+    }
+}
+
+.my-button-middle {
+    justify-content: center;
+}
+
+.full-size {
+    width: 100%;
+}
+
+.button-dark {
+    background-color: $black;
+    color: $white;
+    border: none;
+
+    &:hover {
+        background-color: $grey-400;
+    }
+
+    &:disabled {
+        color: $grey-400;
+        background-color: $grey-300;
+    }
+}
+
+.button-light {
+    background-color: $grey-100;
+    color: $black;
+    border: none;
+
+    &:hover {
+        background-color: $grey-200;
+    }
+
+    &:disabled {
+        color: $grey-400;
+        background-color: $grey-300;
+    }
+}
+
+.button-light-transparent {
+    color: $white;
+    border: $white solid 1px;
+    background-color: transparent;
+
+    &:hover {
+        color: $grey-200;
+        border: $grey-200 solid 1px;
+        background-color: transparent;
+    }
+
+    &:disabled {
+        color: $grey-400;
+        border: $grey-400 solid 1px;
+        background-color: transparent;
+    }
+}
+
+.button-dark-transparent {
+    color: $black;
+    border: $black solid 1px;
+    background-color: transparent;
+
+    &:hover {
+        color: $grey-400;
+        border: $grey-400 solid 1px;
+        background-color: transparent;
+    }
+
+    &:disabled {
+        color: $grey-400;
+        border: $grey-400 solid 1px;
+        background-color: transparent;
+    }
+}

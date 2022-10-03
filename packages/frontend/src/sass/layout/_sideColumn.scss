@@ -19,6 +19,20 @@
     height: 40px;
 }
 
+.private-key-detail {
+    border-radius: 8px;
+    padding: 16px 24px;
+    background-color: $grey-100;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    p {
+        margin-bottom: 0px;
+    }
+}
+
 .default-widget {
     height: 176px;
     border-radius: 8px;
@@ -46,12 +60,9 @@
     border-radius: 8px;
     border: 1px solid $grey-200;
 
-    .block-title {
-        font-size: $text-sm;
-        color: $grey-700;
-        display: flex;
-        flex-direction: row;
-        padding-bottom: 8px;
+    .rep-info {
+        width: 100%;
+        padding: 32px 24px;
     }
 
     h3 {
@@ -65,15 +76,24 @@
         }
     }
 
-    .rep-info {
-        width: 100%;
-        padding: 32px 24px;
-    }
-
     .ust-info {
         width: 100%;
         background-color: $grey-100;
         padding: 16px 24px;
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0px;
+        }
+
+        h4 {
+            font-size: $text-sm;
+            color: $grey-700;
+            display: flex;
+            font-weight: 400;
+            margin-bottom: 0px;
+        }
 
         .margin {
             height: 24px;
@@ -81,52 +101,59 @@
 
         .epks {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
+            gap: 8px;
 
             .epk {
-                background-color: $grey-200;
+                width: 80px;
                 padding: 4px 8px;
+                background-color: $grey-200;
                 border-radius: 8px;
                 font-size: $text-xs;
                 color: $grey-700;
-                margin-right: 8px;
+                text-align: center;
+            }
+        }
+
+        .rep-handout {
+            display: flex;
+            width: 116px;
+            height: 28px;
+            padding: 4px 8px;
+            gap: 8px;
+            justify-content: center;
+            background-color: $white;
+            border-radius: 8px;
+            border: 1px solid $grey-200;
+            font-size: $text-xs;
+            color: $grey-700;
+
+            .interline {
+                width: 2px;
+                height: 20px;
+                background-color: $grey-300;
             }
         }
 
         .countdown {
-            font-size: $text-md;
+            font-size: $text-sm;
             font-weight: 600;
             color: $grey-700;
         }
 
-        .small {
-            font-size: $text-xs;
-        }
-    }
-}
+        button {
+            width: 100%;
+            padding: 8px 24px;
+            border-radius: 8px;
+            background-color: $black;
+            color: $white;
+            font-size: $text-md;
+            font-weight: 600;
+            border: none;
 
-.custom-ui {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: fixed;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-    top: 0px;
-    background: rgba(255, 255, 255, 0.7);
-    z-index: 1000;
-
-    .custom-btn {
-        outline: none;
-        border: none;
-        padding: 16px;
-        border-radius: 4px;
-        background-color: $black;
-        color: $white;
-
-        &:hover {
-            background-color: $grey-700;
+            &:hover {
+                background-color: $grey-400;
+            }
         }
     }
 }
