@@ -19,13 +19,6 @@ packages/frontend/cypress/screenshots
 packages/core/contracts/*Verifier.sol
 
 # sqlite
-*.sql
-*/*.sql
-*/*/*.sql
-*/*/*/*.sql
-*/*/*/*/*.sql
-*.sqlite
-*/*.sqlite
-*/*/*.sqlite
-*/*/*/*.sqlite
+**/**.sql
+**/**.sqlite
 yarn-error.log
