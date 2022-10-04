@@ -6,6 +6,7 @@ import {
     UserTransitionProof,
     StartTransitionProof,
     ProcessAttestationsProof,
+    EpochKeyProof,
 } from '@unirep/contracts'
 import { DB } from 'anondb'
 import { UNIREP, UNIREP_ABI, DEFAULT_ETH_PROVIDER } from './constants'
@@ -77,6 +78,43 @@ const verifyReputationProof = async (
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
+    }
+}
+
+const verifyEpochKeyProof = async (
+    db: DB,
+    epochKeyProof: EpochKeyProof,
+    epoch: number,
+    epochKey: string
+): Promise<string | undefined> => {
+    const proofEpoch = Number(epochKeyProof.epoch)
+    const gstRoot = epochKeyProof.globalStateTree.toString()
+
+    // check GST root
+    {
+        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        if (!exists) {
+            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
+        }
+    }
+    // check post/comment epoch and epk proof epoch
+    {
+        if (proofEpoch !== epoch)
+            return `Proof epoch: ${proofEpoch} is not the post/comment epoch: ${epoch}`
+    }
+    // check post/comment epoch key and the proof
+    {
+        if (epochKey !== epochKeyProof.epochKey)
+            return `Proof epoch key: ${epochKeyProof.epochKey} is not the post/comment epoch: ${epochKey}`
+    }
+
+    const isProofValid = await Prover.verifyProof(
+        Circuit.verifyEpochKey,
+        (epochKeyProof as any).publicSignals,
+        formatProofForSnarkjsVerification(epochKeyProof.proof as string[])
+    )
+    if (!isProofValid) {
+        return 'Error: invalid epoch key proof'
     }
 }
 
@@ -214,6 +252,7 @@ const verifyUSTProof = async (
 export {
     verifyReputationProof,
     verifyUSTProof,
+    verifyEpochKeyProof,
     verifyAirdropProof,
     verifyGSTRoot,
 }

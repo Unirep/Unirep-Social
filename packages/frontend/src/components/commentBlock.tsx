@@ -67,7 +67,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
                 <a
                     className="etherscan"
                     target="_blank"
-                    href={`${EXPLORER_URL}/tx/${comment.id}`}
+                    href={`${EXPLORER_URL}/tx/${comment.transactionHash}`}
                 >
                     <span>Etherscan</span>
                     <img src={require('../../public/images/etherscan.svg')} />

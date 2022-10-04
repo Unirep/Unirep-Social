@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof, BaseProof } from '@unirep/contracts'
+import { ReputationProof, BaseProof, EpochKeyProof } from '@unirep/contracts'
 import { ethers } from 'ethers'
 import {
     UNIREP_SOCIAL,
@@ -10,14 +10,12 @@ import {
     QueryType,
     UNIREP_SOCIAL_ATTESTER_ID,
     LOAD_POST_COUNT,
-    titlePrefix,
-    titlePostfix,
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
 } from '../constants'
 import { ActionType } from '@unirep-social/core'
-import { verifyReputationProof } from '../utils'
+import { verifyEpochKeyProof, verifyReputationProof } from '../utils'
 import TransactionManager from '../daemons/TransactionManager'
 
 export default (app: Express) => {
@@ -27,6 +25,7 @@ export default (app: Express) => {
     app.get('/api/post/:postId/votes', catchError(loadVotesByPostId))
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
+    app.post('/api/post/edit/:id', catchError(editPost))
 }
 
 async function loadCommentsByPostId(req, res) {
@@ -164,7 +163,7 @@ async function createPost(req, res) {
         downvote: DEFAULT_POST_KARMA,
         epoch: currentEpoch,
         action: ActionType.Post,
-        data: hash,
+        data: post._id,
         transactionHash: hash,
         confirmed: 0,
     })
@@ -227,9 +226,95 @@ async function createPostSubsidy(req, res) {
         status: 0,
         transactionHash: hash,
     })
+
+    await req.db.create('Record', {
+        to: epochKey,
+        from: epochKey,
+        upvote: 0,
+        downvote: DEFAULT_POST_KARMA,
+        epoch: currentEpoch,
+        action: ActionType.Post,
+        data: post._id,
+        transactionHash: hash,
+        confirmed: 0,
+    })
+
     res.json({
         transaction: hash,
         currentEpoch: currentEpoch,
+        post,
+    })
+}
+
+async function editPost(req, res) {
+    const id = req.params.id
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+
+    // Parse Inputs
+    const { publicSignals, proof, content } = req.body
+    const epkProof = new EpochKeyProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const newHashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
+
+    const {
+        hashedContent: oldHashedContent,
+        onChainId,
+        epoch,
+        epochKey,
+    } = await req.db.findOne('Post', {
+        where: {
+            _id: id,
+        },
+    })
+
+    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+        onChainId,
+        oldHashedContent,
+        newHashedContent,
+        epkProof.publicSignals,
+        epkProof.proof,
+    ])
+
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+        }
+    )
+
+    await req.db.update('Post', {
+        where: {
+            _id: id,
+            onChainId,
+            hashedContent: oldHashedContent,
+        },
+        update: {
+            content,
+            hashedContent: newHashedContent,
+        },
+    })
+
+    const post = await req.db.findOne('Post', { where: { _id: id } })
+
+    res.json({
+        error: error,
+        transaction: hash,
         post,
     })
 }

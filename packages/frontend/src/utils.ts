@@ -114,6 +114,7 @@ export const convertDataToComment = (data: any) => {
         reputation: data.minRep,
         current_epoch: data.epoch,
         proofIndex: data.proofIndex,
+        transactionHash: data.transactionHash,
     }
 
     return comment

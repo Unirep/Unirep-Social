@@ -50,8 +50,7 @@ describe('test all CLI subcommands', function () {
         minRepDiff = 15
     let userRepProof, repPublicSignals
     let airdropProof, airdropPublicSignals
-    let transactionHash
-    let proofIdx
+    let postId
 
     before(async () => {
         deployerPrivKey = ethers.utils.solidityKeccak256(['uint'], [0])
@@ -333,12 +332,12 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(postRegMatch).not.equal(null)
-            transactionHash = postRegMatch[0].split('Transaction hash: ')[1]
 
-            const proofIndexRegMatch = stdout
+            const postIdRegMatch = stdout
                 .trim()
-                .match(/Proof index: ([0-9]+)/) as any
-            proofIdx = proofIndexRegMatch[1]
+                .match(/Post ID: ([0-9]+)/) as any
+            expect(postIdRegMatch).not.equal(null)
+            postId = postIdRegMatch[1]
         })
     })
 
@@ -402,7 +401,7 @@ describe('test all CLI subcommands', function () {
             const command =
                 `npx ts-node cli/index.ts leaveComment` +
                 ` -x ${unirepSocialContract.address} ` +
-                ` -pid ${transactionHash} ` +
+                ` -pid ${postId} ` +
                 ` -tx ${text2}` +
                 ` -d ${deployerPrivKey}` +
                 ` -p ${repPublicSignals}` +
@@ -516,7 +515,6 @@ describe('test all CLI subcommands', function () {
                 .trim()
                 .match(/Transaction hash: 0x[a-fA-F0-9]{64}/) as any
             expect(txRegMatch).not.equal(null)
-            transactionHash = txRegMatch[0].split('Transaction hash: ')[1]
         })
     })
 

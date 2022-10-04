@@ -35,7 +35,7 @@ export interface Vote {
 
 export interface Comment {
     type: DataType
-    id: string // === txHash
+    id: string
     post_id: string
     content: string
     upvote: number
@@ -46,11 +46,12 @@ export interface Comment {
     reputation: number
     current_epoch: number
     proofIndex: number
+    transactionHash: string
 }
 
 export interface Post {
     type: DataType
-    id: string // txHash
+    id: string
     title: string
     content: string
     upvote: number

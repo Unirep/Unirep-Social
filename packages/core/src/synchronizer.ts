@@ -1,21 +1,7 @@
 import { DB, TransactionDB } from 'anondb'
 import { ethers } from 'ethers'
-import {
-    Circuit,
-    formatProofForSnarkjsVerification,
-    Prover,
-} from '@unirep/circuits'
-import { stringifyBigInts, unstringifyBigInts } from '@unirep/crypto'
+import { Prover } from '@unirep/circuits'
 import { Synchronizer } from '@unirep/core'
-import { ReputationProof, SignUpProof } from '@unirep/contracts'
-
-const encodeBigIntArray = (arr: BigInt[]): string => {
-    return JSON.stringify(stringifyBigInts(arr))
-}
-
-const decodeBigIntArray = (input: string): bigint[] => {
-    return unstringifyBigInts(JSON.parse(input))
-}
 
 export enum ActionType {
     Post = 'Post',
@@ -80,6 +66,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const [_CommentSubmitted] =
             this.unirepSocialContract.filters.CommentSubmitted()
                 .topics as string[]
+        const [_ContentUpdated] =
+            this.unirepSocialContract.filters.ContentUpdated()
+                .topics as string[]
         const [_VoteSubmitted] =
             this.unirepSocialContract.filters.VoteSubmitted().topics as string[]
         const [_AirdropSubmitted] =
@@ -90,6 +79,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             [_UserSignedUp]: this.socialUserSignedUp.bind(this),
             [_PostSubmitted]: this.postSubmittedEvent.bind(this),
             [_CommentSubmitted]: this.commentSubmittedEvent.bind(this),
+            [_ContentUpdated]: this.contentUpdatedEvent.bind(this),
             [_VoteSubmitted]: this.voteSubmittedEvent.bind(this),
             [_AirdropSubmitted]: this.airdropSubmittedEvent.bind(this),
         }
@@ -102,6 +92,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             this.unirepSocialContract.filters.PostSubmitted().topics as string[]
         const [_CommentSubmitted] =
             this.unirepSocialContract.filters.CommentSubmitted()
+                .topics as string[]
+        const [_ContentUpdated] =
+            this.unirepSocialContract.filters.ContentUpdated()
                 .topics as string[]
         const [_VoteSubmitted] =
             this.unirepSocialContract.filters.VoteSubmitted().topics as string[]
@@ -116,6 +109,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                     _UserSignedUp,
                     _PostSubmitted,
                     _CommentSubmitted,
+                    _ContentUpdated,
                     _VoteSubmitted,
                     _AirdropSubmitted,
                 ],
@@ -139,17 +133,22 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             event.data
         )
         const transactionHash = event.transactionHash
-        const commentId = event.transactionHash
-        const postId = event.topics[2]
+        const onChainPostId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
         const epochKey = BigInt(event.topics[3]).toString(10)
+        const onChainCommentId = decodedData._commentId.toString()
         const findComment = await this._db.findOne('Comment', {
             where: {
-                transactionHash: commentId,
+                transactionHash,
             },
         })
         const minRep = decodedData.minRep.toNumber()
         const hashedContent = decodedData._contentHash
+        const { _id: postId } = await this._db.findOne('Post', {
+            where: {
+                onChainId: onChainPostId,
+            },
+        })
 
         if (findComment) {
             db.update('Comment', {
@@ -160,12 +159,14 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 update: {
                     status: 1,
                     transactionHash,
+                    onChainId: onChainCommentId,
                 },
             })
         } else {
             db.create('Comment', {
                 transactionHash,
                 postId,
+                onChainId: onChainCommentId,
                 hashedContent,
                 epochKey,
                 epoch,
@@ -183,7 +184,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         })
         db.update('Post', {
             where: {
-                transactionHash: postId,
+                _id: postId,
             },
             update: {
                 // add one for the current comment we're updating
@@ -198,15 +199,24 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 0,
             },
         })
-        db.create('Record', {
-            to: epochKey,
-            from: epochKey,
-            upvote: 0,
-            downvote: this.socialConfig.commentRep,
-            epoch,
-            action: ActionType.Comment,
-            data: transactionHash,
-            transactionHash,
+        db.upsert('Record', {
+            where: {
+                transactionHash,
+            },
+            update: {
+                confirmed: 1,
+            },
+            create: {
+                to: epochKey,
+                from: epochKey,
+                upvote: 0,
+                downvote: this.socialConfig.commentRep,
+                epoch,
+                action: ActionType.Comment,
+                transactionHash,
+                data: findComment?._id ?? '',
+                confirmed: 1,
+            },
         })
         const existingEpkRecord = await this._db.findOne('EpkRecord', {
             where: {
@@ -236,10 +246,10 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         }
     }
     async postSubmittedEvent(event: ethers.Event, db: TransactionDB) {
-        const postId = event.transactionHash
+        const transactionHash = event.transactionHash
         const findPost = await this._db.findOne('Post', {
             where: {
-                transactionHash: postId,
+                transactionHash,
             },
         })
 
@@ -247,9 +257,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             'PostSubmitted',
             event.data
         )
-        const transactionHash = event.transactionHash
+        const onChainId = BigInt(event.topics[2]).toString()
         const epoch = Number(event.topics[1])
-        const epochKey = BigInt(event.topics[2]).toString(10)
+        const epochKey = BigInt(event.topics[3]).toString(10)
         const minRep = decodedData.minRep.toNumber()
         const hashedContent = decodedData._contentHash
 
@@ -261,11 +271,12 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 },
                 update: {
                     status: 1,
-                    transactionHash,
+                    onChainId,
                 },
             })
         } else {
             db.create('Post', {
+                onChainId,
                 transactionHash,
                 hashedContent,
                 epochKey,
@@ -283,15 +294,24 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 0,
             },
         })
-        db.create('Record', {
-            to: epochKey,
-            from: epochKey,
-            upvote: 0,
-            downvote: this.socialConfig.postRep,
-            epoch,
-            action: ActionType.Post,
-            data: transactionHash,
-            transactionHash: transactionHash,
+        db.upsert('Record', {
+            where: {
+                transactionHash,
+            },
+            update: {
+                confirmed: 1,
+            },
+            create: {
+                to: epochKey,
+                from: epochKey,
+                upvote: 0,
+                downvote: this.socialConfig.postRep,
+                epoch,
+                action: ActionType.Post,
+                transactionHash,
+                data: findPost?._id ?? '',
+                confirmed: 1,
+            },
         })
         const existingEpkRecord = await this._db.findOne('EpkRecord', {
             where: {
@@ -319,6 +339,36 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 negRep: 0,
             })
         }
+    }
+
+    async contentUpdatedEvent(event: ethers.Event, db: TransactionDB) {
+        const decodedData = this.unirepSocialContract.interface.decodeEventLog(
+            'ContentUpdated',
+            event.data
+        )
+        const onChainId = event.topics[1].toString()
+        const oldContentHash = decodedData._oldContentHash
+        const newContentHash = decodedData._newContentHash
+
+        db.update('Post', {
+            where: {
+                onChainId,
+                hashedContent: oldContentHash,
+            },
+            update: {
+                hashedContent: newContentHash,
+            },
+        })
+
+        db.update('Comment', {
+            where: {
+                onChainId,
+                hashedContent: oldContentHash,
+            },
+            update: {
+                hashedContent: newContentHash,
+            },
+        })
     }
 
     async voteSubmittedEvent(event: ethers.Event, db: TransactionDB) {
@@ -399,15 +449,24 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 0,
             },
         })
-        db.create('Record', {
-            to: _toEpochKey,
-            from: _fromEpochKey,
-            upvote: _posRep,
-            downvote: _negRep,
-            epoch: _epoch,
-            action: ActionType.Vote,
-            transactionHash: _transactionHash,
-            data: '',
+        db.upsert('Record', {
+            where: {
+                transactionHash: _transactionHash,
+            },
+            update: {
+                confirmed: 1,
+            },
+            create: {
+                to: _toEpochKey,
+                from: _fromEpochKey,
+                upvote: _posRep,
+                downvote: _negRep,
+                epoch: _epoch,
+                action: ActionType.Vote,
+                transactionHash: _transactionHash,
+                data: '',
+                confirmed: 1,
+            },
         })
         {
             const epkRecord = await this._db.findOne('EpkRecord', {
