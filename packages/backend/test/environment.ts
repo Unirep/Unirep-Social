@@ -41,6 +41,7 @@ async function deploy(wallet: ethers.Wallet, overrides = {}) {
         postReputation,
         commentReputation,
         airdropReputation,
+        ...overrides,
     })
     await unirepSocial.deployed()
     return { unirep, unirepSocial, provider }

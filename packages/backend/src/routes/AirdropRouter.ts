@@ -1,6 +1,6 @@
 import { Express } from 'express'
+import { NegativeRepProof } from '@unirep-social/core'
 import catchError from '../catchError'
-import { SignUpProof } from '@unirep/contracts'
 import {
     UNIREP_SOCIAL,
     DEFAULT_ETH_PROVIDER,
@@ -10,9 +10,10 @@ import {
     UNIREP_SOCIAL_ABI,
     DEFAULT_AIRDROPPED_KARMA,
 } from '../constants'
-import { verifyAirdropProof } from '../utils'
+import { verifyNegRepProof } from '../utils'
 import { ethers } from 'ethers'
 import TransactionManager from '../daemons/TransactionManager'
+import { Prover } from '../daemons/Prover'
 
 export default (app: Express) => {
     app.post('/api/airdrop', catchError(getAirdrop))
@@ -35,14 +36,14 @@ async function getAirdrop(req, res) {
 
     // Parse Inputs
     const { publicSignals, proof } = req.body
-    const signUpProof = new SignUpProof(publicSignals, proof)
+    const negRepProof = new NegativeRepProof(publicSignals, proof, Prover)
 
     const { attestingFee } = await unirepContract.config()
 
     // Verify proof
-    const error = await verifyAirdropProof(
+    const error = await verifyNegRepProof(
         req.db,
-        signUpProof,
+        negRepProof,
         Number(unirepSocialId),
         currentEpoch
     )
@@ -54,8 +55,8 @@ async function getAirdrop(req, res) {
 
     // submit epoch key to unirep social contract
     const calldata = unirepSocialContract.interface.encodeFunctionData(
-        'airdrop',
-        [signUpProof.publicSignals, signUpProof.proof]
+        'getSubsidyAirdrop',
+        [negRepProof.publicSignals, negRepProof.proof]
     )
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,

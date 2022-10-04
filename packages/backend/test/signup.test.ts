@@ -1,7 +1,7 @@
 import test from 'ava'
 import { startServer } from './environment'
 
-import { airdrop, signIn, signUp } from './utils'
+import { signIn, signUp } from './utils'
 
 test.before(async (t: any) => {
     const context = await startServer()
@@ -10,12 +10,6 @@ test.before(async (t: any) => {
 
 test('should sign up', async (t: any) => {
     await signUp(t)
-    t.pass()
-})
-
-test.skip('should airdrop', async (t: any) => {
-    const { iden } = await signUp(t)
-    await airdrop(t, iden)
     t.pass()
 })
 

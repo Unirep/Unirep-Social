@@ -1,5 +1,6 @@
 import test from 'ava'
 import { startServer } from './environment'
+import { epochTransition } from './utils'
 
 const EPOCH_LENGTH = 20000
 
@@ -9,18 +10,6 @@ test.before(async (t: any) => {
 })
 
 test.serial('should use EpochManager to epoch transition', async (t: any) => {
-    const { EpochManager } = require('../src/daemons/EpochManager')
-    const { unirep } = t.context
-    const startEpoch = (await unirep.currentEpoch()).toNumber()
-    const epochManager = new EpochManager()
-    const waitTime = await epochManager.updateWatch()
-    t.assert(waitTime < EPOCH_LENGTH)
-    t.assert(waitTime >= 0)
-    for (;;) {
-        await new Promise((r) => setTimeout(r, waitTime + 10000))
-        const currentEpoch = await unirep.currentEpoch()
-        if (currentEpoch.toNumber() !== startEpoch + 1) continue
-        t.is(currentEpoch.toNumber(), startEpoch + 1)
-        break
-    }
+    await epochTransition(t)
+    t.pass()
 })
