@@ -27,6 +27,10 @@ const Header = () => {
         history.push(`/user`, { isConfirmed: true })
     }
 
+    const gotoSettingPage = () => {
+        history.push(`/setting`, { isConfirmed: true })
+    }
+
     const openMenu = () => {
         if (!isMenuOpen) {
             console.log('open menu!')
@@ -85,6 +89,19 @@ const Header = () => {
                         <img
                             src={require('../../../public/images/user.svg')}
                             onClick={gotoUserPage}
+                        />
+                    </div>
+                    <div
+                        id="setting"
+                        className={
+                            location.pathname === '/setting'
+                                ? 'navBtn chosen'
+                                : 'navBtn'
+                        }
+                    >
+                        <img
+                            src={require('../../../public/images/setting.svg')}
+                            onClick={gotoSettingPage}
                         />
                     </div>
                     <div id="menu" className="navBtn">

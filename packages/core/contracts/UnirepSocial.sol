@@ -59,6 +59,12 @@ contract UnirepSocial is zkSNARKHelper {
 
     uint256 immutable public subsidy;
 
+    // assign posts/comments with an id
+    uint256 public contentId = 1;
+
+    // post/comment id => hashed content => epoch key
+    mapping(uint256 => mapping(bytes32 => uint256)) public hashedContentMapping;
+
     // help Unirep Social track event
     event UserSignedUp(
         uint256 indexed _epoch,
@@ -72,6 +78,7 @@ contract UnirepSocial is zkSNARKHelper {
 
     event PostSubmitted(
         uint256 indexed _epoch,
+        uint256 indexed _postId,
         uint256 indexed _epochKey,
         bytes32 _contentHash,
         uint256 minRep
@@ -81,8 +88,15 @@ contract UnirepSocial is zkSNARKHelper {
         uint256 indexed _epoch,
         uint256 indexed _postId,
         uint256 indexed _epochKey,
+        uint256 _commentId,
         bytes32 _contentHash,
         uint256 minRep
+    );
+
+    event ContentUpdated(
+        uint256 indexed _id,
+        bytes32 _oldContentHash,
+        bytes32 _newContentHash
     );
 
     event VoteSubmitted(
@@ -183,7 +197,7 @@ contract UnirepSocial is zkSNARKHelper {
     function getSubsidyAirdrop(
       uint256[5] memory publicSignals,
       uint256[8] memory proof
-    ) public {
+    ) public payable {
         (,,,,,,,uint attestingFee,,) = unirep.config();
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
@@ -238,15 +252,25 @@ contract UnirepSocial is zkSNARKHelper {
         usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
+        uint256 epochKey = publicSignals[1];
         require(verifySubsidyKeyProof(publicSignals, proof));
         trySpendSubsidy(epoch, publicSignals[1], postReputation);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
+
+        // saved post id and hashed content
+        uint256 postId = contentId;
+        hashedContentMapping[postId][contentHash] = epochKey;
+
         emit PostSubmitted(
-            unirep.currentEpoch(),
-            publicSignals[1],
+            epoch,
+            postId,
+            epochKey,
             contentHash,
             publicSignals[4] // min rep
         );
+
+        // update content Id
+        contentId ++;
     }
 
     function publishCommentSubsidy(
@@ -263,16 +287,26 @@ contract UnirepSocial is zkSNARKHelper {
         usedProofNullifier[proofNullifier] = true;
         require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
         uint256 epoch = publicSignals[2];
+        uint256 epochKey = publicSignals[1];
         require(verifySubsidyKeyProof(publicSignals, proof));
         trySpendSubsidy(epoch, publicSignals[1], commentReputation);
         require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
+
+        // saved post id and hashed content
+        uint256 commentId = contentId;
+        hashedContentMapping[commentId][contentHash] = epochKey;
+
         emit CommentSubmitted(
-            unirep.currentEpoch(),
+            epoch,
             postId,
-            publicSignals[1], // epoch key
+            epochKey,
+            commentId,
             contentHash,
             publicSignals[4] // min rep
         );
+
+         // update content Id
+        contentId ++;
     }
 
     function voteSubsidy(
@@ -331,6 +365,7 @@ contract UnirepSocial is zkSNARKHelper {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        uint256 epochKey = publicSignals[0];
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
@@ -340,19 +375,26 @@ contract UnirepSocial is zkSNARKHelper {
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
-        uint256 epochKey = publicSignals[0];
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
+        // saved post id and hashed content
+        uint256 postId = contentId;
+        hashedContentMapping[postId][contentHash] = epochKey;
+
         emit PostSubmitted(
             epoch,
+            postId,
             epochKey,
             contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
+
+        // update content Id
+        contentId ++;
     }
 
     /*
@@ -368,6 +410,8 @@ contract UnirepSocial is zkSNARKHelper {
         uint256[8] memory proof
     ) external payable {
         (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
+        uint256 epochKey = publicSignals[0];
+        require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
@@ -375,22 +419,56 @@ contract UnirepSocial is zkSNARKHelper {
         require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
         usedProofNullifier[proofNullifier] = true;
         require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        require(postId < contentId, "Unirep Social: the post id is not valid");
 
         uint256 epoch = publicSignals[maxReputationBudget + 2];
-        uint256 epochKey = publicSignals[0];
         uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
         require(proofSpendAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
 
         // Spend reputation
         unirep.spendReputation{value: attestingFee}(publicSignals, proof);
 
+        // saved post id and hashed content
+        uint256 commentId = contentId;
+        hashedContentMapping[commentId][contentHash] = epochKey;
+
         emit CommentSubmitted(
             epoch,
             postId,
-            epochKey, // epoch key
+            epochKey,
+            commentId,
             contentHash,
             publicSignals[maxReputationBudget + 5] // min rep
         );
+
+        // update comment Id
+        contentId ++;
+    }
+
+    /*
+     * Update a published post/comment content
+     * @param id The post ID or the comment ID
+     * @param oldContentHash The old hashed content of the post/comment
+     * @param newContentHash The new hashed content of the post/comment
+     * @param publicSignals The public signals of the epoch key proof of the author of the post/comment
+     * @param proof The epoch key proof of the author of the post/comment
+     */
+    function edit(
+        uint256 id,
+        bytes32 oldContentHash,
+        bytes32 newContentHash,
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
+    ) external payable {
+        uint256 epochKey = publicSignals[0];
+        require(unirep.verifyEpochKeyValidity(publicSignals, proof), "Unirep Social: The epoch key proof is invalid");
+        require(unirep.globalStateTreeRoots(publicSignals[2], publicSignals[1]) == true, "Unirep Social: Invalid global state tree root");
+        require(hashedContentMapping[id][oldContentHash] == epochKey, "Unirep Social: Mismatched epoch key proof to the post or the comment id");
+
+        hashedContentMapping[id][oldContentHash] = 0;
+        hashedContentMapping[id][newContentHash] = epochKey;
+
+        emit ContentUpdated(id, oldContentHash, newContentHash);
     }
 
     /*

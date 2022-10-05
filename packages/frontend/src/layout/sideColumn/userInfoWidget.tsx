@@ -1,19 +1,26 @@
 import { useContext, useEffect, useState } from 'react'
+import { useHistory } from 'react-router-dom'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
 import EpochContext from '../../context/EpochManager'
 import QueueContext, { ActionType, Metadata } from '../../context/Queue'
+import UIContext from '../../context/UI'
 
 import HelpWidget from '../../components/helpWidget'
+import MyButton, { ButtonType } from '../../components/myButton'
+import CustomGap from '../../components/customGap'
 import { InfoType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
 
 const UserInfoWidget = () => {
     const epochManager = useContext(EpochContext)
     const userContext = useContext(UserContext)
+    const uiContext = useContext(UIContext)
     const queue = useContext(QueueContext)
+    const history = useHistory()
+
     const [countdownText, setCountdownText] = useState<string>('')
     const [diffTime, setDiffTime] = useState<number>(0)
     const nextUSTTimeString = dateformat(
@@ -53,6 +60,10 @@ const UserInfoWidget = () => {
         return 'Awaiting Epoch Change...'
     }
 
+    const gotoSettingPage = () => {
+        history.push(`/setting`, { isConfirmed: true })
+    }
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setCountdownText(makeCountdownText())
@@ -73,6 +84,21 @@ const UserInfoWidget = () => {
                             />
                             {userContext.netReputation}
                         </h3>
+                        {!uiContext.downloadPrivateKey && (
+                            <div>
+                                <CustomGap times={1} />
+                                <MyButton
+                                    type={ButtonType.dark}
+                                    onClick={gotoSettingPage}
+                                    fullSize={true}
+                                >
+                                    Grab my private key
+                                    <img
+                                        src={require('../../../public/images/arrow-right.svg')}
+                                    />
+                                </MyButton>
+                            </div>
+                        )}
                     </div>
                     {userContext.userState &&
                     !userContext.isInitialSyncing &&

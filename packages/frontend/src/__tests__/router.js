@@ -113,7 +113,7 @@ test('AppRouter should navigate to /setting', () => {
     renderAppRouter(<AppRouter />)
     expect(
         screen.getByText(
-            /unirep social uses semaphore technology to generate the private key. it's a super dope string and it's very important for you to store it safely. this key will be used to regain access to your rep points./i
+            /It seems like you haven’t download your private key yet, please do so soon./i
         )
     ).toBeInTheDocument()
 })

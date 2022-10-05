@@ -7,7 +7,6 @@ import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
 import { deployUnirepSocial, UnirepSocial } from '../src/utils'
-import { Attestation } from '@unirep/contracts'
 
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 

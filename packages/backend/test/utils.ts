@@ -204,13 +204,123 @@ export const createPost = async (t, iden) => {
     return data
 }
 
-export const queryPost = async (t, postId) => {
+export const editPost = async (t, iden) => {
+    const { post } = await createPost(t, iden)
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
+        epkNonce
+    )
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/post/edit/${post._id}`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: 'new content',
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
     for (;;) {
         await new Promise((r) => setTimeout(r, 1000))
-        const r = await fetch(`${t.context.url}/api/post/${postId}`)
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const editComment = async (t, iden, postId) => {
+    const { comment } = await createComment(t, iden, postId)
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
+        epkNonce
+    )
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/comment/edit/${comment._id}`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: 'new content',
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/comment error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const queryPost = async (t, id) => {
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const r = await fetch(`${t.context.url}/api/post/${id}`)
         if (r.status === 404) continue
         t.is(r.status, 200)
-        return true
+        const data = await r.json()
+        return data
+    }
+}
+
+export const queryComment = async (t, id) => {
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const r = await fetch(`${t.context.url}/api/comment/${id}`)
+        if (r.status === 404) continue
+        t.is(r.status, 200)
+        const data = await r.json()
+        return data
     }
 }
 
@@ -315,6 +425,13 @@ export const vote = async (
     t.pass()
 }
 
+export const epochTransition = async (t) => {
+    const { txManager, unirep } = t.context
+    const calldata = unirep.interface.encodeFunctionData('beginEpochTransition')
+    const hash = await txManager.queueTransaction(unirep.address, calldata)
+    await t.context.unirep.provider.waitForTransaction(hash)
+}
+
 export const userStateTransition = async (t, iden) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
@@ -345,4 +462,71 @@ export const userStateTransition = async (t, iden) => {
 
     await waitForBackendBlock(t, receipt.blockNumber)
     t.pass()
+}
+
+export const genUsernameProof = async (t, iden, preImage) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+
+    const epkNonce = 0
+
+    const usernameProof = await userState.genProveReputationProof(
+        t.context.attesterId,
+        epkNonce,
+        0,
+        preImage == 0 ? BigInt(0) : BigInt(1),
+        preImage,
+        0
+    )
+
+    const isValid = await usernameProof.verify()
+    t.true(isValid)
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+
+    return {
+        proof: usernameProof.proof,
+        publicSignals: usernameProof.publicSignals,
+        blockNumber,
+    }
+}
+
+export const setUsername = async (t, iden, preImage, newUsername) => {
+    const hexlifiedPreImage =
+        preImage == 0
+            ? 0
+            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+    const { proof, publicSignals, blockNumber } = await genUsernameProof(
+        t,
+        iden,
+        hexlifiedPreImage
+    )
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/usernames`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            newUsername,
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
 }
