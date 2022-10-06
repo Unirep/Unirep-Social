@@ -36,7 +36,7 @@ test('should render PrivateKey component', async () => {
             /you must complete the password field to set up encryption/i
         )
     )
-    // now complete password -- todo -- have issue targeting these nodes
+    // now complete password 
     const password = screen.getByLabelText('Password')
     const confirmPassword = screen.getByLabelText('Confirm password')
     await userEvent.type(password, 'satoshispassword')
