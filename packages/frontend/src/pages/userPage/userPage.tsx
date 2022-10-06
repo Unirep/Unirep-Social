@@ -9,6 +9,7 @@ import { getRecords } from '../../utils'
 import BasicPage from '../basicPage/basicPage'
 import { Record, Page, QueryType } from '../../constants'
 import ActivityWidget from './activityWidget'
+import CustomGap from '../../components/customGap'
 import PostsList from '../../components/postsList'
 import CommentsList from '../../components/commentsList'
 import PostContext from '../../context/Post'
@@ -70,7 +71,7 @@ const UserPage = () => {
     const [sort, setSort] = useState<QueryType>(QueryType.Boost)
     const [isDropdown, setIsDropdown] = useState<boolean>(false)
 
-    const [received, setReceived] = useState<number[]>([0, 0]) // boost, squash
+    const [received, setReceived] = useState<number[]>([0, 0, 0]) // airdrop, boost, squash
     const [spent, setSpent] = useState<number[]>([0, 0, 0, 0]) // post, comment, boost, squash
 
     const getUserPosts = async (sort: QueryType, lastRead: string = '0') => {
@@ -99,8 +100,12 @@ const UserPage = () => {
                 const isSpent = user.currentEpochKeys.indexOf(h.from) !== -1
                 if (isReceived) {
                     // right stuff
-                    r[0] += h.upvote
-                    r[1] += h.downvote
+                    if (h.action === ActionType.UST) {
+                        r[0] += h.upvote
+                    } else if (h.action === ActionType.Vote) {
+                        r[1] += h.upvote
+                        r[2] += h.downvote
+                    }
                 }
 
                 if (isSpent) {
@@ -236,7 +241,7 @@ const UserPage = () => {
                                 ))}
                             </div>
                         </div>
-                        <div style={{ height: '8px' }}></div>
+                        <CustomGap times={1} />
                         {/* left after devcon
                                 <div className="rep-details">
                                 <div className="rep-bar-title">
@@ -258,13 +263,12 @@ const UserPage = () => {
                             </div> */}
                     </div>
                 </div>
-                <div style={{ width: '16px' }}></div>
-
+                <div style={{ width: '16px' }}></div>{' '}
                 <div className="received stuff">
                     <div className="grey-block">
                         <p>Received</p>
                         <div className="rep-received">
-                            {received[0] - received[1]}
+                            {received[0] + received[1] - received[2]}
                         </div>
                         <span>
                             This Rep is in the vault. It will be yours in the
@@ -275,13 +279,23 @@ const UserPage = () => {
                         <div className="received-info">
                             <span>
                                 <img
+                                    src={require('../../../public/images/unirep.svg')}
+                                />
+                                Rep Reset
+                            </span>
+                            <div className="amount">+{received[0]}</div>
+                        </div>
+                        <CustomGap times={2} />
+                        <div className="received-info">
+                            <span>
+                                <img
                                     src={require('../../../public/images/boost.svg')}
                                 />
                                 Boost
                             </span>
-                            <div className="amount">+{received[0]}</div>
+                            <div className="amount">+{received[1]}</div>
                         </div>
-                        <div style={{ height: '16px' }}></div>
+                        <CustomGap times={2} />
                         <div className="received-info">
                             <span>
                                 <img
@@ -289,7 +303,7 @@ const UserPage = () => {
                                 />
                                 Squash
                             </span>
-                            <div className="amount">-{received[1]}</div>
+                            <div className="amount">-{received[2]}</div>
                         </div>
                     </div>
                 </div>
