@@ -241,6 +241,18 @@ async function voteSubsidy(req, res) {
         commentId: comment ? dataId : '',
         status: 0,
     })
+    // save to db data
+    await req.db.create('Record', {
+        to: req.body.receiver,
+        from: epochKey,
+        upvote: req.body.upvote,
+        downvote: req.body.downvote,
+        epoch: currentEpoch,
+        action: ActionType.Vote,
+        transactionHash: hash,
+        data: dataId,
+        confirmed: 0,
+    })
     res.json({
         transaction: hash,
         newVote,
