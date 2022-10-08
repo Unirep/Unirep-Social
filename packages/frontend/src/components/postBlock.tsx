@@ -51,6 +51,7 @@ const PostBlock = ({ postId, page }: Props) => {
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
+    const isAuthor = userContext.allEpks.includes(post.epoch_key)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
 
@@ -140,6 +141,9 @@ const PostBlock = ({ postId, page }: Props) => {
                     data={post}
                 />
                 <BlockButton type={ButtonType.Share} count={0} data={post} />
+                {isAuthor && (
+                    <BlockButton type={ButtonType.Edit} count={0} data={post} />
+                )}
             </div>
             {page === Page.Home ? (
                 <div></div>

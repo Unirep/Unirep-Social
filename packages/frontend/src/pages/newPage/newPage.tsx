@@ -31,8 +31,7 @@ const NewPage = () => {
     }
 
     return (
-        <BasicPage>
-            <h3>Create post</h3>
+        <BasicPage title={'Create Post'}>
             <WritingField
                 type={DataType.Post}
                 submit={submit}

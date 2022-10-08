@@ -74,6 +74,7 @@ export enum ButtonType {
     Post = 'post',
     Activity = 'activity',
     Save = 'save',
+    Edit = 'edit',
 }
 
 export enum InfoType {

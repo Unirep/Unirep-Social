@@ -23,7 +23,11 @@ const BlockButton = ({ type, count, data }: Props) => {
     const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false) // only for share button
 
     const checkAbility = () => {
-        if (type === ButtonType.Comments || type === ButtonType.Share) {
+        if (
+            type === ButtonType.Comments ||
+            type === ButtonType.Share ||
+            type === ButtonType.Edit
+        ) {
             return true
         } else {
             if (!userContext.userState) return false
@@ -63,6 +67,12 @@ const BlockButton = ({ type, count, data }: Props) => {
             setIsLinkCopied(true)
         } else if (type === ButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
+        } else if (type === ButtonType.Edit) {
+            if (data.type === DataType.Post) {
+                history.push(`/edit/${data.id}`) // post only
+            } else {
+                // add a block to edit comment
+            }
         }
     }
 
@@ -97,7 +107,7 @@ const BlockButton = ({ type, count, data }: Props) => {
     return (
         <div
             className={
-                type === ButtonType.Share
+                type === ButtonType.Share || type === ButtonType.Edit
                     ? 'block-button share'
                     : 'block-button'
             }
@@ -110,28 +120,20 @@ const BlockButton = ({ type, count, data }: Props) => {
                     isHover && checkAbility() ? '-fill' : ''
                 }.svg`)}
             />
-            {type !== ButtonType.Share ? (
+            {type !== ButtonType.Share && type !== ButtonType.Edit && (
                 <span className="count">{count}</span>
-            ) : (
-                <span></span>
             )}
             <span className="btn-name">
                 {type.charAt(0).toUpperCase() + type.slice(1)}
             </span>
 
-            {checkAbility() ? (
-                <div></div>
-            ) : (
+            {checkAbility() === false && (
                 <div
                     className="disabled"
                     onMouseEnter={setReminderMessage}
                 ></div>
             )}
-            {reminder.length > 0 ? (
-                <div className="reminder">{reminder}</div>
-            ) : (
-                <div></div>
-            )}
+            {reminder.length > 0 && <div className="reminder">{reminder}</div>}
             {isBoostOn ? (
                 <VoteBox
                     isUpvote={true}

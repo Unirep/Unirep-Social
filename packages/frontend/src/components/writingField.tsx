@@ -20,6 +20,8 @@ type Props = {
     ) => void
     submitBtnName: string
     onClick: (event: any) => void
+    title?: string
+    content?: string
 }
 
 const WritingField = (props: Props) => {
@@ -29,12 +31,20 @@ const WritingField = (props: Props) => {
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
 
     const [title, setTitle] = useState<string>(() => {
+        if (props.title) {
+            return props.title
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.title
         }
         return ''
     })
     const [content, setContent] = useState<string>(() => {
+        if (props.content) {
+            return props.content
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.content
         } else if (
