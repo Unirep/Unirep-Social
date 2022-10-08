@@ -51,7 +51,7 @@ const PostBlock = ({ postId, page }: Props) => {
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
-    const isAuthor = userContext.allEpks.includes(post.epoch_key)
+    const isAuthor = userContext.allEpks?.includes(post.epoch_key)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
 
