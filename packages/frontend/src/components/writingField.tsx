@@ -22,6 +22,7 @@ type Props = {
     onClick: (event: any) => void
     title?: string
     content?: string
+    showDetail?: boolean
 }
 
 const WritingField = (props: Props) => {
@@ -130,29 +131,33 @@ const WritingField = (props: Props) => {
                 />
             )}
             <div style={{ marginBottom: '32px' }}></div>
-            {userContext.userState ? (
-                <ActionDetail
-                    showBorder={true}
-                    showHelp={true}
-                    showRep={true}
-                    maxRep={userContext.netReputation}
-                    defaultRep={defaultRep}
-                    hasRep={
-                        useSubsidy
-                            ? userContext.subsidyReputation
-                            : userContext.netReputation
-                    }
-                    showoffRep={reputation}
-                    setShowoffRep={setReputation}
-                    allEpks={userContext.currentEpochKeys}
-                    useSubsidy={useSubsidy}
-                    chooseToUseSubsidy={chooseToUseSubsidy}
-                    chooseToUsePersona={chooseToUsePersona}
-                    epkNonce={epkNonce}
-                    setEpkNonce={setEpkNonce}
-                />
-            ) : (
-                <>somethings wrong...</>
+            {props.showDetail && (
+                <>
+                    {userContext.userState ? (
+                        <ActionDetail
+                            showBorder={true}
+                            showHelp={true}
+                            showRep={true}
+                            maxRep={userContext.netReputation}
+                            defaultRep={defaultRep}
+                            hasRep={
+                                useSubsidy
+                                    ? userContext.subsidyReputation
+                                    : userContext.netReputation
+                            }
+                            showoffRep={reputation}
+                            setShowoffRep={setReputation}
+                            allEpks={userContext.currentEpochKeys}
+                            useSubsidy={useSubsidy}
+                            chooseToUseSubsidy={chooseToUseSubsidy}
+                            chooseToUsePersona={chooseToUsePersona}
+                            epkNonce={epkNonce}
+                            setEpkNonce={setEpkNonce}
+                        />
+                    ) : (
+                        <>somethings wrong...</>
+                    )}
+                </>
             )}
             <div className="submit-btn" onClick={submit}>
                 {props.submitBtnName}

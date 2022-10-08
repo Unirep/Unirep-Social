@@ -37,6 +37,7 @@ const NewPage = () => {
                 submit={submit}
                 submitBtnName="Post - 5 points"
                 onClick={preventPropagation}
+                showDetail={true}
             />
         </BasicPage>
     )

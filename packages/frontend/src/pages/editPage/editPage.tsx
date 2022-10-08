@@ -22,7 +22,14 @@ const EditPage = () => {
         event.stopPropagation()
     }
 
-    const submit = () => {}
+    const submit = (
+        title: string,
+        content: string,
+        epkNonce: number,
+        reputation: number
+    ) => {
+        postContext.editPost(id, title, content, epkNonce)
+    }
 
     return (
         <BasicPage hasBack={true} title={'Update Post'}>

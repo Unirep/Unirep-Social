@@ -276,6 +276,56 @@ export class Data {
         )
     }
 
+    editPost(
+        postId: string = '',
+        title: string = '',
+        content: string = '',
+        epkNonce: number = 0
+    ) {
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Updating post',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce
+                        ) // question: this should be the epkNonce, but what's the nonce?
+                    updateStatus({
+                        title: 'Updating post',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`post/edit/${postId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title,
+                            content,
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const { transaction, error, post: _post } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    const post = convertDataToPost(_post)
+                    this.postsById[post.id] = post
+                    this.feedsByQuery[QueryType.New].unshift(post.id)
+                    this.save()
+                }
+            },
+            {
+                successMessage: 'Update post is finalized',
+                type: ActionType.Post,
+            }
+        )
+    }
+
     vote(
         postId: string = '',
         commentId: string = '',
