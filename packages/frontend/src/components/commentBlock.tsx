@@ -1,6 +1,6 @@
 // import BlockButton from './blockButton';
 import { useState, useContext } from 'react'
-import { useHistory } from 'react-router-dom'
+import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
 
@@ -29,14 +29,13 @@ const CommentBlock = ({ commentId, page }: Props) => {
     const commentHtml = markdown.render(comment.content)
     const unirepConfig = useContext(UnirepContext)
     const date = dateformat(new Date(comment.createdAt), 'dd/mm/yyyy hh:MM TT')
-    const history = useHistory()
     const [isEpkHovered, setEpkHovered] = useState<boolean>(false)
 
-    const gotoPost = () => {
-        if (page === Page.User) {
-            history.push(`/post/${comment.post_id}`, { commentId: comment.id })
-        }
-    }
+    // const gotoPost = () => {
+    //     if (page === Page.User) {
+    //         history.push(`/post/${comment.post_id}`, { commentId: comment.id })
+    //     }
+    // }
 
     return (
         <div className="comment-block">
@@ -73,20 +72,22 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     <img src={require('../../public/images/etherscan.svg')} />
                 </a>
             </div>
-            <div
-                className="block-content no-padding-horizontal"
-                onClick={gotoPost}
+            <Link
+                className="comment-block-link"
+                to={`/post/${comment.post_id}#${comment.id}`}
             >
-                <div
-                    style={{
-                        maxHeight: page == Page.Home ? '300px' : undefined,
-                        overflow: 'hidden',
-                    }}
-                    dangerouslySetInnerHTML={{
-                        __html: commentHtml,
-                    }}
-                />
-            </div>
+                <div className="block-content no-padding-horizontal">
+                    <div
+                        style={{
+                            maxHeight: page == Page.Home ? '300px' : undefined,
+                            overflow: 'hidden',
+                        }}
+                        dangerouslySetInnerHTML={{
+                            __html: commentHtml,
+                        }}
+                    />
+                </div>
+            </Link>
             <div className="block-buttons no-padding">
                 <BlockButton
                     type={ButtonType.Boost}
