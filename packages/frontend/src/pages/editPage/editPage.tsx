@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import PostContext from '../../context/Post'
@@ -8,11 +8,13 @@ import BasicPage from '../basicPage/basicPage'
 import WritingField from '../../components/writingField'
 import MyButton, { ButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
+import AlertCover from './alertCover'
 import { DataType } from '../../constants'
 
 const EditPage = () => {
     const { id } = useParams<Params>()
     const postContext = useContext(PostContext)
+    const [alertOn, setAlertOn] = useState<boolean>(false)
 
     useEffect(() => {
         postContext.loadPost(id)
@@ -20,6 +22,11 @@ const EditPage = () => {
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
+    }
+
+    const deletePost = () => {
+        console.log('delete post')
+        setAlertOn(false)
     }
 
     const submit = (
@@ -47,9 +54,19 @@ const EditPage = () => {
             )}
             <CustomGap times={2} />
             {postContext.postsById[id] && (
-                <MyButton type={ButtonType.light} fullSize={true}>
+                <MyButton
+                    type={ButtonType.light}
+                    fullSize={true}
+                    onClick={() => setAlertOn(true)}
+                >
                     Delete Post
                 </MyButton>
+            )}
+            {alertOn && (
+                <AlertCover
+                    close={() => setAlertOn(false)}
+                    deletePost={deletePost}
+                />
             )}
         </BasicPage>
     )
