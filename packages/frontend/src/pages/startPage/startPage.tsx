@@ -13,7 +13,7 @@ enum StepType {
     getstarted = 'getstarted',
     onboarded = 'onboarded',
     signin = 'signin',
-    error = 'error'
+    error = 'error',
 }
 
 const StartPage = () => {
@@ -41,17 +41,18 @@ const StartPage = () => {
     }, [])
 
     return (
-        <div
-            className="start-page"
-        >
+        <div className="start-page">
             {step === StepType.getstarted ? (
                 <GetStarted signin={() => setStep(StepType.signin)} />
             ) : step === StepType.onboarded ? (
                 <Onboarded />
             ) : step === StepType.signin ? (
                 <Signin getStarted={() => setStep(StepType.getstarted)} />
-            ) : step === StepType.error? (
-                <Error getStarted={() => setStep(StepType.getstarted)} signin={() => setStep(StepType.signin)} />
+            ) : step === StepType.error ? (
+                <Error
+                    getStarted={() => setStep(StepType.getstarted)}
+                    signin={() => setStep(StepType.signin)}
+                />
             ) : null}
         </div>
     )
