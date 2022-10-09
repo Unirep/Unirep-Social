@@ -1,16 +1,19 @@
 import { screen, render, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import CommentsList from '../components/commentsList'
 import PostContext from '../context/Post'
 
 const renderCommentsField = (postData, commentIds, page, loadMoreComments) => {
     return render(
-        <PostContext.Provider value={postData}>
-            <CommentsList
-                commentIds={commentIds}
-                page={page}
-                loadMoreComments={loadMoreComments}
-            />
-        </PostContext.Provider>
+        <BrowserRouter>
+            <PostContext.Provider value={postData}>
+                <CommentsList
+                    commentIds={commentIds}
+                    page={page}
+                    loadMoreComments={loadMoreComments}
+                />
+            </PostContext.Provider>
+        </BrowserRouter>
     )
 }
 

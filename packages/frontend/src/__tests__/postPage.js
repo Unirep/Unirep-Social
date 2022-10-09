@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import PostContext from '../context/Post'
 import UserContext from '../context/User'
 import PostPage from '../pages/postPage/postPage'
@@ -10,11 +11,13 @@ jest.mock('react-router-dom', () => ({
 
 const renderPostPage = (userData, postData, postId, page) => {
     render(
-        <UserContext.Provider value={userData}>
-            <PostContext.Provider value={postData}>
-                <PostPage postId={postId} page={page} />
-            </PostContext.Provider>
-        </UserContext.Provider>
+        <BrowserRouter>
+            <UserContext.Provider value={userData}>
+                <PostContext.Provider value={postData}>
+                    <PostPage postId={postId} page={page} />
+                </PostContext.Provider>
+            </UserContext.Provider>
+        </BrowserRouter>
     )
 }
 
