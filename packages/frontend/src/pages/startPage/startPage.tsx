@@ -7,19 +7,23 @@ import UserContext from '../../context/User'
 import GetStarted from './getStarted'
 import Signin from './signin'
 import Onboarded from './onboarded'
+import Error from './error'
 
 enum StepType {
     getstarted = 'getstarted',
     onboarded = 'onboarded',
     signin = 'signin',
+    error = 'error'
 }
 
 const StartPage = () => {
     const location = useLocation()
     const params = new URLSearchParams(location.search)
     const [step, setStep] = useState<StepType>(
-        params.get('signupCode') || params.get('signupError')
+        params.get('signupCode')
             ? StepType.onboarded
+            : params.get('signupError')
+            ? StepType.error
             : StepType.getstarted
     )
 
@@ -31,15 +35,14 @@ const StartPage = () => {
             userContext
                 .signUp(params.get('signupCode') as string)
                 .then(() => setStep(StepType.onboarded))
+        } else if (params.get('signupError')) {
+            setStep(StepType.error)
         }
     }, [])
 
     return (
         <div
             className="start-page"
-            style={{
-                backgroundImage: `url(${require(`../../../public/images/bg-${step}.svg`)})`,
-            }}
         >
             {step === StepType.getstarted ? (
                 <GetStarted signin={() => setStep(StepType.signin)} />
@@ -47,6 +50,8 @@ const StartPage = () => {
                 <Onboarded />
             ) : step === StepType.signin ? (
                 <Signin getStarted={() => setStep(StepType.getstarted)} />
+            ) : step === StepType.error? (
+                <Error getStarted={() => setStep(StepType.getstarted)} signin={() => setStep(StepType.signin)} />
             ) : null}
         </div>
     )
