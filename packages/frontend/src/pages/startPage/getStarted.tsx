@@ -1,6 +1,6 @@
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomGap from '../../components/customGap'
-import MyButton, { ButtonType } from '../../components/myButton'
+import MyButton, { MyButtonType } from '../../components/myButton'
 
 type Props = {
     signin: () => void
@@ -30,11 +30,11 @@ const GetStarted = ({ signin, signup }: Props) => {
             </p>
             <CustomGap times={4} />
             <div className="box-buttons">
-                <MyButton type={ButtonType.light} onClick={signup}>
+                <MyButton type={MyButtonType.light} onClick={signup}>
                     Sign Up
                 </MyButton>
                 <CustomGap times={3} />
-                <MyButton type={ButtonType.lightTrans} onClick={signin}>
+                <MyButton type={MyButtonType.lightTrans} onClick={signin}>
                     Sign In
                 </MyButton>
             </div>

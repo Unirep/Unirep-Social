@@ -1,4 +1,4 @@
-export enum ButtonType {
+export enum MyButtonType {
     dark = 'button-dark',
     light = 'button-light',
     darkTrans = 'button-dark-transparent',
@@ -6,7 +6,7 @@ export enum ButtonType {
 }
 
 type Props = {
-    type: ButtonType
+    type: MyButtonType
     children: any
     onClick?: () => void
     fullSize?: boolean

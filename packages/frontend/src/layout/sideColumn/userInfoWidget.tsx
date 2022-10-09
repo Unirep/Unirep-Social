@@ -9,7 +9,7 @@ import QueueContext, { ActionType, Metadata } from '../../context/Queue'
 import UIContext from '../../context/UI'
 
 import HelpWidget from '../../components/helpWidget'
-import MyButton, { ButtonType } from '../../components/myButton'
+import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
 import { InfoType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
@@ -88,7 +88,7 @@ const UserInfoWidget = () => {
                             <div>
                                 <CustomGap times={1} />
                                 <MyButton
-                                    type={ButtonType.dark}
+                                    type={MyButtonType.dark}
                                     onClick={gotoSettingPage}
                                     fullSize={true}
                                 >

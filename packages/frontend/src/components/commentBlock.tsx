@@ -3,14 +3,20 @@ import { useState, useContext } from 'react'
 import { useHistory } from 'react-router-dom'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
+import MarkdownIt from 'markdown-it'
 
 import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
+import UserContext from '../context/User'
 
 import { EXPLORER_URL } from '../config'
 import { Page, ButtonType } from '../constants'
 import BlockButton from './blockButton'
-import MarkdownIt from 'markdown-it'
+import MyButton, { MyButtonType } from './myButton'
+import AlertCover from './alertCover'
+import WritingField from './writingField'
+import CustomGap from './customGap'
+import { DataType } from '../constants'
 
 const markdown = new MarkdownIt({
     breaks: true,
@@ -25,17 +31,40 @@ type Props = {
 
 const CommentBlock = ({ commentId, page }: Props) => {
     const postContext = useContext(PostContext)
+    const userContext = useContext(UserContext)
     const comment = postContext.commentsById[commentId]
     const commentHtml = markdown.render(comment.content)
     const unirepConfig = useContext(UnirepContext)
     const date = dateformat(new Date(comment.createdAt), 'dd/mm/yyyy hh:MM TT')
     const history = useHistory()
     const [isEpkHovered, setEpkHovered] = useState<boolean>(false)
+    const [isEdited, setIsEdited] = useState<boolean>(false)
+    const [alertOn, setAlertOn] = useState<boolean>(false)
+    const isAuthor = userContext.allEpks?.includes(comment.epoch_key)
 
     const gotoPost = () => {
         if (page === Page.User) {
             history.push(`/post/${comment.post_id}`, { commentId: comment.id })
         }
+    }
+
+    const editComment = () => {
+        setIsEdited(true)
+    }
+
+    const updateComment = () => {
+        console.log('update comment')
+        setIsEdited(false)
+    }
+
+    const deleteComment = () => {
+        console.log('delete comment')
+        setAlertOn(false)
+        setIsEdited(false)
+    }
+
+    const preventPropagation = (event: any) => {
+        event.stopPropagation()
     }
 
     return (
@@ -98,8 +127,41 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     count={comment.downvote}
                     data={comment}
                 />
-                <BlockButton type={ButtonType.Share} count={0} data={comment} />
+                <BlockButton type={ButtonType.Share} data={comment} />
+                {isAuthor && (
+                    <BlockButton
+                        type={ButtonType.Edit}
+                        data={comment}
+                        edit={editComment}
+                    />
+                )}
             </div>
+            {isEdited && (
+                <div>
+                    <WritingField
+                        type={DataType.Comment}
+                        submit={updateComment}
+                        submitBtnName="Update Comment"
+                        onClick={preventPropagation}
+                        content={comment.content}
+                        isEdit={true}
+                    />
+                    <CustomGap times={2} />
+                    <MyButton
+                        type={MyButtonType.light}
+                        fullSize={true}
+                        onClick={() => setAlertOn(true)}
+                    >
+                        Delete Comment
+                    </MyButton>
+                    {alertOn && (
+                        <AlertCover
+                            close={() => setAlertOn(false)}
+                            deleteContent={deleteComment}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     )
 }

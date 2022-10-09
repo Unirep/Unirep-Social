@@ -23,6 +23,7 @@ type Props = {
     title?: string
     content?: string
     showDetail?: boolean
+    isEdit?: boolean
 }
 
 const WritingField = (props: Props) => {
@@ -75,11 +76,13 @@ const WritingField = (props: Props) => {
 
     const handleTitleInput = (event: any) => {
         setTitle(event.target.value)
+        if (props.isEdit) return
         postContext.setDraft(props.type, event.target.value, content)
     }
 
     const handleTextEditorInput = (text: string) => {
         setContent(text)
+        if (props.isEdit) return
         postContext.setDraft(props.type, title, text)
     }
 

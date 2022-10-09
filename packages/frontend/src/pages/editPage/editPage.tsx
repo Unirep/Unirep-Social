@@ -6,9 +6,9 @@ import { Params } from '../../constants'
 
 import BasicPage from '../basicPage/basicPage'
 import WritingField from '../../components/writingField'
-import MyButton, { ButtonType } from '../../components/myButton'
+import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
-import AlertCover from './alertCover'
+import AlertCover from '../../components/alertCover'
 import { DataType } from '../../constants'
 
 const EditPage = () => {
@@ -48,6 +48,7 @@ const EditPage = () => {
                     onClick={preventPropagation}
                     title={postContext.postsById[id].title}
                     content={postContext.postsById[id].content}
+                    isEdit={true}
                 />
             ) : (
                 <div>loading...</div>
@@ -55,7 +56,7 @@ const EditPage = () => {
             <CustomGap times={2} />
             {postContext.postsById[id] && (
                 <MyButton
-                    type={ButtonType.light}
+                    type={MyButtonType.light}
                     fullSize={true}
                     onClick={() => setAlertOn(true)}
                 >
@@ -65,7 +66,7 @@ const EditPage = () => {
             {alertOn && (
                 <AlertCover
                     close={() => setAlertOn(false)}
-                    deletePost={deletePost}
+                    deleteContent={deletePost}
                 />
             )}
         </BasicPage>

@@ -70,6 +70,10 @@ const PostBlock = ({ postId, page }: Props) => {
         history.push(`/post/${post.id}`, { commentId: '' })
     }
 
+    const editPost = () => {
+        history.push(`/edit/${post.id}`)
+    }
+
     return (
         <div className="post-block">
             <div className="block-header">
@@ -140,9 +144,13 @@ const PostBlock = ({ postId, page }: Props) => {
                     count={post.downvote}
                     data={post}
                 />
-                <BlockButton type={ButtonType.Share} count={0} data={post} />
+                <BlockButton type={ButtonType.Share} data={post} />
                 {isAuthor && (
-                    <BlockButton type={ButtonType.Edit} count={0} data={post} />
+                    <BlockButton
+                        type={ButtonType.Edit}
+                        data={post}
+                        edit={editPost}
+                    />
                 )}
             </div>
             {page === Page.Home ? (

@@ -1,12 +1,12 @@
-import MyButton, { ButtonType } from '../../components/myButton'
-import CustomGap from '../../components/customGap'
+import MyButton, { MyButtonType } from './myButton'
+import CustomGap from './customGap'
 
 type Props = {
     close: () => void
-    deletePost: () => void
+    deleteContent: () => void
 }
 
-const AlertCover = ({ close, deletePost }: Props) => {
+const AlertCover = ({ close, deleteContent }: Props) => {
     return (
         <div className="alert-cover">
             <div className="blur-cover"></div>
@@ -14,7 +14,7 @@ const AlertCover = ({ close, deletePost }: Props) => {
                 <h3>Are you sure to delete this post?</h3>
                 <CustomGap times={4} />
                 <MyButton
-                    type={ButtonType.dark}
+                    type={MyButtonType.dark}
                     fullSize={true}
                     onClick={close}
                 >
@@ -22,9 +22,9 @@ const AlertCover = ({ close, deletePost }: Props) => {
                 </MyButton>
                 <CustomGap times={2} />
                 <MyButton
-                    type={ButtonType.light}
+                    type={MyButtonType.light}
                     fullSize={true}
-                    onClick={deletePost}
+                    onClick={deleteContent}
                 >
                     Yes, delete it.
                 </MyButton>

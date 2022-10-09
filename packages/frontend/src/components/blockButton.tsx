@@ -9,11 +9,12 @@ import VoteBox from './voteBox'
 
 type Props = {
     type: ButtonType
-    count: number
+    count?: number
     data: Post | Comment
+    edit?: () => void
 }
 
-const BlockButton = ({ type, count, data }: Props) => {
+const BlockButton = ({ type, count, data, edit }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const [isBoostOn, setBoostOn] = useState<boolean>(false)
@@ -68,11 +69,7 @@ const BlockButton = ({ type, count, data }: Props) => {
         } else if (type === ButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
         } else if (type === ButtonType.Edit) {
-            if (data.type === DataType.Post) {
-                history.push(`/edit/${data.id}`) // post only
-            } else {
-                // add a block to edit comment
-            }
+            if (edit) edit()
         }
     }
 
