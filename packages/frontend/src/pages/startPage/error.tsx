@@ -5,9 +5,10 @@ import MyButton, { ButtonType } from '../../components/myButton'
 type Props = {
     getStarted: () => void
     signin: () => void
+    errorMsg: string
 }
 
-const Error = ({ getStarted, signin }: Props) => {
+const Error = ({ getStarted, signin, errorMsg }: Props) => {
     return (
         <CustomBox
             bg="bg-getstarted"
@@ -17,13 +18,15 @@ const Error = ({ getStarted, signin }: Props) => {
             hasClose={true}
         >
             <h1 className="title">Oops!</h1>
-            <p>
-                You might use this account to sign up before, please try to sign
-                in.
-            </p>
+            <p>{errorMsg}</p>
+
             <CustomGap times={4} />
             <div className="box-buttons">
-                <MyButton type={ButtonType.light} onClick={signin}>
+                <MyButton type={ButtonType.light} onClick={getStarted}>
+                    Back
+                </MyButton>
+                <CustomGap times={2} />
+                <MyButton type={ButtonType.lightTrans} onClick={signin}>
                     Sign In
                 </MyButton>
             </div>
