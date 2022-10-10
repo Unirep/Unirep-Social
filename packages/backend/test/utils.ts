@@ -243,14 +243,7 @@ export const createPostSubsidy = async (t, iden) => {
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -479,17 +472,25 @@ export const vote = async (
 
 export const epochTransition = async (t) => {
     const prevEpoch = await t.context.unirep.currentEpoch()
-    const { EpochManager } = require('../src/daemons/EpochManager')
-
-    const epochManager = new EpochManager()
-    await epochManager.updateWatch()
+    const calldata = (t.context.unirep as any).interface.encodeFunctionData(
+        'beginEpochTransition',
+        []
+    )
+    const hash = await t.context.txManager.queueTransaction(
+        t.context.unirep.address,
+        {
+            data: calldata,
+        }
+    )
     // wait for epoch transition
     for (;;) {
+        try {
+            await t.context.txManager.wait(hash)
+        } catch (_) {}
         const currentEpoch = await t.context.unirep.currentEpoch()
         if (+currentEpoch === +prevEpoch + 1) break
         await new Promise((r) => setTimeout(r, 1000))
     }
-    epochManager.stop()
 }
 
 export const userStateTransition = async (t, iden) => {
