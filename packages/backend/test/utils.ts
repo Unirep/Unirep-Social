@@ -476,15 +476,15 @@ export const epochTransition = async (t) => {
         'beginEpochTransition',
         []
     )
-    const hash = await t.context.txManager.queueTransaction(
-        t.context.unirep.address,
-        {
-            data: calldata,
-        }
-    )
     // wait for epoch transition
     for (;;) {
         try {
+            const hash = await t.context.txManager.queueTransaction(
+                t.context.unirep.address,
+                {
+                    data: calldata,
+                }
+            )
             await t.context.txManager.wait(hash)
         } catch (_) {}
         const currentEpoch = await t.context.unirep.currentEpoch()
