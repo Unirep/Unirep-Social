@@ -10,12 +10,21 @@ type Props = {
     children: any
     onClick?: () => void
     fullSize?: boolean
+    textAlignMiddle?: boolean
 }
 
-const MyButton = ({ type, children, onClick, fullSize }: Props) => {
+const MyButton = ({
+    type,
+    children,
+    onClick,
+    fullSize,
+    textAlignMiddle,
+}: Props) => {
     return (
         <button
-            className={`my-button ${type} ${fullSize ? 'full-size' : ''}`}
+            className={`my-button ${type} ${fullSize ? 'full-size' : ''} ${
+                textAlignMiddle ? 'my-button-middle' : ''
+            }`}
             onClick={onClick}
         >
             {children}

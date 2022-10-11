@@ -141,6 +141,7 @@ const PrivateKey = () => {
                         type={ButtonType.dark}
                         onClick={onClickDownload}
                         fullSize={true}
+                        textAlignMiddle={true}
                     >
                         Download
                     </MyButton>
@@ -161,6 +162,7 @@ const PrivateKey = () => {
                         type={ButtonType.dark}
                         onClick={() => setRevealed(true)}
                         fullSize={true}
+                        textAlignMiddle={true}
                     >
                         Reveal My Private Key
                     </MyButton>
