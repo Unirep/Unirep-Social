@@ -84,7 +84,6 @@ test('should render actionDetail component with props', () => {
     expect(
         screen.queryByText(/you don't have any rep to use persona yet.../i)
     ).not.toBeInTheDocument()
-    screen.debug()
 })
 
 test('trigger falsy useSubsidy', () => {

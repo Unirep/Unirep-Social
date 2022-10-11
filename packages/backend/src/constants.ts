@@ -1,7 +1,6 @@
 import UnirepSocial from '@unirep-social/core/abi/UnirepSocial.json'
 import Unirep from '@unirep/contracts/abi/Unirep.json'
 import { ethers } from 'ethers'
-import randomstring from 'randomstring'
 import { NUM_EPOCH_KEY_NONCE_PER_EPOCH } from '@unirep/circuits'
 
 // Provide default values for process.env
@@ -65,9 +64,6 @@ export enum QueryType {
     Squash = 'squash',
     Rep = 'rep',
 }
-
-export const titlePrefix = '<t>'
-export const titlePostfix = '</t>'
 
 export const add0x = (str: string): string => {
     str = str.padStart(64, '0')

@@ -1,9 +1,8 @@
 import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
 import * as config from './config'
-import { Record, Post, DataType, Vote, Comment, QueryType } from './constants'
+import { Record, Post, DataType, Comment, QueryType } from './constants'
 import UnirepContext from './context/Unirep'
-import { ActionType } from './context/Queue'
 
 export const shortenEpochKey = (epk: string) => {
     if (epk.length > 8) return `${epk.slice(0, 4)}...${epk.slice(-4)}`
@@ -87,6 +86,7 @@ export const getRecords = async (epks: string[]) => {
                     epoch: data[i].epoch,
                     time: Date.parse(data[i].createdAt),
                     data_id: data[i].data,
+                    title: data[i].title,
                     content: data[i].content,
                 }
                 records.unshift(record)
