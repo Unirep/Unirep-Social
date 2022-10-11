@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import UnirepSocial from '@unirep-social/core/abi/UnirepSocial.json'
 import Unirep from '@unirep/contracts/abi/Unirep.json'
 
-const EXPLORER_URL = 'https://kovan-optimistic.etherscan.io'
+const EXPLORER_URL = 'https://blockscout.com/optimism/goerli'
 
 let config: any = {}
 try {
