@@ -17,4 +17,8 @@ packages/frontend/cypress/screenshots
 
 .node-version
 packages/core/contracts/*Verifier.sol
+
+# sqlite
+**/**.sql
+**/**.sqlite
 yarn-error.log

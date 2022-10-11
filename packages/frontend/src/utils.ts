@@ -1,9 +1,8 @@
 import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
 import * as config from './config'
-import { Record, Post, DataType, Vote, Comment, QueryType } from './constants'
+import { Record, Post, DataType, Comment, QueryType } from './constants'
 import UnirepContext from './context/Unirep'
-import { ActionType } from './context/Queue'
 
 export const shortenEpochKey = (epk: string) => {
     if (epk.length > 8) return `${epk.slice(0, 4)}...${epk.slice(-4)}`
@@ -63,34 +62,16 @@ export const makeURL = (_action: string, data: any = {}) => {
     return `${config.SERVER}/api/${action}?${params}`
 }
 
-export const getRecords = async (epks: string[], identity: string) => {
+export const getRecords = async (epks: string[]) => {
+    const epksBase10 = epks.map((epk) => Number('0x' + epk))
     const unirepConfig = (UnirepContext as any)._currentValue
     await unirepConfig.loadingPromise
-    const { commitment } = decodeIdentity(identity)
 
-    const commitmentAPIURL = makeURL(`records`, { commitment })
-    const paramStr = epks.join('_')
+    const paramStr = epksBase10.join('_')
     const apiURL = makeURL(`records/${paramStr}`, {})
     console.log(apiURL)
 
-    const getCommitment = fetch(commitmentAPIURL)
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.length === 0) return
-            const signupRecord: Record = {
-                action: ActionType.Signup,
-                from: 'SignUp Airdrop',
-                to: data[0].to,
-                upvote: unirepConfig.airdroppedReputation,
-                downvote: 0,
-                epoch: data[0].epoch,
-                time: Date.parse(data[0].created_at),
-                data_id: '',
-                content: '',
-            }
-            return signupRecord
-        }) as Promise<Record>
-
+    // bug: createdAt is NaN in backend
     const getGeneralRecords = fetch(apiURL)
         .then((response) => response.json())
         .then((data) => {
@@ -98,13 +79,14 @@ export const getRecords = async (epks: string[], identity: string) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: data[i].from,
-                    to: data[i].to,
+                    from: parseInt(data[i].from).toString(16),
+                    to: parseInt(data[i].to).toString(16),
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
-                    time: Date.parse(data[i].created_at),
+                    time: Date.parse(data[i].createdAt),
                     data_id: data[i].data,
+                    title: data[i].title,
                     content: data[i].content,
                 }
                 records.unshift(record)
@@ -112,7 +94,7 @@ export const getRecords = async (epks: string[], identity: string) => {
             return records
         }) as Promise<Record[]>
 
-    const allRecords = await Promise.all([getCommitment, getGeneralRecords])
+    const allRecords = await Promise.all([getGeneralRecords])
 
     return allRecords.flat()
 }

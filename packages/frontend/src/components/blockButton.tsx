@@ -41,7 +41,7 @@ const BlockButton = ({ type, count, data }: Props) => {
         setReminder('')
 
         if (type === ButtonType.Comments) {
-            history.push(`/post/${data.id}`, { commentId: '' })
+            history.push(`/post/${data.id}`)
         } else if (type === ButtonType.Boost) {
             setBoostOn(true)
         } else if (type === ButtonType.Squash) {

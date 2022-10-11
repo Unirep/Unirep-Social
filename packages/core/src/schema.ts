@@ -129,8 +129,6 @@ const _schema = [
             ['epoch', 'Int'],
             ['action', 'String'],
             ['data', 'String', { optional: true }],
-            ['postId', 'String', { optional: true }],
-            ['commentId', 'String', { optional: true }],
             ['transactionHash', 'String', { unique: true }],
             {
                 name: 'confirmed',

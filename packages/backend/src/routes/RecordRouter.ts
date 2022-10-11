@@ -1,5 +1,4 @@
 import { Express } from 'express'
-import { titlePrefix, titlePostfix } from '../constants'
 import { ActionType } from '@unirep-social/core'
 import catchError from '../catchError'
 
@@ -61,33 +60,30 @@ async function loadRecordsForEpk(req, res) {
     } else {
         const out = await Promise.all(
             records.map(async (record) => {
-                if (record.data === '0' || !record.data) return record
                 if (record.action === 'Post') {
                     const p = await req.db.findOne('Post', {
-                        where: { transactionHash: record.data },
+                        where: { _id: record.data },
                     })
                     if (!p) return
                     return {
-                        ...record.toObject(),
-                        content: `${
-                            p.title !== undefined && p.title.length > 0
-                                ? titlePrefix + p.title + titlePostfix
-                                : ''
-                        }${p.content}`,
+                        ...record,
+                        title: p.title,
+                        content: p.content,
                     }
                 }
                 if (record.action === 'Comment') {
                     const c = await req.db.findOne('Comment', {
                         where: {
-                            transactionHash: record.data,
+                            _id: record.data,
                         },
                     })
                     if (!c) return
                     return {
-                        ...record.toObject(),
+                        ...record,
                         content: c.content,
                     }
                 }
+                return record
             })
         )
         res.json(out.filter((o) => !!o))

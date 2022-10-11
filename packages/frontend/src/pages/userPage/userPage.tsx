@@ -9,6 +9,7 @@ import { getRecords } from '../../utils'
 import BasicPage from '../basicPage/basicPage'
 import { Record, Page, QueryType } from '../../constants'
 import ActivityWidget from './activityWidget'
+import CustomGap from '../../components/customGap'
 import PostsList from '../../components/postsList'
 import CommentsList from '../../components/commentsList'
 import PostContext from '../../context/Post'
@@ -86,7 +87,7 @@ const UserPage = () => {
     const getUserRecords = async () => {
         if (!user.userState || !user.identity) return
 
-        const ret = await getRecords(user.allEpks, user.identity)
+        const ret = await getRecords(user.allEpks)
         const isParsable = !ret.some((h) => h === undefined)
         if (isParsable) {
             setRecords(ret)
@@ -108,6 +109,7 @@ const UserPage = () => {
                 }
 
                 if (isSpent) {
+                    // left stuff
                     if (h.action === ActionType.Post) {
                         s[0] += h.downvote
                     } else if (h.action === ActionType.Comment) {
@@ -115,6 +117,7 @@ const UserPage = () => {
                     } else if (h.action === ActionType.Vote) {
                         s[2] += h.upvote
                         s[3] += h.downvote
+                        r[1] += h.upvote + h.downvote // if all spent also recorded in the right side
                     }
                 }
             })
@@ -219,21 +222,48 @@ const UserPage = () => {
                         </div>
                     </div>
                     <div className="grey-block">
-                        <span>How I use my rep in this cycle</span>
-                        <br />
-                        <div className="rep-bar">
-                            {spent.map((s, i) => (
-                                <RepPortion
-                                    spent={s}
-                                    total={user.reputation}
-                                    action={i}
-                                    key={i}
+                        <div className="title-sm">How I used it</div>
+                        <div className="rep-details">
+                            <div className="rep-bar-title">
+                                <img
+                                    src={require('../../../public/images/lighting.svg')}
                                 />
-                            ))}
+                                Rep
+                            </div>
+                            <div className="rep-bar">
+                                {spent.map((s, i) => (
+                                    <RepPortion
+                                        spent={s}
+                                        total={user.reputation}
+                                        action={i}
+                                        key={i}
+                                    />
+                                ))}
+                            </div>
                         </div>
+                        <CustomGap times={1} />
+                        {/* left after devcon
+                                <div className="rep-details">
+                                <div className="rep-bar-title">
+                                    <img
+                                        src={require('../../../public/images/unirep.svg')}
+                                    />
+                                    Rep-Handout
+                                </div>
+                                <div className="rep-bar">
+                                    {spent.map((s, i) => (
+                                        <RepPortion
+                                            spent={s}
+                                            total={user.reputation}
+                                            action={i}
+                                            key={i}
+                                        />
+                                    ))}
+                                </div>
+                            </div> */}
                     </div>
                 </div>
-                <div style={{ width: '16px' }}></div>
+                <div style={{ width: '16px' }}></div>{' '}
                 <div className="received stuff">
                     <div className="grey-block">
                         <p>Received</p>
@@ -251,10 +281,11 @@ const UserPage = () => {
                                 <img
                                     src={require('../../../public/images/unirep.svg')}
                                 />
-                                System drop
+                                Rep Reset
                             </span>
-                            <p>+{received[0]}</p>
+                            <div className="amount">+{received[0]}</div>
                         </div>
+                        <CustomGap times={2} />
                         <div className="received-info">
                             <span>
                                 <img
@@ -262,8 +293,9 @@ const UserPage = () => {
                                 />
                                 Boost
                             </span>
-                            <p>+{received[1]}</p>
+                            <div className="amount">+{received[1]}</div>
                         </div>
+                        <CustomGap times={2} />
                         <div className="received-info">
                             <span>
                                 <img
@@ -271,7 +303,7 @@ const UserPage = () => {
                                 />
                                 Squash
                             </span>
-                            <p>-{received[2]}</p>
+                            <div className="amount">-{received[2]}</div>
                         </div>
                     </div>
                 </div>
@@ -407,7 +439,7 @@ const UserPage = () => {
                     />
                 ) : (
                     <div>
-                        {records.map((h, i) => (
+                        {records.map((h) => (
                             <ActivityWidget
                                 key={h.time}
                                 record={h}
