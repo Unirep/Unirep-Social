@@ -11,6 +11,8 @@ import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
 import aes from 'aes-js'
 
+const IDENTITY_KEY = 'identityV2'
+
 export class User {
     id?: ZkIdentity
     allEpks = [] as string[]
@@ -68,7 +70,7 @@ export class User {
     // must be called in browser, not in SSR
     async load() {
         await this.unirepConfig.loadingPromise
-        const storedIdentity = window.localStorage.getItem('identity')
+        const storedIdentity = window.localStorage.getItem(IDENTITY_KEY)
         if (storedIdentity) {
             const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
             await this.loadCurrentEpoch()
@@ -92,7 +94,10 @@ export class User {
 
     save() {
         if (this.id) {
-            window.localStorage.setItem('identity', this.id.serializeIdentity())
+            window.localStorage.setItem(
+                IDENTITY_KEY,
+                this.id.serializeIdentity()
+            )
         }
     }
 
@@ -418,7 +423,7 @@ export class User {
             this.reputation = 0
             this.spent = 0
         })
-        window.localStorage.removeItem('identity')
+        window.localStorage.removeItem(IDENTITY_KEY)
     }
 
     async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
