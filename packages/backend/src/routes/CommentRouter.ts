@@ -3,8 +3,12 @@ import catchError from '../catchError'
 import { ethers } from 'ethers'
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { BaseProof, EpochKeyProof, ReputationProof } from '@unirep/contracts'
-import { verifyEpochKeyProof, verifyReputationProof } from '../utils'
+import { EpochKeyProof, ReputationProof } from '@unirep/contracts'
+import {
+    verifyEpochKeyProof,
+    verifyReputationProof,
+    verifySubsidyProof,
+} from '../utils'
 import {
     UNIREP,
     UNIREP_SOCIAL_ABI,
@@ -16,7 +20,8 @@ import {
     QueryType,
     LOAD_POST_COUNT,
 } from '../constants'
-import { ActionType } from '@unirep-social/core'
+import { ActionType, SubsidyProof } from '@unirep-social/core'
+import { Prover } from '../daemons/Prover'
 
 export default (app: Express) => {
     app.get('/api/comment/:id', catchError(loadComment))
@@ -194,15 +199,30 @@ async function createCommentSubsidy(req, res) {
 
     // Parse Inputs
     const { publicSignals, proof, postId, content } = req.body
-    const reputationProof = new BaseProof(
+    const subsidyProof = new SubsidyProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const epochKey = publicSignals[1]
     const minRep = publicSignals[4]
     const hashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(content)
     )
+    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
+
+    const error = await verifySubsidyProof(
+        req.db,
+        subsidyProof,
+        currentEpoch,
+        unirepSocialId
+    )
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
 
     const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
@@ -221,8 +241,8 @@ async function createCommentSubsidy(req, res) {
         [
             post.onChainId,
             hashedContent,
-            reputationProof.publicSignals,
-            reputationProof.proof,
+            subsidyProof.publicSignals,
+            subsidyProof.proof,
         ]
     )
     const hash = await TransactionManager.queueTransaction(

@@ -1,10 +1,12 @@
 import fetch from 'node-fetch'
-import { defaultProver } from '@unirep/circuits/provers/defaultProver'
+// import { defaultProver } from '@unirep-social/circuits/provers/defaultProver'
+import { defaultProver } from './prover'
 import { ZkIdentity } from '@unirep/crypto'
-import { genEpochKey, schema, UserState } from '@unirep/core'
+import { genEpochKey, schema } from '@unirep/core'
 import { getUnirepContract } from '@unirep/contracts'
 import { DB, SQLiteConnector } from 'anondb/node'
 import { ethers } from 'ethers'
+import { SocialUserState } from '@unirep-social/core'
 
 export const genUserState = async (
     provider: ethers.providers.Provider,
@@ -14,7 +16,7 @@ export const genUserState = async (
 ) => {
     const unirepContract = getUnirepContract(address, provider)
     let db: DB = _db ?? (await SQLiteConnector.create(schema, ':memory:'))
-    const userState = new UserState(
+    const userState = new SocialUserState(
         db,
         defaultProver,
         unirepContract,
@@ -65,15 +67,19 @@ export const signUp = async (t) => {
     return { iden, commitment }
 }
 
-export const airdrop = async (t, iden) => {
+export const airdrop = async (t, iden, negRep) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
         iden
     )
-    const signUpProof = await userState.genUserSignUpProof(t.context.attesterId)
-    const isValid = await signUpProof.verify()
+    const negRepProof = await userState.genNegativeRepProof(
+        t.context.attesterId,
+        negRep
+    )
+    const isValid = await negRepProof.verify()
     t.true(isValid)
+    await userState.stop()
 
     const r = await fetch(`${t.context.url}/api/airdrop`, {
         method: 'POST',
@@ -81,8 +87,8 @@ export const airdrop = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            proof: signUpProof.proof,
-            publicSignals: signUpProof.publicSignals,
+            proof: negRepProof.proof,
+            publicSignals: negRepProof.publicSignals,
         }),
     })
     const data = await r.json()
@@ -150,6 +156,7 @@ const genReputationProof = async (t, iden, proveAmount) => {
     )
     const isValid = await repProof.verify()
     t.true(isValid)
+    await userState.stop()
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
     return {
@@ -204,6 +211,42 @@ export const createPost = async (t, iden) => {
     return data
 }
 
+export const createPostSubsidy = async (t, iden) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    const subsidyProof = await userState.genSubsidyProof(t.context.attesterId)
+    const isValid = await subsidyProof.verify()
+    t.true(isValid)
+    await userState.stop()
+
+    const r = await fetch(`${t.context.url}/api/post/subsidy`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            title: 'test',
+            content: 'some content!',
+            publicSignals: subsidyProof.publicSignals,
+            proof: subsidyProof.proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
+    return data
+}
+
 export const editPost = async (t, iden) => {
     const { post } = await createPost(t, iden)
     const userState = await genUserState(
@@ -217,6 +260,7 @@ export const editPost = async (t, iden) => {
     const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
         epkNonce
     )
+    await userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -266,6 +310,7 @@ export const editComment = async (t, iden, postId) => {
     const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
         epkNonce
     )
+    await userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -426,10 +471,26 @@ export const vote = async (
 }
 
 export const epochTransition = async (t) => {
-    const { txManager, unirep } = t.context
-    const calldata = unirep.interface.encodeFunctionData('beginEpochTransition')
-    const hash = await txManager.queueTransaction(unirep.address, calldata)
-    await t.context.unirep.provider.waitForTransaction(hash)
+    const prevEpoch = await t.context.unirep.currentEpoch()
+    const calldata = (t.context.unirep as any).interface.encodeFunctionData(
+        'beginEpochTransition',
+        []
+    )
+    // wait for epoch transition
+    for (;;) {
+        try {
+            const hash = await t.context.txManager.queueTransaction(
+                t.context.unirep.address,
+                {
+                    data: calldata,
+                }
+            )
+            await t.context.txManager.wait(hash)
+        } catch (_) {}
+        const currentEpoch = await t.context.unirep.currentEpoch()
+        if (+currentEpoch === +prevEpoch + 1) break
+        await new Promise((r) => setTimeout(r, 1000))
+    }
 }
 
 export const userStateTransition = async (t, iden) => {
@@ -441,6 +502,7 @@ export const userStateTransition = async (t, iden) => {
 
     const results = await userState.genUserStateTransitionProofs()
     const fromEpoch = userState.latestTransitionedEpoch
+    await userState.stop()
 
     const r = await fetch(`${t.context.url}/api/userStateTransition`, {
         method: 'POST',
@@ -484,6 +546,7 @@ export const genUsernameProof = async (t, iden, preImage) => {
 
     const isValid = await usernameProof.verify()
     t.true(isValid)
+    await userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()

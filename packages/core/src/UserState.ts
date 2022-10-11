@@ -1,6 +1,6 @@
 import { UserState } from '@unirep/core'
-import { BaseProof } from '@unirep/contracts'
 import { stringifyBigInts } from '@unirep/crypto'
+import { NegativeRepProof, SubsidyProof } from './proof'
 
 export class SocialUserState extends UserState {
     async genSubsidyProof(
@@ -42,13 +42,12 @@ export class SocialUserState extends UserState {
             circuitInputs
         )
 
-        const _proof = new BaseProof(
+        const subsidyProof = new SubsidyProof(
             results.publicSignals,
             results.proof,
             this.prover
         )
-        ;(_proof as any).circuit = 'proveSubsidyKey'
-        return _proof
+        return subsidyProof
     }
 
     async genNegativeRepProof(attesterId: BigInt, maxRep: BigInt = BigInt(0)) {
@@ -85,12 +84,12 @@ export class SocialUserState extends UserState {
             circuitInputs
         )
 
-        const _proof = new BaseProof(
+        const negRepProof = new NegativeRepProof(
             results.publicSignals,
             results.proof,
             this.prover
         )
-        ;(_proof as any).circuit = 'proveNegativeReputation'
-        return _proof
+
+        return negRepProof
     }
 }
