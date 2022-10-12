@@ -34,7 +34,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
         : userContext.currentEpoch ===
           postContext.commentsById[dataId].current_epoch
 
-    const isAuthor = userContext.allEpks?.includes(
+    const isAuthor = userContext.currentEpochKeys?.includes(
         isPost
             ? postContext.postsById[dataId].epoch_key
             : postContext.commentsById[dataId].epoch_key
