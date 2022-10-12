@@ -53,7 +53,7 @@ export class TransactionManager {
         }
     }
 
-    async tryBroadcastTransaction(signedData: string) {
+    async tryBroadcastTransaction(signedData: string, backoff = 1000) {
         if (!this.wallet) throw new Error('Not initialized')
         try {
             console.log(`Sending tx ${ethers.utils.keccak256(signedData)}`)
@@ -74,8 +74,8 @@ export class TransactionManager {
                         'Your app has exceeded its compute units per second capacity'
                     ) !== -1
             ) {
-                await new Promise((r) => setTimeout(r, 1000))
-                return this.tryBroadcastTransaction(signedData)
+                await new Promise((r) => setTimeout(r, backoff))
+                return this.tryBroadcastTransaction(signedData, backoff * 2)
             } else {
                 console.log(err)
                 return false
@@ -109,7 +109,11 @@ export class TransactionManager {
         return this.wallet?.provider.waitForTransaction(hash)
     }
 
-    async queueTransaction(to: string, data: string | any = {}) {
+    async queueTransaction(
+        to: string,
+        data: string | any = {},
+        backoff = 1000
+    ) {
         const args = {} as any
         if (typeof data === 'string') {
             // assume it's input data
@@ -138,8 +142,8 @@ export class TransactionManager {
                             'Your app has exceeded its compute units per second capacity'
                         ) !== -1
                 ) {
-                    await new Promise((r) => setTimeout(r, 1000))
-                    return this.queueTransaction(to, data)
+                    await new Promise((r) => setTimeout(r, backoff))
+                    return this.queueTransaction(to, data, backoff * 2)
                 } else {
                     throw err
                 }
