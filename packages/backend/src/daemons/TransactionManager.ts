@@ -130,7 +130,7 @@ export class TransactionManager {
                 Object.assign(args, {
                     gasLimit: gasLimit.add(50000),
                 })
-            } catch (err) {
+            } catch (err: any) {
                 if (
                     err
                         .toString()
