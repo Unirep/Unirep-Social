@@ -35,10 +35,10 @@ export const getRecords = async (epks: string[]) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: (+data[i].from)
+                    from: BigInt(data[i].from)
                         .toString(16)
                         .padStart(unirepConfig.epochTreeDepth / 4, '0'),
-                    to: (+data[i].to)
+                    to: BigInt(data[i].to)
                         .toString(16)
                         .padStart(unirepConfig.epochTreeDepth / 4, '0'),
                     upvote: data[i].upvote,

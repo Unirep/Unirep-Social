@@ -60,6 +60,12 @@ export class Data {
         )
     }
 
+    private convertEpochKeyToHexString(epochKey: string) {
+        return BigInt(epochKey)
+            .toString(16)
+            .padStart(unirepConfig.epochTreeDepth / 4, '0')
+    }
+
     private ingestPosts(_posts: Post | Post[]) {
         const posts = [_posts].flat()
         for (const post of posts) {
@@ -157,7 +163,9 @@ export class Data {
     async loadCommentsByPostId(postId: string) {
         const r = await fetch(makeURL(`post/${postId}/comments`))
         const _comments = await r.json()
-        const comments = _comments.map(this.convertDataToComment) as Comment[]
+        const comments = _comments.map((c: any) =>
+            this.convertDataToComment(c)
+        ) as Comment[]
         this.ingestComments(comments)
         this.commentsByPostId[postId] = comments.map((c) => c.id)
     }
@@ -183,7 +191,10 @@ export class Data {
         if (votesResult === null) return
 
         const votes = (votesResult as Vote[]).map((vote) => {
-            return { ...vote, voter: `${(+vote.voter).toString(16)}` }
+            return {
+                ...vote,
+                voter: this.convertEpochKeyToHexString(vote.voter),
+            }
         })
         this.ingestVotes(votes)
         this.votesByPostId[postId] = votes.map((v: Vote) => v._id)
@@ -435,6 +446,27 @@ export class Data {
         this.save()
     }
 
+    convertDataToComment(data: any) {
+        const comment = {
+            type: DataType.Comment,
+            id: data._id,
+            post_id: data.postId,
+            content: data.content,
+            // votes,
+            upvote: data.posRep,
+            downvote: data.negRep,
+            epoch_key: this.convertEpochKeyToHexString(data.epochKey),
+            username: '',
+            createdAt: data.createdAt,
+            reputation: data.minRep,
+            current_epoch: data.epoch,
+            proofIndex: data.proofIndex,
+            transactionHash: data.transactionHash,
+        }
+
+        return comment
+    }
+
     convertDataToPost(data: any) {
         const post: Post = {
             type: DataType.Post,
@@ -444,9 +476,7 @@ export class Data {
             // votes,
             upvote: data.posRep,
             downvote: data.negRep,
-            epoch_key: `${(+data.epochKey)
-                .toString(16)
-                .padStart(unirepConfig.epochTreeDepth / 4, '0')}`,
+            epoch_key: this.convertEpochKeyToHexString(data.epochKey),
             username: '',
             createdAt: data.createdAt,
             reputation: data.minRep,
@@ -457,29 +487,6 @@ export class Data {
         }
 
         return post
-    }
-
-    convertDataToComment(data: any) {
-        const comment = {
-            type: DataType.Comment,
-            id: data._id,
-            post_id: data.postId,
-            content: data.content,
-            // votes,
-            upvote: data.posRep,
-            downvote: data.negRep,
-            epoch_key: `${(+data.epochKey)
-                .toString(16)
-                .padStart(unirepConfig.epochTreeDepth / 4, '0')}`,
-            username: '',
-            createdAt: data.createdAt,
-            reputation: data.minRep,
-            current_epoch: data.epoch,
-            proofIndex: data.proofIndex,
-            transactionHash: data.transactionHash,
-        }
-
-        return comment
     }
 }
 
