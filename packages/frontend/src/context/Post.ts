@@ -2,7 +2,7 @@ import { createContext } from 'react'
 import { makeAutoObservable } from 'mobx'
 
 import { Post, Comment, QueryType, Vote, Draft, DataType } from '../constants'
-import { makeURL, convertDataToPost, convertDataToComment } from '../utils'
+import { makeURL } from '../utils'
 import UserContext, { User } from './User'
 import QueueContext, { Queue, ActionType, Metadata } from './Queue'
 import UnirepContext, { UnirepConfig } from './Unirep'
@@ -22,16 +22,22 @@ export class Data {
     votesByPostId = {} as { [commentId: string]: string[] }
     postDraft: Draft = { title: '', content: '' }
     commentDraft: Draft = { title: '', content: '' }
+    loadingPromise
 
     constructor() {
         makeAutoObservable(this)
+
         if (typeof window !== 'undefined') {
-            this.load()
+            this.loadingPromise = this.load()
+        } else {
+            this.loadingPromise = Promise.resolve()
         }
     }
 
     // must be called in browser, not in SSR
-    load() {
+    async load() {
+        await unirepConfig.loadingPromise
+
         const storedPostDraft = window.localStorage.getItem('post-draft')
         if (storedPostDraft) {
             this.postDraft = JSON.parse(storedPostDraft)
@@ -80,14 +86,18 @@ export class Data {
     }
 
     async loadPost(id: string) {
+        await unirepConfig.loadingPromise
+
         const apiURL = makeURL(`post/${id}`, {})
         const r = await fetch(apiURL)
         const data = await r.json()
-        const post = convertDataToPost(data)
+        const post = this.convertDataToPost(data)
         this.ingestPosts(post)
     }
 
     async loadFeed(query: string, lastRead = '0', epks = [] as string[]) {
+        await unirepConfig.loadingPromise
+
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
@@ -96,7 +106,7 @@ export class Data {
         })
         const r = await fetch(apiURL)
         const data = await r.json()
-        const posts = data.map((p: any) => convertDataToPost(p)) as Post[]
+        const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
         this.ingestPosts(posts)
         const key = this.feedKey(query, epks)
         if (!this.feedsByQuery[key]) {
@@ -114,6 +124,8 @@ export class Data {
     }
 
     async loadComments(query: string, lastRead = '0', epks = [] as string[]) {
+        await unirepConfig.loadingPromise
+
         const epksBase10 = epks.map((epk) => Number('0x' + epk))
         const apiURL = makeURL(`comment`, {
             query,
@@ -123,7 +135,7 @@ export class Data {
         const r = await fetch(apiURL)
         const data = await r.json()
         const comments = data.map((p: any) =>
-            convertDataToComment(p)
+            this.convertDataToComment(p)
         ) as Comment[]
         const key = this.feedKey(query, epks)
         this.ingestComments(comments)
@@ -145,7 +157,7 @@ export class Data {
     async loadCommentsByPostId(postId: string) {
         const r = await fetch(makeURL(`post/${postId}/comments`))
         const _comments = await r.json()
-        const comments = _comments.map(convertDataToComment) as Comment[]
+        const comments = _comments.map(this.convertDataToComment) as Comment[]
         this.ingestComments(comments)
         this.commentsByPostId[postId] = comments.map((c) => c.id)
     }
@@ -154,7 +166,7 @@ export class Data {
         const r = await fetch(makeURL(`comment/${commentId}`))
         const comment = await r.json()
         if (comment === null) return
-        this.ingestComments(convertDataToComment(comment))
+        this.ingestComments(this.convertDataToComment(comment))
     }
 
     async loadVotesForCommentId(commentId: string) {
@@ -260,7 +272,7 @@ export class Data {
                 const { transaction, error, post: _post } = await r.json()
                 if (error) throw error
                 await queueContext.afterTx(transaction)
-                const post = convertDataToPost(_post)
+                const post = this.convertDataToPost(_post)
                 this.postsById[post.id] = post
                 this.feedsByQuery[QueryType.New].unshift(post.id)
                 this.postDraft = { title: '', content: '' }
@@ -421,6 +433,53 @@ export class Data {
             this.commentDraft = { title, content }
         }
         this.save()
+    }
+
+    convertDataToPost(data: any) {
+        const post: Post = {
+            type: DataType.Post,
+            id: data._id,
+            title: data.title,
+            content: data.content,
+            // votes,
+            upvote: data.posRep,
+            downvote: data.negRep,
+            epoch_key: `${(+data.epochKey)
+                .toString(16)
+                .padStart(unirepConfig.epochTreeDepth / 4, '0')}`,
+            username: '',
+            createdAt: data.createdAt,
+            reputation: data.minRep,
+            commentCount: data.commentCount,
+            current_epoch: data.epoch,
+            proofIndex: data.proofIndex,
+            transactionHash: data.transactionHash,
+        }
+
+        return post
+    }
+
+    convertDataToComment(data: any) {
+        const comment = {
+            type: DataType.Comment,
+            id: data._id,
+            post_id: data.postId,
+            content: data.content,
+            // votes,
+            upvote: data.posRep,
+            downvote: data.negRep,
+            epoch_key: `${(+data.epochKey)
+                .toString(16)
+                .padStart(unirepConfig.epochTreeDepth / 4, '0')}`,
+            username: '',
+            createdAt: data.createdAt,
+            reputation: data.minRep,
+            current_epoch: data.epoch,
+            proofIndex: data.proofIndex,
+            transactionHash: data.transactionHash,
+        }
+
+        return comment
     }
 }
 

@@ -9,50 +9,6 @@ export const shortenEpochKey = (epk: string) => {
     else return epk
 }
 
-const decodeIdentity = (identity: string) => {
-    try {
-        const id = new ZkIdentity(Strategy.SERIALIZED, identity)
-        const commitment = id.genIdentityCommitment()
-        return { id, commitment, identityNullifier: id.identityNullifier }
-    } catch (e) {
-        console.log('Incorrect Identity format\n', e)
-        return {
-            id: BigInt(0),
-            commitment: BigInt(0),
-            identityNullifier: BigInt(0),
-        }
-    }
-}
-
-const getEpochKey = (
-    epkNonce: number,
-    identityNullifier: any,
-    epoch: number
-) => {
-    const unirepConfig = (UnirepContext as any)._currentValue
-    if (!unirepConfig.loaded) throw new Error('Unirep config not loaded')
-    const epochKey = genEpochKey(
-        identityNullifier,
-        epoch,
-        epkNonce,
-        unirepConfig.epochTreeDepth
-    )
-
-    return epochKey.toString(16)
-}
-
-const getEpochKeys = (identity: string, epoch: number) => {
-    const unirepConfig = (UnirepContext as any)._currentValue
-    if (!unirepConfig.loaded) throw new Error('Unirep config not loaded')
-    const { identityNullifier } = decodeIdentity(identity)
-    const epks: string[] = []
-    for (let i = 0; i < unirepConfig.numEpochKeyNoncePerEpoch; i++) {
-        const tmp = getEpochKey(i, identityNullifier, epoch)
-        epks.push(tmp)
-    }
-    return epks
-}
-
 export const makeURL = (_action: string, data: any = {}) => {
     const params = new URLSearchParams(data)
     let action = _action
@@ -79,8 +35,12 @@ export const getRecords = async (epks: string[]) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: parseInt(data[i].from).toString(16).padStart(8, '0'),
-                    to: parseInt(data[i].to).toString(16).padStart(8, '0'),
+                    from: (+data[i].from)
+                        .toString(16)
+                        .padStart(unirepConfig.epochTreeDepth / 4, '0'),
+                    to: (+data[i].to)
+                        .toString(16)
+                        .padStart(unirepConfig.epochTreeDepth / 4, '0'),
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
@@ -97,74 +57,6 @@ export const getRecords = async (epks: string[]) => {
     const allRecords = await Promise.all([getGeneralRecords])
 
     return allRecords.flat()
-}
-
-export const convertDataToComment = (data: any) => {
-    const comment = {
-        type: DataType.Comment,
-        id: data._id,
-        post_id: data.postId,
-        content: data.content,
-        // votes,
-        upvote: data.posRep,
-        downvote: data.negRep,
-        epoch_key: `${(+data.epochKey).toString(16).padStart(8, '0')}`, // change to epochTreeDepth
-        username: '',
-        createdAt: data.createdAt,
-        reputation: data.minRep,
-        current_epoch: data.epoch,
-        proofIndex: data.proofIndex,
-        transactionHash: data.transactionHash,
-    }
-
-    return comment
-}
-
-export const convertDataToPost = (data: any) => {
-    const post: Post = {
-        type: DataType.Post,
-        id: data._id,
-        title: data.title,
-        content: data.content,
-        // votes,
-        upvote: data.posRep,
-        downvote: data.negRep,
-        epoch_key: `${(+data.epochKey).toString(16).padStart(8, '0')}`, // change to epochTreeDepth
-        username: '',
-        createdAt: data.createdAt,
-        reputation: data.minRep,
-        commentCount: data.commentCount,
-        current_epoch: data.epoch,
-        proofIndex: data.proofIndex,
-        transactionHash: data.transactionHash,
-    }
-
-    return post
-}
-
-export const getPostsByQuery = async (
-    query: QueryType,
-    lastRead: string = '0',
-    epks: string[] = []
-) => {
-    const apiURL = makeURL(`post`, { query, lastRead, epks: epks.join('_') })
-    console.log(apiURL)
-
-    const r = await fetch(apiURL)
-    const data = await r.json()
-    return data.map((p: any) => convertDataToPost(p)) as Post[]
-}
-
-export const getCommentsByQuery = async (
-    query: QueryType,
-    lastRead: string = '0',
-    epks: string[] = []
-) => {
-    const apiURL = makeURL(`comment`, { query, lastRead, epks: epks.join('_') })
-    console.log(apiURL)
-    const r = await fetch(apiURL)
-    const data = await r.json()
-    return data.map((c: any) => convertDataToComment(c)) as Comment[]
 }
 
 export const sentReport = async (issue: string, email: string) => {
