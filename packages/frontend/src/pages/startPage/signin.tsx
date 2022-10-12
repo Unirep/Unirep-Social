@@ -31,13 +31,15 @@ const Signin = ({ getStarted }: Props) => {
     const gotoHomePage = async () => {
         if (!pwd) {
             await userContext.login(input)
+            uiContext.setDownloadPrivateKey(true)
             history.push('/')
             return
         }
         try {
             const id = await userContext.decrypt(pwd, JSON.parse(input))
+            uiContext.setDownloadPrivateKey(true)
+
             await userContext.login(id)
-            uiContext.setDownloadPrivateKey()
 
             history.push('/')
         } catch (err) {

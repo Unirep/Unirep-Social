@@ -33,8 +33,14 @@ const Overlay = () => {
         history.push(`/setting`, { isConfirmed: true })
     }
 
-    const signout = async () => {
+    const signout = async (event: any) => {
+        if (!uiContext.hasDownloadPrivateKey && !checkNotDownload) {
+            preventPropagation(event)
+            return
+        }
+
         await userContext.logout()
+        uiContext.uiLogout()
         history.push('/')
         window.location.reload()
     }
@@ -65,7 +71,7 @@ const Overlay = () => {
                         <a href="/feedback">Send feedback</a>
                         <p onClick={gotoUserPage}>My stuff</p>
                         <p onClick={gotoSettingPage}>Settings</p>
-                        {!uiContext.downloadPrivateKey && (
+                        {!uiContext.hasDownloadPrivateKey && (
                             <div
                                 className="warning"
                                 onClick={preventPropagation}
@@ -88,7 +94,7 @@ const Overlay = () => {
                         <p
                             onClick={signout}
                             className={
-                                !uiContext.downloadPrivateKey &&
+                                !uiContext.hasDownloadPrivateKey &&
                                 !checkNotDownload
                                     ? 'disabled'
                                     : ''
