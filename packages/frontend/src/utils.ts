@@ -79,8 +79,8 @@ export const getRecords = async (epks: string[]) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: parseInt(data[i].from).toString(16),
-                    to: parseInt(data[i].to).toString(16),
+                    from: parseInt(data[i].from).toString(16).padStart(8, '0'),
+                    to: parseInt(data[i].to).toString(16).padStart(8, '0'),
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
@@ -108,7 +108,7 @@ export const convertDataToComment = (data: any) => {
         // votes,
         upvote: data.posRep,
         downvote: data.negRep,
-        epoch_key: `${(+data.epochKey).toString(16)}`,
+        epoch_key: `${(+data.epochKey).toString(16).padStart(8, '0')}`, // change to epochTreeDepth
         username: '',
         createdAt: data.createdAt,
         reputation: data.minRep,
@@ -129,7 +129,7 @@ export const convertDataToPost = (data: any) => {
         // votes,
         upvote: data.posRep,
         downvote: data.negRep,
-        epoch_key: `${(+data.epochKey).toString(16)}`,
+        epoch_key: `${(+data.epochKey).toString(16).padStart(8, '0')}`, // change to epochTreeDepth
         username: '',
         createdAt: data.createdAt,
         reputation: data.minRep,

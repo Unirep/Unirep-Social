@@ -3,6 +3,7 @@ export enum ButtonType {
     light = 'button-light',
     darkTrans = 'button-dark-transparent',
     lightTrans = 'button-light-transparent',
+    disabled = 'button-disabled',
 }
 
 type Props = {
@@ -11,6 +12,9 @@ type Props = {
     onClick?: () => void
     fullSize?: boolean
     textAlignMiddle?: boolean
+    disabled?: boolean
+    fontSize?: number
+    fontWeight?: number
 }
 
 const MyButton = ({
@@ -19,6 +23,9 @@ const MyButton = ({
     onClick,
     fullSize,
     textAlignMiddle,
+    disabled,
+    fontSize,
+    fontWeight,
 }: Props) => {
     return (
         <button
@@ -26,6 +33,11 @@ const MyButton = ({
                 textAlignMiddle ? 'my-button-middle' : ''
             }`}
             onClick={onClick}
+            disabled={disabled}
+            style={{
+                fontSize: `${fontSize ? `${fontSize}px` : '16px'}`,
+                fontWeight: `${fontWeight ?? '400'}`,
+            }}
         >
             {children}
         </button>
