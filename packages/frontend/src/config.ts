@@ -23,10 +23,24 @@ if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
 const SERVER = config.SERVER ?? 'http://localhost:3001'
 const DEFAULT_ETH_PROVIDER_URL =
     config.DEFAULT_ETH_PROVIDER_URL ?? 'http://localhost:8545'
-const DEFAULT_ETH_PROVIDER = DEFAULT_ETH_PROVIDER_URL.startsWith('http')
-    ? new ethers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER_URL)
-    : new ethers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER_URL)
-// const DEFAULT_ETH_PROVIDER = 'http://18.188.136.227'
+
+let DEFAULT_ETH_PROVIDER: any
+if (config.ALCHEMY_KEY) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.AlchemyProvider(
+        'optimism-goerli',
+        config.ALCHEMY_KEY
+    )
+} else if (DEFAULT_ETH_PROVIDER_URL.startsWith('http')) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.JsonRpcProvider(
+        DEFAULT_ETH_PROVIDER_URL
+    )
+} else if (DEFAULT_ETH_PROVIDER_URL.startsWith('ws')) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.WebSocketProvider(
+        DEFAULT_ETH_PROVIDER_URL
+    )
+} else {
+    throw new Error('No eth provider')
+}
 
 const UNIREP_SOCIAL_ABI = UnirepSocial
 const UNIREP_ABI = Unirep

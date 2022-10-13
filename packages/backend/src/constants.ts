@@ -17,6 +17,7 @@ export const {
     UNIREP,
     UNIREP_SOCIAL,
     DEFAULT_ETH_PROVIDER_URL,
+    ALCHEMY_KEY,
     MONGO_URL,
     DB_PATH,
     GITHUB_CLIENT_ID,
@@ -35,9 +36,24 @@ if (!DEPLOYER_PRIV_KEY) {
 // export const UNIREP = '0xE7709F35fb195E1D117D486aEB24bA58CEccCD29';
 // export const UNIREP_SOCIAL = '0x0F50453236B2Ca88D5C1fBC8D7FA91001d93eC68';
 // const DEFAULT_ETH_PROVIDER_URL = 'wss://eth-goerli.alchemyapi.io/v2/tYp-IJU_idg28iohx9gsLqhq6KRZxk7f';
-export const DEFAULT_ETH_PROVIDER = DEFAULT_ETH_PROVIDER_URL.startsWith('http')
-    ? new ethers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER_URL)
-    : new ethers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER_URL)
+let DEFAULT_ETH_PROVIDER: any
+if (ALCHEMY_KEY) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.AlchemyProvider(
+        'optimism-goerli',
+        ALCHEMY_KEY
+    )
+} else if (DEFAULT_ETH_PROVIDER_URL.startsWith('http')) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.JsonRpcProvider(
+        DEFAULT_ETH_PROVIDER_URL
+    )
+} else if (DEFAULT_ETH_PROVIDER_URL.startsWith('ws')) {
+    DEFAULT_ETH_PROVIDER = new ethers.providers.WebSocketProvider(
+        DEFAULT_ETH_PROVIDER_URL
+    )
+} else {
+    throw new Error('No eth provider')
+}
+export { DEFAULT_ETH_PROVIDER }
 export const DEFAULT_START_BLOCK = 0
 export const UNIREP_SOCIAL_ATTESTER_ID = 1
 

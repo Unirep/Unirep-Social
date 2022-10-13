@@ -53,7 +53,7 @@ export class TransactionManager {
         }
     }
 
-    async tryBroadcastTransaction(signedData: string, backoff = 1000) {
+    async tryBroadcastTransaction(signedData: string) {
         if (!this.wallet) throw new Error('Not initialized')
         try {
             console.log(`Sending tx ${ethers.utils.keccak256(signedData)}`)
@@ -67,16 +67,6 @@ export class TransactionManager {
             ) {
                 // if the transaction is reverted the nonce is still used, so we return true
                 return true
-            } else if (
-                err
-                    .toString()
-                    .indexOf(
-                        'Your app has exceeded its compute units per second capacity'
-                    ) !== -1
-            ) {
-                console.log('backing off', backoff)
-                await new Promise((r) => setTimeout(r, backoff))
-                return this.tryBroadcastTransaction(signedData, backoff * 2)
             } else {
                 console.log(err)
                 return false
@@ -110,11 +100,7 @@ export class TransactionManager {
         return this.wallet?.provider.waitForTransaction(hash)
     }
 
-    async queueTransaction(
-        to: string,
-        data: string | any = {},
-        backoff = 1000
-    ) {
+    async queueTransaction(to: string, data: string | any = {}) {
         const args = {} as any
         if (typeof data === 'string') {
             // assume it's input data
@@ -124,32 +110,16 @@ export class TransactionManager {
         }
         if (!this.wallet) throw new Error('Not initialized')
         if (!args.gasLimit) {
-            try {
-                // don't estimate, use this for unpredictable gas limit tx's
-                // transactions may revert with this
-                const gasLimit = await this.wallet.provider.estimateGas({
-                    to,
-                    from: this.wallet.address,
-                    ...args,
-                })
-                Object.assign(args, {
-                    gasLimit: gasLimit.add(50000),
-                })
-            } catch (err: any) {
-                if (
-                    err
-                        .toString()
-                        .indexOf(
-                            'Your app has exceeded its compute units per second capacity'
-                        ) !== -1
-                ) {
-                    console.log('backing off', backoff)
-                    await new Promise((r) => setTimeout(r, backoff))
-                    return this.queueTransaction(to, data, backoff * 2)
-                } else {
-                    throw err
-                }
-            }
+            // don't estimate, use this for unpredictable gas limit tx's
+            // transactions may revert with this
+            const gasLimit = await this.wallet.provider.estimateGas({
+                to,
+                from: this.wallet.address,
+                ...args,
+            })
+            Object.assign(args, {
+                gasLimit: gasLimit.add(50000),
+            })
         }
         const nonce = await this.getNonce(this.wallet.address)
         const signedData = await this.wallet.signTransaction({
