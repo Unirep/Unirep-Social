@@ -74,6 +74,7 @@ export class TransactionManager {
                         'Your app has exceeded its compute units per second capacity'
                     ) !== -1
             ) {
+                console.log('backing off', backoff)
                 await new Promise((r) => setTimeout(r, backoff))
                 return this.tryBroadcastTransaction(signedData, backoff * 2)
             } else {
@@ -142,6 +143,7 @@ export class TransactionManager {
                             'Your app has exceeded its compute units per second capacity'
                         ) !== -1
                 ) {
+                    console.log('backing off', backoff)
                     await new Promise((r) => setTimeout(r, backoff))
                     return this.queueTransaction(to, data, backoff * 2)
                 } else {
