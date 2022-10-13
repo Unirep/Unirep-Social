@@ -48,6 +48,8 @@ const UNIREP_ABI = Unirep
 const ABOUT_URL = 'https://about.unirep.social'
 const LOAD_POST_COUNT = 10
 
+const CURRENT_VERSION = config.CURRENT_VERSION ?? 1
+
 export {
     SERVER,
     DEFAULT_ETH_PROVIDER,
@@ -57,4 +59,5 @@ export {
     ABOUT_URL,
     LOAD_POST_COUNT,
     EXPLORER_URL,
+    CURRENT_VERSION,
 }

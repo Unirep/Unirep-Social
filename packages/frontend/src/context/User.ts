@@ -69,7 +69,14 @@ export class User {
     async load() {
         await this.unirepConfig.loadingPromise
         const storedIdentity = window.localStorage.getItem('identity')
+        const version = window.localStorage.getItem('version')
         if (storedIdentity) {
+            if (version !== config.CURRENT_VERSION) {
+                // wipe the database so we can do a fresh sync
+                const db = await IndexedDBConnector.create(schema, 1)
+                await db.closeAndWipe()
+            }
+            window.localStorage.setItem('version', config.CURRENT_VERSION)
             const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
             await this.loadCurrentEpoch()
             await this.setIdentity(id)
