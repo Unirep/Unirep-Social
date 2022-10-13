@@ -65,7 +65,7 @@ async function listComments(req, res, next) {
             createdAt:
                 lastRead && query === QueryType.New
                     ? {
-                          $lt: +lastRead,
+                          lt: +lastRead,
                       }
                     : undefined,
             epochKey: epks.length ? epks : undefined,
