@@ -30,7 +30,7 @@ test('trigger button onClick functionality', async () => {
     }
     const userData = {
         // userStateTransition: jest.fn(),
-        calcualteAllEpks: jest.fn(),
+        calculateAllEpks: jest.fn(),
         loadReputation: jest.fn(),
         updateWatch: jest.fn(),
         updateLatestTransitionEpoch: jest.fn(),
