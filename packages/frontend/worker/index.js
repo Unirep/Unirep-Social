@@ -3,8 +3,8 @@ import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
 // Enables edge cdn - https://developers.cloudflare.com/workers/learning/how-the-cache-works/
 const DEBUG = true
 const ENABLE_ASSET_CACHE = false
-const ENABLE_KEY_CACHE = true
-const BACKEND_URL = 'https://unirep.tubby.cloud'
+const ENABLE_KEY_CACHE = false
+const BACKEND_URL = 'https://unirep.social'
 
 addEventListener('fetch', (event) => {
     event.respondWith(generateResponse(event))
