@@ -162,6 +162,7 @@ jobs:
                   command: |
                       yarn build --scope @unirep-social/circuits --scope @unirep-social/core
                       cd packages/frontend
+                      echo "export default {DEFAULT_ETH_PROVIDER_URL: 'wss://ws-goerli.optimism.io'}" > src/localConfig.ts
                       yarn build --mode production
                       yarn build:worker
             - run:
