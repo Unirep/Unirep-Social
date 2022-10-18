@@ -6,13 +6,15 @@ export class UI {
 
     hasBanner: boolean = true
     scrollTop: number = 0
-    downloadPrivateKey = false
+    hasDownloadPrivateKey: boolean = false
 
     constructor() {
         makeObservable(this, {
             hasBanner: observable,
             scrollTop: observable,
+            hasDownloadPrivateKey: observable,
         })
+
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
         } else {
@@ -30,6 +32,13 @@ export class UI {
         if (storedHasBanner) {
             this.hasBanner = storedHasBanner === 'true'
         }
+
+        const storedHasDownloadPrivateKey = window.localStorage.getItem(
+            'hasDownloadPrivateKey'
+        )
+        if (storedHasDownloadPrivateKey) {
+            this.hasDownloadPrivateKey = storedHasDownloadPrivateKey === 'true'
+        }
     }
 
     setHasBanner(input: boolean) {
@@ -37,8 +46,17 @@ export class UI {
         window.localStorage.setItem('hasBanner', this.hasBanner.toString())
     }
 
-    setDownloadPrivateKey() {
-        this.downloadPrivateKey = true
+    setDownloadPrivateKey(input: boolean) {
+        this.hasDownloadPrivateKey = input
+        window.localStorage.setItem(
+            'hasDownloadPrivateKey',
+            this.hasDownloadPrivateKey.toString()
+        )
+    }
+
+    uiLogout() {
+        window.localStorage.removeItem('hasDownloadPrivateKey')
+        window.localStorage.removeItem('hasBanner')
     }
 }
 

@@ -84,7 +84,7 @@ const UserInfoWidget = () => {
                             />
                             {userContext.netReputation}
                         </h3>
-                        {!uiContext.downloadPrivateKey && (
+                        {!uiContext.hasDownloadPrivateKey && (
                             <div>
                                 <CustomGap times={1} />
                                 <MyButton
