@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useHistory } from 'react-router-dom'
 
 import PostContext from '../../context/Post'
+import UserContext from '../../context/User'
 import { Params } from '../../constants'
 
 import BasicPage from '../basicPage/basicPage'
@@ -13,7 +14,9 @@ import { DataType } from '../../constants'
 
 const EditPage = () => {
     const { id } = useParams<Params>()
+    const history = useHistory()
     const postContext = useContext(PostContext)
+    const userContext = useContext(UserContext)
     const [alertOn, setAlertOn] = useState<boolean>(false)
 
     useEffect(() => {
@@ -35,7 +38,12 @@ const EditPage = () => {
         epkNonce: number,
         reputation: number
     ) => {
-        postContext.editPost(id, title, content, epkNonce)
+        const post = postContext.postsById[id]
+        const index = userContext.currentEpochKeys.findIndex(
+            (k) => k === post.epoch_key
+        )
+        postContext.editPost(id, title, content, index ?? 0)
+        history.goBack()
     }
 
     return (

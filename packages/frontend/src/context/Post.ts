@@ -315,7 +315,6 @@ export class Data {
                     await queueContext.afterTx(transaction)
                     const post = convertDataToPost(_post)
                     this.postsById[post.id] = post
-                    this.feedsByQuery[QueryType.New].unshift(post.id)
                     this.save()
                 }
             },
