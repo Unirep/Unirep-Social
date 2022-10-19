@@ -15,7 +15,6 @@ workflows:
                       branches:
                           only:
                               - main
-                              - staging-deploy
 
 # Just for reusing below
 step_defs:
