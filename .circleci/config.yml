@@ -9,18 +9,24 @@ workflows:
             - frontend-test
             - frontend-e2e-test
             - circuits-test
+            - staging-deploy:
+                  context: cloudflare
+                  filters:
+                      branches:
+                          only:
+                              - main
 
 # Just for reusing below
 step_defs:
     - run: &node_version
           name: Set Node version
           command: |
-              nvm install v14
-              nvm alias default v14
+              nvm install v16
+              nvm alias default v16
               echo "nvm use default" >> $BASH_ENV
     - run: &check_version
           name: Check Node version
-          command: node -v | grep v14
+          command: node -v | grep v16
 
 jobs:
     lint:
@@ -139,3 +145,27 @@ jobs:
             - run:
                   name: Test
                   command: cd packages/circuits && yarn test
+    staging-deploy:
+        resource_class: medium
+        machine:
+            image: ubuntu-2204:2022.04.1
+        steps:
+            - checkout
+            - run: *node_version
+            - run: *check_version
+            - run:
+                  name: Install Packages
+                  command: yarn && yarn bootstrap --force-local
+            - run:
+                  name: Build
+                  command: |
+                      yarn build --scope @unirep-social/circuits --scope @unirep-social/core
+                      cd packages/frontend
+                      echo "export default {DEFAULT_ETH_PROVIDER_URL: 'wss://ws-goerli.optimism.io', SERVER:'https://unirep.social'}" > src/localConfig.ts
+                      yarn build --mode production
+                      yarn build:worker
+            - run:
+                  name: Deploy
+                  command: |
+                      cd packages/frontend
+                      npx wrangler publish
