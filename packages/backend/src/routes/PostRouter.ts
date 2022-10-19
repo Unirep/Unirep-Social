@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof, BaseProof, EpochKeyProof } from '@unirep/contracts'
+import { ReputationProof, EpochKeyProof } from '@unirep/contracts'
 import { ethers } from 'ethers'
 import {
     UNIREP_SOCIAL,
@@ -14,9 +14,14 @@ import {
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
 } from '../constants'
-import { ActionType } from '@unirep-social/core'
-import { verifyEpochKeyProof, verifyReputationProof } from '../utils'
+import { ActionType, SubsidyProof } from '@unirep-social/core'
+import {
+    verifyEpochKeyProof,
+    verifyReputationProof,
+    verifySubsidyProof,
+} from '../utils'
 import TransactionManager from '../daemons/TransactionManager'
+import { Prover } from '../daemons/Prover'
 
 export default (app: Express) => {
     app.get('/api/post', catchError(loadPosts))
@@ -191,13 +196,29 @@ async function createPostSubsidy(req, res) {
 
     // Parse Inputs
     const { publicSignals, proof, title, content } = req.body
-    const subsidyProof = new BaseProof(
+    const subsidyProof = new SubsidyProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const hashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(title + content)
     )
+    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
+
+    const error = await verifySubsidyProof(
+        req.db,
+        subsidyProof,
+        currentEpoch,
+        unirepSocialId
+    )
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
     const { attestingFee } = await unirepContract.config()
 
     const calldata = unirepSocialContract.interface.encodeFunctionData(

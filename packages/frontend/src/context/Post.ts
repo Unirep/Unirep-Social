@@ -88,7 +88,7 @@ export class Data {
     }
 
     async loadFeed(query: string, lastRead = '0', epks = [] as string[]) {
-        const epksBase10 = epks.map((epk) => Number('0x' + epk))
+        const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
             lastRead,

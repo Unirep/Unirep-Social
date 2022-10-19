@@ -2,7 +2,6 @@ import { Circuit, formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { Prover } from './daemons/Prover'
 import {
     ReputationProof,
-    SignUpProof,
     UserTransitionProof,
     StartTransitionProof,
     ProcessAttestationsProof,
@@ -11,6 +10,7 @@ import {
 import { DB } from 'anondb'
 import { UNIREP, UNIREP_ABI, DEFAULT_ETH_PROVIDER } from './constants'
 import { ethers } from 'ethers'
+import { NegativeRepProof, SubsidyProof } from '@unirep-social/core'
 
 const unirepContract = new ethers.Contract(
     UNIREP,
@@ -118,17 +118,56 @@ const verifyEpochKeyProof = async (
     }
 }
 
-const verifyAirdropProof = async (
+const verifySubsidyProof = async (
     db: DB,
-    signUpProof: SignUpProof,
+    subsidyProof: SubsidyProof,
+    currentEpoch: number,
+    unirepSocialId: number,
+    voteReceiver?: string
+): Promise<string | undefined> => {
+    const epoch = Number(subsidyProof.epoch)
+    const gstRoot = subsidyProof.globalStateTreeRoot.toString()
+    const attesterId = Number(subsidyProof.attesterId)
+
+    // check if epoch is correct
+    if (epoch !== Number(currentEpoch)) {
+        return 'Error: epoch of the proof mismatches current epoch'
+    }
+
+    // check GST root
+    {
+        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        if (!exists) {
+            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
+        }
+    }
+
+    // check attester ID
+    if (Number(unirepSocialId) !== attesterId) {
+        return 'Error: proof with wrong attester ID'
+    }
+
+    // check vote receiver is not the proof owner
+    if (voteReceiver && voteReceiver !== subsidyProof.notEpochKey) {
+        return 'Error: prove wrong receiver'
+    }
+
+    const isProofValid = await subsidyProof.verify()
+    if (!isProofValid) {
+        return 'Error: invalid subsidy proof'
+    }
+}
+
+const verifyNegRepProof = async (
+    db: DB,
+    negRepProof: NegativeRepProof,
     unirepSocialId: number,
     currentEpoch: number
 ): Promise<string | undefined> => {
-    const epoch = Number(signUpProof.epoch)
-    const epk = signUpProof.epochKey.toString(16)
-    const gstRoot = signUpProof.globalStateTree.toString()
-    const attesterId = signUpProof.attesterId
-    const userHasSignedUp = signUpProof.userHasSignedUp
+    const epoch = Number(negRepProof.epoch)
+    const epk = negRepProof.epochKey
+    const gstRoot = negRepProof.globalStateTreeRoot.toString()
+    const attesterId = negRepProof.attesterId
 
     // check if epoch is correct
     if (epoch !== Number(currentEpoch)) {
@@ -140,18 +179,9 @@ const verifyAirdropProof = async (
         return 'Error: proof with wrong attester ID'
     }
 
-    // Check if user has signed up in Unirep Social
-    if (Number(userHasSignedUp) === 0) {
-        return 'Error: user has not signed up in Unirep Social'
-    }
-
-    const isProofValid = await Prover.verifyProof(
-        Circuit.proveUserSignUp,
-        (signUpProof as any).publicSignals,
-        formatProofForSnarkjsVerification(signUpProof.proof as string[])
-    )
+    const isProofValid = await negRepProof.verify()
     if (!isProofValid) {
-        return 'Error: invalid user sign up proof'
+        return 'Error: invalid negative reputation proof'
     }
 
     // check GST root
@@ -253,6 +283,7 @@ export {
     verifyReputationProof,
     verifyUSTProof,
     verifyEpochKeyProof,
-    verifyAirdropProof,
+    verifyNegRepProof,
+    verifySubsidyProof,
     verifyGSTRoot,
 }

@@ -4,13 +4,17 @@
 
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
 
     &:hover {
         img {
             filter: opacity(60%);
         }
     }
+}
+
+.my-button-middle {
+    justify-content: center;
 }
 
 .full-size {

@@ -67,6 +67,15 @@ export class TransactionManager {
             ) {
                 // if the transaction is reverted the nonce is still used, so we return true
                 return true
+            } else if (
+                err
+                    .toString()
+                    .indexOf(
+                        'Your app has exceeded its compute units per second capacity'
+                    ) !== -1
+            ) {
+                await new Promise((r) => setTimeout(r, 1000))
+                return this.tryBroadcastTransaction(signedData)
             } else {
                 console.log(err)
                 return false

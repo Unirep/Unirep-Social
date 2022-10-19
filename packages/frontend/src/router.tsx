@@ -9,8 +9,6 @@ import MainPage from './pages/mainPage/mainPage'
 import PostPage from './pages/postPage/postPage'
 import EditPage from './pages/editPage/editPage'
 import UserPage from './pages/userPage/userPage'
-import LoginPage from './pages/loginPage/loginPage'
-import SignupPage from './pages/signupPage/signupPage'
 import NewPage from './pages/newPage/newPage'
 import FeedbackPage from './pages/feedbackPage/feedbackPage'
 import AdminPage from './pages/adminPage/adminPage'
@@ -49,8 +47,6 @@ const AppRouter = () => {
                         <Route component={PostPage} path="/post/:id" />
                         <Route component={EditPage} path="/edit/:id" />
                         <Route component={UserPage} path="/user" />
-                        <Route component={LoginPage} path="/login" />
-                        <Route component={SignupPage} path="/signup" />
                         <Route component={NewPage} path="/new" />
                         <Route component={FeedbackPage} path="/feedback" />
                         <Route component={AdminPage} path="/admin" />

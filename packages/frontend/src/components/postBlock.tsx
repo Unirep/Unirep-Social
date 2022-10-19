@@ -67,7 +67,7 @@ const PostBlock = ({ postId, page }: Props) => {
 
     const gotoPostPage = () => {
         if (page === Page.Post) return
-        history.push(`/post/${post.id}`, { commentId: '' })
+        history.push(`/post/${post.id}`)
     }
 
     const editPost = () => {

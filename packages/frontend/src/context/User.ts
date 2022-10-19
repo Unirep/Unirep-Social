@@ -331,14 +331,18 @@ export class User {
 
     async signUp(signupCode: string) {
         if (this.id) {
-            throw new Error('Identity already exists!')
+            return { error: 'Identity already exists!' }
+            // throw new Error('Identity already exists!')
         }
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
 
         const id = new ZkIdentity()
         await this.setIdentity(id)
-        if (!this.id) throw new Error('Iden is not set')
+        if (!this.id) {
+            return { error: 'Iden is not set' }
+            // throw new Error('Iden is not set')
+        }
         this.save()
 
         const commitment = id
@@ -364,7 +368,8 @@ export class User {
         if (error) {
             this.id = undefined
             this.userState = undefined
-            throw error
+            return { error }
+            // throw error
         }
         const { blockNumber } =
             await config.DEFAULT_ETH_PROVIDER.waitForTransaction(transaction)

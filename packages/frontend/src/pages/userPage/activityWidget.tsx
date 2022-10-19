@@ -5,7 +5,7 @@ import MarkdownIt from 'markdown-it'
 
 import { ActionType } from '../../context/Queue'
 import PostContext from '../../context/Post'
-import { Record, titlePrefix, titlePostfix } from '../../constants'
+import { Record } from '../../constants'
 
 type Props = {
     record: Record
@@ -80,19 +80,9 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
         }
     })
     const [actionData, setActionData] = useState<ActionData>(() => {
-        if (record.content === undefined || record.content.length === 0)
-            return { title: '', content: '' }
-
-        let i = record.content.indexOf(titlePrefix)
-        let j = record.content.indexOf(titlePostfix)
-        if (i === -1 || j === -1)
-            return { title: '', content: markdown.render(record.content) }
-        i = i + titlePrefix.length
         return {
-            title: record.content.substring(i, j),
-            content: markdown.render(
-                record.content.substring(j + titlePostfix.length)
-            ),
+            title: record.title ?? '',
+            content: record.content ? markdown.render(record.content) : '',
         }
     })
 

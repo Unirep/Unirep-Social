@@ -11,10 +11,6 @@ export enum ActionType {
     Signup = 'Signup',
 }
 
-// For legacy support
-const titlePostfix = '</t>'
-const titlePrefix = '<t>'
-
 export interface UnirepSocialConfig {
     postRep: number
     commentRep: number
@@ -193,12 +189,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 commentCount: commentCount + (findComment ? 0 : 1),
             },
         })
-        db.delete('Record', {
-            where: {
-                transactionHash,
-                confirmed: 0,
-            },
-        })
         db.upsert('Record', {
             where: {
                 transactionHash,
@@ -288,12 +278,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 status: 1,
             })
         }
-        db.delete('Record', {
-            where: {
-                transactionHash,
-                confirmed: 0,
-            },
-        })
         db.upsert('Record', {
             where: {
                 transactionHash,
@@ -372,8 +356,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
     }
 
     async voteSubmittedEvent(event: ethers.Event, db: TransactionDB) {
-        const voteId = event.transactionHash
-
         const decodedData = this.unirepSocialContract.interface.decodeEventLog(
             'VoteSubmitted',
             event.data
@@ -387,7 +369,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _negRep = Number(decodedData.downvoteValue._hex)
 
         const findVote = await this._db.findOne('Vote', {
-            where: { transactionHash: voteId },
+            where: { transactionHash: _transactionHash },
         })
         if (findVote) {
             db.update('Vote', {
@@ -443,12 +425,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             })
         }
 
-        db.delete('Record', {
-            where: {
-                transactionHash: _transactionHash,
-                confirmed: 0,
-            },
-        })
         db.upsert('Record', {
             where: {
                 transactionHash: _transactionHash,
@@ -464,7 +440,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 epoch: _epoch,
                 action: ActionType.Vote,
                 transactionHash: _transactionHash,
-                data: '',
+                data: findVote?.postId ?? findVote?.commentId ?? '',
                 confirmed: 1,
             },
         })
@@ -532,12 +508,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const _epoch = Number(event.topics[1])
         const _epochKey = BigInt(event.topics[2]).toString(10)
 
-        db.delete('Record', {
-            where: {
-                transactionHash: _transactionHash,
-                confirmed: 0,
-            },
-        })
         db.create('Record', {
             to: _epochKey,
             from: 'UnirepSocial',

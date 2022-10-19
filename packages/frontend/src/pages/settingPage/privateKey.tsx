@@ -74,7 +74,7 @@ const PrivateKey = () => {
             document.body.appendChild(element)
             element.click()
 
-            uiContext.setDownloadPrivateKey()
+            uiContext.setDownloadPrivateKey(true)
         }
     }
 
@@ -141,6 +141,7 @@ const PrivateKey = () => {
                         type={MyButtonType.dark}
                         onClick={onClickDownload}
                         fullSize={true}
+                        textAlignMiddle={true}
                     >
                         Download
                     </MyButton>
@@ -150,7 +151,7 @@ const PrivateKey = () => {
                     <img
                         src={require('../../../public/images/reveal-key.svg')}
                     />
-                    {!uiContext.downloadPrivateKey && (
+                    {!uiContext.hasDownloadPrivateKey && (
                         <p>
                             It seems like you haven’t download your private key
                             yet, please do so soon.
@@ -161,6 +162,7 @@ const PrivateKey = () => {
                         type={MyButtonType.dark}
                         onClick={() => setRevealed(true)}
                         fullSize={true}
+                        textAlignMiddle={true}
                     >
                         Reveal My Private Key
                     </MyButton>

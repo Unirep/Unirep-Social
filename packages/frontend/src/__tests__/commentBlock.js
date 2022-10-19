@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import CommentBlock from '../components/commentBlock'
+import { HashLink as Link } from 'react-router-hash-link'
+import { BrowserRouter } from 'react-router-dom'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -20,11 +22,13 @@ jest.mock('react-router-dom', () => ({
 
 const renderCommentBlock = (userData, postData, commentId, page) => {
     return render(
-        <UserContext.Provider value={userData}>
-            <PostContext.Provider value={postData}>
-                <CommentBlock commentId={commentId} page={page} />
-            </PostContext.Provider>
-        </UserContext.Provider>
+        <BrowserRouter>
+            <UserContext.Provider value={userData}>
+                <PostContext.Provider value={postData}>
+                    <CommentBlock commentId={commentId} page={page} />
+                </PostContext.Provider>
+            </UserContext.Provider>
+        </BrowserRouter>
     )
 }
 
