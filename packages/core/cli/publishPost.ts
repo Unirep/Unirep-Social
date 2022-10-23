@@ -136,7 +136,7 @@ const publishPost = async (args: any) => {
         const proofIndex = await unirepContract.getProofIndex(
             reputationProof.hash()
         )
-        const data = unirepSocialContract.interface.parseLog(logs[1])
+        const data = unirepSocialContract.interface.parseLog(logs[2])
         const postId = data.args._postId
         console.log('Transaction hash:', tx?.hash)
         console.log('Proof index:', proofIndex.toNumber())

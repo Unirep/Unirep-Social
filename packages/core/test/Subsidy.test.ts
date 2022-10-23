@@ -153,8 +153,8 @@ describe('Subsidy', function () {
         expect(tx)
             .to.emit(unirepContract, 'AttestationSubmitted')
             .withArgs(epoch, toEpochKey, unirepSocialContract.address, [
+                BigInt(attesterId),
                 BigInt(voteAmount),
-                BigInt(0),
                 BigInt(0),
                 BigInt(0),
                 BigInt(0),
@@ -366,7 +366,13 @@ describe('Subsidy', function () {
                 epoch,
                 negRepProof.publicSignals[1],
                 unirepSocialContract.address,
-                [BigInt(voteAmount), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]
+                [
+                    BigInt(attesterId),
+                    BigInt(voteAmount),
+                    BigInt(0),
+                    BigInt(0),
+                    BigInt(0),
+                ]
             )
         await tx.wait()
         // should fail to double claim

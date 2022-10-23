@@ -196,7 +196,7 @@ describe('Post', function () {
                 ethers.provider
             )
             const data = unirepSocialContract.interface.parseLog(
-                receipt.logs[1]
+                receipt.logs[2]
             )
             const postId = data.args._postId
             await leaveComment(unirepSocialContract, ethers.provider, postId)
@@ -211,7 +211,7 @@ describe('Post', function () {
                 ethers.provider
             )
             const data = unirepSocialContract.interface.parseLog(
-                receipt.logs[1]
+                receipt.logs[2]
             )
             const postId = data.args._postId
 
@@ -266,7 +266,7 @@ describe('Post', function () {
                 unirepSocialContract,
                 ethers.provider
             )
-            const data = unirepSocialContract.interface.parseLog(logs[1])
+            const data = unirepSocialContract.interface.parseLog(logs[2])
             const postId = data.args._postId
 
             const id = new ZkIdentity()
@@ -370,7 +370,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 postId = data.args._postId
             }
 
@@ -438,7 +438,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 postId = data.args._postId
             }
 
@@ -515,7 +515,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 postId = data.args._postId
             }
             const id = new ZkIdentity()
@@ -559,7 +559,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 commentId = data.args._commentId
             }
 
@@ -631,7 +631,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 postId = data.args._postId
             }
             const id = new ZkIdentity()
@@ -675,7 +675,7 @@ describe('Post', function () {
                         { value: DEFAULT_ATTESTING_FEE }
                     )
                     .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[1])
+                const data = unirepSocialContract.interface.parseLog(logs[2])
                 commentId = data.args._commentId
             }
 
