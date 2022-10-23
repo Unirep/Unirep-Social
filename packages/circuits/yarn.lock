@@ -696,6 +696,14 @@
     "@unirep/crypto" "1.0.0-alpha-5"
     snarkjs "^0.4.7"
 
+"@unirep/circuits@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.1.tgz#7640b384b2c6e2049bc60a50c09b4f1afbe27290"
+  integrity sha512-Bxm2ZRQ8JMtZ4CwQZWRq61VydWNEtQfD6wVxtEQEKXdKSse/13wvWjnxFb4yUDQS9LgkK3C3TpG1zIlQSHG/cw==
+  dependencies:
+    "@unirep/crypto" "1.0.1"
+    snarkjs "^0.4.7"
+
 "@unirep/contracts@1.0.0-alpha-10":
   version "1.0.0-alpha-10"
   resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-10.tgz#067fabdad5d9de1087b5eb1fe2e34a439967fe3a"
@@ -722,6 +730,15 @@
   version "1.0.0-alpha-5"
   resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.0-alpha-5.tgz#d392473d6e0be6326d56d08c32694949b23ce615"
   integrity sha512-ILLSDDP/DCdoA7p2JLN8Xyr9LWU8HvYXege9xhwAaE+e4MBfIaFTvnG+QpxcqYOqX+6blDC+vPxWmLlqcfbo+Q==
+  dependencies:
+    "@zk-kit/incremental-merkle-tree" "^0.4.3"
+    circomlibjs "0.0.8"
+    maci-crypto "^0.9.1"
+
+"@unirep/crypto@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.1.tgz#ac7b199319ddb1f9c6aafed3e2e5da2d499ae71f"
+  integrity sha512-PIfkag5njg4lOSx2x6rBJbpsy8rHvyrR5FBG9w4BpTjjBeUN2PHXKOVFPvdDAJ3elh84E+ZwBX0evyJ6cmm9oQ==
   dependencies:
     "@zk-kit/incremental-merkle-tree" "^0.4.3"
     circomlibjs "0.0.8"

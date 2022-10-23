@@ -18,8 +18,8 @@
     },
     "devDependencies": {
         "@types/mocha": "^9.1.1",
-        "@unirep/circuits": "1.0.0-alpha-8",
-        "@unirep/crypto": "1.0.0-alpha-5",
+        "@unirep/circuits": "1.0.1",
+        "@unirep/crypto": "1.0.1",
         "circom": "^0.5.46",
         "circomlib": "0.5.3",
         "mocha": "^10.0.0",

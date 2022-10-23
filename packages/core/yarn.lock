@@ -740,40 +740,41 @@
   resolved "https://registry.npmjs.org/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@unirep/circuits@1.0.0-alpha-8":
-  version "1.0.0-alpha-8"
-  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-8.tgz#374766ce308a1390e5b5443dd2618f4f7c4808d3"
-  integrity sha512-wDTbxRo31hwryj2pibQXDQxfdZenFfZ7t8EqEMexJZA/+BJOCOySXeiYM9XPwldOFLj3dN9AfeSWd7uVjUl9ug==
+"@unirep/circuits@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.1.tgz#7640b384b2c6e2049bc60a50c09b4f1afbe27290"
+  integrity sha512-Bxm2ZRQ8JMtZ4CwQZWRq61VydWNEtQfD6wVxtEQEKXdKSse/13wvWjnxFb4yUDQS9LgkK3C3TpG1zIlQSHG/cw==
   dependencies:
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/crypto" "1.0.1"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-10":
-  version "1.0.0-alpha-10"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-10.tgz#067fabdad5d9de1087b5eb1fe2e34a439967fe3a"
-  integrity sha512-NL/rlW8X8eUDgzVPBxUQmyjwRGK44rgS6HHhUe/HR4b5lxzPmaRGmn9mw30gYUEqnPoC3XcV3L+nP7ey8/mwgw==
+"@unirep/contracts@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.1.tgz#483d9a41ad1175760dc3d44ad13c50764c899a4a"
+  integrity sha512-HIxBsZkLrAIF1JhTgkiEtgY02YCaieuJl56BGyhaxaEM5FRdSXBYXdmrI3zcWkHEvrvKzwcRgl3Zk5eYidZBBQ==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-8"
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/circuits" "1.0.1"
+    "@unirep/crypto" "1.0.1"
     "@zk-kit/incremental-merkle-tree.sol" "^1.2.0"
     ethers "^5.6.8"
+    solc "^0.8.16"
 
-"@unirep/core@1.0.0-alpha-14":
-  version "1.0.0-alpha-14"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-14.tgz#d65406025dea234c29364c4b7e3aae5fce5f7af8"
-  integrity sha512-tLlf35BOEqFI8nq+q2rw0XLwttTslySbKrQmkOX6owA2T24BQDxqaEeykbh0QI6lZL3Oxg09dQ/Lozs/mgqdog==
+"@unirep/core@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.1.tgz#00bf476ea298541ddd762848eac8a8e41896ef9f"
+  integrity sha512-kAJdukXWToUpmi9u9XeV8U14K4zxs+N9fWXmK/VSAnyEvYrhBMpTfYQpDvanF91g7xvTP3sKQ1r6O2jWX00iIA==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-8"
-    "@unirep/contracts" "1.0.0-alpha-10"
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/circuits" "1.0.1"
+    "@unirep/contracts" "1.0.1"
+    "@unirep/crypto" "1.0.1"
     anondb "^0.0.10"
     ethers "^5.6.8"
     nanoid "3"
 
-"@unirep/crypto@1.0.0-alpha-5":
-  version "1.0.0-alpha-5"
-  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.0-alpha-5.tgz#d392473d6e0be6326d56d08c32694949b23ce615"
-  integrity sha512-ILLSDDP/DCdoA7p2JLN8Xyr9LWU8HvYXege9xhwAaE+e4MBfIaFTvnG+QpxcqYOqX+6blDC+vPxWmLlqcfbo+Q==
+"@unirep/crypto@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.1.tgz#ac7b199319ddb1f9c6aafed3e2e5da2d499ae71f"
+  integrity sha512-PIfkag5njg4lOSx2x6rBJbpsy8rHvyrR5FBG9w4BpTjjBeUN2PHXKOVFPvdDAJ3elh84E+ZwBX0evyJ6cmm9oQ==
   dependencies:
     "@zk-kit/incremental-merkle-tree" "^0.4.3"
     circomlibjs "0.0.8"
@@ -1700,6 +1701,11 @@ commander@3.0.2:
   version "3.0.2"
   resolved "https://registry.npmjs.org/commander/-/commander-3.0.2.tgz"
   integrity sha512-Gar0ASD4BDyKC4hl4DwHqDrmvjoxWKZigVnAbn5H1owvm4CxCPdb0HQDehwNYMJpla5+M2tPmPARzhtYuwpHow==
+
+commander@^8.1.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-8.3.0.tgz#4837ea1b2da67b9c616a67afbb0fafee567bca66"
+  integrity sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -4986,6 +4992,19 @@ solc@0.7.3:
     js-sha3 "0.8.0"
     memorystream "^0.3.1"
     require-from-string "^2.0.0"
+    semver "^5.5.0"
+    tmp "0.0.33"
+
+solc@^0.8.16:
+  version "0.8.17"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.17.tgz#c748fec6a64bf029ec406aa9b37e75938d1115ae"
+  integrity sha512-Dtidk2XtTTmkB3IKdyeg6wLYopJnBVxdoykN8oP8VY3PQjN16BScYoUJTXFm2OP7P0hXNAqWiJNmmfuELtLf8g==
+  dependencies:
+    command-exists "^1.2.8"
+    commander "^8.1.0"
+    follow-redirects "^1.12.1"
+    js-sha3 "0.8.0"
+    memorystream "^0.3.1"
     semver "^5.5.0"
     tmp "0.0.33"
 

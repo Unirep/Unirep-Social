@@ -2421,40 +2421,41 @@
   dependencies:
     "@types/node" "*"
 
-"@unirep/circuits@1.0.0-alpha-8":
-  version "1.0.0-alpha-8"
-  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.0-alpha-8.tgz#374766ce308a1390e5b5443dd2618f4f7c4808d3"
-  integrity sha512-wDTbxRo31hwryj2pibQXDQxfdZenFfZ7t8EqEMexJZA/+BJOCOySXeiYM9XPwldOFLj3dN9AfeSWd7uVjUl9ug==
+"@unirep/circuits@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/circuits/-/circuits-1.0.1.tgz#7640b384b2c6e2049bc60a50c09b4f1afbe27290"
+  integrity sha512-Bxm2ZRQ8JMtZ4CwQZWRq61VydWNEtQfD6wVxtEQEKXdKSse/13wvWjnxFb4yUDQS9LgkK3C3TpG1zIlQSHG/cw==
   dependencies:
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/crypto" "1.0.1"
     snarkjs "^0.4.7"
 
-"@unirep/contracts@1.0.0-alpha-10":
-  version "1.0.0-alpha-10"
-  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.0-alpha-10.tgz#067fabdad5d9de1087b5eb1fe2e34a439967fe3a"
-  integrity sha512-NL/rlW8X8eUDgzVPBxUQmyjwRGK44rgS6HHhUe/HR4b5lxzPmaRGmn9mw30gYUEqnPoC3XcV3L+nP7ey8/mwgw==
+"@unirep/contracts@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/contracts/-/contracts-1.0.1.tgz#483d9a41ad1175760dc3d44ad13c50764c899a4a"
+  integrity sha512-HIxBsZkLrAIF1JhTgkiEtgY02YCaieuJl56BGyhaxaEM5FRdSXBYXdmrI3zcWkHEvrvKzwcRgl3Zk5eYidZBBQ==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-8"
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/circuits" "1.0.1"
+    "@unirep/crypto" "1.0.1"
     "@zk-kit/incremental-merkle-tree.sol" "^1.2.0"
     ethers "^5.6.8"
+    solc "^0.8.16"
 
-"@unirep/core@1.0.0-alpha-14":
-  version "1.0.0-alpha-14"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.0-alpha-14.tgz#d65406025dea234c29364c4b7e3aae5fce5f7af8"
-  integrity sha512-tLlf35BOEqFI8nq+q2rw0XLwttTslySbKrQmkOX6owA2T24BQDxqaEeykbh0QI6lZL3Oxg09dQ/Lozs/mgqdog==
+"@unirep/core@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.1.tgz#00bf476ea298541ddd762848eac8a8e41896ef9f"
+  integrity sha512-kAJdukXWToUpmi9u9XeV8U14K4zxs+N9fWXmK/VSAnyEvYrhBMpTfYQpDvanF91g7xvTP3sKQ1r6O2jWX00iIA==
   dependencies:
-    "@unirep/circuits" "1.0.0-alpha-8"
-    "@unirep/contracts" "1.0.0-alpha-10"
-    "@unirep/crypto" "1.0.0-alpha-5"
+    "@unirep/circuits" "1.0.1"
+    "@unirep/contracts" "1.0.1"
+    "@unirep/crypto" "1.0.1"
     anondb "^0.0.10"
     ethers "^5.6.8"
     nanoid "3"
 
-"@unirep/crypto@1.0.0-alpha-5":
-  version "1.0.0-alpha-5"
-  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.0-alpha-5.tgz#d392473d6e0be6326d56d08c32694949b23ce615"
-  integrity sha512-ILLSDDP/DCdoA7p2JLN8Xyr9LWU8HvYXege9xhwAaE+e4MBfIaFTvnG+QpxcqYOqX+6blDC+vPxWmLlqcfbo+Q==
+"@unirep/crypto@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@unirep/crypto/-/crypto-1.0.1.tgz#ac7b199319ddb1f9c6aafed3e2e5da2d499ae71f"
+  integrity sha512-PIfkag5njg4lOSx2x6rBJbpsy8rHvyrR5FBG9w4BpTjjBeUN2PHXKOVFPvdDAJ3elh84E+ZwBX0evyJ6cmm9oQ==
   dependencies:
     "@zk-kit/incremental-merkle-tree" "^0.4.3"
     circomlibjs "0.0.8"
@@ -3707,9 +3708,9 @@ blake2b-wasm@^2.4.0:
     b4a "^1.0.1"
     nanoassert "^2.0.0"
 
-"blake2b-wasm@git+https://github.com/jbaylina/blake2b-wasm.git":
+"blake2b-wasm@https://github.com/jbaylina/blake2b-wasm.git":
   version "2.1.0"
-  resolved "git+https://github.com/jbaylina/blake2b-wasm.git#0d5f024b212429c7f50a7f533aa3a2406b5b42b3"
+  resolved "https://github.com/jbaylina/blake2b-wasm.git#0d5f024b212429c7f50a7f533aa3a2406b5b42b3"
   dependencies:
     nanoassert "^1.0.0"
 
@@ -4494,6 +4495,11 @@ combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   dependencies:
     delayed-stream "~1.0.0"
 
+command-exists@^1.2.8:
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/command-exists/-/command-exists-1.2.9.tgz#c50725af3808c8ab0260fd60b01fbfa25b954f69"
+  integrity sha512-LTQ/SGc+s0Xc0Fu5WaKnR0YiygZkm9eKFvyS+fRsU7/ZWFF8ykFM6Pc9aCVf1+xasOOZpO3BAVgVrKvsqKHV7w==
+
 commander@^2.20.0:
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
@@ -4509,7 +4515,7 @@ commander@^7.0.0, commander@^7.2.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-7.2.0.tgz#a36cb57d0b501ce108e4d20559a150a391d97ab7"
   integrity sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==
 
-commander@^8.3.0:
+commander@^8.1.0, commander@^8.3.0:
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-8.3.0.tgz#4837ea1b2da67b9c616a67afbb0fafee567bca66"
   integrity sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
@@ -6093,6 +6099,11 @@ follow-redirects@^1.0.0, follow-redirects@^1.14.0:
   version "1.15.1"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.1.tgz#0ca6a452306c9b276e4d3127483e29575e207ad5"
   integrity sha512-yLAMQs+k0b2m7cVxpS1VKJVvoz7SS9Td1zss3XRwXj+ZDH00RJgnuLx7E44wx02kQLrdM3aOOy+FpzS7+8OizA==
+
+follow-redirects@^1.12.1:
+  version "1.15.2"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
+  integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
 
 for-each@^0.3.3:
   version "0.3.3"
@@ -8527,6 +8538,11 @@ memfs@^3.4.3:
   dependencies:
     fs-monkey "^1.0.3"
 
+memorystream@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/memorystream/-/memorystream-0.3.1.tgz#86d7090b30ce455d63fbae12dda51a47ddcaf9b2"
+  integrity sha512-S3UwM3yj5mtUSEfP41UZmt/0SCoVYUcU1rkXv+BQ5Ig8ndL4sPoJNBUJERafdPb5jjHJGuMgytgKvKIf58XNBw==
+
 meow@^9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/meow/-/meow-9.0.0.tgz#cd9510bc5cac9dee7d03c73ee1f9ad959f4ea364"
@@ -10865,7 +10881,7 @@ selfsigned@^2.0.1:
   dependencies:
     node-forge "^1"
 
-"semver@2 || 3 || 4 || 5", semver@^5.3.0:
+"semver@2 || 3 || 4 || 5", semver@^5.3.0, semver@^5.5.0:
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.1.tgz#a954f931aeba508d307bbf069eff0c01c96116f7"
   integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
@@ -11115,6 +11131,19 @@ socks@^2.6.2:
   dependencies:
     ip "^2.0.0"
     smart-buffer "^4.2.0"
+
+solc@^0.8.16:
+  version "0.8.17"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.17.tgz#c748fec6a64bf029ec406aa9b37e75938d1115ae"
+  integrity sha512-Dtidk2XtTTmkB3IKdyeg6wLYopJnBVxdoykN8oP8VY3PQjN16BScYoUJTXFm2OP7P0hXNAqWiJNmmfuELtLf8g==
+  dependencies:
+    command-exists "^1.2.8"
+    commander "^8.1.0"
+    follow-redirects "^1.12.1"
+    js-sha3 "0.8.0"
+    memorystream "^0.3.1"
+    semver "^5.5.0"
+    tmp "0.0.33"
 
 "source-map-js@>=0.6.2 <2.0.0", source-map-js@^1.0.2:
   version "1.0.2"
@@ -11716,19 +11745,19 @@ tmp-promise@^2.0.2:
   dependencies:
     tmp "0.1.0"
 
+tmp@0.0.33, tmp@^0.0.33:
+  version "0.0.33"
+  resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
+  integrity sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==
+  dependencies:
+    os-tmpdir "~1.0.2"
+
 tmp@0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.1.0.tgz#ee434a4e22543082e294ba6201dcc6eafefa2877"
   integrity sha512-J7Z2K08jbGcdA1kkQpJSqLF6T0tdQqpR2pnSUXsIchbPdTI9v3e85cLW0d6WDhwuAleOV71j2xWs8qMPfK7nKw==
   dependencies:
     rimraf "^2.6.3"
-
-tmp@^0.0.33:
-  version "0.0.33"
-  resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
-  integrity sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==
-  dependencies:
-    os-tmpdir "~1.0.2"
 
 tmp@~0.2.1:
   version "0.2.1"
