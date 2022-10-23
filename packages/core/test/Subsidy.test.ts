@@ -7,6 +7,7 @@ import { genUserState } from './utils'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { deployUnirepSocial } from '../src/utils'
 import * as config from '@unirep/circuits'
+import * as ContractConfig from '@unirep/contracts'
 
 describe('Subsidy', function () {
     this.timeout(1000000)
@@ -16,11 +17,11 @@ describe('Subsidy', function () {
     before(async () => {
         const accounts = await ethers.getSigners()
         const settings = {
-            maxUsers: config.MAX_USERS,
-            maxAttesters: config.MAX_ATTESTERS,
+            // maxUsers: config.MAX_USERS,
+            // maxAttesters: config.MAX_ATTESTERS,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
-            epochLength: config.EPOCH_LENGTH,
+            epochLength: ContractConfig.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
         unirepContract = await deployUnirep(accounts[0], settings)
@@ -307,7 +308,9 @@ describe('Subsidy', function () {
             await userState.stop()
         }
         // now do a UST
-        await ethers.provider.send('evm_increaseTime', [config.EPOCH_LENGTH])
+        await ethers.provider.send('evm_increaseTime', [
+            ContractConfig.EPOCH_LENGTH,
+        ])
         await unirepContract
             .connect(accounts[0])
             .beginEpochTransition()

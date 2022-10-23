@@ -5,7 +5,7 @@ import { NegativeRepProof, SubsidyProof } from './proof'
 export class SocialUserState extends UserState {
     async genSubsidyProof(
         attesterId: bigint,
-        minRep: BigInt = BigInt(0),
+        minRep: bigint = BigInt(0),
         notEpochKey: BigInt = BigInt(0)
     ) {
         const epoch = await this.latestTransitionedEpoch()

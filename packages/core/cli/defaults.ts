@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 import * as config from '@unirep/circuits'
+import * as ContractConfig from '@unirep/contracts'
 import { BigNumber } from 'ethers'
 
 dotenv.config()
@@ -8,7 +9,7 @@ dotenv.config()
 const DEFAULT_PRIVATE_KEY = process.env.PRIVATE_KEY
 const DEFAULT_ETH_PROVIDER = 'http://localhost:8545'
 const DEFAULT_MAX_EPOCH_KEY_NONCE = config.NUM_EPOCH_KEY_NONCE_PER_EPOCH
-const DEFAULT_EPOCH_LENGTH = config.EPOCH_LENGTH
+const DEFAULT_EPOCH_LENGTH = ContractConfig.EPOCH_LENGTH
 const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
 const DEFAULT_TREE_DEPTHS_CONFIG = 'circuit'
 

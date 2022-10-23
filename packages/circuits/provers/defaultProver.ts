@@ -63,7 +63,7 @@ const _defaultProver = {
     },
     getVKey: (name: string): any => {
         return
-    }
+    },
 }
 
 export { _defaultProver as defaultProver }
