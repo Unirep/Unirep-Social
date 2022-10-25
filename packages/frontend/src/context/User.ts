@@ -44,6 +44,7 @@ export class User {
             latestProcessedBlock: observable,
             isInitialSyncing: observable,
             id: observable,
+            needsUST: computed,
         })
         if (typeof window !== 'undefined') {
             this.loadingPromise = this.load()
