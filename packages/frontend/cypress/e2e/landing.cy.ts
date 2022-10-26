@@ -17,18 +17,16 @@ describe('Landing Page', () => {
         cy.get('*[class^="banner"]').should('be.visible')
         cy.get('#getstarted').should('be.visible')
     })
-    /*
+    it('loads the burger menu on click', () => {
+        cy.visit('/')
+        cy.get('#menu').click()
+        cy.get('*[class^="black-area"]').should('be.visible')
+    })
     it('loads the start menu on click', () => {
         cy.get('#getstarted').click()
         cy.findByText('Twitter').should('be.visible')
         cy.findByText('Github').should('be.visible')
         cy.findByText('Sign In').should('be.visible')
-    })
-    */
-    it('loads the burger menu on click', () => {
-        cy.visit('/')
-        cy.get('#menu').click()
-        cy.get('*[class^="black-area"]').should('be.visible')
     })
     it('progress list opens and closes', () => {
         cy.visit('/')
