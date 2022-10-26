@@ -16,7 +16,7 @@ import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 // -- This is a parent command --
 Cypress.Commands.add('deployUnirep', () => {
     const serverUrl = Cypress.env('serverUrl')
-    cy.task('deployUnirep').then(
+    return cy.task('deployUnirep').then(
         ({
             unirepAddress,
             unirepSocialAddress,
