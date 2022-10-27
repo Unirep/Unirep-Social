@@ -95,8 +95,8 @@ const deploy = async (args: any) => {
             : defaultConfig.DEFAULT_ATTESTING_FEE
 
     const UnirepSettings = {
-        maxUsers: config.MAX_USERS,
-        maxAttesters: config.MAX_ATTESTERS,
+        // maxUsers: config.MAX_USERS,
+        // maxAttesters: config.MAX_ATTESTERS,
         numEpochKeyNoncePerEpoch: _numEpochKeyNoncePerEpoch,
         maxReputationBudget: _maxReputationBudget,
         epochLength: _epochLength,

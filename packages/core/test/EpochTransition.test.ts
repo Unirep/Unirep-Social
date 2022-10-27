@@ -31,8 +31,8 @@ describe('Epoch Transition', function () {
         accounts = await hardhatEthers.getSigners()
 
         const _settings = {
-            maxUsers: config.MAX_USERS,
-            maxAttesters: config.MAX_ATTESTERS,
+            // maxUsers: config.MAX_USERS,
+            // maxAttesters: config.MAX_ATTESTERS,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
             epochLength: EPOCH_LENGTH,

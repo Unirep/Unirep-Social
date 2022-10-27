@@ -1,0 +1,6 @@
+name = "unirep-social-staging"
+main = "dist/index.js"
+compatibility_date = "2022-10-18"
+
+[site]
+bucket = "./build"

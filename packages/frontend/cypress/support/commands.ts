@@ -11,12 +11,11 @@
 import '@testing-library/cypress/add-commands'
 import 'cypress-real-events/support'
 import { ethers } from 'ethers'
-import UnirepSocialABI from '@unirep-social/core/abi/UnirepSocial.json'
 
 // -- This is a parent command --
-Cypress.Commands.add('deployUnirep', () => {
+Cypress.Commands.add('start', () => {
     const serverUrl = Cypress.env('serverUrl')
-    cy.task('deployUnirep').then(
+    cy.task('start').then(
         ({
             unirepAddress,
             unirepSocialAddress,

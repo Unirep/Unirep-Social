@@ -4,6 +4,7 @@ import 'react-circular-progressbar/dist/styles.css'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import ActionDetail from './actionDetail'
+import MyButton, { MyButtonType } from './myButton'
 
 type Props = {
     isUpvote: boolean
@@ -33,6 +34,12 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
         : userContext.currentEpoch ===
           postContext.commentsById[dataId].current_epoch
 
+    const isAuthor = userContext.currentEpochKeys?.includes(
+        isPost
+            ? postContext.postsById[dataId].epoch_key
+            : postContext.commentsById[dataId].epoch_key
+    )
+
     useEffect(() => {
         if (isPost) {
             postContext.loadVotesForPostId(dataId)
@@ -42,6 +49,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
     }, [])
 
     const doVote = async () => {
+        if (isAuthor) return
         if (!userContext.userState) {
             console.error('user not login!')
         } else if (givenAmount === undefined) {
@@ -181,12 +189,23 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         epkNonce={epkNonce}
                         setEpkNonce={setEpkNonce}
                     />
-                    <div
-                        className={isAvailable ? 'submit' : 'submit outdated'}
+                    <MyButton
+                        type={MyButtonType.dark}
                         onClick={doVote}
+                        fullSize={true}
+                        textAlignMiddle={true}
+                        disabled={isAuthor || !isAvailable}
+                        fontSize={18}
+                        fontWeight={600}
                     >
-                        {isAvailable ? "Yep, let's do it." : 'Outdated'}
-                    </div>
+                        {isAuthor
+                            ? `Can't ${
+                                  isUpvote ? 'boost' : 'squash'
+                              } on your own`
+                            : isAvailable
+                            ? "Yep, let's do it."
+                            : 'Outdated'}
+                    </MyButton>
                     <div className="histories">
                         <div
                             className="main-btn"

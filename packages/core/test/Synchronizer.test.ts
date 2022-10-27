@@ -228,7 +228,7 @@ describe('Synchronzier processes events', function () {
             await unirepContract.attesters(unirepSocialContract.address)
         )
         const receipt = await publishPost(unirepSocialContract, ethers.provider)
-        const data = unirepSocialContract.interface.parseLog(receipt.logs[1])
+        const data = unirepSocialContract.interface.parseLog(receipt.logs[2])
         const onChainPostId = data.args._postId.toString()
 
         const id = new ZkIdentity()
@@ -324,7 +324,7 @@ describe('Synchronzier processes events', function () {
             await unirepContract.attesters(unirepSocialContract.address)
         )
         const receipt = await publishPost(unirepSocialContract, ethers.provider)
-        const data = unirepSocialContract.interface.parseLog(receipt.logs[1])
+        const data = unirepSocialContract.interface.parseLog(receipt.logs[2])
         const onChainPostId = data.args._postId.toString()
 
         const id = new ZkIdentity()

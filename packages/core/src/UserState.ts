@@ -4,8 +4,8 @@ import { NegativeRepProof, SubsidyProof } from './proof'
 
 export class SocialUserState extends UserState {
     async genSubsidyProof(
-        attesterId: BigInt,
-        minRep: BigInt = BigInt(0),
+        attesterId: bigint,
+        minRep: bigint = BigInt(0),
         notEpochKey: BigInt = BigInt(0)
     ) {
         const epoch = await this.latestTransitionedEpoch()
@@ -50,7 +50,7 @@ export class SocialUserState extends UserState {
         return subsidyProof
     }
 
-    async genNegativeRepProof(attesterId: BigInt, maxRep: BigInt = BigInt(0)) {
+    async genNegativeRepProof(attesterId: bigint, maxRep: BigInt = BigInt(0)) {
         const epoch = await this.latestTransitionedEpoch()
         const leafIndex = await this.latestGSTLeafIndex()
         const rep = await this.getRepByAttester(attesterId)

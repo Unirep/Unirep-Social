@@ -7,6 +7,7 @@ import { genUserState } from './utils'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { deployUnirepSocial } from '../src/utils'
 import * as config from '@unirep/circuits'
+import * as ContractConfig from '@unirep/contracts'
 
 describe('Subsidy', function () {
     this.timeout(1000000)
@@ -16,11 +17,11 @@ describe('Subsidy', function () {
     before(async () => {
         const accounts = await ethers.getSigners()
         const settings = {
-            maxUsers: config.MAX_USERS,
-            maxAttesters: config.MAX_ATTESTERS,
+            // maxUsers: config.MAX_USERS,
+            // maxAttesters: config.MAX_ATTESTERS,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
-            epochLength: config.EPOCH_LENGTH,
+            epochLength: ContractConfig.EPOCH_LENGTH,
             attestingFee: attestingFee,
         }
         unirepContract = await deployUnirep(accounts[0], settings)
@@ -152,8 +153,8 @@ describe('Subsidy', function () {
         expect(tx)
             .to.emit(unirepContract, 'AttestationSubmitted')
             .withArgs(epoch, toEpochKey, unirepSocialContract.address, [
+                BigInt(attesterId),
                 BigInt(voteAmount),
-                BigInt(0),
                 BigInt(0),
                 BigInt(0),
                 BigInt(0),
@@ -307,7 +308,9 @@ describe('Subsidy', function () {
             await userState.stop()
         }
         // now do a UST
-        await ethers.provider.send('evm_increaseTime', [config.EPOCH_LENGTH])
+        await ethers.provider.send('evm_increaseTime', [
+            ContractConfig.EPOCH_LENGTH,
+        ])
         await unirepContract
             .connect(accounts[0])
             .beginEpochTransition()
@@ -363,7 +366,13 @@ describe('Subsidy', function () {
                 epoch,
                 negRepProof.publicSignals[1],
                 unirepSocialContract.address,
-                [BigInt(voteAmount), BigInt(0), BigInt(0), BigInt(0), BigInt(0)]
+                [
+                    BigInt(attesterId),
+                    BigInt(voteAmount),
+                    BigInt(0),
+                    BigInt(0),
+                    BigInt(0),
+                ]
             )
         await tx.wait()
         // should fail to double claim
