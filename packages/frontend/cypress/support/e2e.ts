@@ -19,9 +19,10 @@ import { ethers } from 'ethers'
 
 // import unirep social json abi
 import UnirepSocial from '@unirep-social/core/artifacts/contracts/UnirepSocial.sol/UnirepSocial.json'
-import { deployUnirep } from '@unirep/contracts/deploy'
-import { deployUnirepSocial } from '@unirep-social/core'
+import { getUnirepContract } from '@unirep/contracts'
 
+const unirepAddress = '0xe69a847CD5BC0C9480adA0b339d7F0a8caC2B667'
+const unirepSocialAddress = '0x7758F98C1c487E5653795470eEab6C4698bE541b'
 const GANACHE_URL = 'http://localhost:18545'
 const FUNDED_PRIVATE_KEY =
     '0x0000000000000000000000000000000000000000000000000000000000000001'
@@ -37,23 +38,6 @@ async function waitForGanache() {
     }
 }
 
-async function deploy(wallet: ethers.Wallet, overrides = {}) {
-    console.log('deploying unirep in e2e')
-    const provider = new ethers.providers.JsonRpcProvider(GANACHE_URL)
-    const unirep = await deployUnirep(wallet)
-    const postReputation = 5
-    const commentReputation = 3
-    const airdropReputation = 30
-    const unirepSocial = await deployUnirepSocial(wallet, unirep.address, {
-        postReputation,
-        commentReputation,
-        airdropReputation,
-        ...overrides,
-    })
-    await unirepSocial.deployed()
-    return { unirep, unirepSocial, provider }
-}
-
 export async function startServer(contractOverrides = {}) {
     console.log('start server function in e2e')
     await waitForGanache()
@@ -62,8 +46,12 @@ export async function startServer(contractOverrides = {}) {
 
     const wallet = new ethers.Wallet(FUNDED_PRIVATE_KEY, provider)
 
-    const data = await deploy(wallet, contractOverrides)
-    const { unirep, unirepSocial } = data
+    const unirep = getUnirepContract(unirepAddress, wallet)
+    const unirepSocial = new ethers.Contract(
+        unirepSocialAddress,
+        UnirepSocial.abi,
+        provider
+    )
 
     // Object.assign(process.env, {
     //     UNIREP: unirep.address,
