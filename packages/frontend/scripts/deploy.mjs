@@ -35,11 +35,3 @@ const unirepSocial = await deployUnirepSocial(wallet, unirep.address, {
 })
 console.log('Unirep: ', unirep.address)
 console.log('Unirep Social: ', unirepSocial.address)
-
-Object.assign(process.env, {
-    UNIREP: unirep.address,
-    UNIREP_SOCIAL: unirepSocial.address,
-    DEPLOYER_PRIV_KEY: wallet.privateKey,
-    DEFAULT_ETH_PROVIDER_URL: GANACHE_URL,
-    ...process.env,
-})
