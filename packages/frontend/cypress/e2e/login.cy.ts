@@ -7,7 +7,7 @@ describe('sign up, log out, then sign in', () => {
 
     beforeEach(() => {
         // deploy unirep and unirep social contract
-        cy.deployUnirep()
+        cy.start()
 
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
@@ -28,6 +28,7 @@ describe('sign up, log out, then sign in', () => {
             .as('privateKey')
 
         cy.get('#menu').click()
+        cy.get('.style-check-box').click()
         cy.findByText('Sign out').click()
         cy.findByText('Get started').click()
         cy.findByText('Sign In').click()

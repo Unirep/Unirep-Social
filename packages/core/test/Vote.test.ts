@@ -3,6 +3,7 @@ import { ethers } from 'hardhat'
 import { BigNumberish, BigNumber } from 'ethers'
 import { expect } from 'chai'
 import * as config from '@unirep/circuits'
+import * as ContractConfig from '@unirep/contracts'
 import { genEpochKey } from '@unirep/core'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
@@ -23,11 +24,11 @@ describe('Vote', function () {
         const accounts = await ethers.getSigners()
 
         const _settings = {
-            maxUsers: config.MAX_USERS,
-            maxAttesters: config.MAX_ATTESTERS,
+            // maxUsers: config.MAX_USERS,
+            // maxAttesters: config.MAX_ATTESTERS,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: maxReputationBudget,
-            epochLength: config.EPOCH_LENGTH,
+            epochLength: ContractConfig.EPOCH_LENGTH,
             attestingFee: DEFAULT_ATTESTING_FEE,
         }
         unirepContract = await deployUnirep(accounts[0], _settings)

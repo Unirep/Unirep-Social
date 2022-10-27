@@ -61,6 +61,9 @@ const _defaultProver = {
         const vkey = require(vkeyPath)
         return snarkjs.groth16.verify(vkey, publicSignals, proof)
     },
+    getVKey: (name: string): any => {
+        return
+    },
 }
 
 export { _defaultProver as defaultProver }

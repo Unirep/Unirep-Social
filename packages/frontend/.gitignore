@@ -1,9 +1,6 @@
 # .DS_Store
 .DS_Store
 
-# cloudflare workers
-wrangler.toml
-
 # build
 build/
 nohup.out
