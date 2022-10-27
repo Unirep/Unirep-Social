@@ -24,7 +24,8 @@ export async function startServer() {
         unirepSocialAddress: '0x7758F98C1c487E5653795470eEab6C4698bE541b',
         unirepAddress: '0xe69a847CD5BC0C9480adA0b339d7F0a8caC2B667',
         unirepSocialABI: UnirepSocial.abi,
-        fundedKey: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        fundedKey:
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
         ganacheUrl: 'http://localhost:18545',
     }
 }
