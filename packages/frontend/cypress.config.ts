@@ -10,7 +10,7 @@ export default defineConfig({
         video: false,
         setupNodeEvents(on, config) {
             on('task', {
-                deployUnirep() {
+                start() {
                     if (deployed) return deployed
                     deployed = startServer()
                     return deployed

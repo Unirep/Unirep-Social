@@ -17,4 +17,8 @@ export class Prover {
         // no need for attester to generate proofs
         throw new Error('Not implemented')
     }
+
+    static getVKey(): any {
+        throw new Error('Not implemented')
+    }
 }

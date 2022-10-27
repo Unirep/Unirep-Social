@@ -3,6 +3,7 @@ import { ethers } from 'hardhat'
 import { BigNumber } from 'ethers'
 import { expect } from 'chai'
 import * as config from '@unirep/circuits'
+import * as ContractConfig from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
 import { ZkIdentity, genRandomSalt } from '@unirep/crypto'
 import { genEpochKey } from '@unirep/core'
@@ -26,7 +27,7 @@ describe('Signup', function () {
             maxAttesters: maxAttesters,
             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
-            epochLength: config.EPOCH_LENGTH,
+            epochLength: ContractConfig.EPOCH_LENGTH,
             attestingFee: DEFAULT_ATTESTING_FEE,
         }
         unirepContract = await deployUnirep(accounts[0], _settings)

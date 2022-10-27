@@ -14,9 +14,10 @@
         "test:watch": "jest --watch",
         "cy:run": "cypress run --e2e",
         "cy:open": "cypress open --e2e --browser chrome",
+        "deploy": "node ./scripts/deploy.mjs",
         "test:coverage": "jest --coverage",
-        "test:e2e": "sh scripts/start_test_environment.sh && yarn cy:run",
-        "test:e2e:dev": "sh scripts/start_test_environment.sh && yarn cy:open"
+        "test:e2e": "sh scripts/start_test_environment.sh && yarn deploy && yarn cy:run",
+        "test:e2e:dev": "sh scripts/start_test_environment.sh && yarn deploy && yarn cy:open"
     },
     "_moduleAliases": {
         "worker_threads": "./externals/worker_threads.js"
@@ -27,9 +28,9 @@
         "@types/react": "^17.0.15",
         "@types/react-dom": "^17.0.9",
         "@unirep-social/core": "^1.0.0",
-        "@unirep/circuits": "1.0.0-alpha-8",
-        "@unirep/core": "1.0.0-alpha-14",
-        "@unirep/crypto": "1.0.0-alpha-5",
+        "@unirep/circuits": "1.0.1",
+        "@unirep/core": "1.0.1",
+        "@unirep/crypto": "1.0.1",
         "aes-js": "^3.1.2",
         "anondb": "^0.0.13",
         "babel-preset-env": "^1.7.0",
