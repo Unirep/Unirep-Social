@@ -303,9 +303,9 @@ export class Data {
         postId: string = '',
         title: string = '',
         content: string = '',
-        epk: string = '',
+        epk: string = ''
     ) {
-        const i = userContext.allEpks.findIndex(e => e === epk)
+        const i = userContext.allEpks.findIndex((e) => e === epk)
         const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
@@ -320,7 +320,7 @@ export class Data {
                         await userContext.userState.genVerifyEpochKeyProof(
                             epkNonce,
                             epoch
-                        ) 
+                        )
                     updateStatus({
                         title: 'Updating post',
                         details: 'Waiting for TX inclusion...',
@@ -494,9 +494,9 @@ export class Data {
     editComment(
         commentId: string = '',
         content: string = '',
-        epk: string = '',
+        epk: string = ''
     ) {
-        const i = userContext.allEpks.findIndex(e => e === epk)
+        const i = userContext.allEpks.findIndex((e) => e === epk)
         const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
@@ -511,7 +511,7 @@ export class Data {
                         await userContext.userState.genVerifyEpochKeyProof(
                             epkNonce,
                             epoch
-                        ) 
+                        )
                     updateStatus({
                         title: 'Updating comment',
                         details: 'Waiting for TX inclusion...',
@@ -528,7 +528,11 @@ export class Data {
                         }),
                         method: 'POST',
                     })
-                    const { transaction, error, comment: _comment } = await r.json()
+                    const {
+                        transaction,
+                        error,
+                        comment: _comment,
+                    } = await r.json()
                     if (error) throw error
                     await queueContext.afterTx(transaction)
                     await Promise.all([
