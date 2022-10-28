@@ -39,10 +39,7 @@ const EditPage = () => {
         reputation: number
     ) => {
         const post = postContext.postsById[id]
-        const index = userContext.currentEpochKeys.findIndex(
-            (k) => k === post.epoch_key
-        )
-        postContext.editPost(id, title, content, index ?? 0)
+        postContext.editPost(id, title, content, post.epoch_key)
         history.goBack()
     }
 

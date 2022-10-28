@@ -303,8 +303,13 @@ export class Data {
         postId: string = '',
         title: string = '',
         content: string = '',
-        epkNonce: number = 0
+        epk: string = '',
     ) {
+        const i = userContext.allEpks.findIndex(e => e === epk)
+        console.log('edit post epk', epk, 'from index', i)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
         queueContext.addOp(
             async (updateStatus) => {
                 if (userContext && userContext.userState) {
@@ -314,8 +319,9 @@ export class Data {
                     })
                     const { publicSignals, proof } =
                         await userContext.userState.genVerifyEpochKeyProof(
-                            epkNonce
-                        ) // question: this should be the epkNonce, but what's the nonce?
+                            epkNonce,
+                            epoch
+                        ) 
                     updateStatus({
                         title: 'Updating post',
                         details: 'Waiting for TX inclusion...',
