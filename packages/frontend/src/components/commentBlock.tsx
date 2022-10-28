@@ -80,15 +80,13 @@ const CommentBlock = ({ commentId, page }: Props) => {
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />
-                        {isEpkHovered ? (
+                        {isEpkHovered && comment.reputation > 0 && (
                             <span className="show-off-rep">
                                 {comment.reputation ===
                                 unirepConfig.commentReputation
                                     ? `This person is very modest, showing off only ${unirepConfig.commentReputation} Rep.`
                                     : `This person is showing off ${comment.reputation} Rep.`}
                             </span>
-                        ) : (
-                            <span></span>
                         )}
                     </span>
                 </div>

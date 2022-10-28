@@ -104,7 +104,6 @@ const PostBlock = ({ postId, page }: Props) => {
                         onMouseEnter={() => setEpkHovered(true)}
                         onMouseLeave={() => setEpkHovered(false)}
                         onClick={() => setEpkHovered(!isEpkHovered)}
-                        // title={post.reputation === DEFAULT_POST_KARMA? `This person is very modest, showing off only ${DEFAULT_POST_KARMA} Rep.` : `This person is showing off ${post.reputation} Rep.`}
                     >
                         Post by {post.epoch_key}
                         {post.reputation > 0 && (
@@ -112,14 +111,12 @@ const PostBlock = ({ postId, page }: Props) => {
                                 src={require('../../public/images/lighting.svg')}
                             />
                         )}
-                        {isEpkHovered && post.reputation > 0 ? (
+                        {isEpkHovered && post.reputation > 0 && (
                             <span className="show-off-rep">
                                 {post.reputation === unirepConfig.postReputation
                                     ? `This person is very modest, showing off only ${unirepConfig.postReputation} Rep.`
                                     : `This person is showing off ${post.reputation} Rep.`}
                             </span>
-                        ) : (
-                            <span></span>
                         )}
                     </span>
                 </div>
