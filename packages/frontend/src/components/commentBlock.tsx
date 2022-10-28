@@ -51,8 +51,13 @@ const CommentBlock = ({ commentId, page }: Props) => {
         setIsEdited(true)
     }
 
-    const updateComment = () => {
-        console.log('update comment')
+    const updateComment = (
+        title: string,
+        content: string,
+        epkNonce: number,
+        reputation: number
+    ) => {
+        postContext.editComment(comment.id, content, comment.epoch_key)
         setIsEdited(false)
     }
 

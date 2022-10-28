@@ -306,7 +306,6 @@ export class Data {
         epk: string = '',
     ) {
         const i = userContext.allEpks.findIndex(e => e === epk)
-        console.log('edit post epk', epk, 'from index', i)
         const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
@@ -488,6 +487,59 @@ export class Data {
                 successMessage: 'Comment is finalized!',
                 type: ActionType.Comment,
                 metadata: { id: postId },
+            }
+        )
+    }
+
+    editComment(
+        commentId: string = '',
+        content: string = '',
+        epk: string = '',
+    ) {
+        const i = userContext.allEpks.findIndex(e => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Updating comment',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        ) 
+                    updateStatus({
+                        title: 'Updating comment',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`comment/edit/${commentId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            content,
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const { transaction, error, comment: _comment } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    await Promise.all([
+                        this.loadCommentsByPostId(_comment.post_id),
+                    ])
+                    this.save()
+                }
+            },
+            {
+                successMessage: 'Update post is finalized',
+                type: ActionType.Post,
             }
         )
     }
