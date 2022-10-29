@@ -99,7 +99,11 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     count={comment.downvote}
                     data={comment}
                 />
-                <BlockButton type={BlockButtonType.Share} count={0} data={comment} />
+                <BlockButton
+                    type={BlockButtonType.Share}
+                    count={0}
+                    data={comment}
+                />
             </div>
         </div>
     )

@@ -159,7 +159,11 @@ const PostBlock = ({ postId, page }: Props) => {
                     count={post.downvote}
                     data={post}
                 />
-                <BlockButton type={BlockButtonType.Share} count={0} data={post} />
+                <BlockButton
+                    type={BlockButtonType.Share}
+                    count={0}
+                    data={post}
+                />
             </div>
             {page === Page.Home ? (
                 <div></div>

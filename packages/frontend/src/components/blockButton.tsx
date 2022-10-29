@@ -33,7 +33,10 @@ const BlockButton = ({ type, count, data }: Props) => {
     const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false) // only for share button
 
     const checkAbility = () => {
-        if (type === BlockButtonType.Comments || type === BlockButtonType.Share) {
+        if (
+            type === BlockButtonType.Comments ||
+            type === BlockButtonType.Share
+        ) {
             return true
         } else {
             if (!userContext.userState) return false
@@ -56,7 +59,10 @@ const BlockButton = ({ type, count, data }: Props) => {
             setBoostOn(true)
         } else if (type === BlockButtonType.Squash) {
             setSquashOn(true)
-        } else if (type === BlockButtonType.Share && data.type === DataType.Post) {
+        } else if (
+            type === BlockButtonType.Share &&
+            data.type === DataType.Post
+        ) {
             navigator.clipboard.writeText(
                 `${window.location.origin}/post/${data.id}`
             )
