@@ -74,7 +74,7 @@ describe('visit and interact with home page', () => {
         cy.get('.button-border').contains('Preview').click({ force: true })
         cy.get('.block-content').should('exist')
         // submit post and check for reputation
-        cy.get('.submit-btn').click()
+        cy.get('.my-button').contains('Post - 5 points').click()
         cy.location('pathname').should('eq', '/')
     })
 })
