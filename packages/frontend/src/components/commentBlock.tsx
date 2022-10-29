@@ -8,8 +8,8 @@ import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
 
 import { EXPLORER_URL } from '../config'
-import { Page, ButtonType } from '../constants'
-import BlockButton from './blockButton'
+import { Page } from '../constants'
+import BlockButton, { BlockButtonType } from './blockButton'
 import MarkdownIt from 'markdown-it'
 
 const markdown = new MarkdownIt({
@@ -90,16 +90,16 @@ const CommentBlock = ({ commentId, page }: Props) => {
             </Link>
             <div className="block-buttons no-padding">
                 <BlockButton
-                    type={ButtonType.Boost}
+                    type={BlockButtonType.Boost}
                     count={comment.upvote}
                     data={comment}
                 />
                 <BlockButton
-                    type={ButtonType.Squash}
+                    type={BlockButtonType.Squash}
                     count={comment.downvote}
                     data={comment}
                 />
-                <BlockButton type={ButtonType.Share} count={0} data={comment} />
+                <BlockButton type={BlockButtonType.Share} count={0} data={comment} />
             </div>
         </div>
     )

@@ -10,10 +10,10 @@ import EpochContext from '../context/EpochManager'
 import QueueContext, { ActionType } from '../context/Queue'
 
 import { EXPLORER_URL } from '../config'
-import { Page, ButtonType, AlertType } from '../constants'
+import { Page, AlertType } from '../constants'
 import CommentField from './commentField'
 import CommentBlock from './commentBlock'
-import BlockButton from './blockButton'
+import BlockButton, { BlockButtonType } from './blockButton'
 import RefreshReminder from './refreshReminder'
 import MarkdownIt from 'markdown-it'
 
@@ -145,21 +145,21 @@ const PostBlock = ({ postId, page }: Props) => {
             {page === Page.Home ? <div className="divider"></div> : <div></div>}
             <div className="block-buttons">
                 <BlockButton
-                    type={ButtonType.Comments}
+                    type={BlockButtonType.Comments}
                     count={post.commentCount}
                     data={post}
                 />
                 <BlockButton
-                    type={ButtonType.Boost}
+                    type={BlockButtonType.Boost}
                     count={post.upvote}
                     data={post}
                 />
                 <BlockButton
-                    type={ButtonType.Squash}
+                    type={BlockButtonType.Squash}
                     count={post.downvote}
                     data={post}
                 />
-                <BlockButton type={ButtonType.Share} count={0} data={post} />
+                <BlockButton type={BlockButtonType.Share} count={0} data={post} />
             </div>
             {page === Page.Home ? (
                 <div></div>
