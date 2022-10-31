@@ -28,7 +28,7 @@ describe('Landing Page', () => {
         cy.get('#menu').click()
         cy.get('*[class^="black-area"]').should('be.visible')
     })
-    it('progress list opens and closes', () => {
+    it.skip('progress list opens and closes', () => {
         cy.visit('/')
         cy.findByText('Detail').click()
         cy.get('*[class^="progress-list"]').should('be.visible')
