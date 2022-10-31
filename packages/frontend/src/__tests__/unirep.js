@@ -11,7 +11,7 @@ afterEach(() => {
     jest.restoreAllMocks()
 })
 
-describe('Unirep Config', () => {
+describe('Unirep Config', function () {
     const unirepconfig = new UnirepConfig()
 
     test('defines load()', () => {
@@ -58,6 +58,7 @@ describe('Unirep Config', () => {
         const currentEpochSpy = jest.spyOn(unirepconfig, 'currentEpoch')
 
         const currentEpoch = await unirepconfig.currentEpoch()
+        expect(currentEpoch._hex).toBe('0x01')
         expect(currentEpochSpy).toHaveBeenCalled()
     })
 })
