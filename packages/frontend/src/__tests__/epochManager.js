@@ -18,7 +18,6 @@ describe('EpochManager', function () {
 
         const updateWatch = await epochmanager.updateWatch()
 
-        expect(epochmanager.timer).toEqual(790)
         expect(epochmanager.currentEpoch._hex).toBe('0x01')
         expect(epochmanager.nextTransition).toEqual(2000)
         expect(epochmanager.readyToTransition).toBe(false)
