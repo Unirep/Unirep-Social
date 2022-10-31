@@ -13,6 +13,7 @@ import {
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
+    DELETED_CONTENT,
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
 import {
@@ -31,15 +32,18 @@ export default (app: Express) => {
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
+    app.post('/api/post/delete/:id', catchError(deletePost))
 }
 
 async function loadCommentsByPostId(req, res) {
     const { postId } = req.params
-    const comments = await req.db.findMany('Comment', {
-        where: {
-            postId,
-        },
-    })
+    const comments = (
+        await req.db.findMany('Comment', {
+            where: {
+                postId,
+            },
+        })
+    ).filter((c) => c.content !== DELETED_CONTENT)
     res.json(comments)
 }
 
@@ -59,16 +63,20 @@ async function loadPostById(req, res) {
             _id: req.params.id,
         },
     })
-    res.json(post)
+    if (!post || post.content === DELETED_CONTENT)
+        res.status(404).json('no such post')
+    else res.json(post)
 }
 
 async function loadPosts(req, res) {
     if (req.query.query === undefined) {
-        const posts = await req.db.findMany('Post', {
-            where: {
-                status: 1,
-            },
-        })
+        const posts = (
+            await req.db.findMany('Post', {
+                where: {
+                    status: 1,
+                },
+            })
+        ).filter((p) => p.content !== DELETED_CONTENT)
         res.json(posts)
         return
     }
@@ -77,19 +85,22 @@ async function loadPosts(req, res) {
     // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
 
-    const posts = await req.db.findMany('Post', {
-        where: {
-            epochKey: epks,
-        },
-        orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-            commentCount: query === QueryType.Comments ? 'desc' : undefined,
-        },
-        limit: LOAD_POST_COUNT,
-    })
+    const posts = (
+        await req.db.findMany('Post', {
+            where: {
+                epochKey: epks,
+            },
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            },
+            limit: LOAD_POST_COUNT,
+        })
+    ).filter((p) => p.content !== DELETED_CONTENT)
+
     res.json(posts)
 }
 
@@ -337,5 +348,76 @@ async function editPost(req, res) {
         error: error,
         transaction: hash,
         post,
+    })
+}
+
+async function deletePost(req, res) {
+    const id = req.params.id
+    const unirepSocialContract = new ethers.Contract(
+        UNIREP_SOCIAL,
+        UNIREP_SOCIAL_ABI,
+        DEFAULT_ETH_PROVIDER
+    )
+
+    // Parse Inputs
+    const { publicSignals, proof } = req.body
+    const epkProof = new EpochKeyProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof)
+    )
+    const newHashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(DELETED_CONTENT)
+    )
+
+    const {
+        hashedContent: oldHashedContent,
+        onChainId,
+        epoch,
+        epochKey,
+    } = await req.db.findOne('Post', {
+        where: {
+            _id: id,
+        },
+    })
+
+    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+        return
+    }
+
+    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+        onChainId,
+        oldHashedContent,
+        newHashedContent,
+        epkProof.publicSignals,
+        epkProof.proof,
+    ])
+
+    const hash = await TransactionManager.queueTransaction(
+        unirepSocialContract.address,
+        {
+            data: calldata,
+        }
+    )
+
+    await req.db.update('Post', {
+        where: {
+            _id: id,
+            onChainId,
+            hashedContent: oldHashedContent,
+        },
+        update: {
+            content: DELETED_CONTENT,
+            hashedContent: newHashedContent,
+        },
+    })
+
+    res.json({
+        error: error,
+        transaction: hash,
+        id,
     })
 }
