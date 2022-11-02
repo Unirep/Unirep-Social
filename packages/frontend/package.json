@@ -37,7 +37,6 @@
         "bootstrap": "^5.0.2",
         "cypress-real-events": "^1.7.1",
         "dateformat": "^4.5.1",
-        "eth-testing": "^1.9.0",
         "ethers": "^5.5.4",
         "events": "^3.3.0",
         "fake-indexeddb": "^4.0.0",
