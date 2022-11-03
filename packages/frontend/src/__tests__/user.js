@@ -5,6 +5,10 @@ import { ZkIdentity } from '@unirep/crypto'
 import 'fake-indexeddb/auto'
 import { genEpochKey } from '@unirep/core'
 import { SocialUserState } from '@unirep-social/core'
+import prover from '../context/prover'
+import { DB } from 'anondb'
+
+// might have to instantiate a database and other arguements like how it is done in the setIdentity function
 
 let user
 
@@ -60,6 +64,24 @@ describe('User', function () {
     test.skip('syncPercent functionality', () => {
         user.latestProcessedBlock = 4
         console.log(user.syncPercent)
+    })
+
+    test.skip('startSync() functionality', async () => {
+        user.startSync('string')
+    })
+
+    test('setIdentity() functionality initializes user state', async () => {
+        await user.setIdentity(new ZkIdentity())
+        // user state
+        expect(typeof user.userState).toBe('object')
+        // check if database was created
+        expect(typeof user.userState._db).toBe('object')
+    })
+
+    test('updateLatestTransitionedEpoch() functionality is triggered', async () => {
+        const updateLTESpy = jest.spyOn(user, 'updateLatestTransitionedEpoch')
+        await user.updateLatestTransitionedEpoch()
+        expect(updateLTESpy).toHaveBeenCalled()
     })
 
     test('encrypt() with zkIdentity', async () => {
