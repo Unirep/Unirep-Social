@@ -8,13 +8,17 @@ import { SocialUserState } from '@unirep-social/core'
 import prover from '../context/prover'
 import { DB } from 'anondb'
 
-// might have to instantiate a database and other arguements like how it is done in the setIdentity function
-
 let user
 
 describe('User', function () {
     beforeEach(async () => {
         user = new User()
+        // user.userState = new SocialUserState(
+        //     DB,
+        //     prover,
+        //     user.unirepConfig.unirep,
+        //     user.id
+        // )
     })
     afterEach(() => {
         jest.clearAllMocks()
@@ -25,7 +29,7 @@ describe('User', function () {
         await user.load()
         expect(windowGetItemSpy).toHaveBeenCalled()
     })
-    // TODO: config() error error
+    // TODO: config() error here
     test.skip('save() calls setItem on localStorage', async () => {
         const windowSetItemSpy = jest.spyOn(localStorage, 'setItem')
         // no identity set, so will not be called
@@ -61,9 +65,16 @@ describe('User', function () {
         expect(typeof value).toBe('string')
     })
 
-    test.skip('syncPercent functionality', () => {
-        user.latestProcessedBlock = 4
-        console.log(user.syncPercent)
+    test('syncPercent functionality', () => {
+        // error case
+        user.latestProcessedBlock = false
+        expect(user.syncPercent).toEqual(0)
+        // set values
+        user.latestProcessedBlock = 1000
+        user.initialSyncFinalBlock = 400
+        user.syncStartBlock = 1
+        const value = user.syncPercent
+        expect(Math.floor(value)).toEqual(250)
     })
 
     test.skip('startSync() functionality', async () => {
@@ -80,7 +91,8 @@ describe('User', function () {
 
     test('updateLatestTransitionedEpoch() functionality is triggered', async () => {
         const updateLTESpy = jest.spyOn(user, 'updateLatestTransitionedEpoch')
-        await user.updateLatestTransitionedEpoch()
+        user.latestTransitionedEpoch = 40
+        const value = await user.updateLatestTransitionedEpoch()
         expect(updateLTESpy).toHaveBeenCalled()
     })
 
@@ -91,7 +103,7 @@ describe('User', function () {
         expect(encryptSpy).toHaveBeenCalled()
     })
 
-    test('encrypt() should error without zkIdetity', async () => {
+    test('encrypt() should error without zkIdentity', async () => {
         expect.assertions(1)
         try {
             await user.encrypt()
