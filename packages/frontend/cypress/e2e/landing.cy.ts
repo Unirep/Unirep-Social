@@ -23,12 +23,12 @@ describe('Landing Page', () => {
         cy.findByText('Github').should('be.visible')
         cy.findByText('Sign In').should('be.visible')
     })
-    it('loads the burger menu on click', () => {
+    it.skip('loads the burger menu on click', () => {
         cy.visit('/')
         cy.get('#menu').click()
         cy.get('*[class^="black-area"]').should('be.visible')
     })
-    it('progress list opens and closes', () => {
+    it.skip('progress list opens and closes', () => {
         cy.visit('/')
         cy.findByText('Detail').click()
         cy.get('*[class^="progress-list"]').should('be.visible')

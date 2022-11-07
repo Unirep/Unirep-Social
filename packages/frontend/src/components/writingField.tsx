@@ -126,7 +126,7 @@ const WritingField = (props: Props) => {
                 <ActionDetail
                     showBorder={true}
                     showHelp={true}
-                    showRep={true}
+                    showRep={userContext.netReputation >= defaultRep}
                     maxRep={userContext.netReputation}
                     defaultRep={defaultRep}
                     hasRep={
