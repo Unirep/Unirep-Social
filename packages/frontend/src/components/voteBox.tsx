@@ -4,7 +4,7 @@ import 'react-circular-progressbar/dist/styles.css'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import ActionDetail from './actionDetail'
-import MyButton, { ButtonType } from './myButton'
+import MyButton, { MyButtonType } from './myButton'
 
 type Props = {
     isUpvote: boolean
@@ -190,7 +190,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         setEpkNonce={setEpkNonce}
                     />
                     <MyButton
-                        type={ButtonType.dark}
+                        type={MyButtonType.dark}
                         onClick={doVote}
                         fullSize={true}
                         textAlignMiddle={true}

@@ -31,7 +31,7 @@
     }
 
     &:disabled {
-        color: $grey-400;
+        color: $white;
         background-color: $grey-300;
         cursor: not-allowed;
     }
