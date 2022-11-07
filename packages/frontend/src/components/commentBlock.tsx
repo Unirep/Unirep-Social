@@ -10,13 +10,13 @@ import PostContext from '../context/Post'
 import UserContext from '../context/User'
 
 import { EXPLORER_URL } from '../config'
-import { Page, ButtonType } from '../constants'
-import BlockButton from './blockButton'
 import MyButton, { MyButtonType } from './myButton'
 import AlertCover from './alertCover'
 import WritingField from './writingField'
 import CustomGap from './customGap'
 import { DataType } from '../constants'
+import { Page } from '../constants'
+import BlockButton, { BlockButtonType } from './blockButton'
 
 const markdown = new MarkdownIt({
     breaks: true,
@@ -122,19 +122,23 @@ const CommentBlock = ({ commentId, page }: Props) => {
             </Link>
             <div className="block-buttons no-padding">
                 <BlockButton
-                    type={ButtonType.Boost}
+                    type={BlockButtonType.Boost}
                     count={comment.upvote}
                     data={comment}
                 />
                 <BlockButton
-                    type={ButtonType.Squash}
+                    type={BlockButtonType.Squash}
                     count={comment.downvote}
                     data={comment}
                 />
-                <BlockButton type={ButtonType.Share} data={comment} />
+                <BlockButton
+                    type={BlockButtonType.Share}
+                    count={0}
+                    data={comment}
+                />
                 {isAuthor && (
                     <BlockButton
-                        type={ButtonType.Edit}
+                        type={BlockButtonType.Edit}
                         data={comment}
                         edit={editComment}
                     />

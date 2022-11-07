@@ -102,12 +102,9 @@
                     margin-top: -12px;
                     width: 30px;
                     height: 30px;
-                    background-image: url('../public/images/boost-fill.svg');
                     background-size: 30px;
-                    box-shadow: rangeLongShadow(
-                        $size: -12px,
-                        $color: $grey-100
-                    );
+                    box-shadow: rangeLongShadow($size: -12px, $color: $black);
+                    background-image: url('https://i.imgur.com/FUtjs0I.png');
                 }
 
                 &::-moz-range-track,
@@ -123,12 +120,9 @@
                     margin-top: -12px;
                     width: 30px;
                     height: 30px;
-                    background-image: url('../public/images/boost-fill.svg');
+                    background-image: url('https://i.imgur.com/FUtjs0I.png');
                     background-size: 30px;
-                    box-shadow: rangeLongShadow(
-                        $size: -12px,
-                        $color: $grey-100
-                    );
+                    box-shadow: rangeLongShadow($size: -12px, $color: $black);
                 }
             }
 

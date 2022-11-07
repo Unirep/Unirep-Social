@@ -9,6 +9,7 @@ import EpochContext from '../context/EpochManager'
 
 import TextEditor from './textEditor'
 import ActionDetail from './actionDetail'
+import MyButton, { MyButtonType } from './myButton'
 import { DataType } from '../constants'
 
 type Props = {
@@ -164,9 +165,15 @@ const WritingField = (props: Props) => {
                     )}
                 </>
             )}
-            <div className="submit-btn" onClick={submit}>
+            <MyButton
+                type={MyButtonType.dark}
+                onClick={submit}
+                fullSize={true}
+                textAlignMiddle={true}
+                fontWeight={600}
+            >
                 {props.submitBtnName}
-            </div>
+            </MyButton>
             {errorMsg.length > 0 ? (
                 <div className="error">{errorMsg}</div>
             ) : (

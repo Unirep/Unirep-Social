@@ -66,17 +66,6 @@ export interface Post {
     transactionHash: string
 }
 
-export enum ButtonType {
-    Comments = 'comments',
-    Boost = 'boost',
-    Squash = 'squash',
-    Share = 'share',
-    Post = 'post',
-    Activity = 'activity',
-    Save = 'save',
-    Edit = 'edit',
-}
-
 export enum InfoType {
     epk4Post = 'Select a persona to post this',
     epk4Comment = 'Select a persona to comment this',
