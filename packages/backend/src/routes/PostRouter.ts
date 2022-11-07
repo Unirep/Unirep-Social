@@ -280,6 +280,56 @@ async function createPostSubsidy(req, res) {
 
 async function editPost(req, res) {
     const id = req.params.id
+    const { publicSignals, proof, content } = req.body
+
+    const { transaction, error } = await editPostOnContract(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        content
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        const post = await req.db.findOne('Post', { where: { _id: id } })
+        res.json({
+            error,
+            transaction,
+            post,
+        })
+    }
+}
+
+async function deletePost(req, res) {
+    const id = req.params.id
+    const { publicSignals, proof } = req.body
+
+    const { transaction, error } = await editPostOnContract(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        DELETED_CONTENT
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        res.json({
+            error,
+            transaction,
+            id,
+        })
+    }
+}
+
+async function editPostOnContract(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -287,7 +337,6 @@ async function editPost(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -301,18 +350,15 @@ async function editPost(req, res) {
         onChainId,
         epoch,
         epochKey,
-    } = await req.db.findOne('Post', {
+    } = await db.findOne('Post', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
+    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
     if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
+        return { error }
     }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
@@ -330,7 +376,7 @@ async function editPost(req, res) {
         }
     )
 
-    await req.db.update('Post', {
+    await db.update('Post', {
         where: {
             _id: id,
             onChainId,
@@ -342,82 +388,5 @@ async function editPost(req, res) {
         },
     })
 
-    const post = await req.db.findOne('Post', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        post,
-    })
-}
-
-async function deletePost(req, res) {
-    const id = req.params.id
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
-    // Parse Inputs
-    const { publicSignals, proof } = req.body
-    const epkProof = new EpochKeyProof(
-        publicSignals,
-        formatProofForSnarkjsVerification(proof)
-    )
-    const newHashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(DELETED_CONTENT)
-    )
-
-    const {
-        hashedContent: oldHashedContent,
-        onChainId,
-        epoch,
-        epochKey,
-    } = await req.db.findOne('Post', {
-        where: {
-            _id: id,
-        },
-    })
-
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        onChainId,
-        oldHashedContent,
-        newHashedContent,
-        epkProof.publicSignals,
-        epkProof.proof,
-    ])
-
-    const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
-        {
-            data: calldata,
-        }
-    )
-
-    await req.db.update('Post', {
-        where: {
-            _id: id,
-            onChainId,
-            hashedContent: oldHashedContent,
-        },
-        update: {
-            content: DELETED_CONTENT,
-            hashedContent: newHashedContent,
-        },
-    })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        id,
-    })
+    return { transaction: hash, error }
 }
