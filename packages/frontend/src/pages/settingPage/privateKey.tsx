@@ -2,7 +2,7 @@ import { useState, useContext } from 'react'
 
 import UIContext from '../../context/UI'
 import UserContext from '../../context/User'
-import MyButton, { ButtonType } from '../../components/myButton'
+import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomInput from '../../components/customInput'
 import CustomGap from '../../components/customGap'
 
@@ -88,7 +88,7 @@ const PrivateKey = () => {
             {isRevealed ? (
                 <div className="reveal-private-key">
                     <MyButton
-                        type={ButtonType.darkTrans}
+                        type={MyButtonType.darkTrans}
                         onClick={() => setRevealed(false)}
                     >
                         Hide
@@ -138,7 +138,7 @@ const PrivateKey = () => {
                         <span>Download without encryption</span>
                     </div>
                     <MyButton
-                        type={ButtonType.dark}
+                        type={MyButtonType.dark}
                         onClick={onClickDownload}
                         fullSize={true}
                         textAlignMiddle={true}
@@ -159,7 +159,7 @@ const PrivateKey = () => {
                     )}
                     <CustomGap times={2} />
                     <MyButton
-                        type={ButtonType.dark}
+                        type={MyButtonType.dark}
                         onClick={() => setRevealed(true)}
                         fullSize={true}
                         textAlignMiddle={true}

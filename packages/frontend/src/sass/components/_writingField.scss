@@ -46,19 +46,6 @@
         text-align: center;
     }
 
-    .submit-btn {
-        width: 100%;
-        @include myButton(
-            $height: 58px,
-            $radius: 8px,
-            $block-color: $black,
-            $color: $white,
-            $font-weight: 700,
-            $font-size: $text-lg,
-            $margin-horizontal: 0px
-        );
-    }
-
     .disable-cover {
         position: absolute;
         top: 0px;
