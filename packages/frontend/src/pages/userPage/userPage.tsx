@@ -74,12 +74,15 @@ const UserPage = () => {
     const [received, setReceived] = useState<number[]>([0, 0, 0]) // airdrop, boost, squash
     const [spent, setSpent] = useState<number[]>([0, 0, 0, 0]) // post, comment, boost, squash
 
-    const getUserPosts = async (sort: QueryType, lastRead: string = '0') => {
+    const getUserPosts = async (sort: QueryType, lastRead = [] as string[]) => {
         await user.loadingPromise
         await postContext.loadFeed(sort, lastRead, user.allEpks)
     }
 
-    const getUserComments = async (sort: QueryType, lastRead: string = '0') => {
+    const getUserComments = async (
+        sort: QueryType,
+        lastRead = [] as string[]
+    ) => {
         await user.loadingPromise
         await postContext.loadComments(sort, lastRead, user.allEpks)
     }
@@ -183,7 +186,12 @@ const UserPage = () => {
             postContext.feedsByQuery[postContext.feedKey(sort, user.allEpks)] ??
             []
         if (posts.length > 0) {
-            await getUserPosts(sort, posts[posts.length - 1])
+            await getUserPosts(
+                sort,
+                postContext.feedsByQuery[
+                    postContext.feedKey(sort, user.allEpks)
+                ]
+            )
         } else {
             await getUserPosts(sort)
         }
@@ -195,7 +203,12 @@ const UserPage = () => {
                 postContext.feedKey(sort, user.allEpks)
             ] ?? []
         if (comments.length > 0) {
-            await getUserComments(sort, comments[comments.length - 1])
+            await getUserComments(
+                sort,
+                postContext.commentsByQuery[
+                    postContext.feedKey(sort, user.allEpks)
+                ]
+            )
         } else {
             await getUserComments(sort)
         }

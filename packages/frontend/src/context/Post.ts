@@ -101,13 +101,17 @@ export class Data {
         this.ingestPosts(post)
     }
 
-    async loadFeed(query: string, lastRead = '0', epks = [] as string[]) {
+    async loadFeed(
+        query: string,
+        lastRead = [] as string[],
+        epks = [] as string[]
+    ) {
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
-            lastRead,
+            lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
         const r = await fetch(apiURL)
@@ -129,13 +133,17 @@ export class Data {
         )
     }
 
-    async loadComments(query: string, lastRead = '0', epks = [] as string[]) {
+    async loadComments(
+        query: string,
+        lastRead = [] as string[],
+        epks = [] as string[]
+    ) {
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => Number('0x' + epk))
         const apiURL = makeURL(`comment`, {
             query,
-            lastRead,
+            lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
         const r = await fetch(apiURL)

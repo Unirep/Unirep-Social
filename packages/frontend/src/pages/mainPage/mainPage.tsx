@@ -24,8 +24,7 @@ const MainPage = () => {
             'load more posts, now posts: ' +
                 postController.feedsByQuery[query]?.length
         )
-        const lastPostId = [...postController.feedsByQuery[query]].pop()
-        postController.loadFeed(query, lastPostId)
+        postController.loadFeed(query, postController.feedsByQuery[query])
     }
 
     useEffect(() => {

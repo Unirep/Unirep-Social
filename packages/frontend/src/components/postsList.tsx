@@ -26,12 +26,10 @@ const PostsList = ({ postIds, loadMorePosts }: Props) => {
                     </p>
                 </div>
             )}
-            {postIds.length > 0 && postIds.length % LOAD_POST_COUNT === 0 ? (
+            {postIds.length > 0 && postIds.length % LOAD_POST_COUNT === 0 && (
                 <div className="load-more-button" onClick={loadMorePosts}>
                     Load more posts
                 </div>
-            ) : (
-                <div></div>
             )}
         </div>
     )
