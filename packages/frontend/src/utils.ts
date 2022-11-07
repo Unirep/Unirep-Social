@@ -33,6 +33,8 @@ export const getRecords = async (epks: string[]) => {
         .then((data) => {
             const records: Record[] = []
             for (let i = 0; i < data.length; i++) {
+                console.log('data ', i, 'created at:', data[i].createdAt)
+
                 const record: Record = {
                     action: data[i].action,
                     from: BigInt(data[i].from)
@@ -44,7 +46,7 @@ export const getRecords = async (epks: string[]) => {
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
-                    time: Date.parse(data[i].createdAt),
+                    time: data[i].createdAt,
                     data_id: data[i].data,
                     title: data[i].title,
                     content: data[i].content,
