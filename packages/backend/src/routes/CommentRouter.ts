@@ -295,6 +295,57 @@ async function createCommentSubsidy(req, res) {
 
 async function editComment(req, res) {
     const id = req.params.id
+    const { publicSignals, proof, content } = req.body
+
+    const { transaction, error } = await editCommentOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        content
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        const comment = await req.db.findOne('Comment', { where: { _id: id } })
+
+        res.json({
+            error,
+            transaction,
+            comment,
+        })
+    }
+}
+
+async function deleteComment(req, res) {
+    const id = req.params.id
+    const { publicSignals, proof } = req.body
+
+    const { transaction, error } = await editCommentOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        DELETED_CONTENT
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        res.json({
+            error,
+            transaction,
+            id,
+        })
+    }
+}
+
+async function editCommentOnChain(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -302,7 +353,6 @@ async function editComment(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -316,19 +366,14 @@ async function editComment(req, res) {
         onChainId,
         epoch,
         epochKey,
-    } = await req.db.findOne('Comment', {
+    } = await db.findOne('Comment', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
+    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
+    if (error !== undefined) return { error }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
         onChainId,
@@ -345,7 +390,7 @@ async function editComment(req, res) {
         }
     )
 
-    await req.db.update('Comment', {
+    await db.update('Comment', {
         where: {
             _id: id,
             onChainId,
@@ -357,83 +402,5 @@ async function editComment(req, res) {
         },
     })
 
-    const comment = await req.db.findOne('Comment', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        comment,
-    })
-}
-
-async function deleteComment(req, res) {
-    const id = req.params.id
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
-    // Parse Inputs
-    const { publicSignals, proof } = req.body
-    const epkProof = new EpochKeyProof(
-        publicSignals,
-        formatProofForSnarkjsVerification(proof)
-    )
-
-    const newHashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(DELETED_CONTENT)
-    )
-
-    const {
-        hashedContent: oldHashedContent,
-        onChainId,
-        epoch,
-        epochKey,
-    } = await req.db.findOne('Comment', {
-        where: {
-            _id: id,
-        },
-    })
-
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
-        onChainId,
-        oldHashedContent,
-        newHashedContent,
-        epkProof.publicSignals,
-        epkProof.proof,
-    ])
-
-    const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
-        {
-            data: calldata,
-        }
-    )
-
-    await req.db.update('Comment', {
-        where: {
-            _id: id,
-            onChainId,
-            hashedContent: oldHashedContent,
-        },
-        update: {
-            content: DELETED_CONTENT,
-            hashedContent: newHashedContent,
-        },
-    })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        id,
-    })
+    return { transaction: hash, error }
 }

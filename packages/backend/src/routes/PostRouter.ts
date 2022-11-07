@@ -282,7 +282,7 @@ async function editPost(req, res) {
     const id = req.params.id
     const { publicSignals, proof, content } = req.body
 
-    const { transaction, error } = await editPostOnContract(
+    const { transaction, error } = await editPostOnChain(
         id,
         req.db,
         publicSignals,
@@ -308,7 +308,7 @@ async function deletePost(req, res) {
     const id = req.params.id
     const { publicSignals, proof } = req.body
 
-    const { transaction, error } = await editPostOnContract(
+    const { transaction, error } = await editPostOnChain(
         id,
         req.db,
         publicSignals,
@@ -329,7 +329,7 @@ async function deletePost(req, res) {
     }
 }
 
-async function editPostOnContract(id, db, publicSignals, proof, content) {
+async function editPostOnChain(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
