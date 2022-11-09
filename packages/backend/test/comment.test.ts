@@ -56,5 +56,5 @@ test('should delete a comment', async (t: any) => {
     // edit a comment
     const { id } = await deleteComment(t, iden, post._id)
     const data = await queryComment(t, id)
-    t.is(data, 'no such comment')
+    t.is(data.content, '===deleted===')
 })

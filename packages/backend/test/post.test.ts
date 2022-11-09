@@ -37,5 +37,5 @@ test('should delete a post', async (t: any) => {
     await signIn(t, iden)
     const { id } = await deletePost(t, iden)
     const data = await queryPost(t, id)
-    t.is(data, 'no such post')
+    t.is(data.content, '===deleted===')
 })

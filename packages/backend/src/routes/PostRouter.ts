@@ -37,13 +37,11 @@ export default (app: Express) => {
 
 async function loadCommentsByPostId(req, res) {
     const { postId } = req.params
-    const comments = (
-        await req.db.findMany('Comment', {
-            where: {
-                postId,
-            },
-        })
-    ).filter((c) => c.content !== DELETED_CONTENT)
+    const comments = await req.db.findMany('Comment', {
+        where: {
+            postId,
+        },
+    })
     res.json(comments)
 }
 
@@ -63,20 +61,17 @@ async function loadPostById(req, res) {
             _id: req.params.id,
         },
     })
-    if (!post || post.content === DELETED_CONTENT)
-        res.status(404).json('no such post')
+    if (!post) res.status(404).json('no such post')
     else res.json(post)
 }
 
 async function loadPosts(req, res) {
     if (req.query.query === undefined) {
-        const posts = (
-            await req.db.findMany('Post', {
-                where: {
-                    status: 1,
-                },
-            })
-        ).filter((p) => p.content !== DELETED_CONTENT)
+        const posts = await req.db.findMany('Post', {
+            where: {
+                status: 1,
+            },
+        })
         res.json(posts)
         return
     }
@@ -85,21 +80,19 @@ async function loadPosts(req, res) {
     // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
 
-    const posts = (
-        await req.db.findMany('Post', {
-            where: {
-                epochKey: epks,
-            },
-            orderBy: {
-                createdAt: query === QueryType.New ? 'desc' : undefined,
-                posRep: query === QueryType.Boost ? 'desc' : undefined,
-                negRep: query === QueryType.Squash ? 'desc' : undefined,
-                totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                commentCount: query === QueryType.Comments ? 'desc' : undefined,
-            },
-            limit: LOAD_POST_COUNT,
-        })
-    ).filter((p) => p.content !== DELETED_CONTENT)
+    const posts = await req.db.findMany('Post', {
+        where: {
+            epochKey: epks,
+        },
+        orderBy: {
+            createdAt: query === QueryType.New ? 'desc' : undefined,
+            posRep: query === QueryType.Boost ? 'desc' : undefined,
+            negRep: query === QueryType.Squash ? 'desc' : undefined,
+            totalRep: query === QueryType.Rep ? 'desc' : undefined,
+            commentCount: query === QueryType.Comments ? 'desc' : undefined,
+        },
+        limit: LOAD_POST_COUNT,
+    })
 
     res.json(posts)
 }

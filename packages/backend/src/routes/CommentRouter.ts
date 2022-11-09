@@ -40,8 +40,7 @@ async function loadComment(req, res, next) {
             _id: req.params.id,
         },
     })
-    if (!comment || comment.content === DELETED_CONTENT)
-        res.status(404).json('no such comment')
+    if (!comment) res.status(404).json('no such comment')
     else res.json(comment)
 }
 
@@ -57,36 +56,32 @@ async function loadVotesByCommentId(req, res, next) {
 
 async function listComments(req, res, next) {
     if (req.query.query === undefined) {
-        const comments = (
-            await req.db.findMany('Comment', { where: {} })
-        ).filter((c) => c.content !== DELETED_CONTENT)
+        const comments = await req.db.findMany('Comment', { where: {} })
         res.json(comments)
         return
     }
     const lastRead = req.query.lastRead
     const query = req.query.query.toString()
     const epks = req.query.epks ? req.query.epks.split('_') : []
-    const comments = (
-        await req.db.findMany('Comment', {
-            where: {
-                createdAt:
-                    lastRead && query === QueryType.New
-                        ? {
-                              $lt: +lastRead,
-                          }
-                        : undefined,
-                epochKey: epks.length ? epks : undefined,
-            },
-            // TODO: add an offset argument for non-chronological sorts
-            orderBy: {
-                createdAt: query === QueryType.New ? 'desc' : undefined,
-                posRep: query === QueryType.Boost ? 'desc' : undefined,
-                negRep: query === QueryType.Squash ? 'desc' : undefined,
-                totalRep: query === QueryType.Rep ? 'desc' : undefined,
-            },
-            limit: LOAD_POST_COUNT,
-        })
-    ).filter((c) => c.content !== DELETED_CONTENT)
+    const comments = await req.db.findMany('Comment', {
+        where: {
+            createdAt:
+                lastRead && query === QueryType.New
+                    ? {
+                          $lt: +lastRead,
+                      }
+                    : undefined,
+            epochKey: epks.length ? epks : undefined,
+        },
+        // TODO: add an offset argument for non-chronological sorts
+        orderBy: {
+            createdAt: query === QueryType.New ? 'desc' : undefined,
+            posRep: query === QueryType.Boost ? 'desc' : undefined,
+            negRep: query === QueryType.Squash ? 'desc' : undefined,
+            totalRep: query === QueryType.Rep ? 'desc' : undefined,
+        },
+        limit: LOAD_POST_COUNT,
+    })
     res.json(comments)
 }
 
