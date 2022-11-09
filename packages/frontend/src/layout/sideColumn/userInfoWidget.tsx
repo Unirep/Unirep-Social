@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite'
 import UserContext from '../../context/User'
 import EpochContext from '../../context/EpochManager'
 import QueueContext, { ActionType, Metadata } from '../../context/Queue'
-import UIContext from '../../context/UI'
+import UIContext, { EpochStatus } from '../../context/UI'
 
 import HelpWidget from '../../components/helpWidget'
 import MyButton, { MyButtonType } from '../../components/myButton'
@@ -32,29 +32,30 @@ const UserInfoWidget = () => {
         const diff = (epochManager.nextTransition - Date.now()) / 1000
         setDiffTime(diff)
 
-        if (userContext.isInitialSyncing) {
+        if (uiContext.epochStatus === EpochStatus.syncing) {
             return 'Syncing...'
-        }
-
-        if (queue.queuedOp(ActionType.UST)) {
+        } else if (uiContext.epochStatus === EpochStatus.doingUST) {
             return 'Doing UST...'
+        } else if (uiContext.epochStatus === EpochStatus.needsUST) {
+            return 'Needs UST'
+        } else {
+            const days = Math.floor(diff / (24 * 60 * 60))
+            if (days > 0) {
+                return days + ' days'
+            }
+            const hours = Math.floor(diff / (60 * 60))
+            if (hours > 0) {
+                return hours + ' hours'
+            }
+            const minutes = Math.floor(diff / 60)
+            if (minutes > 0) {
+                return minutes + ' minutes'
+            }
+            if (diff >= 0) {
+                return Math.floor(diff) + ' seconds'
+            }
+            return 'Awaiting Epoch Change...'
         }
-        const days = Math.floor(diff / (24 * 60 * 60))
-        if (days > 0) {
-            return days + ' days'
-        }
-        const hours = Math.floor(diff / (60 * 60))
-        if (hours > 0) {
-            return hours + ' hours'
-        }
-        const minutes = Math.floor(diff / 60)
-        if (minutes > 0) {
-            return minutes + ' minutes'
-        }
-        if (diff >= 0) {
-            return Math.floor(diff) + ' seconds'
-        }
-        return 'Awaiting Epoch Change...'
     }
 
     const gotoSettingPage = () => {
@@ -97,10 +98,7 @@ const UserInfoWidget = () => {
                             </div>
                         )}
                     </div>
-                    {userContext.userState &&
-                    !userContext.isInitialSyncing &&
-                    (epochManager.readyToTransition || userContext.needsUST) &&
-                    !queue.queuedOp(ActionType.UST) ? (
+                    {uiContext.epochStatus === EpochStatus.needsUST ? (
                         <div className="ust-info">
                             <h4>
                                 Previous cycle was ended at {nextUSTTimeString}

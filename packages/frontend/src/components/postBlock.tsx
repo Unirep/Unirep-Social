@@ -6,8 +6,7 @@ import { observer } from 'mobx-react-lite'
 import UserContext from '../context/User'
 import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
-import EpochContext from '../context/EpochManager'
-import QueueContext, { ActionType } from '../context/Queue'
+import UIContext, { EpochStatus } from '../context/UI'
 
 import { EXPLORER_URL } from '../config'
 import { Page, AlertType } from '../constants'
@@ -51,16 +50,11 @@ const PostBlock = ({ postId, page }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
-    const epochManager = useContext(EpochContext)
-    const queue = useContext(QueueContext)
+    const uiContext = useContext(UIContext)
 
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
-
-    const disabled =
-        userContext.userState &&
-        (epochManager.readyToTransition || userContext.needsUST)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
 
@@ -80,13 +74,9 @@ const PostBlock = ({ postId, page }: Props) => {
     }
 
     const expandCommentField = () => {
-        if (
-            userContext.userState &&
-            (epochManager.readyToTransition || userContext.needsUST)
-        )
-            return
-
-        setShowCommentField(true)
+        if (uiContext.epochStatus === EpochStatus.default) {
+            setShowCommentField(true)
+        }
     }
 
     return (
@@ -169,13 +159,9 @@ const PostBlock = ({ postId, page }: Props) => {
                 <div></div>
             ) : (
                 <div className="comment">
-                    {userContext.userState &&
-                        !userContext.isInitialSyncing &&
-                        (epochManager.readyToTransition ||
-                            userContext.needsUST) &&
-                        !queue.queuedOp(ActionType.UST) && (
-                            <RefreshReminder closeReminder={() => {}} />
-                        )}
+                    {uiContext.epochStatus === EpochStatus.needsUST && (
+                        <RefreshReminder />
+                    )}
                     <div className="comment-block">
                         {!userContext.userState ? (
                             <AlertBox type={AlertType.commentNotLogin} />
@@ -193,7 +179,9 @@ const PostBlock = ({ postId, page }: Props) => {
                                 onClick={expandCommentField}
                                 className="inactive-comment-field"
                             >
-                                What do you think?
+                                {uiContext.epochStatus === EpochStatus.default
+                                    ? 'What do you think?'
+                                    : 'Something is processing...'}
                             </div>
                         )}
                     </div>

@@ -6,7 +6,7 @@ import { makeAutoObservable } from 'mobx'
 const unirepConfig = (UnirepContext as any)._currentValue
 const userContext = (UserContext as any)._currentValue
 
-class EpochManager {
+export class EpochManager {
     private timer: NodeJS.Timeout | null = null
     private currentEpoch = 0
     readonly nextTransition = 0

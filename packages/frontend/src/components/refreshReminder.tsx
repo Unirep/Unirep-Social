@@ -4,11 +4,7 @@ import UserContext from '../context/User'
 import QueueContext, { Metadata, ActionType } from '../context/Queue'
 import EpochContetxt from '../context/EpochManager'
 
-type Props = {
-    closeReminder: () => void
-}
-
-const RefreshReminder = ({ closeReminder }: Props) => {
+const RefreshReminder = () => {
     const userContext = useContext(UserContext)
     const queue = useContext(QueueContext)
     const epochManager = useContext(EpochContetxt)
@@ -47,7 +43,6 @@ const RefreshReminder = ({ closeReminder }: Props) => {
                             type: ActionType.UST,
                         }
                     )
-                    closeReminder()
                 }}
             >
                 Refresh
