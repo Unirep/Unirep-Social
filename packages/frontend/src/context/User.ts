@@ -44,6 +44,7 @@ export class User {
             latestProcessedBlock: observable,
             isInitialSyncing: observable,
             id: observable,
+            latestTransitionedEpoch: observable,
             needsUST: computed,
         })
         if (typeof window !== 'undefined') {
@@ -129,6 +130,7 @@ export class User {
 
     get needsUST() {
         if (!this.userState || !this.latestTransitionedEpoch) return false
+
         return this.currentEpoch > (this.latestTransitionedEpoch || -1)
     }
 
@@ -191,8 +193,9 @@ export class User {
     }
 
     async updateLatestTransitionedEpoch() {
+        if (!this.userState) throw new Error('No user state')
         this.latestTransitionedEpoch =
-            await this.userState?.latestTransitionedEpoch()
+            await this.userState.latestTransitionedEpoch()
     }
 
     async calculateAllEpks() {
@@ -425,6 +428,8 @@ export class User {
     async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
         const currentEpoch = await this.loadCurrentEpoch()
         if (!this.userState) throw new Error('User state not initialized')
+
+        await this.userState.waitForSync()
         const { proof, publicSignals } = await this.userState.genSubsidyProof(
             BigInt(this.unirepConfig.attesterId),
             BigInt(minRep),
@@ -452,6 +457,8 @@ export class User {
         const proveGraffiti = BigInt(0)
         const graffitiPreImage = BigInt(0)
         if (!this.userState) throw new Error('User state not initialized')
+
+        await this.userState.waitForSync()
         const { proof, publicSignals } =
             await this.userState.genProveReputationProof(
                 BigInt(this.unirepConfig.attesterId),
@@ -470,6 +477,8 @@ export class User {
         if (!this.userState) {
             throw new Error('User state not initialized')
         }
+
+        await this.userState.waitForSync()
         const results = await this.userState.genUserStateTransitionProofs()
         const r = await fetch(makeURL('userStateTransition'), {
             headers: {
@@ -485,11 +494,7 @@ export class User {
 
         if (error && error.length > 0) {
             console.log(error)
-        } else {
-            await this.loadCurrentEpoch()
-            await this.calculateAllEpks()
-            await this.loadReputation()
-        } // store user state in local storage
+        }
 
         return { error, transaction }
     }

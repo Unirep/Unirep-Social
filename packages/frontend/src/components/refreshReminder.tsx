@@ -32,10 +32,11 @@ const RefreshReminder = ({ closeReminder }: Props) => {
                                 details: 'Waiting for transaction...',
                             })
                             await queue.afterTx(transaction)
+                            await epochManager.updateWatch()
+                            await userContext.loadCurrentEpoch()
+                            await userContext.updateLatestTransitionedEpoch()
                             await userContext.calculateAllEpks()
                             await userContext.loadReputation()
-                            await epochManager.updateWatch()
-                            await userContext.updateLatestTransitionedEpoch()
 
                             let metadata: Metadata = {
                                 transactionId: transaction,

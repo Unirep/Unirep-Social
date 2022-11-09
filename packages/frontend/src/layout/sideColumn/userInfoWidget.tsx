@@ -36,10 +36,7 @@ const UserInfoWidget = () => {
             return 'Syncing...'
         }
 
-        if (
-            userContext.userState &&
-            (epochManager.readyToTransition || userContext.needsUST)
-        ) {
+        if (queue.queuedOp(ActionType.UST)) {
             return 'Doing UST...'
         }
         const days = Math.floor(diff / (24 * 60 * 60))
@@ -128,10 +125,11 @@ const UserInfoWidget = () => {
                                                     'Waiting for transaction...',
                                             })
                                             await queue.afterTx(transaction)
+                                            await epochManager.updateWatch()
+                                            await userContext.loadCurrentEpoch()
+                                            await userContext.updateLatestTransitionedEpoch()
                                             await userContext.calculateAllEpks()
                                             await userContext.loadReputation()
-                                            await epochManager.updateWatch()
-                                            await userContext.updateLatestTransitionedEpoch()
 
                                             let metadata: Metadata = {
                                                 transactionId: transaction,
