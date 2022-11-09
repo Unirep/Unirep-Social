@@ -13,6 +13,7 @@ import {
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
+    DELETED_CONTENT,
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
 import {
@@ -31,6 +32,7 @@ export default (app: Express) => {
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
+    app.post('/api/post/delete/:id', catchError(deletePost))
 }
 
 async function loadCommentsByPostId(req, res) {
@@ -59,7 +61,8 @@ async function loadPostById(req, res) {
             _id: req.params.id,
         },
     })
-    res.json(post)
+    if (!post) res.status(404).json('no such post')
+    else res.json(post)
 }
 
 async function loadPosts(req, res) {
@@ -90,6 +93,7 @@ async function loadPosts(req, res) {
         },
         limit: LOAD_POST_COUNT,
     })
+
     res.json(posts)
 }
 
@@ -269,6 +273,56 @@ async function createPostSubsidy(req, res) {
 
 async function editPost(req, res) {
     const id = req.params.id
+    const { publicSignals, proof, content } = req.body
+
+    const { transaction, error } = await editPostOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        content
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        const post = await req.db.findOne('Post', { where: { _id: id } })
+        res.json({
+            error,
+            transaction,
+            post,
+        })
+    }
+}
+
+async function deletePost(req, res) {
+    const id = req.params.id
+    const { publicSignals, proof } = req.body
+
+    const { transaction, error } = await editPostOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        DELETED_CONTENT
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        res.json({
+            error,
+            transaction,
+            id,
+        })
+    }
+}
+
+async function editPostOnChain(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -276,7 +330,6 @@ async function editPost(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -290,18 +343,15 @@ async function editPost(req, res) {
         onChainId,
         epoch,
         epochKey,
-    } = await req.db.findOne('Post', {
+    } = await db.findOne('Post', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
+    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
     if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
+        return { error }
     }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
@@ -319,7 +369,7 @@ async function editPost(req, res) {
         }
     )
 
-    await req.db.update('Post', {
+    await db.update('Post', {
         where: {
             _id: id,
             onChainId,
@@ -331,11 +381,5 @@ async function editPost(req, res) {
         },
     })
 
-    const post = await req.db.findOne('Post', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        post,
-    })
+    return { transaction: hash, error }
 }
