@@ -25,7 +25,6 @@ export const getRecords = async (epks: string[]) => {
 
     const paramStr = epksBase10.join('_')
     const apiURL = makeURL(`records/${paramStr}`, {})
-    console.log(apiURL)
 
     // bug: createdAt is NaN in backend
     const getGeneralRecords = fetch(apiURL)
@@ -33,8 +32,6 @@ export const getRecords = async (epks: string[]) => {
         .then((data) => {
             const records: Record[] = []
             for (let i = 0; i < data.length; i++) {
-                console.log('data ', i, 'created at:', data[i].createdAt)
-
                 const record: Record = {
                     action: data[i].action,
                     from: BigInt(data[i].from)
