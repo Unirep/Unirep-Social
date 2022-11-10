@@ -44,7 +44,7 @@ describe('Post', function () {
         await post.loadComments('queryString', '1', ['0000'])
     })
 
-    test('getAirdrop() functionality', async () => {
+    test.skip('getAirdrop() functionality', async () => {
         const addOpSpy = jest.spyOn(queue, 'addOp')
 
         await post.getAirdrop('1')
