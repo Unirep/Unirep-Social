@@ -4,11 +4,21 @@ import { observer } from 'mobx-react-lite'
 
 import UserContext from '../context/User'
 
-import { Post, Comment, ButtonType, DataType } from '../constants'
+import { Post, Comment, DataType } from '../constants'
 import VoteBox from './voteBox'
 
+export enum BlockButtonType {
+    Comments = 'comments',
+    Boost = 'boost',
+    Squash = 'squash',
+    Share = 'share',
+    Post = 'post',
+    Activity = 'activity',
+    Save = 'save',
+}
+
 type Props = {
-    type: ButtonType
+    type: BlockButtonType
     count: number
     data: Post | Comment
 }
@@ -23,7 +33,10 @@ const BlockButton = ({ type, count, data }: Props) => {
     const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false) // only for share button
 
     const checkAbility = () => {
-        if (type === ButtonType.Comments || type === ButtonType.Share) {
+        if (
+            type === BlockButtonType.Comments ||
+            type === BlockButtonType.Share
+        ) {
             return true
         } else {
             if (!userContext.userState) return false
@@ -40,19 +53,22 @@ const BlockButton = ({ type, count, data }: Props) => {
         setIsHover(false)
         setReminder('')
 
-        if (type === ButtonType.Comments) {
+        if (type === BlockButtonType.Comments) {
             history.push(`/post/${data.id}`)
-        } else if (type === ButtonType.Boost) {
+        } else if (type === BlockButtonType.Boost) {
             setBoostOn(true)
-        } else if (type === ButtonType.Squash) {
+        } else if (type === BlockButtonType.Squash) {
             setSquashOn(true)
-        } else if (type === ButtonType.Share && data.type === DataType.Post) {
+        } else if (
+            type === BlockButtonType.Share &&
+            data.type === DataType.Post
+        ) {
             navigator.clipboard.writeText(
                 `${window.location.origin}/post/${data.id}`
             )
             setIsLinkCopied(true)
         } else if (
-            type === ButtonType.Share &&
+            type === BlockButtonType.Share &&
             data.type === DataType.Comment
         ) {
             navigator.clipboard.writeText(
@@ -61,7 +77,7 @@ const BlockButton = ({ type, count, data }: Props) => {
                 }`
             )
             setIsLinkCopied(true)
-        } else if (type === ButtonType.Share) {
+        } else if (type === BlockButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
         }
     }
@@ -78,7 +94,7 @@ const BlockButton = ({ type, count, data }: Props) => {
                 setReminder('Time out :(')
             else if (userContext.spendableReputation < 1)
                 setReminder('No enough Rep')
-            else if (type !== ButtonType.Share) setReminder('loading...')
+            else if (type !== BlockButtonType.Share) setReminder('loading...')
         }
     }
 
@@ -97,7 +113,7 @@ const BlockButton = ({ type, count, data }: Props) => {
     return (
         <div
             className={
-                type === ButtonType.Share
+                type === BlockButtonType.Share
                     ? 'block-button share'
                     : 'block-button'
             }
@@ -110,7 +126,7 @@ const BlockButton = ({ type, count, data }: Props) => {
                     isHover && checkAbility() ? '-fill' : ''
                 }.svg`)}
             />
-            {type !== ButtonType.Share ? (
+            {type !== BlockButtonType.Share ? (
                 <span className="count">{count}</span>
             ) : (
                 <span></span>
