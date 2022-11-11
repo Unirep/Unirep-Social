@@ -41,12 +41,10 @@ const Banner = () => {
                         >
                             How it works
                         </a>
-                        {!userContext.userState ? (
-                            <a className="banner-button" href="/signup">
+                        {!userContext.userState && (
+                            <a className="banner-button" href="/start">
                                 Join us
                             </a>
-                        ) : (
-                            <div></div>
                         )}
                     </div>
                     <div className="banner-close" onClick={closeBanner}>

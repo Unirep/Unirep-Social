@@ -2,12 +2,17 @@ import { useHistory } from 'react-router-dom'
 
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomGap from '../../components/customGap'
+import MyButton, { MyButtonType } from '../../components/myButton'
 
 const Onboarded = () => {
     const history = useHistory()
 
     const gotoHomePage = () => {
         history.push('/')
+    }
+
+    const gotoSettingPage = () => {
+        history.push('/setting', { isConfirmed: true })
     }
 
     return (
@@ -30,9 +35,25 @@ const Onboarded = () => {
             <p>Enjoy your journey in UniRep Social!</p>
             <div className="gap"></div>
             <div className="box-buttons box-buttons-bottom">
-                <button className="button-light" onClick={gotoHomePage}>
+                <MyButton
+                    type={MyButtonType.lightTrans}
+                    onClick={gotoHomePage}
+                    fullSize={true}
+                    textAlignMiddle={true}
+                    fontWeight={600}
+                >
                     Get in
-                </button>
+                </MyButton>
+                <CustomGap times={2} />
+                <MyButton
+                    type={MyButtonType.light}
+                    onClick={gotoSettingPage}
+                    fullSize={true}
+                    textAlignMiddle={true}
+                    fontWeight={600}
+                >
+                    Grab my private key
+                </MyButton>
             </div>
         </CustomBox>
     )
