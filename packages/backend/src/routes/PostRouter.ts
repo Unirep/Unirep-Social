@@ -13,6 +13,7 @@ import {
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
+    TITLE_LABEL,
     DELETED_CONTENT,
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
@@ -121,7 +122,7 @@ async function createPost(req, res) {
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
     const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
 
     const error = await verifyReputationProof(
@@ -206,7 +207,7 @@ async function createPostSubsidy(req, res) {
         Prover
     )
     const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
     const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
 
@@ -273,13 +274,14 @@ async function createPostSubsidy(req, res) {
 
 async function editPost(req, res) {
     const id = req.params.id
-    const { publicSignals, proof, content } = req.body
+    const { publicSignals, proof, title, content } = req.body
 
     const { transaction, error } = await editPostOnChain(
         id,
         req.db,
         publicSignals,
         proof,
+        title,
         content
     )
 
@@ -306,6 +308,7 @@ async function deletePost(req, res) {
         req.db,
         publicSignals,
         proof,
+        '',
         DELETED_CONTENT
     )
 
@@ -322,7 +325,7 @@ async function deletePost(req, res) {
     }
 }
 
-async function editPostOnChain(id, db, publicSignals, proof, content) {
+async function editPostOnChain(id, db, publicSignals, proof, title, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -335,7 +338,7 @@ async function editPostOnChain(id, db, publicSignals, proof, content) {
         formatProofForSnarkjsVerification(proof)
     )
     const newHashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
 
     const {
@@ -376,6 +379,7 @@ async function editPostOnChain(id, db, publicSignals, proof, content) {
             hashedContent: oldHashedContent,
         },
         update: {
+            title,
             content,
             hashedContent: newHashedContent,
         },
