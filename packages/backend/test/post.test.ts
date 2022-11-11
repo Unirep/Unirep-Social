@@ -32,6 +32,7 @@ test('should edit a post', async (t: any) => {
     const data = await queryPost(t, post._id)
     t.is(data.content, newContent)
     t.is(data.title, newTitle)
+    t.not(data.latestUpdatedAt, data.createdAt)
 })
 
 test('should delete a post', async (t: any) => {
@@ -39,5 +40,6 @@ test('should delete a post', async (t: any) => {
     await signIn(t, iden)
     const { id } = await deletePost(t, iden)
     const data = await queryPost(t, id)
-    t.is(data.content, '===deleted===')
+    t.is(data.content, '[This has been deleted...]')
+    t.not(data.latestUpdatedAt, data.createdAt)
 })

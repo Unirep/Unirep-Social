@@ -382,6 +382,7 @@ async function editPostOnChain(id, db, publicSignals, proof, title, content) {
             title,
             content,
             hashedContent: newHashedContent,
+            latestUpdatedAt: +(new Date())
         },
     })
 

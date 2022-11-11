@@ -32,6 +32,11 @@ const _schema = [
                 type: 'Int',
                 default: () => +new Date(),
             },
+            {
+                name: 'latestUpdatedAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
             ['postId', 'String', { optional: true }],
             ['onChainId', 'String', { optional: true }],
             ['transactionHash', 'String', { optional: true }],
@@ -64,6 +69,11 @@ const _schema = [
         rows: [
             {
                 name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+            {
+                name: 'latestUpdatedAt',
                 type: 'Int',
                 default: () => +new Date(),
             },
