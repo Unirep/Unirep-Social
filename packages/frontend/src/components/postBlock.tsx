@@ -55,6 +55,7 @@ const PostBlock = ({ postId, page }: Props) => {
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
+    const isAuthor = userContext.allEpks?.includes(post.epoch_key)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
 
@@ -73,6 +74,10 @@ const PostBlock = ({ postId, page }: Props) => {
         history.push(`/post/${post.id}`)
     }
 
+    const editPost = () => {
+        history.push(`/edit/${post.id}`)
+    }
+
     const expandCommentField = () => {
         if (uiContext.epochStatus === EpochStatus.default) {
             setShowCommentField(true)
@@ -89,7 +94,6 @@ const PostBlock = ({ postId, page }: Props) => {
                         onMouseEnter={() => setEpkHovered(true)}
                         onMouseLeave={() => setEpkHovered(false)}
                         onClick={() => setEpkHovered(!isEpkHovered)}
-                        // title={post.reputation === DEFAULT_POST_KARMA? `This person is very modest, showing off only ${DEFAULT_POST_KARMA} Rep.` : `This person is showing off ${post.reputation} Rep.`}
                     >
                         Post by {post.epoch_key}
                         {post.reputation > 0 && (
@@ -97,14 +101,12 @@ const PostBlock = ({ postId, page }: Props) => {
                                 src={require('../../public/images/lighting.svg')}
                             />
                         )}
-                        {isEpkHovered && post.reputation > 0 ? (
+                        {isEpkHovered && post.reputation > 0 && (
                             <span className="show-off-rep">
                                 {post.reputation === unirepConfig.postReputation
                                     ? `This person is very modest, showing off only ${unirepConfig.postReputation} Rep.`
                                     : `This person is showing off ${post.reputation} Rep.`}
                             </span>
-                        ) : (
-                            <span></span>
                         )}
                     </span>
                 </div>
@@ -154,6 +156,13 @@ const PostBlock = ({ postId, page }: Props) => {
                     count={0}
                     data={post}
                 />
+                {isAuthor && (
+                    <BlockButton
+                        type={BlockButtonType.Edit}
+                        data={post}
+                        edit={editPost}
+                    />
+                )}
             </div>
             {page === Page.Home ? (
                 <div></div>

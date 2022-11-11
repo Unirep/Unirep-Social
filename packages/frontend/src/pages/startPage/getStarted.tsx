@@ -1,7 +1,7 @@
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomGap from '../../components/customGap'
-import { SERVER } from '../../config'
 import MyButton, { MyButtonType } from '../../components/myButton'
+import { SERVER } from '../../config'
 
 type Props = {
     signin: () => void

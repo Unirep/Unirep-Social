@@ -15,15 +15,17 @@ export enum BlockButtonType {
     Post = 'post',
     Activity = 'activity',
     Save = 'save',
+    Edit = 'edit',
 }
 
 type Props = {
     type: BlockButtonType
-    count: number
+    count?: number
     data: Post | Comment
+    edit?: () => void
 }
 
-const BlockButton = ({ type, count, data }: Props) => {
+const BlockButton = ({ type, count, data, edit }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const [isBoostOn, setBoostOn] = useState<boolean>(false)
@@ -35,7 +37,8 @@ const BlockButton = ({ type, count, data }: Props) => {
     const checkAbility = () => {
         if (
             type === BlockButtonType.Comments ||
-            type === BlockButtonType.Share
+            type === BlockButtonType.Share ||
+            type === BlockButtonType.Edit
         ) {
             return true
         } else {
@@ -79,6 +82,8 @@ const BlockButton = ({ type, count, data }: Props) => {
             setIsLinkCopied(true)
         } else if (type === BlockButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
+        } else if (type === BlockButtonType.Edit) {
+            if (edit) edit()
         }
     }
 
@@ -113,7 +118,7 @@ const BlockButton = ({ type, count, data }: Props) => {
     return (
         <div
             className={
-                type === BlockButtonType.Share
+                type === BlockButtonType.Share || type === BlockButtonType.Edit
                     ? 'block-button share'
                     : 'block-button'
             }
@@ -126,28 +131,21 @@ const BlockButton = ({ type, count, data }: Props) => {
                     isHover && checkAbility() ? '-fill' : ''
                 }.svg`)}
             />
-            {type !== BlockButtonType.Share ? (
-                <span className="count">{count}</span>
-            ) : (
-                <span></span>
-            )}
+            {type !== BlockButtonType.Share &&
+                type !== BlockButtonType.Edit && (
+                    <span className="count">{count}</span>
+                )}
             <span className="btn-name">
                 {type.charAt(0).toUpperCase() + type.slice(1)}
             </span>
 
-            {checkAbility() ? (
-                <div></div>
-            ) : (
+            {checkAbility() === false && (
                 <div
                     className="disabled"
                     onMouseEnter={setReminderMessage}
                 ></div>
             )}
-            {reminder.length > 0 ? (
-                <div className="reminder">{reminder}</div>
-            ) : (
-                <div></div>
-            )}
+            {reminder.length > 0 && <div className="reminder">{reminder}</div>}
             {isBoostOn ? (
                 <VoteBox
                     isUpvote={true}

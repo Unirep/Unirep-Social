@@ -22,6 +22,10 @@ type Props = {
     ) => void
     submitBtnName: string
     onClick: (event: any) => void
+    title?: string
+    content?: string
+    showDetail?: boolean
+    isEdit?: boolean
 }
 
 const WritingField = (props: Props) => {
@@ -32,12 +36,20 @@ const WritingField = (props: Props) => {
 
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
+        if (props.title) {
+            return props.title
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.title
         }
         return ''
     })
     const [content, setContent] = useState<string>(() => {
+        if (props.content) {
+            return props.content
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.content
         } else if (
@@ -67,11 +79,13 @@ const WritingField = (props: Props) => {
 
     const handleTitleInput = (event: any) => {
         setTitle(event.target.value)
+        if (props.isEdit) return
         postContext.setDraft(props.type, event.target.value, content)
     }
 
     const handleTextEditorInput = (text: string) => {
         setContent(text)
+        if (props.isEdit) return
         postContext.setDraft(props.type, title, text)
     }
 
@@ -123,29 +137,33 @@ const WritingField = (props: Props) => {
                 />
             )}
             <div style={{ marginBottom: '32px' }}></div>
-            {userContext.userState ? (
-                <ActionDetail
-                    showBorder={true}
-                    showHelp={true}
-                    showRep={userContext.netReputation >= defaultRep}
-                    maxRep={userContext.netReputation}
-                    defaultRep={defaultRep}
-                    hasRep={
-                        useSubsidy
-                            ? userContext.subsidyReputation
-                            : userContext.netReputation
-                    }
-                    showoffRep={reputation}
-                    setShowoffRep={setReputation}
-                    allEpks={userContext.currentEpochKeys}
-                    useSubsidy={useSubsidy}
-                    chooseToUseSubsidy={chooseToUseSubsidy}
-                    chooseToUsePersona={chooseToUsePersona}
-                    epkNonce={epkNonce}
-                    setEpkNonce={setEpkNonce}
-                />
-            ) : (
-                <>somethings wrong...</>
+            {props.showDetail && (
+                <>
+                    {userContext.userState ? (
+                        <ActionDetail
+                            showBorder={true}
+                            showHelp={true}
+                            showRep={true}
+                            maxRep={userContext.netReputation}
+                            defaultRep={defaultRep}
+                            hasRep={
+                                useSubsidy
+                                    ? userContext.subsidyReputation
+                                    : userContext.netReputation
+                            }
+                            showoffRep={reputation}
+                            setShowoffRep={setReputation}
+                            allEpks={userContext.currentEpochKeys}
+                            useSubsidy={useSubsidy}
+                            chooseToUseSubsidy={chooseToUseSubsidy}
+                            chooseToUsePersona={chooseToUsePersona}
+                            epkNonce={epkNonce}
+                            setEpkNonce={setEpkNonce}
+                        />
+                    ) : (
+                        <>somethings wrong...</>
+                    )}
+                </>
             )}
             <MyButton
                 type={MyButtonType.dark}
