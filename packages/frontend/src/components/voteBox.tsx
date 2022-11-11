@@ -208,10 +208,10 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                     </MyButton>
                     <div className="histories">
                         <div
-                            className="main-btn"
+                            className="history-btn"
                             onClick={() => setHistoriesOpen(!isHistoriesOpen)}
                         >
-                            <div className="btn-name">
+                            <div className="history-btn-name">
                                 <p className="title">History</p>
                                 <p className="description">{`You have ${
                                     voteHistories.length > 0 ? '' : 'not '
