@@ -1,5 +1,20 @@
 import { createContext } from 'react'
-import { makeObservable, observable } from 'mobx'
+import { makeObservable, observable, computed } from 'mobx'
+
+import UserContext, { User } from './User'
+import EpochContext, { EpochManager } from './EpochManager'
+import QueueContext, { Queue, ActionType } from './Queue'
+
+export enum EpochStatus {
+    syncing,
+    doingUST,
+    needsUST,
+    default,
+}
+
+const userContext = (UserContext as any)._currentValue as User
+const queue = (QueueContext as any)._currentValue as Queue
+const epochManager = (EpochContext as any)._currentValue as EpochManager
 
 export class UI {
     loadingPromise
@@ -13,6 +28,7 @@ export class UI {
             hasBanner: observable,
             scrollTop: observable,
             hasDownloadPrivateKey: observable,
+            epochStatus: computed,
         })
 
         if (typeof window !== 'undefined') {
@@ -57,6 +73,23 @@ export class UI {
     uiLogout() {
         window.localStorage.removeItem('hasDownloadPrivateKey')
         window.localStorage.removeItem('hasBanner')
+    }
+
+    get epochStatus() {
+        if (userContext.isInitialSyncing) {
+            return EpochStatus.syncing
+        } else if (
+            userContext.userState &&
+            !userContext.isInitialSyncing &&
+            (epochManager.readyToTransition || userContext.needsUST) &&
+            !queue.queuedOp(ActionType.UST)
+        ) {
+            return EpochStatus.needsUST
+        } else if (queue.queuedOp(ActionType.UST)) {
+            return EpochStatus.doingUST
+        } else {
+            return EpochStatus.default
+        }
     }
 }
 

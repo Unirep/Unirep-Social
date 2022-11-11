@@ -1,9 +1,8 @@
 import { useContext, useState, useEffect } from 'react'
+import { observer } from 'mobx-react-lite'
 
 import { WebContext } from '../../context/WebContext'
-import UserContext from '../../context/User'
-import QueueContext, { ActionType } from '../../context/Queue'
-import EpochContext from '../../context/EpochManager'
+import UIContext, { EpochStatus } from '../../context/UI'
 
 import Banner from '../../layout/banner/banner'
 import SideColumn from '../../layout/sideColumn/sideColumn'
@@ -17,27 +16,7 @@ type Props = {
 
 const BasicPage = ({ children }: Props) => {
     const { isMenuOpen } = useContext(WebContext)
-    const [isReminderOn, setReminderOn] = useState<boolean>(false)
-    const userContext = useContext(UserContext)
-    const queue = useContext(QueueContext)
-    const epochManager = useContext(EpochContext)
-
-    const closeReminder = () => {
-        if (queue.queuedOp(ActionType.UST)) {
-            setReminderOn(false)
-        }
-    }
-
-    useEffect(() => {
-        if (
-            userContext.userState &&
-            !userContext.isInitialSyncing &&
-            (epochManager.readyToTransition || userContext.needsUST) &&
-            !queue.queuedOp(ActionType.UST)
-        ) {
-            setReminderOn(true)
-        }
-    })
+    const uiContext = useContext(UIContext)
 
     return (
         <div className="body-columns">
@@ -45,8 +24,8 @@ const BasicPage = ({ children }: Props) => {
             <div className="content">
                 <Banner />
                 <div className="main-content">
-                    {isReminderOn && (
-                        <RefreshReminder closeReminder={closeReminder} />
+                    {uiContext.epochStatus === EpochStatus.needsUST && (
+                        <RefreshReminder />
                     )}
                     {children}
                 </div>
@@ -63,4 +42,4 @@ const BasicPage = ({ children }: Props) => {
     )
 }
 
-export default BasicPage
+export default observer(BasicPage)
