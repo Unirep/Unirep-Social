@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import EpochContext from '../context/EpochManager'
+import UIContext, { EpochStatus } from '../context/UI'
 
 import TextEditor from './textEditor'
 import ActionDetail from './actionDetail'
@@ -32,9 +32,9 @@ const WritingField = (props: Props) => {
     const unirepConfig = useContext(UnirepContext)
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
-    const epochManager = useContext(EpochContext)
-    const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
+    const uiContext = useContext(UIContext)
 
+    const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
         if (props.title) {
             return props.title
@@ -179,10 +179,9 @@ const WritingField = (props: Props) => {
             ) : (
                 <div></div>
             )}
-            {userContext.userState &&
-                (epochManager.readyToTransition || userContext.needsUST) && (
-                    <div className="disable-cover"></div>
-                )}
+            {uiContext.epochStatus !== EpochStatus.default && (
+                <div className="disable-cover"></div>
+            )}
         </div>
     )
 }
