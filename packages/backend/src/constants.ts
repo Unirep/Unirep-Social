@@ -53,7 +53,6 @@ export const EPOCH_KEY_NONCE_PER_EPOCH = NUM_EPOCH_KEY_NONCE_PER_EPOCH
 export const maxReputationBudget = 10
 
 export const LOAD_POST_COUNT = 10
-export const TITLE_LABEL = '<title>'
 
 export const UNIREP_ABI = Unirep
 export const UNIREP_SOCIAL_ABI = UnirepSocial
@@ -71,4 +70,5 @@ export const add0x = (str: string): string => {
     return str.startsWith('0x') ? str : '0x' + str
 }
 
-export const DELETED_CONTENT: string = '===deleted==='
+export const DELETED_CONTENT: string = '[This has been deleted...]'
+export const TITLE_LABEL = '<title>'
