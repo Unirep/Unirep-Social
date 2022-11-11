@@ -13,6 +13,7 @@ import {
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
+    TITLE_LABEL
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
 import {
@@ -117,7 +118,7 @@ async function createPost(req, res) {
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
     const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
 
     const error = await verifyReputationProof(
@@ -202,7 +203,7 @@ async function createPostSubsidy(req, res) {
         Prover
     )
     const hashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(title + content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
     const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
 
@@ -276,13 +277,13 @@ async function editPost(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
+    const { publicSignals, proof, title, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
     )
     const newHashedContent = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(content)
+        ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
 
     const {
@@ -326,6 +327,7 @@ async function editPost(req, res) {
             hashedContent: oldHashedContent,
         },
         update: {
+            title,
             content,
             hashedContent: newHashedContent,
         },

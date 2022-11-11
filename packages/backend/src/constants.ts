@@ -54,6 +54,8 @@ export const maxReputationBudget = 10
 
 export const LOAD_POST_COUNT = 10
 
+export const TITLE_LABEL = '<title>'
+
 export const UNIREP_ABI = Unirep
 export const UNIREP_SOCIAL_ABI = UnirepSocial
 
