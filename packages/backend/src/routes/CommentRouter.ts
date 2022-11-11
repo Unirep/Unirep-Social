@@ -394,7 +394,7 @@ async function editCommentOnChain(id, db, publicSignals, proof, content) {
         update: {
             content,
             hashedContent: newHashedContent,
-            latestUpdatedAt: +(new Date())
+            latestUpdatedAt: +new Date(),
         },
     })
 

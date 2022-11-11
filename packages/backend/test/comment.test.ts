@@ -59,5 +59,4 @@ test('should delete a comment', async (t: any) => {
     const data = await queryComment(t, id)
     t.is(data.content, '[This has been deleted...]')
     t.not(data.latestUpdatedAt, data.createdAt)
-
 })
