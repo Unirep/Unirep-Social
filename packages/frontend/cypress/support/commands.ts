@@ -62,7 +62,7 @@ Cypress.Commands.add('signupNewUser', (password) => {
     cy.visit('/')
     cy.findByText('Get started').click()
     // cy.findByText('Sign Up').click()
-    cy.findByText('Twitter').click()
+    cy.findByText('Sign up with Twitter').click()
     cy.wait(20000)
     cy.findByText('Get in').click()
     // if (!password) {
