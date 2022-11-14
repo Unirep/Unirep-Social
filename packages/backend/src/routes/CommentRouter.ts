@@ -335,10 +335,12 @@ async function deleteComment(req, res) {
             error,
         })
     } else {
+        const comment = await req.db.findOne('Comment', { where: { _id: id } })
+
         res.json({
             error,
             transaction,
-            id,
+            comment,
         })
     }
 }

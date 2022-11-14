@@ -591,14 +591,66 @@ export class Data {
                     if (error) throw error
                     await queueContext.afterTx(transaction)
                     await Promise.all([
-                        this.loadCommentsByPostId(_comment.post_id),
+                        this.loadCommentsByPostId(_comment.postId),
                     ])
                     this.save()
                 }
             },
             {
-                successMessage: 'Update post is finalized',
-                type: ActionType.Post,
+                successMessage: 'Update comment is finalized',
+                type: ActionType.Comment,
+            }
+        )
+    }
+
+    deleteComment(commentId: string = '', epk: string = '') {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Deleting comment',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Deleting comment',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`comment/delete/${commentId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const {
+                        transaction,
+                        error,
+                        comment: _comment,
+                    } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    await Promise.all([
+                        this.loadCommentsByPostId(_comment.postId),
+                    ])
+                    this.save()
+                }
+            },
+            {
+                successMessage: 'Delete comment is finalized',
+                type: ActionType.Comment,
             }
         )
     }

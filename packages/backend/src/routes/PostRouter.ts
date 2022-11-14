@@ -319,10 +319,12 @@ async function deletePost(req, res) {
             error,
         })
     } else {
+        const post = await req.db.findOne('Post', { where: { _id: id } })
+
         res.json({
             error,
             transaction,
-            id,
+            post,
         })
     }
 }

@@ -119,7 +119,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     <img src={require('../../public/images/etherscan.svg')} />
                 </a>
             </div>
-            {page === Page.Home ? <div className="divider"></div> : <div></div>}
+            {page === Page.Home && <div className="divider"></div>}
             <div className="block-content" onClick={gotoPostPage}>
                 <div className="title">{post.title}</div>
                 <div className="content">
@@ -134,7 +134,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     />
                 </div>
             </div>
-            {page === Page.Home ? <div className="divider"></div> : <div></div>}
+            {page === Page.Home && <div className="divider"></div>}
             <div className="block-buttons">
                 <BlockButton
                     type={BlockButtonType.Comments}
@@ -164,9 +164,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     />
                 )}
             </div>
-            {page === Page.Home ? (
-                <div></div>
-            ) : (
+            {page !== Page.Home && (
                 <div className="comment">
                     {uiContext.epochStatus === EpochStatus.needsUST && (
                         <RefreshReminder />
@@ -200,10 +198,8 @@ const PostBlock = ({ postId, page }: Props) => {
                             {comments.map((id, i) => (
                                 <div key={id} id={id}>
                                     <CommentBlock page={page} commentId={id} />
-                                    {i < comments.length - 1 ? (
+                                    {i < comments.length - 1 && (
                                         <div className="divider"></div>
-                                    ) : (
-                                        <div></div>
                                     )}
                                 </div>
                             ))}

@@ -62,7 +62,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
     }
 
     const deleteComment = () => {
-        console.log('delete comment')
+        postContext.deleteComment(comment.id, comment.epoch_key)
         setAlertOn(false)
         setIsEdited(false)
     }
