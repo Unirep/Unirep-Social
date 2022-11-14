@@ -95,7 +95,7 @@ async function loadPosts(req, res) {
                 commentCount: query === QueryType.Comments ? 'desc' : undefined,
             },
         })
-    ).filter((p) => p.content !== DELETED_CONTENT && !lastRead.includes(p._id))
+    ).filter((p) => !lastRead.includes(p._id))
 
     res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }

@@ -83,7 +83,7 @@ async function listComments(req, res, next) {
                 totalRep: query === QueryType.Rep ? 'desc' : undefined,
             },
         })
-    ).filter((c) => c.content !== DELETED_CONTENT && !lastRead.includes(c._id))
+    ).filter((c) => !lastRead.includes(c._id))
 
     res.json(comments.slice(0, Math.min(LOAD_POST_COUNT, comments.length)))
 }
