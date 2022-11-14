@@ -33,7 +33,7 @@ const _schema = [
                 default: () => +new Date(),
             },
             {
-                name: 'latestUpdatedAt',
+                name: 'lastUpdatedAt',
                 type: 'Int',
                 default: () => +new Date(),
             },
@@ -73,7 +73,7 @@ const _schema = [
                 default: () => +new Date(),
             },
             {
-                name: 'latestUpdatedAt',
+                name: 'lastUpdatedAt',
                 type: 'Int',
                 default: () => +new Date(),
             },

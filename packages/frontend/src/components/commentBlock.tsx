@@ -9,7 +9,7 @@ import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
 import UserContext from '../context/User'
 
-import { EXPLORER_URL } from '../config'
+import { EXPLORER_URL, DELETED_CONTENT } from '../config'
 import MyButton, { MyButtonType } from './myButton'
 import AlertCover from './alertCover'
 import WritingField from './writingField'
@@ -40,6 +40,12 @@ const CommentBlock = ({ commentId, page }: Props) => {
     const [isEdited, setIsEdited] = useState<boolean>(false)
     const [alertOn, setAlertOn] = useState<boolean>(false)
     const isAuthor = userContext.allEpks?.includes(comment.epoch_key)
+    const commentCondition =
+        comment.lastUpdatedAt && comment.lastUpdatedAt > comment.createdAt
+            ? comment.content === DELETED_CONTENT
+                ? '  (Deleted)'
+                : '  (Edited)'
+            : ''
 
     // const gotoPost = () => {
     //     if (page === Page.User) {
@@ -75,7 +81,10 @@ const CommentBlock = ({ commentId, page }: Props) => {
         <div className="comment-block">
             <div className="block-header comment-block-header no-padding">
                 <div className="info">
-                    <span className="date">{date} |</span>
+                    <span className="date">
+                        {date}
+                        {commentCondition} |
+                    </span>
                     <span
                         className="user"
                         onMouseEnter={() => setEpkHovered(true)}

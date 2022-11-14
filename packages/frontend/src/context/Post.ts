@@ -680,6 +680,7 @@ export class Data {
             current_epoch: data.epoch,
             proofIndex: data.proofIndex,
             transactionHash: data.transactionHash,
+            lastUpdatedAt: data.lastUpdatedAt,
         }
 
         return comment
@@ -702,6 +703,7 @@ export class Data {
             current_epoch: data.epoch,
             proofIndex: data.proofIndex,
             transactionHash: data.transactionHash,
+            lastUpdatedAt: data.lastUpdatedAt,
         }
 
         return post

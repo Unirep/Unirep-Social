@@ -8,7 +8,7 @@ import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
 import UIContext, { EpochStatus } from '../context/UI'
 
-import { EXPLORER_URL } from '../config'
+import { EXPLORER_URL, DELETED_CONTENT } from '../config'
 import { Page, AlertType } from '../constants'
 import CommentField from './commentField'
 import CommentBlock from './commentBlock'
@@ -58,6 +58,12 @@ const PostBlock = ({ postId, page }: Props) => {
     const isAuthor = userContext.allEpks?.includes(post.epoch_key)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
+    const postCondition =
+        post.lastUpdatedAt && post.lastUpdatedAt > post.createdAt
+            ? post.content === DELETED_CONTENT
+                ? '  (Deleted)'
+                : '  (Edited)'
+            : ''
 
     const [showCommentField, setShowCommentField] = useState<boolean>(
         postContext.commentDraft.content.length > 0
@@ -88,7 +94,10 @@ const PostBlock = ({ postId, page }: Props) => {
         <div className="post-block">
             <div className="block-header">
                 <div className="info">
-                    <span className="date">{date} |</span>
+                    <span className="date">
+                        {date}
+                        {postCondition} |
+                    </span>
                     <span
                         className="user"
                         onMouseEnter={() => setEpkHovered(true)}
@@ -96,11 +105,9 @@ const PostBlock = ({ postId, page }: Props) => {
                         onClick={() => setEpkHovered(!isEpkHovered)}
                     >
                         Post by {post.epoch_key}
-                        {post.reputation > 0 && (
-                            <img
-                                src={require('../../public/images/lighting.svg')}
-                            />
-                        )}
+                        <img
+                            src={require('../../public/images/lighting.svg')}
+                        />
                         {isEpkHovered && post.reputation > 0 && (
                             <span className="show-off-rep">
                                 {post.reputation === unirepConfig.postReputation

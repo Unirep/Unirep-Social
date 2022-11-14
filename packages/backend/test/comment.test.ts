@@ -43,7 +43,7 @@ test('should edit a comment', async (t: any) => {
     const { comment } = await editComment(t, iden, post._id, newContent)
     const data = await queryComment(t, comment._id)
     t.is(data.content, newContent)
-    t.not(data.latestUpdatedAt, data.createdAt)
+    t.not(data.lastUpdatedAt, data.createdAt)
 })
 
 test('should delete a comment', async (t: any) => {
@@ -55,8 +55,7 @@ test('should delete a comment', async (t: any) => {
     const { post } = await createPost(t, iden)
 
     // edit a comment
-    const { id } = await deleteComment(t, iden, post._id)
-    const data = await queryComment(t, id)
-    t.is(data.content, '[This has been deleted...]')
-    t.not(data.latestUpdatedAt, data.createdAt)
+    const { comment } = await deleteComment(t, iden, post._id)
+    t.is(comment.content, '[This has been deleted...]')
+    t.not(comment.lastUpdatedAt, comment.createdAt)
 })
