@@ -247,7 +247,7 @@ export const createPostSubsidy = async (t, iden) => {
     return data
 }
 
-export const editPost = async (t, iden) => {
+export const editPost = async (t, iden, content) => {
     const { post } = await createPost(t, iden)
     const userState = await genUserState(
         t.context.unirepSocial.provider,
@@ -272,7 +272,7 @@ export const editPost = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            content: 'new content',
+            content,
             publicSignals,
             proof,
         }),
@@ -297,7 +297,56 @@ export const editPost = async (t, iden) => {
     return data
 }
 
-export const editComment = async (t, iden, postId) => {
+export const deletePost = async (t, iden) => {
+    const { post } = await createPost(t, iden)
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
+        epkNonce
+    )
+    await userState.stop()
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(`${t.context.url}/api/post/delete/${post._id}`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            publicSignals,
+            proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const editComment = async (t, iden, postId, content) => {
     const { comment } = await createComment(t, iden, postId)
     const userState = await genUserState(
         t.context.unirepSocial.provider,
@@ -322,7 +371,7 @@ export const editComment = async (t, iden, postId) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            content: 'new content',
+            content,
             publicSignals,
             proof,
         }),
@@ -347,8 +396,60 @@ export const editComment = async (t, iden, postId) => {
     return data
 }
 
-export const queryPost = async (t, id) => {
+export const deleteComment = async (t, iden, postId) => {
+    const { comment } = await createComment(t, iden, postId)
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    // find valid nonce starter
+    // gen proof
+    const epkNonce = 0
+    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
+        epkNonce
+    )
+    await userState.stop()
+
+    // we need to wait for the backend to process whatever block our provider is on
+    const blockNumber = await t.context.provider.getBlockNumber()
+    await waitForBackendBlock(t, blockNumber)
+
+    const r = await fetch(
+        `${t.context.url}/api/comment/delete/${comment._id}`,
+        {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                publicSignals,
+                proof,
+            }),
+        }
+    )
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/comment error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
     for (;;) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const { blockNumber: latestBlock } = await fetch(
+            `${t.context.url}/api/block`
+        ).then((r) => r.json())
+        if (latestBlock < receipt.blockNumber) continue
+        else break
+    }
+    return data
+}
+
+export const queryPost = async (t, id) => {
+    for (var i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 1000))
         const r = await fetch(`${t.context.url}/api/post/${id}`)
         if (r.status === 404) continue
@@ -356,10 +457,11 @@ export const queryPost = async (t, id) => {
         const data = await r.json()
         return data
     }
+    return 'no such post'
 }
 
 export const queryComment = async (t, id) => {
-    for (;;) {
+    for (var i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 1000))
         const r = await fetch(`${t.context.url}/api/comment/${id}`)
         if (r.status === 404) continue
@@ -367,6 +469,7 @@ export const queryComment = async (t, id) => {
         const data = await r.json()
         return data
     }
+    return 'no such comment'
 }
 
 export const createComment = async (t, iden, postId) => {

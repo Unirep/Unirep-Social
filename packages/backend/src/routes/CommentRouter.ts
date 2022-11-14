@@ -19,6 +19,7 @@ import {
     UNIREP_SOCIAL_ATTESTER_ID,
     QueryType,
     LOAD_POST_COUNT,
+    DELETED_CONTENT,
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
 import { Prover } from '../daemons/Prover'
@@ -30,6 +31,7 @@ export default (app: Express) => {
     app.post('/api/comment', catchError(createComment))
     app.post('/api/comment/subsidy', catchError(createCommentSubsidy))
     app.post('/api/comment/edit/:id', catchError(editComment))
+    app.post('/api/comment/delete/:id', catchError(deleteComment))
 }
 
 async function loadComment(req, res, next) {
@@ -38,7 +40,9 @@ async function loadComment(req, res, next) {
             _id: req.params.id,
         },
     })
-    res.json(comment)
+    if (!comment || comment.content === DELETED_CONTENT)
+        res.status(404).json('no such comment')
+    else res.json(comment)
 }
 
 async function loadVotesByCommentId(req, res, next) {
@@ -53,33 +57,38 @@ async function loadVotesByCommentId(req, res, next) {
 
 async function listComments(req, res, next) {
     if (req.query.query === undefined) {
-        const comments = await req.db.findMany('Comment', { where: {} })
+        const comments = (
+            await req.db.findMany('Comment', { where: {} })
+        ).filter((c) => c.content !== DELETED_CONTENT)
         res.json(comments)
         return
     }
-    const lastRead = req.query.lastRead
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
     const query = req.query.query.toString()
-    const epks = req.query.epks ? req.query.epks.split('_') : []
-    const comments = await req.db.findMany('Comment', {
-        where: {
-            createdAt:
-                lastRead && query === QueryType.New
-                    ? {
-                          $lt: +lastRead,
-                      }
-                    : undefined,
-            epochKey: epks.length ? epks : undefined,
-        },
-        // TODO: add an offset argument for non-chronological sorts
-        orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-        },
-        limit: LOAD_POST_COUNT,
-    })
-    res.json(comments)
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
+
+    const comments = (
+        await req.db.findMany('Comment', {
+            where: {
+                createdAt:
+                    lastRead && query === QueryType.New
+                        ? {
+                              $lt: +lastRead,
+                          }
+                        : undefined,
+                epochKey: epks,
+            },
+            // TODO: add an offset argument for non-chronological sorts
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+            },
+        })
+    ).filter((c) => c.content !== DELETED_CONTENT && !lastRead.includes(c._id))
+
+    res.json(comments.slice(0, Math.min(LOAD_POST_COUNT, comments.length)))
 }
 
 async function createComment(req, res) {
@@ -287,6 +296,57 @@ async function createCommentSubsidy(req, res) {
 
 async function editComment(req, res) {
     const id = req.params.id
+    const { publicSignals, proof, content } = req.body
+
+    const { transaction, error } = await editCommentOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        content
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        const comment = await req.db.findOne('Comment', { where: { _id: id } })
+
+        res.json({
+            error,
+            transaction,
+            comment,
+        })
+    }
+}
+
+async function deleteComment(req, res) {
+    const id = req.params.id
+    const { publicSignals, proof } = req.body
+
+    const { transaction, error } = await editCommentOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        DELETED_CONTENT
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        res.json({
+            error,
+            transaction,
+            id,
+        })
+    }
+}
+
+async function editCommentOnChain(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -294,7 +354,6 @@ async function editComment(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -308,19 +367,14 @@ async function editComment(req, res) {
         onChainId,
         epoch,
         epochKey,
-    } = await req.db.findOne('Comment', {
+    } = await db.findOne('Comment', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
-    if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
-    }
+    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
+    if (error !== undefined) return { error }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
         onChainId,
@@ -337,7 +391,7 @@ async function editComment(req, res) {
         }
     )
 
-    await req.db.update('Comment', {
+    await db.update('Comment', {
         where: {
             _id: id,
             onChainId,
@@ -349,11 +403,5 @@ async function editComment(req, res) {
         },
     })
 
-    const comment = await req.db.findOne('Comment', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        comment,
-    })
+    return { transaction: hash, error }
 }

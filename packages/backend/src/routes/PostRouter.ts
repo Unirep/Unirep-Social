@@ -13,6 +13,7 @@ import {
     UNIREP,
     UNIREP_ABI,
     UNIREP_SOCIAL_ABI,
+    DELETED_CONTENT,
 } from '../constants'
 import { ActionType, SubsidyProof } from '@unirep-social/core'
 import {
@@ -31,15 +32,18 @@ export default (app: Express) => {
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
+    app.post('/api/post/delete/:id', catchError(deletePost))
 }
 
 async function loadCommentsByPostId(req, res) {
     const { postId } = req.params
-    const comments = await req.db.findMany('Comment', {
-        where: {
-            postId,
-        },
-    })
+    const comments = (
+        await req.db.findMany('Comment', {
+            where: {
+                postId,
+            },
+        })
+    ).filter((c) => c.content !== DELETED_CONTENT)
     res.json(comments)
 }
 
@@ -59,16 +63,20 @@ async function loadPostById(req, res) {
             _id: req.params.id,
         },
     })
-    res.json(post)
+    if (!post || post.content === DELETED_CONTENT)
+        res.status(404).json('no such post')
+    else res.json(post)
 }
 
 async function loadPosts(req, res) {
     if (req.query.query === undefined) {
-        const posts = await req.db.findMany('Post', {
-            where: {
-                status: 1,
-            },
-        })
+        const posts = (
+            await req.db.findMany('Post', {
+                where: {
+                    status: 1,
+                },
+            })
+        ).filter((p) => p.content !== DELETED_CONTENT)
         res.json(posts)
         return
     }
@@ -76,21 +84,24 @@ async function loadPosts(req, res) {
     // TODO: deal with this when there's an offset arg
     // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
 
-    const posts = await req.db.findMany('Post', {
-        where: {
-            epochKey: epks,
-        },
-        orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-            commentCount: query === QueryType.Comments ? 'desc' : undefined,
-        },
-        limit: LOAD_POST_COUNT,
-    })
-    res.json(posts)
+    const posts = (
+        await req.db.findMany('Post', {
+            where: {
+                epochKey: epks,
+            },
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            },
+        })
+    ).filter((p) => p.content !== DELETED_CONTENT && !lastRead.includes(p._id))
+
+    res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 
 async function createPost(req, res) {
@@ -269,6 +280,56 @@ async function createPostSubsidy(req, res) {
 
 async function editPost(req, res) {
     const id = req.params.id
+    const { publicSignals, proof, content } = req.body
+
+    const { transaction, error } = await editPostOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        content
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        const post = await req.db.findOne('Post', { where: { _id: id } })
+        res.json({
+            error,
+            transaction,
+            post,
+        })
+    }
+}
+
+async function deletePost(req, res) {
+    const id = req.params.id
+    const { publicSignals, proof } = req.body
+
+    const { transaction, error } = await editPostOnChain(
+        id,
+        req.db,
+        publicSignals,
+        proof,
+        DELETED_CONTENT
+    )
+
+    if (error !== undefined) {
+        res.status(422).json({
+            error,
+        })
+    } else {
+        res.json({
+            error,
+            transaction,
+            id,
+        })
+    }
+}
+
+async function editPostOnChain(id, db, publicSignals, proof, content) {
     const unirepSocialContract = new ethers.Contract(
         UNIREP_SOCIAL,
         UNIREP_SOCIAL_ABI,
@@ -276,7 +337,6 @@ async function editPost(req, res) {
     )
 
     // Parse Inputs
-    const { publicSignals, proof, content } = req.body
     const epkProof = new EpochKeyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -290,18 +350,15 @@ async function editPost(req, res) {
         onChainId,
         epoch,
         epochKey,
-    } = await req.db.findOne('Post', {
+    } = await db.findOne('Post', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(req.db, epkProof, epoch, epochKey)
+    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
     if (error !== undefined) {
-        res.status(422).json({
-            error,
-        })
-        return
+        return { error }
     }
 
     const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
@@ -319,7 +376,7 @@ async function editPost(req, res) {
         }
     )
 
-    await req.db.update('Post', {
+    await db.update('Post', {
         where: {
             _id: id,
             onChainId,
@@ -331,11 +388,5 @@ async function editPost(req, res) {
         },
     })
 
-    const post = await req.db.findOne('Post', { where: { _id: id } })
-
-    res.json({
-        error: error,
-        transaction: hash,
-        post,
-    })
+    return { transaction: hash, error }
 }
