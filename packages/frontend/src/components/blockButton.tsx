@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../context/User'
+import UIContext, { EpochStatus } from '../context/UI'
 
 import { Post, Comment, DataType } from '../constants'
 import VoteBox from './voteBox'
@@ -28,6 +29,8 @@ type Props = {
 const BlockButton = ({ type, count, data, edit }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
+    const uiContext = useContext(UIContext)
+
     const [isBoostOn, setBoostOn] = useState<boolean>(false)
     const [isSquashOn, setSquashOn] = useState<boolean>(false)
     const [isHover, setIsHover] = useState<boolean>(false) // null, purple1, purple2, grey1, grey2
@@ -37,9 +40,11 @@ const BlockButton = ({ type, count, data, edit }: Props) => {
     const checkAbility = () => {
         if (
             type === BlockButtonType.Comments ||
-            type === BlockButtonType.Share ||
-            type === BlockButtonType.Edit
+            type === BlockButtonType.Share
         ) {
+            return true
+        } else if (type === BlockButtonType.Edit) {
+            if (uiContext.epochStatus !== EpochStatus.default) return false
             return true
         } else {
             if (!userContext.userState) return false
@@ -47,7 +52,7 @@ const BlockButton = ({ type, count, data, edit }: Props) => {
                 if (data.current_epoch !== userContext.currentEpoch)
                     return false
                 else if (userContext.spendableReputation < 1) return false
-                else return true
+                return true
             }
         }
     }
@@ -83,7 +88,7 @@ const BlockButton = ({ type, count, data, edit }: Props) => {
         } else if (type === BlockButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
         } else if (type === BlockButtonType.Edit) {
-            if (edit) edit()
+            if (edit && uiContext.epochStatus === EpochStatus.default) edit()
         }
     }
 
@@ -95,11 +100,21 @@ const BlockButton = ({ type, count, data, edit }: Props) => {
     const setReminderMessage = () => {
         if (!userContext.userState) setReminder('Join us :)')
         else {
-            if (data.current_epoch !== userContext.currentEpoch)
-                setReminder('Time out :(')
-            else if (userContext.spendableReputation < 1)
-                setReminder('No enough Rep')
-            else if (type !== BlockButtonType.Share) setReminder('loading...')
+            if (
+                type === BlockButtonType.Edit &&
+                uiContext.epochStatus !== EpochStatus.default
+            ) {
+                setReminder('Please hold')
+            } else if (
+                type === BlockButtonType.Boost ||
+                type === BlockButtonType.Squash
+            ) {
+                if (data.current_epoch !== userContext.currentEpoch)
+                    setReminder('Time out :(')
+                else if (userContext.spendableReputation < 1)
+                    setReminder('No enough Rep')
+                else setReminder('loading...')
+            }
         }
     }
 

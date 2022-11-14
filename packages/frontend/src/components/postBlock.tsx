@@ -188,7 +188,7 @@ const PostBlock = ({ postId, page }: Props) => {
                             >
                                 {uiContext.epochStatus === EpochStatus.default
                                     ? 'What do you think?'
-                                    : 'Something is processing...'}
+                                    : 'Refreshing Epoch, please give a moment.'}
                             </div>
                         )}
                     </div>
