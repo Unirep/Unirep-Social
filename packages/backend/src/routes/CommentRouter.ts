@@ -60,29 +60,32 @@ async function listComments(req, res, next) {
         res.json(comments)
         return
     }
-    const lastRead = req.query.lastRead
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
     const query = req.query.query.toString()
-    const epks = req.query.epks ? req.query.epks.split('_') : []
-    const comments = await req.db.findMany('Comment', {
-        where: {
-            createdAt:
-                lastRead && query === QueryType.New
-                    ? {
-                          $lt: +lastRead,
-                      }
-                    : undefined,
-            epochKey: epks.length ? epks : undefined,
-        },
-        // TODO: add an offset argument for non-chronological sorts
-        orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-        },
-        limit: LOAD_POST_COUNT,
-    })
-    res.json(comments)
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
+
+    const comments = (
+        await req.db.findMany('Comment', {
+            where: {
+                createdAt:
+                    lastRead && query === QueryType.New
+                        ? {
+                              $lt: +lastRead,
+                          }
+                        : undefined,
+                epochKey: epks,
+            },
+            // TODO: add an offset argument for non-chronological sorts
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+            },
+        })
+    ).filter((c) => c.content !== DELETED_CONTENT && !lastRead.includes(c._id))
+
+    res.json(comments.slice(0, Math.min(LOAD_POST_COUNT, comments.length)))
 }
 
 async function createComment(req, res) {

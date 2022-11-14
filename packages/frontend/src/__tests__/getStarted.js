@@ -38,14 +38,14 @@ test('should render getting started text', () => {
 
 test('should simulate twitter signup', async () => {
     renderGetStarted(jest.fn())
-    const twitterButton = screen.getByText('Twitter')
+    const twitterButton = screen.getByText('Sign up with Twitter')
     await userEvent.click(twitterButton)
     expect(location.replace).toHaveBeenCalled()
 })
 
 test('should simulate github signup', async () => {
     renderGetStarted(jest.fn())
-    const githubButton = screen.getByText('Github')
+    const githubButton = screen.getByText('Sign up with Github')
     await userEvent.click(githubButton)
     expect(location.replace).toHaveBeenCalled()
 })

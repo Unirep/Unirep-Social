@@ -80,22 +80,24 @@ async function loadPosts(req, res) {
     // TODO: deal with this when there's an offset arg
     // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
+    
+    const posts = (
+        await req.db.findMany('Post', {
+            where: {
+                epochKey: epks,
+            },
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            },
+        })
+    ).filter((p) => p.content !== DELETED_CONTENT && !lastRead.includes(p._id))
 
-    const posts = await req.db.findMany('Post', {
-        where: {
-            epochKey: epks,
-        },
-        orderBy: {
-            createdAt: query === QueryType.New ? 'desc' : undefined,
-            posRep: query === QueryType.Boost ? 'desc' : undefined,
-            negRep: query === QueryType.Squash ? 'desc' : undefined,
-            totalRep: query === QueryType.Rep ? 'desc' : undefined,
-            commentCount: query === QueryType.Comments ? 'desc' : undefined,
-        },
-        limit: LOAD_POST_COUNT,
-    })
-
-    res.json(posts)
+    res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 
 async function createPost(req, res) {

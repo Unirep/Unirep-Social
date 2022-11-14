@@ -30,13 +30,14 @@ const CommentsList = ({ commentIds, page, loadMoreComments }: Props) => {
                 </div>
             )}
             {commentIds.length > 0 &&
-            commentIds.length % LOAD_POST_COUNT === 0 ? (
-                <div className="load-more-button" onClick={loadMoreComments}>
-                    Load more posts
-                </div>
-            ) : (
-                <div></div>
-            )}
+                commentIds.length % LOAD_POST_COUNT === 0 && (
+                    <div
+                        className="load-more-button"
+                        onClick={loadMoreComments}
+                    >
+                        Load more posts
+                    </div>
+                )}
         </div>
     )
 }
