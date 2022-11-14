@@ -81,7 +81,7 @@ async function loadPosts(req, res) {
     // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
     const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-    
+
     const posts = (
         await req.db.findMany('Post', {
             where: {
