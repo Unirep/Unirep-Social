@@ -28,8 +28,10 @@ const EditPage = () => {
     }
 
     const deletePost = () => {
-        console.log('delete post')
         setAlertOn(false)
+        const post = postContext.postsById[id]
+        postContext.deletePost(id, post.epoch_key)
+        history.goBack()
     }
 
     const submit = (

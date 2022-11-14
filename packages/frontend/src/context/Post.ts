@@ -361,6 +361,53 @@ export class Data {
         )
     }
 
+    deletePost(postId: string = '', epk: string = '') {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Deleting post',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Deleting post',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`post/delete/${postId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const { transaction, error, post: _post } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    const post = this.convertDataToPost(_post)
+                    this.postsById[post.id] = post
+                    this.save()
+                }
+            },
+            {
+                successMessage: 'Delete post is finalized',
+                type: ActionType.Post,
+            }
+        )
+    }
+
     vote(
         postId: string = '',
         commentId: string = '',
