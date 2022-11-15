@@ -11,12 +11,13 @@ import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
 import AlertCover from '../../components/alertCover'
 import { DataType } from '../../constants'
+import { DELETED_CONTENT } from '../../config'
 
 const EditPage = () => {
     const { id } = useParams<Params>()
     const history = useHistory()
     const postContext = useContext(PostContext)
-    const userContext = useContext(UserContext)
+    const post = postContext.postsById[id]
     const [alertOn, setAlertOn] = useState<boolean>(false)
 
     useEffect(() => {
@@ -29,7 +30,6 @@ const EditPage = () => {
 
     const deletePost = () => {
         setAlertOn(false)
-        const post = postContext.postsById[id]
         postContext.deletePost(id, post.epoch_key)
         history.goBack()
     }
@@ -40,32 +40,33 @@ const EditPage = () => {
         epkNonce: number,
         reputation: number
     ) => {
-        const post = postContext.postsById[id]
         postContext.editPost(id, title, content, post.epoch_key)
         history.goBack()
     }
 
     return (
         <BasicPage hasBack={true} title={'Update Post'}>
-            {postContext.postsById[id] ? (
+            {post ? (
                 <WritingField
                     type={DataType.Post}
                     submit={submit}
                     submitBtnName="Update Post"
                     onClick={preventPropagation}
-                    title={postContext.postsById[id].title}
-                    content={postContext.postsById[id].content}
+                    title={post.title}
+                    content={post.content}
                     isEdit={true}
                 />
             ) : (
                 <div>loading...</div>
             )}
             <CustomGap times={2} />
-            {postContext.postsById[id] && (
+            {post && post.content !== DELETED_CONTENT && (
                 <MyButton
                     type={MyButtonType.light}
                     fullSize={true}
                     onClick={() => setAlertOn(true)}
+                    fontWeight={600}
+                    textAlignMiddle={true}
                 >
                     Delete Post
                 </MyButton>

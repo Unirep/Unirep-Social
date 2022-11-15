@@ -164,13 +164,18 @@ const CommentBlock = ({ commentId, page }: Props) => {
                         isEdit={true}
                     />
                     <CustomGap times={2} />
-                    <MyButton
-                        type={MyButtonType.light}
-                        fullSize={true}
-                        onClick={() => setAlertOn(true)}
-                    >
-                        Delete Comment
-                    </MyButton>
+
+                    {comment.content !== DELETED_CONTENT && (
+                        <MyButton
+                            type={MyButtonType.light}
+                            fullSize={true}
+                            onClick={() => setAlertOn(true)}
+                            fontWeight={600}
+                            textAlignMiddle={true}
+                        >
+                            Delete Comment
+                        </MyButton>
+                    )}
                     {alertOn && (
                         <AlertCover
                             close={() => setAlertOn(false)}

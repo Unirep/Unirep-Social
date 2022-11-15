@@ -104,12 +104,15 @@ const WritingField = (props: Props) => {
     const chooseToUseSubsidy = () => {
         setUseSubsidy(true)
         setEpkNonce(-1)
+        setReputation(0)
     }
 
     const chooseToUsePersona = () => {
         setUseSubsidy(false)
         setEpkNonce(0)
-        setReputation(defaultRep)
+        if (reputation < defaultRep) {
+            setReputation(defaultRep)
+        }
     }
 
     return (
@@ -143,7 +146,7 @@ const WritingField = (props: Props) => {
                         <ActionDetail
                             showBorder={true}
                             showHelp={true}
-                            showRep={true}
+                            showRep={userContext.netReputation > defaultRep}
                             maxRep={userContext.netReputation}
                             defaultRep={defaultRep}
                             hasRep={
@@ -174,11 +177,7 @@ const WritingField = (props: Props) => {
             >
                 {props.submitBtnName}
             </MyButton>
-            {errorMsg.length > 0 ? (
-                <div className="error">{errorMsg}</div>
-            ) : (
-                <div></div>
-            )}
+            {errorMsg.length > 0 && <div className="error">{errorMsg}</div>}
             {uiContext.epochStatus !== EpochStatus.default && (
                 <div className="disable-cover"></div>
             )}

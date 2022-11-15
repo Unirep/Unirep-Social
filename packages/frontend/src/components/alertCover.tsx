@@ -17,14 +17,16 @@ const AlertCover = ({ close, deleteContent }: Props) => {
                     type={MyButtonType.dark}
                     fullSize={true}
                     onClick={close}
+                    textAlignMiddle={true}
                 >
                     Nevermind.
                 </MyButton>
                 <CustomGap times={2} />
                 <MyButton
-                    type={MyButtonType.light}
+                    type={MyButtonType.darkTrans}
                     fullSize={true}
                     onClick={deleteContent}
+                    textAlignMiddle={true}
                 >
                     Yes, delete it.
                 </MyButton>
