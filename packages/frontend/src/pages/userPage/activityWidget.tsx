@@ -130,22 +130,20 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                             />{' '}
                             {info.action}
                         </div>
-                        {record.content !== undefined &&
-                            record.content.length > 0 && (
-                                <div className="data">
-                                    {actionData.title.length > 1 && (
-                                        <div className="title">
-                                            {actionData.title}
-                                        </div>
-                                    )}
+                        <div className="data">
+                            {actionData.title.length > 1 && (
+                                <div className="title">{actionData.title}</div>
+                            )}
+                            {record.content !== undefined &&
+                                record.content.length > 0 && (
                                     <div
                                         className="content"
                                         dangerouslySetInnerHTML={{
                                             __html: actionData.content,
                                         }}
                                     />
-                                </div>
-                            )}
+                                )}
+                        </div>
                     </div>
                 </div>
                 {!isSpent && (
