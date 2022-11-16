@@ -45,7 +45,7 @@ const RepPortion = ({ spent, total, action }: Props) => {
             onMouseOut={() => setHover(false)}
             onClick={() => setHover(!isHover)}
         >
-            {isHover ? (
+            {isHover && (
                 <div className="rep-description">
                     <img
                         src={require(`../../../public/images/${
@@ -56,8 +56,6 @@ const RepPortion = ({ spent, total, action }: Props) => {
                     />
                     {portionName}:<span>{spent}</span>
                 </div>
-            ) : (
-                <div></div>
             )}
         </div>
     )
@@ -120,7 +118,6 @@ const UserPage = () => {
                     } else if (h.action === ActionType.Vote) {
                         s[2] += h.upvote
                         s[3] += h.downvote
-                        r[1] += h.upvote + h.downvote // if all spent also recorded in the right side
                     }
                 }
             })
