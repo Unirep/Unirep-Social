@@ -81,6 +81,7 @@ export class User {
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
                 this.updateLatestTransitionedEpoch()
+                this.loadSpent()
             })
         }
 
@@ -104,6 +105,20 @@ export class User {
             await this.unirepConfig.unirep.currentEpoch()
         )
         return this.currentEpoch
+    }
+
+    async loadSpent() {
+        const epksBase10 = this.currentEpochKeys.map((epk) =>
+            BigInt('0x' + epk).toString()
+        )
+
+        const apiURL = makeURL(`records/${epksBase10.join('_')}`, {
+            spentonly: true,
+        })
+        const r = await fetch(apiURL)
+        const data = await r.json()
+        const spentOnly = data.map((d: any) => d.spent)
+        this.spent = spentOnly.reduce((acc: number, val: number) => acc + val)
     }
 
     get currentEpochKeys() {

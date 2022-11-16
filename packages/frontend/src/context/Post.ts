@@ -297,6 +297,7 @@ export class Data {
                 this.postDraft = { title: '', content: '' }
                 this.save()
                 await userContext.loadReputation()
+                await userContext.loadSpent()
 
                 return { id: transaction, transactionId: transaction }
             },
@@ -368,6 +369,7 @@ export class Data {
                 if (postId) await this.loadPost(postId)
                 if (commentId) await this.loadComment(commentId)
                 await userContext.loadReputation()
+                await userContext.loadSpent()
 
                 return {
                     id: postId ? postId : commentId,
@@ -431,6 +433,7 @@ export class Data {
                 this.commentDraft = { title: '', content: '' }
                 this.save()
                 await userContext.loadReputation()
+                await userContext.loadSpent()
 
                 return {
                     id: postId + '#' + transaction,
