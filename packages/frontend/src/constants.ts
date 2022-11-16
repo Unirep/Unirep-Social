@@ -1,11 +1,17 @@
-import { ActionType } from './context/Queue'
-
 export const isVotedText = "You've already voted."
 export const isAuthorText = 'You cannot vote on your own post or comment.'
 export const notLoginText = 'Sign in to participate.'
 export const loadingText = 'Some action is pending, please wait...'
 export const expiredText = 'You cannot vote on posts with expired epoch key.'
 export const offChainText = 'This post is not able to be voted yet.'
+
+export enum ActionType {
+    Post = 'Post',
+    Comment = 'Comment',
+    Vote = 'Vote',
+    UST = 'UST',
+    Signup = 'Signup',
+}
 
 export interface User {
     identity: string
@@ -87,6 +93,7 @@ export interface Record {
     data_id: string
     title?: string
     content?: string
+    spentFromSubsidy?: number
 }
 
 export type FeedChoices = {

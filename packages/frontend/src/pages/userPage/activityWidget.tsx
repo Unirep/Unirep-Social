@@ -3,7 +3,7 @@ import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import MarkdownIt from 'markdown-it'
 
-import { ActionType } from '../../context/Queue'
+import { ActionType } from '../../constants'
 import PostContext from '../../context/Post'
 import { Record } from '../../constants'
 

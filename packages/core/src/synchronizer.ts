@@ -214,26 +214,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 epoch,
             },
         })
-        if (existingEpkRecord) {
-            db.update('EpkRecord', {
-                where: {
-                    _id: existingEpkRecord._id,
-                },
-                update: {
-                    spent:
-                        (existingEpkRecord?.spent ?? 0) +
-                        this.socialConfig.commentRep,
-                },
-            })
-        } else {
-            db.create('EpkRecord', {
-                epk: epochKey,
-                epoch: epoch,
-                spent: this.socialConfig.commentRep,
-                posRep: 0,
-                negRep: 0,
-            })
-        }
     }
     async postSubmittedEvent(event: ethers.Event, db: TransactionDB) {
         const transactionHash = event.transactionHash
@@ -297,32 +277,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 1,
             },
         })
-        const existingEpkRecord = await this._db.findOne('EpkRecord', {
-            where: {
-                epk: epochKey,
-                epoch: epoch,
-            },
-        })
-        if (existingEpkRecord) {
-            db.update('EpkRecord', {
-                where: {
-                    _id: existingEpkRecord._id,
-                },
-                update: {
-                    spent:
-                        (existingEpkRecord?.spent ?? 0) +
-                        this.socialConfig.postRep,
-                },
-            })
-        } else {
-            db.create('EpkRecord', {
-                epk: epochKey,
-                epoch: epoch,
-                spent: this.socialConfig.postRep,
-                posRep: 0,
-                negRep: 0,
-            })
-        }
     }
 
     async contentUpdatedEvent(event: ethers.Event, db: TransactionDB) {
@@ -444,59 +398,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 1,
             },
         })
-        {
-            const epkRecord = await this._db.findOne('EpkRecord', {
-                where: {
-                    epk: _fromEpochKey,
-                    epoch: _epoch,
-                },
-            })
-            if (epkRecord) {
-                db.update('EpkRecord', {
-                    where: {
-                        _id: epkRecord._id,
-                    },
-                    update: {
-                        spent: (epkRecord?.spent ?? 0) + _posRep + _negRep,
-                    },
-                })
-            } else {
-                db.create('EpkRecord', {
-                    epk: _fromEpochKey,
-                    epoch: _epoch,
-                    spent: _posRep + _negRep,
-                    posRep: 0,
-                    negRep: 0,
-                })
-            }
-        }
-        {
-            const epkRecord = await this._db.findOne('EpkRecord', {
-                where: {
-                    epk: _toEpochKey,
-                    epoch: _epoch,
-                },
-            })
-            if (epkRecord) {
-                db.update('EpkRecord', {
-                    where: {
-                        _id: epkRecord._id,
-                    },
-                    update: {
-                        posRep: (epkRecord?.posRep ?? 0) + _posRep,
-                        negRep: (epkRecord?.negRep ?? 0) + _negRep,
-                    },
-                })
-            } else {
-                db.create('EpkRecord', {
-                    epk: _toEpochKey,
-                    epoch: _epoch,
-                    spent: 0,
-                    posRep: _posRep,
-                    negRep: _negRep,
-                })
-            }
-        }
     }
 
     async airdropSubmittedEvent(event: ethers.Event, db: TransactionDB) {

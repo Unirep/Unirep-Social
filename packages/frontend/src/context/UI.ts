@@ -3,7 +3,8 @@ import { makeObservable, observable, computed } from 'mobx'
 
 import UserContext, { User } from './User'
 import EpochContext, { EpochManager } from './EpochManager'
-import QueueContext, { Queue, ActionType } from './Queue'
+import QueueContext, { Queue } from './Queue'
+import { ActionType } from '../constants'
 
 export enum EpochStatus {
     syncing,

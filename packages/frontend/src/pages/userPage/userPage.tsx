@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
 
-import { ActionType } from '../../context/Queue'
+import { ActionType } from '../../constants'
 import { getRecords } from '../../utils'
 
 import BasicPage from '../basicPage/basicPage'

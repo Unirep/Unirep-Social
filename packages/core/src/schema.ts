@@ -100,21 +100,6 @@ const _schema = [
         ],
     },
     {
-        name: 'EpkRecord',
-        rows: [
-            {
-                name: 'createdAt',
-                type: 'Int',
-                default: () => +new Date(),
-            },
-            ['epk', 'String'],
-            ['posRep', 'Int'],
-            ['negRep', 'Int'],
-            ['spent', 'Int'],
-            ['epoch', 'Int'],
-        ],
-    },
-    {
         name: 'Record',
         rows: [
             {

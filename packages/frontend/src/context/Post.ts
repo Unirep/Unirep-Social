@@ -1,10 +1,18 @@
 import { createContext } from 'react'
 import { makeAutoObservable } from 'mobx'
 
-import { Post, Comment, QueryType, Vote, Draft, DataType } from '../constants'
+import {
+    Post,
+    Comment,
+    QueryType,
+    Vote,
+    Draft,
+    DataType,
+    ActionType,
+} from '../constants'
 import { makeURL } from '../utils'
 import UserContext, { User } from './User'
-import QueueContext, { Queue, ActionType, Metadata } from './Queue'
+import QueueContext, { Queue, Metadata } from './Queue'
 import UnirepContext, { UnirepConfig } from './Unirep'
 
 const queueContext = (QueueContext as any)._currentValue as Queue
@@ -297,7 +305,7 @@ export class Data {
                 this.postDraft = { title: '', content: '' }
                 this.save()
                 await userContext.loadReputation()
-                await userContext.loadSpent()
+                await userContext.loadRecords()
 
                 return { id: transaction, transactionId: transaction }
             },
@@ -369,7 +377,7 @@ export class Data {
                 if (postId) await this.loadPost(postId)
                 if (commentId) await this.loadComment(commentId)
                 await userContext.loadReputation()
-                await userContext.loadSpent()
+                await userContext.loadRecords()
 
                 return {
                     id: postId ? postId : commentId,
@@ -433,7 +441,7 @@ export class Data {
                 this.commentDraft = { title: '', content: '' }
                 this.save()
                 await userContext.loadReputation()
-                await userContext.loadSpent()
+                await userContext.loadRecords()
 
                 return {
                     id: postId + '#' + transaction,

@@ -1,7 +1,8 @@
 import { useContext } from 'react'
 
+import { ActionType } from '../constants'
 import UserContext from '../context/User'
-import QueueContext, { Metadata, ActionType } from '../context/Queue'
+import QueueContext, { Metadata } from '../context/Queue'
 import EpochContetxt from '../context/EpochManager'
 
 const RefreshReminder = () => {

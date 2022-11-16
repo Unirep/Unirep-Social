@@ -1,6 +1,7 @@
 import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
 import * as config from '../config'
+import { Record, ActionType } from '../constants'
 import { ethers } from 'ethers'
 import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
 import { makeURL } from '../utils'
@@ -19,6 +20,7 @@ export class User {
     subsidyReputation = 0
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
+    recordsByEpk = {} as { [epk: string]: Record[] }
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: SocialUserState
@@ -36,6 +38,7 @@ export class User {
             netReputation: computed,
             subsidyReputation: observable,
             spent: observable,
+            recordsByEpk: observable,
             currentEpochKeys: computed,
             allEpks: observable,
             syncPercent: computed,
@@ -81,7 +84,7 @@ export class User {
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
                 this.updateLatestTransitionedEpoch()
-                this.loadSpent()
+                this.loadRecords()
             })
         }
 
@@ -107,18 +110,71 @@ export class User {
         return this.currentEpoch
     }
 
-    async loadSpent() {
-        const epksBase10 = this.currentEpochKeys.map((epk) =>
+    async loadRecords() {
+        const epksBase10 = this.allEpks.map((epk) =>
             BigInt('0x' + epk).toString()
         )
 
-        const apiURL = makeURL(`records/${epksBase10.join('_')}`, {
-            spentonly: true,
-        })
+        const apiURL = makeURL(`records/${epksBase10.join('_')}`, {})
         const r = await fetch(apiURL)
         const data = await r.json()
-        const spentOnly = data.map((d: any) => d.spent)
-        this.spent = spentOnly.reduce((acc: number, val: number) => acc + val)
+        const rawRecords = data.map((r: Record) => {
+            return {
+                ...r,
+                from: BigInt(r.from)
+                    .toString(16)
+                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
+                to: BigInt(r.from)
+                    .toString(16)
+                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
+            }
+        })
+
+        for (const record of rawRecords) {
+            let epkOfRecord: string
+            if (this.allEpks.indexOf(record.to) !== -1) {
+                epkOfRecord = record.to
+            } else if (this.allEpks.indexOf(record.from) !== -1) {
+                epkOfRecord = record.from
+            } else {
+                console.log('this records is not belong to this user:', record)
+                continue
+            }
+
+            // classify by epoch keys
+            if (!this.recordsByEpk[epkOfRecord]) {
+                this.recordsByEpk[epkOfRecord] = [record]
+            } else {
+                this.recordsByEpk[epkOfRecord] = [
+                    ...this.recordsByEpk[epkOfRecord],
+                    record,
+                ]
+            }
+        }
+
+        // calculate rep spent of this epoch
+        let rawSpent: number = 0
+        for (const epk of this.currentEpochKeys) {
+            if (!this.recordsByEpk[epk]) continue
+
+            const filteredRecords = this.recordsByEpk[epk].filter((r) => {
+                if (
+                    r.action === ActionType.Post ||
+                    r.action === ActionType.Comment ||
+                    (r.action === ActionType.Vote &&
+                        this.currentEpochKeys.indexOf(r.from) !== -1)
+                ) {
+                    if (!r.spentFromSubsidy || r.spentFromSubsidy === 0)
+                        return true
+                }
+                return false
+            })
+            const spentOfThisEpk = filteredRecords
+                .map((r) => r.downvote + r.upvote)
+                .reduce((acc, val) => acc + val)
+            rawSpent += spentOfThisEpk
+        }
+        this.spent = rawSpent
     }
 
     get currentEpochKeys() {
