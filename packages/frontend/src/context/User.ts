@@ -164,15 +164,16 @@ export class User {
                     (r.action === ActionType.Vote &&
                         this.currentEpochKeys.indexOf(r.from) !== -1)
                 ) {
-                    if (!r.spentFromSubsidy || r.spentFromSubsidy === 0)
-                        return true
+                    if (!r.spentFromSubsidy) return true
                 }
                 return false
             })
-            const spentOfThisEpk = filteredRecords
-                .map((r) => r.downvote + r.upvote)
-                .reduce((acc, val) => acc + val)
-            rawSpent += spentOfThisEpk
+            const spentOfEachRecord = filteredRecords.map(
+                (r) => r.downvote + r.upvote
+            )
+            if (spentOfEachRecord.length > 0) {
+                rawSpent += spentOfEachRecord.reduce((acc, val) => acc + val)
+            }
         }
         this.spent = rawSpent
     }

@@ -269,6 +269,7 @@ async function createPostSubsidy(req, res) {
         data: post._id,
         transactionHash: hash,
         confirmed: 0,
+        spentFromSubsidy: true,
     })
 
     res.json({

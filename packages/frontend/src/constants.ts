@@ -89,11 +89,11 @@ export interface Record {
     upvote: number
     downvote: number
     epoch: number
-    time: number
-    data_id: string
+    createdAt: number
+    data: string
     title?: string
     content?: string
-    spentFromSubsidy?: number
+    spentFromSubsidy: boolean
 }
 
 export type FeedChoices = {

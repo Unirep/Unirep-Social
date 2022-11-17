@@ -285,6 +285,7 @@ async function createCommentSubsidy(req, res) {
         data: comment._id,
         transactionHash: hash,
         confirmed: 0,
+        spentFromSubsidy: true,
     })
 
     res.json({

@@ -128,7 +128,7 @@ const UserPage = () => {
 
     const resortRecords = (s: QueryType, hs: Record[]) => {
         if (s === QueryType.New) {
-            hs.sort((a, b) => (a.time > b.time ? -1 : 1))
+            hs.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
         } else if (s === QueryType.Rep) {
             hs.sort((a, b) =>
                 a.upvote + a.downvote > b.upvote + b.downvote ? -1 : 1
@@ -451,7 +451,7 @@ const UserPage = () => {
                     <div>
                         {records.map((h) => (
                             <ActivityWidget
-                                key={h.time}
+                                key={h.createdAt}
                                 record={h}
                                 isSpent={user.allEpks.indexOf(h.from) !== -1}
                             />

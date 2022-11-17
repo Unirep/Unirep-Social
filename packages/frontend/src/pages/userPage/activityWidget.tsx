@@ -32,7 +32,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
     const postContext = useContext(PostContext)
 
     const [date, setDate] = useState<string>(
-        dateformat(record.time, 'dd/mm/yyyy hh:MM TT')
+        dateformat(record.createdAt, 'dd/mm/yyyy hh:MM TT')
     )
 
     const translateInfo = (h: Record) => {
@@ -67,15 +67,15 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
 
     const [info, setInfo] = useState<Info>(() => translateInfo(record))
     const [goto, setGoto] = useState<string>(() => {
-        if (record.data_id === '0') {
+        if (record.data === '0') {
             return '/user'
         } else {
-            if (postContext.postsById[record.data_id])
-                return `/post/${record.data_id}`
-            else if (postContext.commentsById[record.data_id])
+            if (postContext.postsById[record.data])
+                return `/post/${record.data}`
+            else if (postContext.commentsById[record.data])
                 return `/post/${
-                    postContext.commentsById[record.data_id].post_id
-                }#${record.data_id}`
+                    postContext.commentsById[record.data].post_id
+                }#${record.data}`
             else return ''
         }
     })

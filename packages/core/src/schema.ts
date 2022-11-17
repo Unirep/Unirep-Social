@@ -120,6 +120,11 @@ const _schema = [
                 type: 'Int',
                 default: () => 1,
             },
+            {
+                name: 'spentFromSubsidy',
+                type: 'Bool',
+                default: () => false,
+            },
         ],
     },
 ]
