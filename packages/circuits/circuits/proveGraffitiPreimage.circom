@@ -12,7 +12,7 @@ include "../../../node_modules/circomlib/circuits/poseidon.circom";
 include "./sparseMerkleTree.circom";
 include "./verifyEpochKey.circom";
 
-template ProveGraffiti(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH) {
+template proveGraffitiPreimage(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH) {
 
     /* 1. Check if yauser exists in the Global State Tree and verify epoch key */
     component verify_epoch_key = VerifyEpochKey(GST_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH);
