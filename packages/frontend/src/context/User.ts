@@ -38,7 +38,7 @@ export class User {
             netReputation: computed,
             subsidyReputation: observable,
             spent: observable,
-            recordsByEpk: observable,
+            // recordsByEpk: observable,
             currentEpochKeys: computed,
             allEpks: observable,
             syncPercent: computed,
@@ -130,26 +130,22 @@ export class User {
             }
         })
 
-        for (const record of rawRecords) {
+        for (const r of rawRecords) {
             let epkOfRecord: string
-            if (this.allEpks.indexOf(record.to) !== -1) {
-                epkOfRecord = record.to
-            } else if (this.allEpks.indexOf(record.from) !== -1) {
-                epkOfRecord = record.from
+            if (this.allEpks.indexOf(r.to) !== -1) {
+                epkOfRecord = r.to
+            } else if (this.allEpks.indexOf(r.from) !== -1) {
+                epkOfRecord = r.from
             } else {
-                console.log('this records is not belong to this user:', record)
+                console.log('this records is not belong to this user:', r)
                 continue
             }
 
             // classify by epoch keys
             if (!this.recordsByEpk[epkOfRecord]) {
-                this.recordsByEpk[epkOfRecord] = [record]
-            } else {
-                this.recordsByEpk[epkOfRecord] = [
-                    ...this.recordsByEpk[epkOfRecord],
-                    record,
-                ]
+                this.recordsByEpk[epkOfRecord] = []
             }
+            this.recordsByEpk[epkOfRecord].unshift(r)
         }
 
         // calculate rep spent of this epoch
