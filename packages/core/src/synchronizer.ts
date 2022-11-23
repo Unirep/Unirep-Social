@@ -208,12 +208,6 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 confirmed: 1,
             },
         })
-        const existingEpkRecord = await this._db.findOne('EpkRecord', {
-            where: {
-                epk: epochKey,
-                epoch,
-            },
-        })
     }
     async postSubmittedEvent(event: ethers.Event, db: TransactionDB) {
         const transactionHash = event.transactionHash
