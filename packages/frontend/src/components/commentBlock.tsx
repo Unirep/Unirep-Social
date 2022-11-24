@@ -79,7 +79,10 @@ const CommentBlock = ({ commentId, page }: Props) => {
                 <div className="block-content no-padding-horizontal">
                     <div
                         style={{
-                            maxHeight: page == Page.Home ? '300px' : undefined,
+                            maxHeight:
+                                page == Page.Home || Page.Post
+                                    ? '300px'
+                                    : undefined,
                             overflow: 'hidden',
                         }}
                         dangerouslySetInnerHTML={{
