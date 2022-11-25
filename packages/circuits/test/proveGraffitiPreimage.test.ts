@@ -15,10 +15,8 @@ const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
     reputationRecords,
-    attesterId,
-    _maxRep?
+    attesterId
 ) => {
-    const maxRep = _maxRep ?? 0
     if (reputationRecords[attesterId] === undefined) {
         reputationRecords[attesterId] = new Reputation(
             BigInt(0),
@@ -63,7 +61,6 @@ const genCircuitInput = (
         graffiti: reputationRecords[attesterId].graffiti,
         sign_up: reputationRecords[attesterId].signUp,
         UST_path_elements: USTPathElements,
-        maxRep,
     }
     return crypto.stringifyBigInts(circuitInputs)
 }
@@ -110,8 +107,7 @@ describe('Prove grafitti preimage', function () {
             new ZkIdentity(),
             epoch,
             reputationRecords,
-            attesterId,
-            5
+            attesterId
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
@@ -136,8 +132,7 @@ describe('Prove grafitti preimage', function () {
             id,
             epoch,
             reputationRecords,
-            attesterId,
-            5
+            attesterId
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(

@@ -10,22 +10,57 @@ include "../node_modules/circomlib/circuits/gates.circom";
 include "../node_modules/circomlib/circuits/mux1.circom";
 include "../node_modules/circomlib/circuits/poseidon.circom";
 include "./sparseMerkleTree.circom";
+include "./identityCommitment.circom";
+include "./incrementalMerkleTree.circom";
+include "./modulo.circom";
 
-template proveGraffitiPreimage(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH) {
+template ProveGraffitiPreimage(GST_tree_depth, user_state_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH) {
+	signal input epoch;
 
-    /* 1. Check if yauser exists in the Global State Tree and verify epoch key */
-    component verify_epoch_key = VerifyEpochKey(GST_tree_depth, epoch_tree_depth, EPOCH_KEY_NONCE_PER_EPOCH);
-    for (var i = 0; i< GST_tree_depth; i++) {
-        verify_epoch_key.GST_path_index[i] <== GST_path_index[i];
-        verify_epoch_key.GST_path_elements[i] <== GST_path_elements[i][0];
+    // Global state tree leaf: Identity & user state root
+    signal private input identity_nullifier;
+    signal private input identity_trapdoor;
+    signal private input user_tree_root;
+    // Global state tree
+    signal private input GST_path_index[GST_tree_depth];
+    signal private input GST_path_elements[GST_tree_depth][1];
+    signal output GST_root;
+    // Attester to prove reputation from
+    signal input attester_id;
+    // Attestation by the attester
+    signal private input pos_rep;
+    signal private input neg_rep;
+    signal private input graffiti;
+    signal private input sign_up;
+    signal private input UST_path_elements[user_state_tree_depth][1];
+    signal output epochKey;
+
+    /* 1. Calculate epoch key and check if yauser exists in the Global State Tree*/
+	// calculate epoch key
+	component epochKeyHasher = Poseidon(2);
+    epochKeyHasher.inputs[0] <== identity_nullifier;
+    epochKeyHasher.inputs[1] <== epoch;
+    component epochKeyMod = ModuloTreeDepth(epoch_tree_depth);
+    epochKeyMod.dividend <== epochKeyHasher.out;
+    epochKey <== epochKeyMod.remainder;
+
+	// check if user existst in the GST
+	component identity_commitment = IdentityCommitment();
+    identity_commitment.identity_nullifier <== identity_nullifier;
+    identity_commitment.identity_trapdoor <== identity_trapdoor;
+
+    component leaf_hasher = Poseidon(2);
+    leaf_hasher.inputs[0] <== identity_commitment.out;
+    leaf_hasher.inputs[1] <== user_tree_root;
+
+    component merkletree = MerkleTreeInclusionProof(GST_tree_depth);
+    merkletree.leaf <== leaf_hasher.out;
+    for (var i = 0; i < GST_tree_depth; i++) {
+        merkletree.path_index[i] <== GST_path_index[i];
+        merkletree.path_elements[i] <== GST_path_elements[i][0];
     }
-    verify_epoch_key.identity_nullifier <== identity_nullifier;
-    verify_epoch_key.identity_trapdoor <== identity_trapdoor;
-    verify_epoch_key.user_tree_root <== user_tree_root;
-    verify_epoch_key.nonce <== epoch_key_nonce;
-    verify_epoch_key.epoch <== epoch;
-    epoch_key <== verify_epoch_key.epoch_key;
-    GST_root <== verify_epoch_key.GST_root;
+    GST_root <== merkletree.root;
+
     /* End of check 1 */
 
     /* 2. Check if the reputation given by the attester is in the user state tree */
@@ -46,7 +81,6 @@ template proveGraffitiPreimage(GST_tree_depth, user_state_tree_depth, epoch_tree
     /* End of check 2 */
 
     /* 3. Verify preimage of graffiti */
-    signal input graffiti;
     signal input graffiti_pre_image;
 
     component graffiti_hasher = Poseidon(1);
