@@ -75,19 +75,19 @@ const CommentBlock = ({ commentId, page }: Props) => {
             <Link
                 className="comment-block-link"
                 to={`/post/${comment.post_id}#${comment.id}`}
-            >
-                <div className="block-content no-padding-horizontal">
-                    <div
-                        style={{
-                            maxHeight: page == Page.Home ? '300px' : undefined,
-                            overflow: 'hidden',
-                        }}
-                        dangerouslySetInnerHTML={{
-                            __html: commentHtml,
-                        }}
-                    />
-                </div>
-            </Link>
+            />
+            <div className="block-content no-padding-horizontal">
+                <div
+                    style={{
+                        maxHeight: page == Page.Home ? '300px' : undefined,
+                        overflow: 'hidden',
+                    }}
+                    dangerouslySetInnerHTML={{
+                        __html: commentHtml,
+                    }}
+                />
+            </div>
+
             <div className="block-buttons no-padding">
                 <BlockButton
                     type={BlockButtonType.Boost}
