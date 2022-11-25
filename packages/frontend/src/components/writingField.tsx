@@ -95,6 +95,14 @@ const WritingField = (props: Props) => {
         } else {
             if (title.length === 0 && content.length === 0) {
                 setErrorMsg('Please input either title or content.')
+            } else if (
+                props.isEdit &&
+                title === props.title &&
+                content === props.content
+            ) {
+                setErrorMsg(
+                    'Please change your content to update, else click cancel to leave edit mode.'
+                )
             } else {
                 props.submit(title, content, epkNonce, reputation)
             }
@@ -117,15 +125,13 @@ const WritingField = (props: Props) => {
 
     return (
         <div className="writing-field" onClick={onClickField}>
-            {props.type === DataType.Post ? (
+            {props.type === DataType.Post && (
                 <input
                     type="text"
                     placeholder="Give an eye-catching title"
                     onChange={handleTitleInput}
                     value={title}
                 />
-            ) : (
-                <div></div>
             )}
             {props.type === DataType.Post ? (
                 <TextEditor

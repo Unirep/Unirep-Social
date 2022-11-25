@@ -40,6 +40,8 @@ const EditPage = () => {
         epkNonce: number,
         reputation: number
     ) => {
+        if (content === post.content) return
+
         postContext.editPost(id, title, content, post.epoch_key)
         history.goBack()
     }
