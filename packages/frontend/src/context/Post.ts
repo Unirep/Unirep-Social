@@ -298,7 +298,7 @@ export class Data {
                 this.save()
                 await userContext.loadReputation()
 
-                return { id: transaction, transactionId: transaction }
+                return { id: post.id, transactionId: transaction }
             },
             {
                 successMessage: 'Post is finalized',
@@ -352,6 +352,8 @@ export class Data {
                     const post = this.convertDataToPost(_post)
                     this.postsById[post.id] = post
                     this.save()
+
+                    return { id: post.id, transactionId: transaction }
                 }
             },
             {
@@ -399,6 +401,8 @@ export class Data {
                     const post = this.convertDataToPost(_post)
                     this.postsById[post.id] = post
                     this.save()
+
+                    return { id: post.id, transactionId: transaction }
                 }
             },
             {
@@ -594,6 +598,11 @@ export class Data {
                         this.loadCommentsByPostId(_comment.postId),
                     ])
                     this.save()
+
+                    return {
+                        id: _comment.postId + '#' + transaction,
+                        transactionId: transaction,
+                    }
                 }
             },
             {
@@ -646,6 +655,11 @@ export class Data {
                         this.loadCommentsByPostId(_comment.postId),
                     ])
                     this.save()
+
+                    return {
+                        id: _comment.postId + '#' + transaction,
+                        transactionId: transaction,
+                    }
                 }
             },
             {
