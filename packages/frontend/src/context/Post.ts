@@ -600,7 +600,7 @@ export class Data {
                     this.save()
 
                     return {
-                        id: _comment.postId + '#' + transaction,
+                        id: _comment.postId + '#' + _comment.id,
                         transactionId: transaction,
                     }
                 }
@@ -657,7 +657,7 @@ export class Data {
                     this.save()
 
                     return {
-                        id: _comment.postId + '#' + transaction,
+                        id: _comment.postId + '#' + _comment.id,
                         transactionId: transaction,
                     }
                 }
