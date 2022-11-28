@@ -525,7 +525,7 @@ export class Data {
                     }),
                     method: 'POST',
                 })
-                const { transaction, error } = await r.json()
+                const { transaction, error, comment } = await r.json()
                 if (error) throw error
                 await queueContext.afterTx(transaction)
                 await Promise.all([
@@ -538,7 +538,7 @@ export class Data {
                 await userContext.loadReputation()
 
                 return {
-                    id: postId + '#' + transaction,
+                    id: comment._id,
                     transactionId: transaction,
                 }
             },
@@ -600,7 +600,7 @@ export class Data {
                     this.save()
 
                     return {
-                        id: _comment.postId + '#' + _comment.id,
+                        id: _comment._id,
                         transactionId: transaction,
                     }
                 }
@@ -657,7 +657,7 @@ export class Data {
                     this.save()
 
                     return {
-                        id: _comment.postId + '#' + _comment.id,
+                        id: _comment._id,
                         transactionId: transaction,
                     }
                 }
