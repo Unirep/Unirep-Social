@@ -247,7 +247,7 @@ export const createPostSubsidy = async (t, iden) => {
     return data
 }
 
-export const editPost = async (t, iden, content) => {
+export const editPost = async (t, iden, title, content) => {
     const { post } = await createPost(t, iden)
     const userState = await genUserState(
         t.context.unirepSocial.provider,
@@ -272,6 +272,7 @@ export const editPost = async (t, iden, content) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
+            title,
             content,
             publicSignals,
             proof,

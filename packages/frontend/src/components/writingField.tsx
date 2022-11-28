@@ -22,6 +22,10 @@ type Props = {
     ) => void
     submitBtnName: string
     onClick: (event: any) => void
+    title?: string
+    content?: string
+    showDetail?: boolean
+    isEdit?: boolean
 }
 
 const WritingField = (props: Props) => {
@@ -32,12 +36,20 @@ const WritingField = (props: Props) => {
 
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
+        if (props.title) {
+            return props.title
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.title
         }
         return ''
     })
     const [content, setContent] = useState<string>(() => {
+        if (props.content) {
+            return props.content
+        }
+
         if (props.type === DataType.Post && postContext.postDraft) {
             return postContext.postDraft.content
         } else if (
@@ -67,11 +79,13 @@ const WritingField = (props: Props) => {
 
     const handleTitleInput = (event: any) => {
         setTitle(event.target.value)
+        if (props.isEdit) return
         postContext.setDraft(props.type, event.target.value, content)
     }
 
     const handleTextEditorInput = (text: string) => {
         setContent(text)
+        if (props.isEdit) return
         postContext.setDraft(props.type, title, text)
     }
 
@@ -81,6 +95,14 @@ const WritingField = (props: Props) => {
         } else {
             if (title.length === 0 && content.length === 0) {
                 setErrorMsg('Please input either title or content.')
+            } else if (
+                props.isEdit &&
+                title === props.title &&
+                content === props.content
+            ) {
+                setErrorMsg(
+                    'Please change your content to update, else click cancel to leave edit mode.'
+                )
             } else {
                 props.submit(title, content, epkNonce, reputation)
             }
@@ -90,25 +112,26 @@ const WritingField = (props: Props) => {
     const chooseToUseSubsidy = () => {
         setUseSubsidy(true)
         setEpkNonce(-1)
+        setReputation(0)
     }
 
     const chooseToUsePersona = () => {
         setUseSubsidy(false)
         setEpkNonce(0)
-        setReputation(defaultRep)
+        if (reputation < defaultRep) {
+            setReputation(defaultRep)
+        }
     }
 
     return (
         <div className="writing-field" onClick={onClickField}>
-            {props.type === DataType.Post ? (
+            {props.type === DataType.Post && (
                 <input
                     type="text"
                     placeholder="Give an eye-catching title"
                     onChange={handleTitleInput}
                     value={title}
                 />
-            ) : (
-                <div></div>
             )}
             {props.type === DataType.Post ? (
                 <TextEditor
@@ -123,29 +146,33 @@ const WritingField = (props: Props) => {
                 />
             )}
             <div style={{ marginBottom: '32px' }}></div>
-            {userContext.userState ? (
-                <ActionDetail
-                    showBorder={true}
-                    showHelp={true}
-                    showRep={userContext.netReputation >= defaultRep}
-                    maxRep={userContext.netReputation}
-                    defaultRep={defaultRep}
-                    hasRep={
-                        useSubsidy
-                            ? userContext.subsidyReputation
-                            : userContext.netReputation
-                    }
-                    showoffRep={reputation}
-                    setShowoffRep={setReputation}
-                    allEpks={userContext.currentEpochKeys}
-                    useSubsidy={useSubsidy}
-                    chooseToUseSubsidy={chooseToUseSubsidy}
-                    chooseToUsePersona={chooseToUsePersona}
-                    epkNonce={epkNonce}
-                    setEpkNonce={setEpkNonce}
-                />
-            ) : (
-                <>somethings wrong...</>
+            {props.showDetail && (
+                <>
+                    {userContext.userState ? (
+                        <ActionDetail
+                            showBorder={true}
+                            showHelp={true}
+                            showRep={userContext.netReputation > defaultRep}
+                            maxRep={userContext.netReputation}
+                            defaultRep={defaultRep}
+                            hasRep={
+                                useSubsidy
+                                    ? userContext.subsidyReputation
+                                    : userContext.netReputation
+                            }
+                            showoffRep={reputation}
+                            setShowoffRep={setReputation}
+                            allEpks={userContext.currentEpochKeys}
+                            useSubsidy={useSubsidy}
+                            chooseToUseSubsidy={chooseToUseSubsidy}
+                            chooseToUsePersona={chooseToUsePersona}
+                            epkNonce={epkNonce}
+                            setEpkNonce={setEpkNonce}
+                        />
+                    ) : (
+                        <>somethings wrong...</>
+                    )}
+                </>
             )}
             <MyButton
                 type={MyButtonType.dark}
@@ -156,11 +183,7 @@ const WritingField = (props: Props) => {
             >
                 {props.submitBtnName}
             </MyButton>
-            {errorMsg.length > 0 ? (
-                <div className="error">{errorMsg}</div>
-            ) : (
-                <div></div>
-            )}
+            {errorMsg.length > 0 && <div className="error">{errorMsg}</div>}
             {uiContext.epochStatus !== EpochStatus.default && (
                 <div className="disable-cover"></div>
             )}

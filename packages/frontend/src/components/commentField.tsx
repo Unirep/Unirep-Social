@@ -53,6 +53,7 @@ const CommentField = (props: Props) => {
                 submit={submitComment}
                 submitBtnName="Comment - 3 points"
                 onClick={preventPropagation}
+                showDetail={true}
             />
         </div>
     )
