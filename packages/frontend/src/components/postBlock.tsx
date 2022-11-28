@@ -127,7 +127,14 @@ const PostBlock = ({ postId, page }: Props) => {
                 </a>
             </div>
             {page === Page.Home && <div className="divider"></div>}
-            <div className="block-content" onClick={gotoPostPage}>
+            <div
+                className={
+                    page === Page.Post
+                        ? 'block-content'
+                        : 'block-content block-content-on-hover'
+                }
+                onClick={gotoPostPage}
+            >
                 <div className="title">{post.title}</div>
                 <div className="content">
                     <div

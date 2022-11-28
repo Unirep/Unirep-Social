@@ -47,11 +47,11 @@ const CommentBlock = ({ commentId, page }: Props) => {
                 : '  (Edited)'
             : ''
 
-    // const gotoPost = () => {
-    //     if (page === Page.User) {
-    //         history.push(`/post/${comment.post_id}`, { commentId: comment.id })
-    //     }
-    // }
+    const scrollWithOffset = (el: any) => {
+        const yCoordinate = el.getBoundingClientRect().top + window.pageYOffset
+        const yOffset = -180
+        window.scrollTo({ top: yCoordinate + yOffset, behavior: 'smooth' })
+    }
 
     const editComment = () => {
         setIsEdited(true)
@@ -113,21 +113,37 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     <img src={require('../../public/images/etherscan.svg')} />
                 </a>
             </div>
-            <Link
-                className="comment-block-link"
-                to={`/post/${comment.post_id}#${comment.id}`}
-            />
-            <div className="block-content no-padding-horizontal">
-                <div
-                    style={{
-                        maxHeight: page == Page.Home ? '300px' : undefined,
-                        overflow: 'hidden',
-                    }}
-                    dangerouslySetInnerHTML={{
-                        __html: commentHtml,
-                    }}
-                />
-            </div>
+            {page === Page.Post ? (
+                <div className="block-content no-padding-horizontal">
+                    <div
+                        style={{
+                            overflow: 'hidden',
+                        }}
+                        dangerouslySetInnerHTML={{
+                            __html: commentHtml,
+                        }}
+                    />
+                </div>
+            ) : (
+                <Link
+                    className="comment-block-link"
+                    to={`/post/${comment.post_id}#${comment.id}`}
+                    scroll={(el: any) => scrollWithOffset(el)}
+                >
+                    <div className="block-content block-content-on-hover no-padding-horizontal">
+                        <div
+                            style={{
+                                maxHeight:
+                                    page == Page.Home ? '300px' : undefined,
+                                overflow: 'hidden',
+                            }}
+                            dangerouslySetInnerHTML={{
+                                __html: commentHtml,
+                            }}
+                        />
+                    </div>
+                </Link>
+            )}
 
             <div className="block-buttons no-padding">
                 <BlockButton

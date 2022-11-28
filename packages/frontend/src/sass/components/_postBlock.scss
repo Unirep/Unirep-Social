@@ -234,11 +234,6 @@
     width: 100%;
     padding: 24px 24px 32px;
     color: $black;
-    cursor: pointer;
-
-    &:hover {
-        background-color: $grey-100;
-    }
 
     .title {
         font-size: $title-sm;
@@ -263,6 +258,14 @@
         img {
             width: 100%;
         }
+    }
+}
+
+.block-content-on-hover {
+    cursor: pointer;
+
+    &:hover {
+        background-color: $grey-100;
     }
 }
 
