@@ -70,4 +70,5 @@ export const add0x = (str: string): string => {
     return str.startsWith('0x') ? str : '0x' + str
 }
 
-export const DELETED_CONTENT: string = '===deleted==='
+export const DELETED_CONTENT: string = '[This has been deleted...]'
+export const TITLE_LABEL = '<title>'

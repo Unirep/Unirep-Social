@@ -13,7 +13,7 @@ import Feed from '../../components/feed'
 
 const MainPage = () => {
     const history = useHistory()
-    const postController = useContext(PostContext)
+    const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const unirepConfig = useContext(UnirepContext)
 
@@ -22,13 +22,13 @@ const MainPage = () => {
     const loadMorePosts = () => {
         console.log(
             'load more posts, now posts: ' +
-                postController.feedsByQuery[query]?.length
+                postContext.feedsByQuery[query]?.length
         )
-        postController.loadFeed(query, postController.feedsByQuery[query])
+        postContext.loadFeed(query, postContext.feedsByQuery[query])
     }
 
     useEffect(() => {
-        postController.loadFeed(query)
+        postContext.loadFeed(query)
     }, [query])
 
     const gotoNewPost = () => {
@@ -54,7 +54,7 @@ const MainPage = () => {
             </div>
             <Feed feedChoice={query} setFeedChoice={setQuery} />
             <PostsList
-                postIds={postController.feedsByQuery[query] || []}
+                postIds={postContext.feedsByQuery[query] || []}
                 loadMorePosts={loadMorePosts}
             />
         </BasicPage>
