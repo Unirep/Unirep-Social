@@ -12,6 +12,7 @@ const renderWritingField = (
     postData,
     type,
     page,
+    showDetail,
     submit
 ) => {
     return render(
@@ -23,6 +24,7 @@ const renderWritingField = (
                         submit={submit}
                         submitBtnName={'subbtn'}
                         onClick={jest.fn()}
+                        showDetail={showDetail}
                     />
                 </PostContext.Provider>
             </UnirepContext.Provider>
@@ -55,7 +57,7 @@ test('should render WritingField correctly with .Provider data', () => {
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderWritingField(userData, unirepData, postData, type, page)
+    renderWritingField(userData, unirepData, postData, type, page, true)
     expect(screen.getByText(/subbtn/i)).toBeInTheDocument()
 })
 
@@ -84,7 +86,7 @@ test('should display "somethings wrong..." with null user', () => {
         currentEpochKeys: ['user epoch_key test'],
     }
 
-    renderWritingField(userData, unirepData, postData, type, page)
+    renderWritingField(userData, unirepData, postData, type, page, true)
     expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
 })
 

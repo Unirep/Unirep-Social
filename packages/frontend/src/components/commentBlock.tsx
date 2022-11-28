@@ -3,14 +3,20 @@ import { useState, useContext } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
+import MarkdownIt from 'markdown-it'
 
 import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
+import UserContext from '../context/User'
 
-import { EXPLORER_URL } from '../config'
+import { EXPLORER_URL, DELETED_CONTENT } from '../config'
+import MyButton, { MyButtonType } from './myButton'
+import AlertCover from './alertCover'
+import WritingField from './writingField'
+import CustomGap from './customGap'
+import { DataType } from '../constants'
 import { Page } from '../constants'
 import BlockButton, { BlockButtonType } from './blockButton'
-import MarkdownIt from 'markdown-it'
 
 const markdown = new MarkdownIt({
     breaks: true,
@@ -25,11 +31,21 @@ type Props = {
 
 const CommentBlock = ({ commentId, page }: Props) => {
     const postContext = useContext(PostContext)
+    const userContext = useContext(UserContext)
     const comment = postContext.commentsById[commentId]
     const commentHtml = markdown.render(comment.content)
     const unirepConfig = useContext(UnirepContext)
     const date = dateformat(new Date(comment.createdAt), 'dd/mm/yyyy hh:MM TT')
     const [isEpkHovered, setEpkHovered] = useState<boolean>(false)
+    const [isEdited, setIsEdited] = useState<boolean>(false)
+    const [alertOn, setAlertOn] = useState<boolean>(false)
+    const isAuthor = userContext.allEpks?.includes(comment.epoch_key)
+    const commentCondition =
+        comment.lastUpdatedAt && comment.lastUpdatedAt > comment.createdAt
+            ? comment.content === DELETED_CONTENT
+                ? '  (Deleted)'
+                : '  (Edited)'
+            : ''
 
     const scrollWithOffset = (el: any) => {
         const yCoordinate = el.getBoundingClientRect().top + window.pageYOffset
@@ -37,11 +53,38 @@ const CommentBlock = ({ commentId, page }: Props) => {
         window.scrollTo({ top: yCoordinate + yOffset, behavior: 'smooth' })
     }
 
+    const editComment = () => {
+        setIsEdited(true)
+    }
+
+    const updateComment = (
+        title: string,
+        content: string,
+        epkNonce: number,
+        reputation: number
+    ) => {
+        postContext.editComment(comment.id, content, comment.epoch_key)
+        setIsEdited(false)
+    }
+
+    const deleteComment = () => {
+        postContext.deleteComment(comment.id, comment.epoch_key)
+        setAlertOn(false)
+        setIsEdited(false)
+    }
+
+    const preventPropagation = (event: any) => {
+        event.stopPropagation()
+    }
+
     return (
         <div className="comment-block">
             <div className="block-header comment-block-header no-padding">
                 <div className="info">
-                    <span className="date">{date} |</span>
+                    <span className="date">
+                        {date}
+                        {commentCondition} |
+                    </span>
                     <span
                         className="user"
                         onMouseEnter={() => setEpkHovered(true)}
@@ -51,7 +94,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />
-                        {isEpkHovered && (
+                        {isEpkHovered && comment.reputation > 0 && (
                             <span className="show-off-rep">
                                 {comment.reputation ===
                                 unirepConfig.commentReputation
@@ -118,7 +161,45 @@ const CommentBlock = ({ commentId, page }: Props) => {
                     count={0}
                     data={comment}
                 />
+                {isAuthor && (
+                    <BlockButton
+                        type={BlockButtonType.Edit}
+                        data={comment}
+                        edit={editComment}
+                    />
+                )}
             </div>
+            {isEdited && (
+                <div>
+                    <WritingField
+                        type={DataType.Comment}
+                        submit={updateComment}
+                        submitBtnName="Update Comment"
+                        onClick={preventPropagation}
+                        content={comment.content}
+                        isEdit={true}
+                    />
+                    <CustomGap times={2} />
+
+                    {comment.content !== DELETED_CONTENT && (
+                        <MyButton
+                            type={MyButtonType.light}
+                            fullSize={true}
+                            onClick={() => setAlertOn(true)}
+                            fontWeight={600}
+                            textAlignMiddle={true}
+                        >
+                            Delete Comment
+                        </MyButton>
+                    )}
+                    {alertOn && (
+                        <AlertCover
+                            close={() => setAlertOn(false)}
+                            deleteContent={deleteComment}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     )
 }

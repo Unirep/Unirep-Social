@@ -1,4 +1,5 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext } from 'react'
+import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import { WebContext } from '../../context/WebContext'
@@ -12,10 +13,19 @@ import RefreshReminder from '../../components/refreshReminder'
 
 type Props = {
     children: any
+    hasBack?: boolean
+    title?: string
 }
 
-const BasicPage = ({ children }: Props) => {
+const BasicPage = ({ hasBack, title, children }: Props) => {
     const { isMenuOpen } = useContext(WebContext)
+    const history = useHistory()
+
+    const back = () => {
+        console.log('back')
+        history.goBack()
+    }
+
     const uiContext = useContext(UIContext)
 
     return (
@@ -24,6 +34,15 @@ const BasicPage = ({ children }: Props) => {
             <div className="content">
                 <Banner />
                 <div className="main-content">
+                    <div className="main-content-bar">
+                        {hasBack && (
+                            <img
+                                src={require('../../../public/images/arrow-left.svg')}
+                                onClick={back}
+                            />
+                        )}
+                        {title && <p>{title}</p>}
+                    </div>
                     {uiContext.epochStatus === EpochStatus.needsUST && (
                         <RefreshReminder />
                     )}

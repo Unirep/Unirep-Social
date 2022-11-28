@@ -40,8 +40,7 @@ async function loadComment(req, res, next) {
             _id: req.params.id,
         },
     })
-    if (!comment || comment.content === DELETED_CONTENT)
-        res.status(404).json('no such comment')
+    if (!comment) res.status(404).json('no such comment')
     else res.json(comment)
 }
 
@@ -57,9 +56,7 @@ async function loadVotesByCommentId(req, res, next) {
 
 async function listComments(req, res, next) {
     if (req.query.query === undefined) {
-        const comments = (
-            await req.db.findMany('Comment', { where: {} })
-        ).filter((c) => c.content !== DELETED_CONTENT)
+        const comments = await req.db.findMany('Comment', { where: {} })
         res.json(comments)
         return
     }
@@ -86,7 +83,7 @@ async function listComments(req, res, next) {
                 totalRep: query === QueryType.Rep ? 'desc' : undefined,
             },
         })
-    ).filter((c) => c.content !== DELETED_CONTENT && !lastRead.includes(c._id))
+    ).filter((c) => !lastRead.includes(c._id))
 
     res.json(comments.slice(0, Math.min(LOAD_POST_COUNT, comments.length)))
 }
@@ -338,10 +335,12 @@ async function deleteComment(req, res) {
             error,
         })
     } else {
+        const comment = await req.db.findOne('Comment', { where: { _id: id } })
+
         res.json({
             error,
             transaction,
-            id,
+            comment,
         })
     }
 }
@@ -400,6 +399,7 @@ async function editCommentOnChain(id, db, publicSignals, proof, content) {
         update: {
             content,
             hashedContent: newHashedContent,
+            lastUpdatedAt: +new Date(),
         },
     })
 

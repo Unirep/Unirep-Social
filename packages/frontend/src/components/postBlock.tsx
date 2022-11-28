@@ -8,7 +8,7 @@ import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
 import UIContext, { EpochStatus } from '../context/UI'
 
-import { EXPLORER_URL } from '../config'
+import { EXPLORER_URL, DELETED_CONTENT } from '../config'
 import { Page, AlertType } from '../constants'
 import CommentField from './commentField'
 import CommentBlock from './commentBlock'
@@ -55,8 +55,15 @@ const PostBlock = ({ postId, page }: Props) => {
     const post = postContext.postsById[postId]
     const postHtml = markdown.render(post.content)
     const comments = postContext.commentsByPostId[postId] || []
+    const isAuthor = userContext.allEpks?.includes(post.epoch_key)
 
     const date = dateformat(new Date(post.createdAt), 'dd/mm/yyyy hh:MM TT')
+    const postCondition =
+        post.lastUpdatedAt && post.lastUpdatedAt > post.createdAt
+            ? post.content === DELETED_CONTENT
+                ? '  (Deleted)'
+                : '  (Edited)'
+            : ''
 
     const [showCommentField, setShowCommentField] = useState<boolean>(
         postContext.commentDraft.content.length > 0
@@ -73,6 +80,10 @@ const PostBlock = ({ postId, page }: Props) => {
         history.push(`/post/${post.id}`)
     }
 
+    const editPost = () => {
+        history.push(`/edit/${post.id}`)
+    }
+
     const expandCommentField = () => {
         if (uiContext.epochStatus === EpochStatus.default) {
             setShowCommentField(true)
@@ -83,28 +94,26 @@ const PostBlock = ({ postId, page }: Props) => {
         <div className="post-block">
             <div className="block-header">
                 <div className="info">
-                    <span className="date">{date} |</span>
+                    <span className="date">
+                        {date}
+                        {postCondition} |
+                    </span>
                     <span
                         className="user"
                         onMouseEnter={() => setEpkHovered(true)}
                         onMouseLeave={() => setEpkHovered(false)}
                         onClick={() => setEpkHovered(!isEpkHovered)}
-                        // title={post.reputation === DEFAULT_POST_KARMA? `This person is very modest, showing off only ${DEFAULT_POST_KARMA} Rep.` : `This person is showing off ${post.reputation} Rep.`}
                     >
                         Post by {post.epoch_key}
-                        {post.reputation > 0 && (
-                            <img
-                                src={require('../../public/images/lighting.svg')}
-                            />
-                        )}
-                        {isEpkHovered && post.reputation > 0 ? (
+                        <img
+                            src={require('../../public/images/lighting.svg')}
+                        />
+                        {isEpkHovered && post.reputation > 0 && (
                             <span className="show-off-rep">
                                 {post.reputation === unirepConfig.postReputation
                                     ? `This person is very modest, showing off only ${unirepConfig.postReputation} Rep.`
                                     : `This person is showing off ${post.reputation} Rep.`}
                             </span>
-                        ) : (
-                            <span></span>
                         )}
                     </span>
                 </div>
@@ -139,7 +148,7 @@ const PostBlock = ({ postId, page }: Props) => {
                     />
                 </div>
             </div>
-            {page === Page.Home ? <div className="divider"></div> : <div></div>}
+            {page === Page.Home && <div className="divider"></div>}
             <div className="block-buttons">
                 <BlockButton
                     type={BlockButtonType.Comments}
@@ -161,10 +170,15 @@ const PostBlock = ({ postId, page }: Props) => {
                     count={0}
                     data={post}
                 />
+                {isAuthor && (
+                    <BlockButton
+                        type={BlockButtonType.Edit}
+                        data={post}
+                        edit={editPost}
+                    />
+                )}
             </div>
-            {page === Page.Home ? (
-                <div></div>
-            ) : (
+            {page !== Page.Home && (
                 <div className="comment">
                     {uiContext.epochStatus === EpochStatus.needsUST && (
                         <RefreshReminder />
@@ -188,7 +202,7 @@ const PostBlock = ({ postId, page }: Props) => {
                             >
                                 {uiContext.epochStatus === EpochStatus.default
                                     ? 'What do you think?'
-                                    : 'Something is processing...'}
+                                    : 'Refreshing Epoch, please give a moment.'}
                             </div>
                         )}
                     </div>
@@ -198,10 +212,8 @@ const PostBlock = ({ postId, page }: Props) => {
                             {comments.map((id, i) => (
                                 <div key={id} id={id}>
                                     <CommentBlock page={page} commentId={id} />
-                                    {i < comments.length - 1 ? (
+                                    {i < comments.length - 1 && (
                                         <div className="divider"></div>
-                                    ) : (
-                                        <div></div>
                                     )}
                                 </div>
                             ))}
