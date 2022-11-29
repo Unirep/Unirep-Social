@@ -7,6 +7,7 @@ import * as Constants from './constants'
 import Header from './layout/header/header'
 import MainPage from './pages/mainPage/mainPage'
 import PostPage from './pages/postPage/postPage'
+import EditPage from './pages/editPage/editPage'
 import UserPage from './pages/userPage/userPage'
 import NewPage from './pages/newPage/newPage'
 import FeedbackPage from './pages/feedbackPage/feedbackPage'
@@ -44,6 +45,7 @@ const AppRouter = () => {
                         <Route component={StartPage} path="/start" />
                         <Route component={StartPage} path="/start/callback" />
                         <Route component={PostPage} path="/post/:id" />
+                        <Route component={EditPage} path="/edit/:id" />
                         <Route component={UserPage} path="/user" />
                         <Route component={NewPage} path="/new" />
                         <Route component={FeedbackPage} path="/feedback" />

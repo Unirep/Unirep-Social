@@ -307,10 +307,115 @@ export class Data {
                 await userContext.loadReputation()
                 await userContext.loadRecords()
 
-                return { id: transaction, transactionId: transaction }
+                return { id: post.id, transactionId: transaction }
             },
             {
                 successMessage: 'Post is finalized',
+                type: ActionType.Post,
+            }
+        )
+    }
+
+    editPost(
+        postId: string = '',
+        title: string = '',
+        content: string = '',
+        epk: string = ''
+    ) {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Updating post',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Updating post',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`post/edit/${postId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title,
+                            content,
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const { transaction, error, post: _post } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    const post = this.convertDataToPost(_post)
+                    this.postsById[post.id] = post
+                    this.save()
+
+                    return { id: post.id, transactionId: transaction }
+                }
+            },
+            {
+                successMessage: 'Update post is finalized',
+                type: ActionType.Post,
+            }
+        )
+    }
+
+    deletePost(postId: string = '', epk: string = '') {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Deleting post',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Deleting post',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`post/delete/${postId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const { transaction, error, post: _post } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    const post = this.convertDataToPost(_post)
+                    this.postsById[post.id] = post
+                    this.save()
+
+                    return { id: post.id, transactionId: transaction }
+                }
+            },
+            {
+                successMessage: 'Delete post is finalized',
                 type: ActionType.Post,
             }
         )
@@ -430,7 +535,7 @@ export class Data {
                     }),
                     method: 'POST',
                 })
-                const { transaction, error } = await r.json()
+                const { transaction, error, comment } = await r.json()
                 if (error) throw error
                 await queueContext.afterTx(transaction)
                 await Promise.all([
@@ -444,7 +549,7 @@ export class Data {
                 await userContext.loadRecords()
 
                 return {
-                    id: postId + '#' + transaction,
+                    id: comment._id,
                     transactionId: transaction,
                 }
             },
@@ -452,6 +557,125 @@ export class Data {
                 successMessage: 'Comment is finalized!',
                 type: ActionType.Comment,
                 metadata: { id: postId },
+            }
+        )
+    }
+
+    editComment(
+        commentId: string = '',
+        content: string = '',
+        epk: string = ''
+    ) {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Updating comment',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Updating comment',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`comment/edit/${commentId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            content,
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const {
+                        transaction,
+                        error,
+                        comment: _comment,
+                    } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    await Promise.all([
+                        this.loadCommentsByPostId(_comment.postId),
+                    ])
+                    this.save()
+
+                    return {
+                        id: _comment._id,
+                        transactionId: transaction,
+                    }
+                }
+            },
+            {
+                successMessage: 'Update comment is finalized',
+                type: ActionType.Comment,
+            }
+        )
+    }
+
+    deleteComment(commentId: string = '', epk: string = '') {
+        const i = userContext.allEpks.findIndex((e) => e === epk)
+        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+
+        queueContext.addOp(
+            async (updateStatus) => {
+                if (userContext && userContext.userState) {
+                    updateStatus({
+                        title: 'Deleting comment',
+                        details: 'Generating zk proof...',
+                    })
+                    const { publicSignals, proof } =
+                        await userContext.userState.genVerifyEpochKeyProof(
+                            epkNonce,
+                            epoch
+                        )
+                    updateStatus({
+                        title: 'Deleting comment',
+                        details: 'Waiting for TX inclusion...',
+                    })
+                    const apiURL = makeURL(`comment/delete/${commentId}`)
+                    const r = await fetch(apiURL, {
+                        headers: {
+                            'content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            proof,
+                            publicSignals,
+                        }),
+                        method: 'POST',
+                    })
+                    const {
+                        transaction,
+                        error,
+                        comment: _comment,
+                    } = await r.json()
+                    if (error) throw error
+                    await queueContext.afterTx(transaction)
+                    await Promise.all([
+                        this.loadCommentsByPostId(_comment.postId),
+                    ])
+                    this.save()
+
+                    return {
+                        id: _comment._id,
+                        transactionId: transaction,
+                    }
+                }
+            },
+            {
+                successMessage: 'Delete comment is finalized',
+                type: ActionType.Comment,
             }
         )
     }
@@ -481,6 +705,7 @@ export class Data {
             current_epoch: data.epoch,
             proofIndex: data.proofIndex,
             transactionHash: data.transactionHash,
+            lastUpdatedAt: data.lastUpdatedAt,
         }
 
         return comment
@@ -503,6 +728,7 @@ export class Data {
             current_epoch: data.epoch,
             proofIndex: data.proofIndex,
             transactionHash: data.transactionHash,
+            lastUpdatedAt: data.lastUpdatedAt,
         }
 
         return post

@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../context/User'
+import UIContext, { EpochStatus } from '../context/UI'
 
 import { Post, Comment, DataType } from '../constants'
 import VoteBox from './voteBox'
@@ -15,17 +16,21 @@ export enum BlockButtonType {
     Post = 'post',
     Activity = 'activity',
     Save = 'save',
+    Edit = 'edit',
 }
 
 type Props = {
     type: BlockButtonType
-    count: number
+    count?: number
     data: Post | Comment
+    edit?: () => void
 }
 
-const BlockButton = ({ type, count, data }: Props) => {
+const BlockButton = ({ type, count, data, edit }: Props) => {
     const history = useHistory()
     const userContext = useContext(UserContext)
+    const uiContext = useContext(UIContext)
+
     const [isBoostOn, setBoostOn] = useState<boolean>(false)
     const [isSquashOn, setSquashOn] = useState<boolean>(false)
     const [isHover, setIsHover] = useState<boolean>(false) // null, purple1, purple2, grey1, grey2
@@ -38,13 +43,16 @@ const BlockButton = ({ type, count, data }: Props) => {
             type === BlockButtonType.Share
         ) {
             return true
+        } else if (type === BlockButtonType.Edit) {
+            if (uiContext.epochStatus !== EpochStatus.default) return false
+            return true
         } else {
             if (!userContext.userState) return false
             else {
                 if (data.current_epoch !== userContext.currentEpoch)
                     return false
                 else if (userContext.spendableReputation < 1) return false
-                else return true
+                return true
             }
         }
     }
@@ -79,6 +87,8 @@ const BlockButton = ({ type, count, data }: Props) => {
             setIsLinkCopied(true)
         } else if (type === BlockButtonType.Share) {
             throw new Error(`Unrecognized data type: ${JSON.stringify(data)}`)
+        } else if (type === BlockButtonType.Edit) {
+            if (edit && uiContext.epochStatus === EpochStatus.default) edit()
         }
     }
 
@@ -90,11 +100,21 @@ const BlockButton = ({ type, count, data }: Props) => {
     const setReminderMessage = () => {
         if (!userContext.userState) setReminder('Join us :)')
         else {
-            if (data.current_epoch !== userContext.currentEpoch)
-                setReminder('Time out :(')
-            else if (userContext.spendableReputation < 1)
-                setReminder('No enough Rep')
-            else if (type !== BlockButtonType.Share) setReminder('loading...')
+            if (
+                type === BlockButtonType.Edit &&
+                uiContext.epochStatus !== EpochStatus.default
+            ) {
+                setReminder('Please hold')
+            } else if (
+                type === BlockButtonType.Boost ||
+                type === BlockButtonType.Squash
+            ) {
+                if (data.current_epoch !== userContext.currentEpoch)
+                    setReminder('Time out :(')
+                else if (userContext.spendableReputation < 1)
+                    setReminder('No enough Rep')
+                else setReminder('loading...')
+            }
         }
     }
 
@@ -113,7 +133,7 @@ const BlockButton = ({ type, count, data }: Props) => {
     return (
         <div
             className={
-                type === BlockButtonType.Share
+                type === BlockButtonType.Share || type === BlockButtonType.Edit
                     ? 'block-button share'
                     : 'block-button'
             }
@@ -126,28 +146,21 @@ const BlockButton = ({ type, count, data }: Props) => {
                     isHover && checkAbility() ? '-fill' : ''
                 }.svg`)}
             />
-            {type !== BlockButtonType.Share ? (
-                <span className="count">{count}</span>
-            ) : (
-                <span></span>
-            )}
+            {type !== BlockButtonType.Share &&
+                type !== BlockButtonType.Edit && (
+                    <span className="count">{count}</span>
+                )}
             <span className="btn-name">
                 {type.charAt(0).toUpperCase() + type.slice(1)}
             </span>
 
-            {checkAbility() ? (
-                <div></div>
-            ) : (
+            {checkAbility() === false && (
                 <div
                     className="disabled"
                     onMouseEnter={setReminderMessage}
                 ></div>
             )}
-            {reminder.length > 0 ? (
-                <div className="reminder">{reminder}</div>
-            ) : (
-                <div></div>
-            )}
+            {reminder.length > 0 && <div className="reminder">{reminder}</div>}
             {isBoostOn ? (
                 <VoteBox
                     isUpvote={true}

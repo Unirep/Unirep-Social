@@ -53,6 +53,7 @@ export interface Comment {
     current_epoch: number
     proofIndex: number
     transactionHash: string
+    lastUpdatedAt?: number
 }
 
 export interface Post {
@@ -70,6 +71,7 @@ export interface Post {
     current_epoch: number
     proofIndex: number
     transactionHash: string
+    lastUpdatedAt?: number
 }
 
 export enum InfoType {
