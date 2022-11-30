@@ -42,7 +42,7 @@
         "@unirep-social/circuits": "^0.0.1",
         "@unirep/circuits": "1.0.1",
         "@unirep/contracts": "1.0.1",
-        "@unirep/core": "1.0.1",
+        "@unirep/core": "1.0.2",
         "@unirep/crypto": "1.0.1",
         "@zk-kit/incremental-merkle-tree.sol": "^1.2.0",
         "anondb": "^0.0.12",
