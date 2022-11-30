@@ -25,7 +25,7 @@ const renderEditPage = (postData) => {
     )
 }
 
-test('initial render with truthy PostContext data', async () => {
+test('intial render testing delete button', async () => {
     const postData = {
         postsById: {
             1: {
@@ -48,7 +48,6 @@ test('initial render with truthy PostContext data', async () => {
     const deletePost = screen.getByText('Delete Post')
     await deletePost.click()
     // should render delete post prompt after click
-    screen.debug(deletePost)
     expect(
         screen.getByText('Are you sure to delete this post?') &&
             screen.getByText('Nevermind.') &&
@@ -57,6 +56,31 @@ test('initial render with truthy PostContext data', async () => {
     // Grab delete button in prompt and click it
     const yesDeletePost = screen.getByText('Yes, delete it.')
     await yesDeletePost.click()
+})
+
+test('Update button click functionality', async () => {
+    const postData = {
+        postsById: {
+            1: {
+                id: 'post id',
+                content: 'post content',
+                createdAt: new Date().toUTCString(),
+                reputation: 30,
+                epoch_key: 'epoch_key',
+            },
+        },
+        loadPost: jest.fn(),
+        deletePost: jest.fn(),
+    }
+    renderEditPage(postData)
+    expect(
+        screen.getAllByText('Update Post') &&
+            screen.getByText('post content') &&
+            screen.getByText('Delete Post')
+    ).toBeInTheDocument()
+    const updatePost = screen.queryAllByText('Update Post')[1]
+    screen.debug(updatePost)
+    await updatePost.click()
 })
 
 // todo: expect that the useHistory and useParams react hooks are being called
