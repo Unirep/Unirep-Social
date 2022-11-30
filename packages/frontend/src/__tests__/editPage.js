@@ -79,7 +79,6 @@ test('Update button click functionality', async () => {
             screen.getByText('Delete Post')
     ).toBeInTheDocument()
     const updatePost = screen.queryAllByText('Update Post')[1]
-    screen.debug(updatePost)
     await updatePost.click()
 })
 
