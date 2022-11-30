@@ -17,6 +17,8 @@ jest.mock('react-router-dom', () => ({
     useParams: jest.fn().mockReturnValue({ id: '1' }),
 }))
 
+// const historyGoBackSpy = jest.spyOn(react-router-dom, 'goBack')
+
 const renderEditPage = (postData) => {
     return render(
         <PostContext.Provider value={postData}>
