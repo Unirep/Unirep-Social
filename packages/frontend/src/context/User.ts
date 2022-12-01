@@ -124,12 +124,13 @@ export class User {
                 from: BigInt(r.from)
                     .toString(16)
                     .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
-                to: BigInt(r.from)
+                to: BigInt(r.to)
                     .toString(16)
                     .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
             }
         })
 
+        this.recordsByEpk = {} // maybe it's not a good solution
         for (const r of rawRecords) {
             let epkOfRecord: string
             if (this.allEpks.indexOf(r.to) !== -1) {
@@ -149,26 +150,14 @@ export class User {
         }
 
         // calculate rep spent of this epoch
-        let rawSpent: number = 0
-        for (const epk of this.currentEpochKeys) {
-            if (!this.recordsByEpk[epk]) continue
-
-            const filteredRecords = this.recordsByEpk[epk].filter((r) => {
-                if (
-                    r.action === ActionType.Post ||
-                    r.action === ActionType.Comment ||
-                    (r.action === ActionType.Vote &&
-                        this.currentEpochKeys.indexOf(r.from) !== -1)
-                ) {
-                    if (!r.spentFromSubsidy) return true
-                }
-                return false
-            })
-            const spentOfEachRecord = filteredRecords.map(
-                (r) => r.downvote + r.upvote
-            )
-            if (spentOfEachRecord.length > 0) {
-                rawSpent += spentOfEachRecord.reduce((acc, val) => acc + val)
+        let rawSpent = 0
+        for (var i = 0; i < rawRecords.length; i++) {
+            if (
+                this.currentEpochKeys.indexOf(rawRecords[i].from) !== -1 &&
+                !rawRecords[i].spentFromSubsidy
+            ) {
+                rawSpent =
+                    rawSpent + rawRecords[i].upvote + rawRecords[i].downvote
             }
         }
         this.spent = rawSpent
