@@ -61,6 +61,8 @@ describe('Post', function () {
         expect(window.localStorage.getItem('comment-draft')).toBe(
             '{"title":"Test Comment","content":"Test comment content"}'
         )
+        // clear localStorage
+        window.localStorage.clear()
     })
     test('converts an epoch key to a hex string', () => {
         const epochKey = '12345678'
@@ -124,13 +126,32 @@ describe('Post', function () {
 
         expect(key).toBe(expectedKey)
     })
-    // TODO: undefined to a BigInt error
-    test.skip('loadPost() calls injestPosts', async () => {
-        const ingestPostSpy = jest.spyOn(post, 'ingestPosts')
 
-        await post.loadPost('idstring')
-        expect(ingestPostSpy).toHaveBeenCalled()
+    test.skip('loads a single post and ingests it', async () => {
+        // mock fetch API
+        const postData = {
+            id: 'test-id',
+            title: 'Test Post',
+            content: 'Test content',
+        }
+        const r = { json: () => postData }
+        // mock fetch return value
+        fetch.mockReturnValue(Promise.resolve(r))
+
+        // mock BigInt function
+        const bigIntSpy = jest.spyOn(global, 'BigInt')
+        bigIntSpy.mockReturnValue('test-big-int')
+
+        await post.loadPost('test-id')
+
+        console.log(post)
+
+        expect(post).toHaveProperty('postsById')
+        // expect(post.postsById['test-id']).toEqual(postData)
+        // todo: fix the way I am updating the pstsById
+        console.log(post.postsById)
     })
+
     // TODO: data.map is not a function
     test.skip('loadFeed() functionality', async () => {
         await post.loadFeed('queryString', '1', ['0000'])
