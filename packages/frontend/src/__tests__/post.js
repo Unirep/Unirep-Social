@@ -6,12 +6,31 @@ describe('Post', function () {
     beforeEach(() => {
         post = new Data()
     })
-    test.skip('load() calls localStorage', async () => {
-        jest.clearAllMocks()
-        const windowGetItemSpy = jest.spyOn(localStorage, 'getItem')
+
+    test('loads the post and comment drafts from local storage', async () => {
+        // mock local storage
+        window.localStorage.setItem(
+            'post-draft',
+            JSON.stringify({ title: 'Test Post', content: 'Test content' })
+        )
+        window.localStorage.setItem(
+            'comment-draft',
+            JSON.stringify({
+                title: 'Test Comment',
+                content: 'Test comment content',
+            })
+        )
+
         await post.load()
-        // todo: should be 2 calls to getItem, not 30
-        expect(windowGetItemSpy).toHaveBeenCalledTimes(2)
+
+        expect(post.postDraft).toEqual({
+            title: 'Test Post',
+            content: 'Test content',
+        })
+        expect(post.commentDraft).toEqual({
+            title: 'Test Comment',
+            content: 'Test comment content',
+        })
     })
     test('save() method calls localStorage', () => {
         const windowSetItemSpy = jest.spyOn(localStorage, 'setItem')
