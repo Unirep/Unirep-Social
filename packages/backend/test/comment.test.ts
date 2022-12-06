@@ -5,6 +5,7 @@ import {
     createComment,
     createPost,
     editComment,
+    deleteComment,
     queryComment,
     signIn,
     signUp,
@@ -36,9 +37,25 @@ test('should edit a comment', async (t: any) => {
 
     // first create a post
     const { post } = await createPost(t, iden)
+    const newContent = 'new content'
 
     // edit a comment
-    const { comment } = await editComment(t, iden, post._id)
+    const { comment } = await editComment(t, iden, post._id, newContent)
     const data = await queryComment(t, comment._id)
-    t.is(data.content, 'new content')
+    t.is(data.content, newContent)
+    t.not(data.lastUpdatedAt, data.createdAt)
+})
+
+test('should delete a comment', async (t: any) => {
+    // sign up and sign in user
+    const { iden, commitment } = await signUp(t)
+    await signIn(t, commitment)
+
+    // first create a post
+    const { post } = await createPost(t, iden)
+
+    // edit a comment
+    const { comment } = await deleteComment(t, iden, post._id)
+    t.is(comment.content, '[This has been deleted...]')
+    t.not(comment.lastUpdatedAt, comment.createdAt)
 })

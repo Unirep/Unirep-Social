@@ -23,7 +23,7 @@ test('should render the startPage properly', () => {
         screen.getByText(p1) &&
             screen.getByText(note) &&
             screen.getByText('Sign In') &&
-            screen.getByText('Twitter') &&
-            screen.getByText('Github')
+            screen.getByText('Sign up with Twitter') &&
+            screen.getByText('Sign up with Github')
     ).toBeInTheDocument()
 })

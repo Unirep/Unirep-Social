@@ -121,7 +121,7 @@ const ActionDetail = ({
                         >
                             <input
                                 type="range"
-                                min={0}
+                                min={defaultRep}
                                 max={maxRep}
                                 value={showoffRep}
                                 onChange={onRepChange}

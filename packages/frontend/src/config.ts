@@ -33,6 +33,7 @@ const UNIREP_ABI = Unirep
 
 const ABOUT_URL = 'https://about.unirep.social'
 const LOAD_POST_COUNT = 10
+const DELETED_CONTENT = '[This has been deleted...]'
 
 export {
     SERVER,
@@ -43,4 +44,5 @@ export {
     ABOUT_URL,
     LOAD_POST_COUNT,
     EXPLORER_URL,
+    DELETED_CONTENT,
 }

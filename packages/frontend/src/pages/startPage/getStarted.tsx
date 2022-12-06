@@ -1,7 +1,7 @@
 import CustomBox, { BoxStyle } from '../../components/customBox'
 import CustomGap from '../../components/customGap'
-import { SERVER } from '../../config'
 import MyButton, { MyButtonType } from '../../components/myButton'
+import { SERVER } from '../../config'
 
 type Props = {
     signin: () => void
@@ -47,7 +47,7 @@ const GetStarted = ({ signin }: Props) => {
                     type={MyButtonType.light}
                     onClick={() => twitterSignup()}
                 >
-                    Twitter
+                    Sign up with Twitter
                     <img src={require('../../../public/images/twitter.svg')} />
                 </MyButton>
                 <CustomGap times={2} />
@@ -55,11 +55,16 @@ const GetStarted = ({ signin }: Props) => {
                     type={MyButtonType.light}
                     onClick={() => githubSignup()}
                 >
-                    Github
+                    Sign up with Github
                     <img src={require('../../../public/images/github.svg')} />
                 </MyButton>
                 <CustomGap times={2} />
-                <MyButton type={MyButtonType.lightTrans} onClick={signin}>
+                <MyButton
+                    type={MyButtonType.lightTrans}
+                    onClick={signin}
+                    textAlignMiddle={true}
+                    fontWeight={600}
+                >
                     Sign In
                 </MyButton>
             </div>

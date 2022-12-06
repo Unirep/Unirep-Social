@@ -6,17 +6,12 @@ import UserContext from '../context/User'
 import QueueContext, { Metadata, ActionType } from '../context/Queue'
 import EpochContext from '../context/EpochManager'
 
-const renderRefreshReminder = (
-    userData,
-    queueData,
-    epochData,
-    closeReminder
-) => {
+const renderRefreshReminder = (userData, queueData, epochData) => {
     render(
         <UserContext.Provider value={userData}>
             <QueueContext.Provider value={queueData}>
                 <EpochContext.Provider value={epochData}>
-                    <RefreshReminder closeReminder={closeReminder} />
+                    <RefreshReminder />
                 </EpochContext.Provider>
             </QueueContext.Provider>
         </UserContext.Provider>
@@ -40,12 +35,9 @@ test('trigger button onClick functionality', async () => {
         updateWatch: jest.fn(),
     }
 
-    const closeReminder = jest.fn()
-
-    renderRefreshReminder(userData, queueData, epochData, closeReminder)
+    renderRefreshReminder(userData, queueData, epochData)
     const button = screen.getByText('Refresh')
     button.click()
     // assert functions were called after triggering button click
     expect(queueData.addOp).toHaveBeenCalled()
-    expect(closeReminder).toHaveBeenCalled()
 })
