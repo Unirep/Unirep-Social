@@ -14,6 +14,7 @@ jest.mock('node-fetch', () => ({
 
 afterEach(() => {
     jest.clearAllMocks()
+    window.localStorage.clear()
 })
 
 describe('Post', function () {
@@ -61,9 +62,8 @@ describe('Post', function () {
         expect(window.localStorage.getItem('comment-draft')).toBe(
             '{"title":"Test Comment","content":"Test comment content"}'
         )
-        // clear localStorage
-        window.localStorage.clear()
     })
+
     test('converts an epoch key to a hex string', () => {
         const epochKey = '12345678'
         const hexString = post.convertEpochKeyToHexString(epochKey)
@@ -152,18 +152,85 @@ describe('Post', function () {
         console.log(post.postsById)
     })
 
-    // TODO: data.map is not a function
-    test.skip('loadFeed() functionality', async () => {
-        await post.loadFeed('queryString', '1', ['0000'])
+    // todo: data.map is not a function
+    test.skip('loads and ingests feed data', async () => {
+        // mock fetch API
+        const feedData = [
+            {
+                id: 'test-id-1',
+                title: 'Test Post 1',
+                content: 'Test content 1',
+            },
+            {
+                id: 'test-id-2',
+                title: 'Test Post 2',
+                content: 'Test content 2',
+            },
+        ]
+        const r = { json: () => feedData }
+        // mock fetch return value
+        fetch.mockReturnValue(Promise.resolve(r))
+
+        // mock BigInt function
+        const bigIntSpy = jest.spyOn(global, 'BigInt')
+        bigIntSpy.mockReturnValue('test-big-int')
+
+        // mock convertDataToPost function
+        const convertDataToPostSpy = jest.spyOn(post, 'convertDataToPost')
+        convertDataToPostSpy.mockImplementation((feedData) => feedData)
+
+        await post.loadFeed('test-query')
+
+        expect(convertDataToPostSpy).toHaveBeenCalledWith(feedData)
+        expect(post.postsById['test-id-1']).toEqual(feedData[0])
+        expect(post.postsById['test-id-2']).toEqual(feedData[1])
+
+        // clean up
+        bigIntSpy.mockRestore()
+        convertDataToPostSpy.mockRestore()
     })
+
+    // todo: TypeError: _comments.map is not a function
     test.skip('loadComments() functionality', async () => {
-        await post.loadComments('queryString', '1', ['0000'])
+        const postId = 'test-post-id'
+        const commentData = [
+            { id: 'comment-1', content: 'Test comment 1' },
+            { id: 'comment-2', content: 'Test comment 2' },
+        ]
+
+        const convertDataToCommentSpy = jest.spyOn(post, 'convertDataToComment')
+        const ingestCommentsSpy = jest.spyOn(post, 'ingestComments')
+
+        // mock fetch return value
+        fetch.mockReturnValue(Promise.resolve({ json: () => commentData }))
+
+        await post.loadCommentsByPostId(postId)
+
+        expect(convertDataToCommentSpy).toHaveBeenCalledWith(commentData[0])
+        expect(convertDataToCommentSpy).toHaveBeenCalledWith(commentData[1])
+        expect(ingestCommentsSpy).toHaveBeenCalledWith(commentData)
+        expect(post.commentsByPostId[postId]).toEqual([
+            'comment-1',
+            'comment-2',
+        ])
     })
 
-    test.skip('getAirdrop() functionality', async () => {
-        const addOpSpy = jest.spyOn(queue, 'addOp')
+    test('ingests the comment data with loadComment()', async () => {
+        const commentData = { id: '123', text: 'Test comment' }
+        const r = { json: () => commentData }
+        // mock fetch return value
+        fetch.mockReturnValue(Promise.resolve(r))
 
-        await post.getAirdrop('1')
-        expect(addOpSpy).toHaveBeenCalledTimes(1)
+        const ingestCommentsSpy = jest.spyOn(post, 'ingestComments')
+
+        // mock BigInt function
+        const bigIntSpy = jest.spyOn(global, 'BigInt')
+        bigIntSpy.mockReturnValue('test-big-int')
+
+        // call the function
+        await post.loadComment('123')
+
+        // assert that the ingestComments spy is called
+        expect(ingestCommentsSpy).toHaveBeenCalledTimes(1)
     })
 })
