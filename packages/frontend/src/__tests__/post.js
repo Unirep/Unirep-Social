@@ -14,7 +14,6 @@ let post
 jest.mock('node-fetch', () => ({
     __esModule: true,
     default: jest.fn(),
-    BigInt: jest.fn(),
 }))
 
 afterEach(() => {
@@ -289,5 +288,49 @@ describe('Post', function () {
             title: 'Test Comment Title',
             content: 'Test Comment Content',
         })
+    })
+
+    test('converDataToComment()', () => {
+        const expectedComment = {
+            type: DataType.Comment,
+            id: '12345',
+            post_id: '54321',
+            content: 'Test comment',
+            upvote: 5,
+            downvote: 2,
+            epoch_key: 'abcdef',
+            username: '',
+            createdAt: '2022-01-01',
+            reputation: 10,
+            current_epoch: 5,
+            proofIndex: 1,
+            transactionHash: '0x123456789',
+            lastUpdatedAt: '2022-02-01',
+        }
+
+        const comment = post.convertDataToComment(expectedComment)
+        console.log(comment)
+        expect(comment).toBeTruthy()
+    })
+
+    test('convertDataToPost()', () => {
+        const testData = {
+            _id: '12345',
+            title: 'Test post',
+            content: 'Test content',
+            posRep: 5,
+            negRep: 2,
+            epochKey: 'abcdef',
+            createdAt: '2022-01-01',
+            minRep: 10,
+            commentCount: 5,
+            epoch: 5,
+            proofIndex: 1,
+            transactionHash: '0x123456789',
+            lastUpdatedAt: '2022-02-01',
+        }
+        const result = post.convertDataToPost(testData)
+
+        expect(result).toBeTruthy()
     })
 })
