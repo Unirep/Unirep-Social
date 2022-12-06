@@ -1,10 +1,15 @@
 import { Data } from '../context/Post'
 import fetch from 'node-fetch'
 import UnirepContext, { UnirepConfig } from '../context/Unirep'
+import userContext from '../context/User'
+import queueContext from '../context/Queue'
+
+import { Post, Comment, QueryType, Vote, Draft, DataType } from '../constants'
 
 const unirepConfig = UnirepContext._currentValue
 
 let post
+// let userContext
 
 jest.mock('node-fetch', () => ({
     __esModule: true,
@@ -227,10 +232,62 @@ describe('Post', function () {
         const bigIntSpy = jest.spyOn(global, 'BigInt')
         bigIntSpy.mockReturnValue('test-big-int')
 
-        // call the function
+        // call the loadComment method
         await post.loadComment('123')
 
         // assert that the ingestComments spy is called
         expect(ingestCommentsSpy).toHaveBeenCalledTimes(1)
+    })
+    test.skip('getAirdrop', async () => {
+        // todo: find out better mock for contexts
+
+        // mock userContext.userState
+        userContext.userState = {
+            waitForSync: jest.fn(() => Promise.resolve()),
+        }
+
+        // mock userContext.calculateAllEpks
+        userContext.calculateAllEpks = jest.fn()
+
+        // mock userContext.getAirdrop
+        userContext.getAirdrop = jest.fn(() =>
+            Promise.resolve({ transaction: 'tx' })
+        )
+
+        // mock queueContext.afterTx
+        queueContext.afterTx = jest.fn(() => Promise.resolve())
+
+        // mock queueContext.addOp
+        queueContext.addOp = jest.fn((op) =>
+            op({
+                title: 'Test Title',
+                details: 'Test Details',
+            })
+        )
+
+        const blockNumber = 123
+        await post.getAirdrop(blockNumber)
+    })
+
+    test('sets the draft using setDraft()', () => {
+        const type = DataType.Post
+        const title = 'Test Title'
+        const content = 'Test Content'
+
+        post.setDraft(type, title, content)
+        expect(post.postDraft).toEqual({
+            title: 'Test Title',
+            content: 'Test Content',
+        })
+
+        post.setDraft(
+            DataType.Comment,
+            'Test Comment Title',
+            'Test Comment Content'
+        )
+        expect(post.commentDraft).toEqual({
+            title: 'Test Comment Title',
+            content: 'Test Comment Content',
+        })
     })
 })
