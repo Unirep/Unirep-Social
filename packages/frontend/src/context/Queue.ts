@@ -17,6 +17,7 @@ export enum ActionType {
     Vote = 'Vote',
     UST = 'UST',
     Signup = 'Signup',
+    Airdrop = 'Airdrop',
 }
 
 export interface Metadata {

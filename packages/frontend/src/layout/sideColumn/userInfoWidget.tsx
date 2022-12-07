@@ -129,6 +129,44 @@ const UserInfoWidget = () => {
                                             await userContext.calculateAllEpks()
                                             await userContext.loadReputation()
 
+                                            if (userContext.reputation < 0) {
+                                                console.log(
+                                                    'reputation negative, should get airdrop'
+                                                )
+                                                queue.addOp(
+                                                    async (updateStatus) => {
+                                                        updateStatus({
+                                                            title: 'Performing Airdrop',
+                                                            details:
+                                                                'generating ZK proof...',
+                                                        })
+                                                        const {
+                                                            transaction,
+                                                            error,
+                                                        } = await userContext.getAirdrop()
+                                                        updateStatus({
+                                                            title: 'Performing Airdrop',
+                                                            details:
+                                                                'Waiting for transaction...',
+                                                        })
+                                                        await queue.afterTx(
+                                                            transaction
+                                                        )
+                                                        await epochManager.updateWatch()
+
+                                                        let metadata: Metadata =
+                                                            {
+                                                                transactionId:
+                                                                    transaction,
+                                                            }
+                                                        return metadata
+                                                    },
+                                                    {
+                                                        type: ActionType.Airdrop,
+                                                    }
+                                                )
+                                            }
+
                                             let metadata: Metadata = {
                                                 transactionId: transaction,
                                             }

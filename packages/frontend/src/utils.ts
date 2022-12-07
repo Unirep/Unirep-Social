@@ -34,9 +34,15 @@ export const getRecords = async (epks: string[]) => {
             for (let i = 0; i < data.length; i++) {
                 const record: Record = {
                     action: data[i].action,
-                    from: BigInt(data[i].from)
-                        .toString(16)
-                        .padStart(unirepConfig.epochTreeDepth / 4, '0'),
+                    from:
+                        data[i].from === 'UnirepSocial'
+                            ? 'UnirepSocial'
+                            : BigInt(data[i].from)
+                                  .toString(16)
+                                  .padStart(
+                                      unirepConfig.epochTreeDepth / 4,
+                                      '0'
+                                  ),
                     to: BigInt(data[i].to)
                         .toString(16)
                         .padStart(unirepConfig.epochTreeDepth / 4, '0'),

@@ -35,7 +35,7 @@ async function getAirdrop(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof } = req.body
+    const { publicSignals, proof, negRep } = req.body
     const negRepProof = new NegativeRepProof(publicSignals, proof, Prover)
 
     const { attestingFee } = await unirepContract.config()
@@ -66,12 +66,15 @@ async function getAirdrop(req, res) {
         }
     )
     await req.db.create('Record', {
-        to: publicSignals[1].toString(16),
+        to: publicSignals[1],
         from: 'UnirepSocial',
-        upvote: DEFAULT_AIRDROPPED_KARMA,
+        upvote:
+            negRep > DEFAULT_AIRDROPPED_KARMA
+                ? DEFAULT_AIRDROPPED_KARMA
+                : negRep,
         downvote: 0,
         epoch: currentEpoch,
-        action: 'UST',
+        action: 'Airdrop',
         data: '0',
         transactionHash: hash,
         confirmed: 0,

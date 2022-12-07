@@ -271,6 +271,8 @@ export class User {
 
     async getAirdrop() {
         if (!this.id || !this.userState) throw new Error('Identity not loaded')
+        if (this.reputation >= 0) throw new Error('do not need to airdrop')
+
         await this.unirepConfig.loadingPromise
         const unirepSocial = new ethers.Contract(
             this.unirepConfig.unirepSocialAddress,
@@ -278,9 +280,10 @@ export class User {
             config.DEFAULT_ETH_PROVIDER
         )
         // generate an airdrop proof
-        const attesterId = this.unirepConfig.attesterId
-        const { proof, publicSignals } =
-            await this.userState.genUserSignUpProof(BigInt(attesterId))
+        const negRepProof = await this.userState.genNegativeRepProof(
+            BigInt(this.unirepConfig.attesterId),
+            BigInt(Math.abs(this.reputation))
+        )
 
         const epk = genEpochKey(
             this.id.identityNullifier,
@@ -301,8 +304,9 @@ export class User {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                proof,
-                publicSignals,
+                proof: negRepProof.proof,
+                publicSignals: negRepProof.publicSignals,
+                negRep: Math.abs(this.reputation),
             }),
             method: 'POST',
         })
