@@ -40,7 +40,7 @@ const RankingBlock = observer(({ post, ranking, hasUnderline }: Props) => {
                         isAuthor(post, userContext.allEpks) ? ', by you' : ''
                     }`}
                 </div>
-                <div className="boost">{post.upvote}</div>
+                <div className="boost">{post.upvote - post.downvote}</div>
             </div>
             <div className="ranking-block-content">
                 <h4>{post.title}</h4>
@@ -54,7 +54,7 @@ const PostsWidget = () => {
     const postContext = useContext(PostContext)
 
     const sortByBoost = (a: Post, b: Post) => {
-        if (a.upvote >= b.upvote) return -1
+        if (a.upvote - a.downvote >= b.upvote - b.downvote) return -1
         else return 1
     }
 
