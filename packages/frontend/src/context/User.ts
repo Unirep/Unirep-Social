@@ -115,8 +115,12 @@ export class User {
         )
 
         const apiURL = makeURL(`records/${epksBase10.join('_')}`, {})
-        const r = await fetch(apiURL)
-        const data = await r.json()
+        const res = await fetch(apiURL)
+        if (!res || res.status === 404) {
+            throw new Error('load records from server error')
+        }
+
+        const data = await res.json()
         const rawRecords = data.map((r: Record) => {
             return {
                 ...r,
