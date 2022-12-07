@@ -124,10 +124,11 @@ export const getSpent = async (t, iden) => {
     }
     const paramStr = epks.join('_')
     const r = await fetch(`${t.context.url}/api/records/${paramStr}`)
-    const data = await r.json()
     if (!r.ok) {
-        throw new Error(`/records error ${JSON.stringify(data)}`)
+        throw new Error(`/records error ${JSON.stringify(r)}`)
     }
+    const data = await r.json()
+
     let spent = 0
     for (var i = 0; i < data.length; i++) {
         if (epks.indexOf(data[i].from) !== -1 && !data[i].spentFromSubsidy) {
@@ -201,7 +202,6 @@ export const createPost = async (t, iden) => {
     for (;;) {
         await new Promise((r) => setTimeout(r, 1000))
         const currentSpent = await getSpent(t, iden)
-        console.log('current spent: ', currentSpent)
         if (prevSpent + proveAmount !== currentSpent) continue
         t.is(prevSpent + proveAmount, currentSpent)
 
@@ -215,7 +215,6 @@ export const createPost = async (t, iden) => {
 }
 
 export const createPostSubsidy = async (t, iden) => {
-    console.log('call create post subsidy')
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,

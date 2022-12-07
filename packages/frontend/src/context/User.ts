@@ -38,7 +38,6 @@ export class User {
             netReputation: computed,
             subsidyReputation: observable,
             spent: observable,
-            // recordsByEpk: observable,
             currentEpochKeys: computed,
             allEpks: observable,
             syncPercent: computed,

@@ -95,8 +95,6 @@ const UserPage = () => {
         let s: number[] = [0, 0, 0, 0]
         let subsidySpent: number[] = [0, 0, 0, 0]
 
-        console.log(user.recordsByEpk)
-
         user.currentEpochKeys.forEach((epk) => {
             if (user.recordsByEpk[epk]) {
                 user.recordsByEpk[epk].forEach((record) => {
