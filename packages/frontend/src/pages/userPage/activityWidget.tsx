@@ -3,7 +3,7 @@ import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import MarkdownIt from 'markdown-it'
 
-import { ActionType } from '../../context/Queue'
+import { ActionType } from '../../constants'
 import PostContext from '../../context/Post'
 import { Record } from '../../constants'
 
@@ -32,7 +32,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
     const postContext = useContext(PostContext)
 
     const [date, setDate] = useState<string>(
-        dateformat(record.time, 'dd/mm/yyyy hh:MM TT')
+        dateformat(record.createdAt, 'dd/mm/yyyy hh:MM TT')
     )
 
     const translateInfo = (h: Record) => {
@@ -67,15 +67,15 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
 
     const [info, setInfo] = useState<Info>(() => translateInfo(record))
     const [goto, setGoto] = useState<string>(() => {
-        if (record.data_id === '0') {
+        if (record.data === '0') {
             return '/user'
         } else {
-            if (postContext.postsById[record.data_id])
-                return `/post/${record.data_id}`
-            else if (postContext.commentsById[record.data_id])
+            if (postContext.postsById[record.data])
+                return `/post/${record.data}`
+            else if (postContext.commentsById[record.data])
                 return `/post/${
-                    postContext.commentsById[record.data_id].post_id
-                }#${record.data_id}`
+                    postContext.commentsById[record.data].post_id
+                }#${record.data}`
             else return ''
         }
     })
@@ -130,22 +130,20 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                             />{' '}
                             {info.action}
                         </div>
-                        {record.content !== undefined &&
-                            record.content.length > 0 && (
-                                <div className="data">
-                                    {actionData.title.length > 1 && (
-                                        <div className="title">
-                                            {actionData.title}
-                                        </div>
-                                    )}
+                        <div className="data">
+                            {actionData.title.length > 1 && (
+                                <div className="title">{actionData.title}</div>
+                            )}
+                            {record.content !== undefined &&
+                                record.content.length > 0 && (
                                     <div
                                         className="content"
                                         dangerouslySetInnerHTML={{
                                             __html: actionData.content,
                                         }}
                                     />
-                                </div>
-                            )}
+                                )}
+                        </div>
                     </div>
                 </div>
                 {!isSpent && (

@@ -33,6 +33,7 @@ test('should render correctly with UserContext and PostContext', () => {
         allEpks: ['allEpk1', 'allEpk2'],
         identity: 'identity',
         loadingPromise: jest.fn(),
+        recordsByEpk: [],
     }
 
     const postData = {

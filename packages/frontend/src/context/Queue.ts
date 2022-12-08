@@ -3,20 +3,13 @@ import { makeAutoObservable } from 'mobx'
 import { nanoid } from 'nanoid'
 import { makeURL } from '../utils'
 import { DEFAULT_ETH_PROVIDER } from '../config'
+import { ActionType } from '../constants'
 
 export enum LoadingState {
     loading,
     success,
     failed,
     none,
-}
-
-export enum ActionType {
-    Post = 'Post',
-    Comment = 'Comment',
-    Vote = 'Vote',
-    UST = 'UST',
-    Signup = 'Signup',
 }
 
 export interface Metadata {

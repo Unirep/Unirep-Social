@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
 
-import { ActionType } from '../../context/Queue'
+import { ActionType } from '../../constants'
 import { getRecords } from '../../utils'
 
 import BasicPage from '../basicPage/basicPage'
@@ -45,7 +45,7 @@ const RepPortion = ({ spent, total, action }: Props) => {
             onMouseOut={() => setHover(false)}
             onClick={() => setHover(!isHover)}
         >
-            {isHover ? (
+            {isHover && (
                 <div className="rep-description">
                     <img
                         src={require(`../../../public/images/${
@@ -56,8 +56,6 @@ const RepPortion = ({ spent, total, action }: Props) => {
                     />
                     {portionName}:<span>{spent}</span>
                 </div>
-            ) : (
-                <div></div>
             )}
         </div>
     )
@@ -73,6 +71,9 @@ const UserPage = () => {
 
     const [received, setReceived] = useState<number[]>([0, 0, 0]) // airdrop, boost, squash
     const [spent, setSpent] = useState<number[]>([0, 0, 0, 0]) // post, comment, boost, squash
+    const [spentFromSubsidy, setSpentFromSubsidy] = useState<number[]>([
+        0, 0, 0, 0,
+    ]) // post, comment, boost, squash
 
     const getUserPosts = async (sort: QueryType, lastRead = [] as string[]) => {
         await user.loadingPromise
@@ -90,48 +91,61 @@ const UserPage = () => {
     const getUserRecords = async () => {
         if (!user.userState || !user.identity) return
 
-        const ret = await getRecords(user.allEpks)
-        const isParsable = !ret.some((h) => h === undefined)
-        if (isParsable) {
-            setRecords(ret)
-            resortRecords(QueryType.New, ret)
-            let r: number[] = [0, 0, 0]
-            let s: number[] = [0, 0, 0, 0]
+        let r: number[] = [0, 0, 0]
+        let s: number[] = [0, 0, 0, 0]
+        let subsidySpent: number[] = [0, 0, 0, 0]
 
-            ret.forEach((h) => {
-                const isReceived = user.currentEpochKeys.indexOf(h.to) !== -1
-                const isSpent = user.currentEpochKeys.indexOf(h.from) !== -1
-                if (isReceived) {
-                    // right stuff
-                    if (h.action === ActionType.UST) {
-                        r[0] += h.upvote
-                    } else if (h.action === ActionType.Vote) {
-                        r[1] += h.upvote
-                        r[2] += h.downvote
+        user.currentEpochKeys.forEach((epk) => {
+            if (user.recordsByEpk[epk]) {
+                user.recordsByEpk[epk].forEach((record) => {
+                    if (record.action === ActionType.Post) {
+                        if (record.spentFromSubsidy) {
+                            subsidySpent[0] += record.downvote
+                        } else {
+                            s[0] += record.downvote
+                        }
+                    } else if (record.action === ActionType.Comment) {
+                        if (record.spentFromSubsidy) {
+                            subsidySpent[1] += record.downvote
+                        } else {
+                            s[1] += record.downvote
+                        }
+                    } else if (record.action === ActionType.UST) {
+                        r[0] += record.upvote
+                    } else if (record.action === ActionType.Vote) {
+                        if (record.from === epk && record.spentFromSubsidy) {
+                            subsidySpent[2] += record.upvote
+                            subsidySpent[3] += record.downvote
+                        } else if (
+                            record.from === epk &&
+                            !record.spentFromSubsidy
+                        ) {
+                            s[2] += record.upvote
+                            s[3] += record.downvote
+                        } else if (record.to === epk) {
+                            r[1] += record.upvote
+                            r[2] += record.downvote
+                        }
                     }
-                }
+                })
+            }
+        })
 
-                if (isSpent) {
-                    // left stuff
-                    if (h.action === ActionType.Post) {
-                        s[0] += h.downvote
-                    } else if (h.action === ActionType.Comment) {
-                        s[1] += h.downvote
-                    } else if (h.action === ActionType.Vote) {
-                        s[2] += h.upvote
-                        s[3] += h.downvote
-                        r[1] += h.upvote + h.downvote // if all spent also recorded in the right side
-                    }
-                }
-            })
-            setReceived(r)
-            setSpent(s)
-        }
+        let rs: Record[] = []
+        user.allEpks.forEach((epk) => {
+            if (user.recordsByEpk[epk]) {
+                rs = [...rs, ...user.recordsByEpk[epk]]
+            }
+        })
+        setReceived(r)
+        setSpent(s)
+        setSpentFromSubsidy(subsidySpent)
+        resortRecords(QueryType.New, rs)
     }
 
     const resortRecords = (s: QueryType, hs: Record[]) => {
         if (s === QueryType.New) {
-            hs.sort((a, b) => (a.time > b.time ? -1 : 1))
+            hs.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
         } else if (s === QueryType.Rep) {
             hs.sort((a, b) =>
                 a.upvote + a.downvote > b.upvote + b.downvote ? -1 : 1
@@ -255,25 +269,24 @@ const UserPage = () => {
                             </div>
                         </div>
                         <CustomGap times={1} />
-                        {/* left after devcon
-                                <div className="rep-details">
-                                <div className="rep-bar-title">
-                                    <img
-                                        src={require('../../../public/images/unirep.svg')}
+                        <div className="rep-details">
+                            <div className="rep-bar-title">
+                                <img
+                                    src={require('../../../public/images/unirep.svg')}
+                                />
+                                Rep-Handout
+                            </div>
+                            <div className="rep-bar">
+                                {spentFromSubsidy.map((s, i) => (
+                                    <RepPortion
+                                        spent={s}
+                                        total={30}
+                                        action={i}
+                                        key={i}
                                     />
-                                    Rep-Handout
-                                </div>
-                                <div className="rep-bar">
-                                    {spent.map((s, i) => (
-                                        <RepPortion
-                                            spent={s}
-                                            total={user.reputation}
-                                            action={i}
-                                            key={i}
-                                        />
-                                    ))}
-                                </div>
-                            </div> */}
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div style={{ width: '16px' }}></div>{' '}
@@ -454,7 +467,7 @@ const UserPage = () => {
                     <div>
                         {records.map((h) => (
                             <ActivityWidget
-                                key={h.time}
+                                key={h.createdAt}
                                 record={h}
                                 isSpent={user.allEpks.indexOf(h.from) !== -1}
                             />

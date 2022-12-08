@@ -34,58 +34,37 @@ async function loadRecordsForEpk(req, res) {
                 },
                 {
                     to: epks,
-                    action: req.query.spentonly ? ActionType.Vote : undefined,
                 },
             ],
         },
     })
-    if (req.query.spentonly) {
-        const recordsByFrom = records.reduce((acc, val) => {
-            return {
-                ...acc,
-                [val.from]: [...(acc[val.from] || []), val],
+    const out = await Promise.all(
+        records.map(async (record) => {
+            if (record.action === 'Post') {
+                const p = await req.db.findOne('Post', {
+                    where: { _id: record.data },
+                })
+                if (!p) return
+                return {
+                    ...record,
+                    title: p.title,
+                    content: p.content,
+                }
             }
-        }, {})
-        const epkRecords = await req.db.findMany('EpkRecord', {
-            where: {
-                epk: epks,
-            },
+            if (record.action === 'Comment') {
+                const c = await req.db.findOne('Comment', {
+                    where: {
+                        _id: record.data,
+                    },
+                })
+                if (!c) return
+                return {
+                    ...record,
+                    content: c.content,
+                }
+            }
+            return record
         })
-        res.json(
-            epkRecords.map((r) => ({
-                ...r,
-                records: recordsByFrom[r.epk] || [],
-            }))
-        )
-    } else {
-        const out = await Promise.all(
-            records.map(async (record) => {
-                if (record.action === 'Post') {
-                    const p = await req.db.findOne('Post', {
-                        where: { _id: record.data },
-                    })
-                    if (!p) return
-                    return {
-                        ...record,
-                        title: p.title,
-                        content: p.content,
-                    }
-                }
-                if (record.action === 'Comment') {
-                    const c = await req.db.findOne('Comment', {
-                        where: {
-                            _id: record.data,
-                        },
-                    })
-                    if (!c) return
-                    return {
-                        ...record,
-                        content: c.content,
-                    }
-                }
-                return record
-            })
-        )
-        res.json(out.filter((o) => !!o))
-    }
+    )
+    res.json(out.filter((o) => !!o))
 }
