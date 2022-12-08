@@ -2,9 +2,7 @@ import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
-
-import { ActionType } from '../../constants'
-import { getRecords } from '../../utils'
+import { ActionType } from '@unirep-social/core'
 
 import BasicPage from '../basicPage/basicPage'
 import { Record, Page, QueryType } from '../../constants'

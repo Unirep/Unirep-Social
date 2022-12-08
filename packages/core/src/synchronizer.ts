@@ -9,6 +9,11 @@ export enum ActionType {
     Vote = 'Vote',
     UST = 'UST',
     Signup = 'Signup',
+    Airdrop = 'Airdrop',
+    EditPost = 'EditPost',
+    DeletePost = 'DeletePost',
+    EditComment = 'EditComment',
+    DeleteComment = 'DeleteComment',
 }
 
 export interface UnirepSocialConfig {
@@ -281,6 +286,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         const onChainId = event.topics[1].toString()
         const oldContentHash = decodedData._oldContentHash
         const newContentHash = decodedData._newContentHash
+        const hash = event.transactionHash
 
         db.update('Post', {
             where: {
@@ -299,6 +305,15 @@ export class UnirepSocialSynchronizer extends Synchronizer {
             },
             update: {
                 hashedContent: newContentHash,
+            },
+        })
+
+        db.update('Record', {
+            where: {
+                transactionHash: hash,
+            },
+            update: {
+                confirmed: 1,
             },
         })
     }

@@ -3,7 +3,7 @@ import { makeAutoObservable } from 'mobx'
 import { nanoid } from 'nanoid'
 import { makeURL } from '../utils'
 import { DEFAULT_ETH_PROVIDER } from '../config'
-import { ActionType } from '../constants'
+import { ActionType } from '@unirep-social/core'
 
 export enum LoadingState {
     loading,

@@ -1,9 +1,10 @@
 import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
+
 import * as config from '../config'
-import { Record, ActionType } from '../constants'
+import { Record } from '../constants'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { makeURL } from '../utils'
 import { genEpochKey, schema } from '@unirep/core'
 import { SocialUserState } from '@unirep-social/core'

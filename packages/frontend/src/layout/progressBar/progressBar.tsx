@@ -6,7 +6,7 @@ import { EXPLORER_URL } from '../../config'
 import UserContext from '../../context/User'
 import PostContext from '../../context/Post'
 import QueueContext, { LoadingState } from '../../context/Queue'
-import { ActionType } from '../../constants'
+import { ActionType } from '@unirep-social/core'
 
 const ProgressBar = () => {
     const userContext = useContext(UserContext)
@@ -141,6 +141,33 @@ const ProgressBar = () => {
                                         }
                                     >
                                         go to post
+                                    </a>
+                                )}
+                            {!h.isSuccess &&
+                                (h.type === ActionType.EditPost ||
+                                    h.type === ActionType.DeletePost) &&
+                                h.metadata && (
+                                    <a
+                                        className="etherscan"
+                                        href={`/post/${h.metadata.id}`}
+                                    >
+                                        go to post
+                                    </a>
+                                )}
+                            {!h.isSuccess &&
+                                (h.type === ActionType.EditComment ||
+                                    h.type === ActionType.DeleteComment) &&
+                                h.metadata &&
+                                h.metadata.id && (
+                                    <a
+                                        className="etherscan"
+                                        href={`/post/${
+                                            postContext.commentsById[
+                                                h.metadata.id
+                                            ].post_id
+                                        }#${h.metadata.id}`}
+                                    >
+                                        go to comment
                                     </a>
                                 )}
                         </div>

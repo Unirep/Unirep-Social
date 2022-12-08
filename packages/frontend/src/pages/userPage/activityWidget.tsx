@@ -2,10 +2,10 @@ import { useState, useEffect, useContext } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import MarkdownIt from 'markdown-it'
+import { ActionType } from '@unirep-social/core'
 
-import { ActionType } from '../../constants'
-import PostContext from '../../context/Post'
 import { Record } from '../../constants'
+import PostContext from '../../context/Post'
 
 type Props = {
     record: Record
