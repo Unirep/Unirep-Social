@@ -130,9 +130,6 @@ const UserInfoWidget = () => {
                                             await userContext.loadReputation()
 
                                             if (userContext.reputation < 0) {
-                                                console.log(
-                                                    'reputation negative, should get airdrop'
-                                                )
                                                 queue.addOp(
                                                     async (updateStatus) => {
                                                         updateStatus({

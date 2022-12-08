@@ -24,6 +24,7 @@ export class UnirepConfig {
     commentReputation = 0
     airdroppedReputation = 0
     attesterId = 0
+    defaultAirdropKarma = 30
     unirep = null as any as ethers.Contract
     unirepSocial = null as any as ethers.Contract
 

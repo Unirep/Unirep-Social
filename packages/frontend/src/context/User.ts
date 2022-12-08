@@ -280,9 +280,14 @@ export class User {
             config.DEFAULT_ETH_PROVIDER
         )
         // generate an airdrop proof
+        const negRep = Math.min(
+            Math.abs(this.reputation),
+            this.unirepConfig.defaultAirdropKarma
+        )
+
         const negRepProof = await this.userState.genNegativeRepProof(
             BigInt(this.unirepConfig.attesterId),
-            BigInt(Math.abs(this.reputation))
+            BigInt(negRep)
         )
 
         const epk = genEpochKey(
@@ -290,10 +295,13 @@ export class User {
             await this.userState.getUnirepStateCurrentEpoch(),
             0
         )
-        const gotAirdrop = await unirepSocial.isEpochKeyGotAirdrop(epk)
-        if (gotAirdrop) {
+        // Check if the user already got airdropped
+        const subsidy = (
+            await this.unirepConfig.unirepSocial.subsidy()
+        ).toNumber()
+        if (subsidy !== this.unirepConfig.defaultAirdropKarma) {
             return {
-                error: 'The epoch key has been airdropped.',
+                error: 'The epoch key has been airdropped',
                 transaction: undefined,
             }
         }
@@ -306,7 +314,7 @@ export class User {
             body: JSON.stringify({
                 proof: negRepProof.proof,
                 publicSignals: negRepProof.publicSignals,
-                negRep: Math.abs(this.reputation),
+                negRep,
             }),
             method: 'POST',
         })
