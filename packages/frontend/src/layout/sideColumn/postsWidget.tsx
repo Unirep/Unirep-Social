@@ -37,12 +37,10 @@ const RankingBlock = observer(({ post, ranking, hasUnderline }: Props) => {
                         src={require('../../../public/images/boost-fill.svg')}
                     />
                     {`#${ranking + 1}${
-                        isAuthor(post, userContext.currentEpochKeys)
-                            ? ', by you'
-                            : ''
+                        isAuthor(post, userContext.allEpks) ? ', by you' : ''
                     }`}
                 </div>
-                <div className="boost">{post.upvote}</div>
+                <div className="boost">{post.upvote - post.downvote}</div>
             </div>
             <div className="ranking-block-content">
                 <h4>{post.title}</h4>
@@ -55,17 +53,24 @@ const RankingBlock = observer(({ post, ranking, hasUnderline }: Props) => {
 const PostsWidget = () => {
     const postContext = useContext(PostContext)
 
+    const sortByBoost = (a: Post, b: Post) => {
+        if (a.upvote - a.downvote >= b.upvote - b.downvote) return -1
+        else return 1
+    }
+
     return (
         <div className="posts-widget widget">
             <h3>Post ranking</h3>
-            {Object.values(postContext.postsById).map((post, i) => (
-                <RankingBlock
-                    post={post}
-                    ranking={i}
-                    hasUnderline={true}
-                    key={post.id}
-                />
-            ))}
+            {Object.values(postContext.postsById)
+                .sort(sortByBoost)
+                .map((post, i) => (
+                    <RankingBlock
+                        post={post}
+                        ranking={i}
+                        hasUnderline={true}
+                        key={post.id}
+                    />
+                ))}
         </div>
     )
 }
