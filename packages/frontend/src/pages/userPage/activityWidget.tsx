@@ -40,10 +40,8 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
             return { who: 'I (' + h.from + ')', action: 'created a post' }
         } else if (h.action === ActionType.Comment) {
             return { who: 'I (' + h.from + ')', action: 'commented on a post' }
-        } else if (h.action === ActionType.UST) {
+        } else if (h.action === ActionType.Airdrop) {
             return { who: 'UniRep Social', action: 'Epoch Rep drop' }
-        } else if (h.action === ActionType.Signup) {
-            return { who: 'Unirep Social', action: 'Sign Up Rep drop' }
         } else {
             if (isSpent) {
                 return {

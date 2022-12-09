@@ -185,8 +185,7 @@ const WritingField = (props: Props) => {
             </MyButton>
             {errorMsg.length > 0 && <div className="error">{errorMsg}</div>}
             {(uiContext.epochStatus !== EpochStatus.default ||
-                userContext.spendableReputation <
-                    unirepConfig.postReputation) && (
+                userContext.spendableReputation < defaultRep) && (
                 <div className="disable-cover"></div>
             )}
         </div>
