@@ -1,11 +1,22 @@
 import React from 'react'
 
 const TopicsMenu = () => {
+    const goToPhil = () => {}
+    const goToTech = () => {}
+    const goToPol = () => {}
+    const goToMus = () => {}
+    const goToBiz = () => {}
+    const goToLit = () => {}
+    const goToFit = () => {}
+    const goToPho = () => {}
+    const goToNews = () => {}
+
     return (
+        // todo: add userContext.userState logic
         <div className="topics-menu">
             {/* include logic for userState ? */}
             <div className="topic-buttons">
-                <div>Philosophy</div>
+                <div onClick={goToPhil}>Philosophy</div>
                 <div>Technology</div>
                 <div>Politics</div>
                 <div>Music</div>
