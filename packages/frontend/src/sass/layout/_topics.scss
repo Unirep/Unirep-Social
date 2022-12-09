@@ -1,0 +1,34 @@
+.topics-menu {
+    z-index: 11;
+    position: relative;
+    display: block;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0px 104px;
+    background: $background-color;
+    width: 100%;
+    // border-top: 20px solid light-grey;
+    // border-bottom: 1px solid light-grey;
+    border-top: solid lightgrey 1px;
+    border-bottom: solid lightgrey 1px;
+    .topic-buttons {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+        align-items: center;
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+
+    .topic-buttons > div {
+        padding: 10px 30px;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .topic-buttons > div:hover {
+        cursor: pointer;
+    }
+}

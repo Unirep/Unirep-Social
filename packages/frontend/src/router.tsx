@@ -5,6 +5,7 @@ import useLocalStorage from './hooks/useLocalStorage'
 import * as Constants from './constants'
 
 import Header from './layout/header/header'
+import TopicsMenu from './components/topicsMenu'
 import MainPage from './pages/mainPage/mainPage'
 import PostPage from './pages/postPage/postPage'
 import EditPage from './pages/editPage/editPage'
@@ -39,6 +40,7 @@ const AppRouter = () => {
                     }}
                 >
                     <Header />
+                    <TopicsMenu />
 
                     <Switch>
                         <Route component={MainPage} path="/" exact={true} />
