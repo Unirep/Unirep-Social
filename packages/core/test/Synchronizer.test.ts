@@ -118,16 +118,6 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: defaultPostReputation,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(epkRecord).not.to.be.null
     })
 
     it('submit post should succeed and update db (if data saved before)', async () => {
@@ -211,16 +201,6 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: defaultPostReputation,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(epkRecord).not.to.be.null
     })
 
     it('submit comment should succeed and update db', async () => {
@@ -307,16 +287,6 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: defaultCommentReputation,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(epkRecord).not.to.be.null
     })
 
     it('submit comment should succeed and update db (if data saved before)', async () => {
@@ -421,16 +391,6 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const epkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: defaultCommentReputation,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(epkRecord).not.to.be.null
     })
 
     it('submit upvote should succeed and update db', async () => {
@@ -506,26 +466,6 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const fromEpkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: upvoteValue + downvoteValue,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(fromEpkRecord).not.to.be.null
-        const toEpkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: toEpochKey.toString(),
-                epoch: Number(reputationProof.epoch),
-                spent: 0,
-                posRep: upvoteValue,
-                negRep: downvoteValue,
-            },
-        })
-        expect(toEpkRecord).not.to.be.null
     })
 
     it('submit downvote should succeed and update db (if data saved before)', async () => {
@@ -627,25 +567,5 @@ describe('Synchronzier processes events', function () {
             },
         })
         expect(record).not.to.be.null
-        const fromEpkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: reputationProof.epochKey,
-                epoch: Number(reputationProof.epoch),
-                spent: upvoteValue + downvoteValue,
-                posRep: 0,
-                negRep: 0,
-            },
-        })
-        expect(fromEpkRecord).not.to.be.null
-        const toEpkRecord = await db.findOne('EpkRecord', {
-            where: {
-                epk: toEpochKey.toString(),
-                epoch: Number(reputationProof.epoch),
-                spent: 0,
-                posRep: upvoteValue,
-                negRep: downvoteValue,
-            },
-        })
-        expect(toEpkRecord).not.to.be.null
     })
 })

@@ -263,6 +263,7 @@ async function voteSubsidy(req, res) {
         transactionHash: hash,
         data: dataId,
         confirmed: 0,
+        spentFromSubsidy: true,
     })
     res.json({
         transaction: hash,

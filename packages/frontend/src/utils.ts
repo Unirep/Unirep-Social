@@ -49,10 +49,11 @@ export const getRecords = async (epks: string[]) => {
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,
-                    time: data[i].createdAt,
-                    data_id: data[i].data,
+                    createdAt: data[i].createdAt,
+                    data: data[i].data,
                     title: data[i].title,
                     content: data[i].content,
+                    spentFromSubsidy: data[i].spentFromSubsidy,
                 }
                 records.unshift(record)
             }

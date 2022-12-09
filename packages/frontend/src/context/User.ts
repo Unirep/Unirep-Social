@@ -1,8 +1,9 @@
 import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
 import * as config from '../config'
+import { Record } from '../constants'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { makeURL } from '../utils'
 import { genEpochKey, schema } from '@unirep/core'
 import { SocialUserState } from '@unirep-social/core'
@@ -19,6 +20,7 @@ export class User {
     subsidyReputation = 0
     unirepConfig = (UnirepContext as any)._currentValue
     spent = 0
+    recordsByEpk = {} as { [epk: string]: Record[] }
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: SocialUserState
@@ -81,6 +83,7 @@ export class User {
             this.userState?.waitForSync().then(() => {
                 this.loadReputation()
                 this.updateLatestTransitionedEpoch()
+                this.loadRecords()
             })
         }
 
@@ -104,6 +107,69 @@ export class User {
             await this.unirepConfig.unirep.currentEpoch()
         )
         return this.currentEpoch
+    }
+
+    async loadRecords() {
+        const epksBase10 = this.allEpks.map((epk) =>
+            BigInt('0x' + epk).toString()
+        )
+
+        const apiURL = makeURL(`records/${epksBase10.join('_')}`, {})
+        const res = await fetch(apiURL)
+        if (!res || res.status === 404) {
+            throw new Error('load records from server error')
+        }
+
+        const data = await res.json()
+        const rawRecords = data.map((r: Record) => {
+            return {
+                ...r,
+                from:
+                    r.from === 'UnirepSocial'
+                        ? 'UnirepSocial'
+                        : BigInt(r.from)
+                              .toString(16)
+                              .padStart(
+                                  this.unirepConfig.epochTreeDepth / 4,
+                                  '0'
+                              ),
+                to: BigInt(r.to)
+                    .toString(16)
+                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
+            }
+        })
+
+        this.recordsByEpk = {} // maybe it's not a good solution
+        for (const r of rawRecords) {
+            let epkOfRecord: string
+            if (this.allEpks.indexOf(r.to) !== -1) {
+                epkOfRecord = r.to
+            } else if (this.allEpks.indexOf(r.from) !== -1) {
+                epkOfRecord = r.from
+            } else {
+                console.log('this records is not belong to this user:', r)
+                continue
+            }
+
+            // classify by epoch keys
+            if (!this.recordsByEpk[epkOfRecord]) {
+                this.recordsByEpk[epkOfRecord] = []
+            }
+            this.recordsByEpk[epkOfRecord].unshift(r)
+        }
+
+        // calculate rep spent of this epoch
+        let rawSpent = 0
+        for (var i = 0; i < rawRecords.length; i++) {
+            if (
+                this.currentEpochKeys.indexOf(rawRecords[i].from) !== -1 &&
+                !rawRecords[i].spentFromSubsidy
+            ) {
+                rawSpent =
+                    rawSpent + rawRecords[i].upvote + rawRecords[i].downvote
+            }
+        }
+        this.spent = rawSpent
     }
 
     get currentEpochKeys() {

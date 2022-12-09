@@ -12,6 +12,10 @@ describe('sign up, log out, then sign in', () => {
         cy.intercept('GET', `${serverUrl}/api/post?*`, {
             body: [],
         }).as('getApiContent')
+
+        cy.intercept('GET', `${serverUrl}/api/records/*`, {
+            body: [],
+        }).as('getApiContent')
     })
 
     it('should login without encryption', () => {
@@ -44,7 +48,7 @@ describe('sign up, log out, then sign in', () => {
 
     it('should login with encryption', () => {
         const password = 'imalongpasswordlookatme'
-        cy.signupNewUser(password)
+        cy.signupNewUser()
         cy.visit('/')
         cy.wait(3000) // wait for the synchronizer to get started
 

@@ -110,21 +110,6 @@ const _schema = [
         ],
     },
     {
-        name: 'EpkRecord',
-        rows: [
-            {
-                name: 'createdAt',
-                type: 'Int',
-                default: () => +new Date(),
-            },
-            ['epk', 'String'],
-            ['posRep', 'Int'],
-            ['negRep', 'Int'],
-            ['spent', 'Int'],
-            ['epoch', 'Int'],
-        ],
-    },
-    {
         name: 'Record',
         rows: [
             {
@@ -144,6 +129,11 @@ const _schema = [
                 name: 'confirmed',
                 type: 'Int',
                 default: () => 1,
+            },
+            {
+                name: 'spentFromSubsidy',
+                type: 'Bool',
+                default: () => false,
             },
         ],
     },

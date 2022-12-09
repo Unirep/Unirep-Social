@@ -58,7 +58,7 @@ Cypress.Commands.add('start', () => {
     )
 })
 
-Cypress.Commands.add('signupNewUser', (password) => {
+Cypress.Commands.add('signupNewUser', () => {
     cy.visit('/')
     cy.findByText('Get started').click()
     // cy.findByText('Sign Up').click()

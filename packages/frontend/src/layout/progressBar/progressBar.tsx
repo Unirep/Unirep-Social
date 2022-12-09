@@ -5,7 +5,8 @@ import { EXPLORER_URL } from '../../config'
 
 import UserContext from '../../context/User'
 import PostContext from '../../context/Post'
-import QueueContext, { LoadingState, ActionType } from '../../context/Queue'
+import QueueContext, { LoadingState } from '../../context/Queue'
+import { ActionType } from '../../constants'
 
 const ProgressBar = () => {
     const userContext = useContext(UserContext)

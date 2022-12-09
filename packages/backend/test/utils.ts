@@ -124,17 +124,19 @@ export const getSpent = async (t, iden) => {
         )
     }
     const paramStr = epks.join('_')
-    const r = await fetch(
-        `${t.context.url}/api/records/${paramStr}?spentonly=true`
-    )
-    const data = await r.json()
+    const r = await fetch(`${t.context.url}/api/records/${paramStr}`)
     if (!r.ok) {
-        throw new Error(`/records error ${JSON.stringify(data)}`)
+        throw new Error(`/records error ${JSON.stringify(r)}`)
     }
+    const data = await r.json()
+
     let spent = 0
     for (var i = 0; i < data.length; i++) {
-        spent = spent + data[i].spent
+        if (epks.indexOf(data[i].from) !== -1 && !data[i].spentFromSubsidy) {
+            spent = spent + data[i].upvote + data[i].downvote
+        }
     }
+
     return spent
 }
 
@@ -168,6 +170,8 @@ const genReputationProof = async (t, iden, proveAmount) => {
 }
 
 export const createPost = async (t, iden) => {
+    const prevSpent = await getSpent(t, iden)
+
     const proveAmount = t.context.constants.DEFAULT_POST_KARMA
     const { blockNumber, proof, publicSignals } = await genReputationProof(
         t,
@@ -187,12 +191,11 @@ export const createPost = async (t, iden) => {
             proof,
         }),
     })
+    if (!r.ok) {
+        throw new Error(`/post error ${JSON.stringify(r)}`)
+    }
 
     const data = await r.json()
-    const prevSpent = await getSpent(t, iden)
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
@@ -475,6 +478,8 @@ export const queryComment = async (t, id) => {
 }
 
 export const createComment = async (t, iden, postId) => {
+    const prevSpent = await getSpent(t, iden)
+
     const proveAmount = t.context.constants.DEFAULT_COMMENT_KARMA
     const { blockNumber, proof, publicSignals } = await genReputationProof(
         t,
@@ -495,11 +500,11 @@ export const createComment = async (t, iden, postId) => {
             proof,
         }),
     })
-    const data = await r.json()
-    const prevSpent = await getSpent(t, iden)
     if (!r.ok) {
-        throw new Error(`/comment error ${JSON.stringify(data)}`)
+        throw new Error(`/comment error ${JSON.stringify(r)}`)
     }
+
+    const data = await r.json()
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
@@ -528,6 +533,8 @@ export const vote = async (
     upvote,
     downvote
 ) => {
+    const prevSpent = await getSpent(t, iden)
+
     const proveAmount = upvote + downvote
     const { blockNumber, proof, publicSignals } = await genReputationProof(
         t,
@@ -551,11 +558,11 @@ export const vote = async (
             receiver,
         }),
     })
-    const data = await r.json()
-    const prevSpent = await getSpent(t, iden)
     if (!r.ok) {
-        throw new Error(`/vote error ${JSON.stringify(data)}`)
+        throw new Error(`/vote error ${JSON.stringify(r)}`)
     }
+    const data = await r.json()
+
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )

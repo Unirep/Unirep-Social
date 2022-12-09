@@ -5,13 +5,13 @@ import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
 import EpochContext from '../../context/EpochManager'
-import QueueContext, { ActionType, Metadata } from '../../context/Queue'
+import QueueContext, { Metadata } from '../../context/Queue'
 import UIContext, { EpochStatus } from '../../context/UI'
 
 import HelpWidget from '../../components/helpWidget'
 import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
-import { InfoType } from '../../constants'
+import { InfoType, ActionType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
 
 const UserInfoWidget = () => {
