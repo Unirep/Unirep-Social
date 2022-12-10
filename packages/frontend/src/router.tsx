@@ -16,6 +16,9 @@ import AdminPage from './pages/adminPage/adminPage'
 import SettingPage from './pages/settingPage/settingPage'
 import StartPage from './pages/startPage/startPage'
 
+// Topics
+import PhilosophyPage from './pages/philosophyPage/philosophyPage'
+
 import { WebContext } from './context/WebContext'
 import Favicon from 'react-favicon'
 const Favicon_ = Favicon as any
@@ -53,6 +56,8 @@ const AppRouter = () => {
                         <Route component={FeedbackPage} path="/feedback" />
                         <Route component={AdminPage} path="/admin" />
                         <Route component={SettingPage} path="/setting" />
+
+                        <Route component={PhilosophyPage} path="/philosophy" />
                         <Route component={() => <Redirect to="/" />} />
                     </Switch>
                 </WebContext.Provider>

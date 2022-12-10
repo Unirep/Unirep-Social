@@ -21,15 +21,18 @@ const NewPage = () => {
     const submit = async (
         title: string,
         content: string,
+        topic: string,
         epkNonce: number,
         reputation: number
     ) => {
         if (!userContext.userState) {
             throw new Error('Should not be able to create post without login')
         }
-        postContext.publishPost(title, content, epkNonce, reputation)
+        postContext.publishPost(title, content, topic, epkNonce, reputation)
         history.push('/')
     }
+
+    // todo: new page can be resued to publish a post so the `submit` function gets the correct pathname for the topic
 
     return (
         <BasicPage title={'Create Post'}>

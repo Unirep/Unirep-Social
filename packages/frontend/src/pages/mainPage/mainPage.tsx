@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import PostContext from '../../context/Post'
@@ -11,13 +11,17 @@ import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
 
+// todo: the logic will be refactored to call `postContext.loadFeedByTopic`
+
 const MainPage = () => {
     const history = useHistory()
+    const location = useLocation()
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const unirepConfig = useContext(UnirepContext)
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
+    const [topic, setTopic] = useState('')
 
     const loadMorePosts = () => {
         console.log(
@@ -28,8 +32,16 @@ const MainPage = () => {
     }
 
     useEffect(() => {
-        postContext.loadFeed(query)
-    }, [query])
+        const pathname = location.pathname // will be '/topic'
+        const topic = pathname.split('/')[1] // this will be 'topic'
+        setTopic(topic)
+        if (!location.pathname || location.pathname === '/') {
+            postContext.loadFeed(query, postContext.feedsByQuery[query])
+        } else {
+            console.log('elseorrr')
+            postContext.loadFeedByTopic(topic, postContext.feedsByTopic[topic])
+        }
+    }, [topic])
 
     const gotoNewPost = () => {
         if (

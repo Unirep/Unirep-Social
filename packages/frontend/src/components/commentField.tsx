@@ -24,6 +24,7 @@ const CommentField = (props: Props) => {
     const submitComment = async (
         title: string = '',
         content: string,
+        topic: string,
         epkNonce: number,
         reputation: number
     ) => {
