@@ -6,7 +6,7 @@ import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 import UnirepContext from '../../context/Unirep'
 
-import { QueryType, AlertType } from '../../constants'
+import { QueryType, AlertType } from '../../constants' // todo: topics array in constants file
 import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
@@ -35,20 +35,27 @@ const MainPage = () => {
         const pathname = location.pathname // will be '/topic'
         const topic = pathname.split('/')[1] // this will be 'topic'
         setTopic(topic)
-        if (!location.pathname || location.pathname === '/') {
-            postContext.loadFeed(query, postContext.feedsByQuery[query])
-        } else {
-            console.log('elseorrr')
-            postContext.loadFeedByTopic(topic, postContext.feedsByTopic[topic])
-        }
-    }, [topic])
+        // if (!location.pathname || location.pathname === '/') {
+        //     postContext.loadFeed(query, postContext.feedsByQuery[query])
+        // } else {
+        //     // todo: fix the API route this function is hitting
+        //     postContext.loadFeedByTopic(topic, postContext.feedsByTopic[topic])
+        // }
+    }, [])
 
     const gotoNewPost = () => {
         if (
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            history.push('/new', { isConfirmed: true })
+            // history.push('/new', { isConfirmed: true })
+            history.push(
+                {
+                    pathname: '/new',
+                    state: { topic: topic, test: 'test' },
+                },
+                { isConfirmed: true }
+            )
         } else {
             console.log(userContext.id)
         }

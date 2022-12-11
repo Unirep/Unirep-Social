@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
@@ -13,6 +13,10 @@ const NewPage = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
+
+    const location = useLocation()
+
+    console.log(location.state)
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
