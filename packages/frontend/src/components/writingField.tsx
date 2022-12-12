@@ -36,7 +36,7 @@ const WritingField = (props: Props) => {
     const postContext = useContext(PostContext)
     const uiContext = useContext(UIContext)
 
-    const location = useLocation()
+    const location = useLocation<{ topic: string }>()
 
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
@@ -69,12 +69,9 @@ const WritingField = (props: Props) => {
 
     const [topic, setTopic] = useState<string>('')
 
-    // todo: where do I call this function? also refactor when newpage is on a topic page
     const handleTopic = () => {
-        const pathname = location.pathname // will be '/topic'
-        const topic = pathname.split('/')[1] // this will be 'topic'
-        setTopic(topic)
-        console.log(topic) // this currently would be 'new'
+        console.log(location.state.topic)
+        setTopic(location.state.topic)
     }
 
     const defaultRep =
@@ -85,6 +82,7 @@ const WritingField = (props: Props) => {
 
     useEffect(() => {
         setErrorMsg('')
+        handleTopic()
     }, [title, content, reputation, epkNonce])
 
     const onClickField = (event: any) => {
@@ -202,7 +200,9 @@ const WritingField = (props: Props) => {
                 <div className="disable-cover"></div>
             )}
             {/* testing handle topic */}
-            <button onClick={handleTopic}>handle topic</button>
+            <button onClick={handleTopic}>
+                handle topic - should console log the topic
+            </button>
         </div>
     )
 }
