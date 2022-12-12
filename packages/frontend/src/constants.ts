@@ -11,6 +11,7 @@ export enum ActionType {
     Vote = 'Vote',
     UST = 'UST',
     Signup = 'Signup',
+    Username = 'Username',
 }
 
 export interface User {

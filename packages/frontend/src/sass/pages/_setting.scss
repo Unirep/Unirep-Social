@@ -66,10 +66,14 @@
         padding: 24px;
 
         word-break: break-word;
+    }
 
-        .error-msg {
-            font-size: $text-xs;
-            color: $red;
-        }
+    .error-msg {
+        font-size: $text-xs;
+        color: $red;
+    }
+
+    .username {
+        width: 100%;
     }
 }

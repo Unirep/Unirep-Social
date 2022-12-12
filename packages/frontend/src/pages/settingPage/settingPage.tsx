@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 
 import BasicPage from '../basicPage/basicPage'
 import PrivateKey from './privateKey'
+import Username from './username'
 
 enum SettingNav {
     PrivateKey,
@@ -43,9 +44,7 @@ const SettingPage = () => {
                 </div>
             </div>
             {nav === SettingNav.PrivateKey && <PrivateKey />}
-            {nav === SettingNav.Username && (
-                <div className="setting-content"></div>
-            )}
+            {nav === SettingNav.Username && <Username />}
         </BasicPage>
     )
 }

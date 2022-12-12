@@ -622,6 +622,11 @@ export class User {
             salt: ethers.utils.hexlify(saltBytes),
         }
     }
+
+    async setUsername(username: string) {
+        console.log('user set user name', username)
+        return { transaction: '', error: '' }
+    }
 }
 
 export default createContext(new User())
