@@ -23,9 +23,7 @@ export class Data {
     commentsById = {} as { [id: string]: Comment }
     postsById = {} as { [id: string]: Post }
     feedsByQuery = {} as { [query: string]: string[] }
-    // todo: feedsByTopic? - then feed the params 'id' into the component
     feedsByTopic = {} as { [topic: string]: string[] }
-    // todo: ====== updated router 5:25pm
     commentsByPostId = {} as { [postId: string]: string[] }
     commentsByQuery = {} as { [commentId: string]: string[] }
     votesById = {} as { [id: string]: Vote }
@@ -117,6 +115,7 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
+        console.log('load feed in Post context')
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
@@ -149,7 +148,7 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
-        console.log('hi from Post Context')
+        console.log('loadFeedByTopic() topic:', topic)
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
@@ -158,8 +157,8 @@ export class Data {
             lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
+        console.log('apiurl in the loadfeebytopic func', apiURL)
         const r = await fetch(apiURL)
-        console.log(r)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
         this.ingestPosts(posts)
