@@ -20,20 +20,21 @@ const MainPage = (topic: any) => {
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
 
+    let topicName: any
+
     useEffect(() => {
-        loadMorePosts(topic)
+        topicName = topic.topic
+        loadMorePosts(topicName)
     }, [topic])
 
     const loadMorePosts = (topic: any) => {
-        console.log(topic.topic)
-        const topicName = topic.topic
-        if (typeof topicName === 'undefined') {
+        if (typeof topic === 'undefined') {
             console.log('query in the undefined topic logic:', query)
             postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
         } else {
             console.log('loading topic feed....')
             postContext.loadFeedByTopic(
-                topicName,
+                topic,
                 postContext.feedsByTopic[topic] || []
             )
         }
@@ -48,7 +49,7 @@ const MainPage = (topic: any) => {
             history.push(
                 {
                     pathname: '/new',
-                    state: { topic: topic },
+                    state: { topic: topicName },
                 },
                 { isConfirmed: true }
             )
@@ -56,6 +57,8 @@ const MainPage = (topic: any) => {
             console.log(userContext.id)
         }
     }
+
+    // todo: fix problem with rendering relevant topic posts
 
     return (
         <BasicPage>
@@ -68,10 +71,18 @@ const MainPage = (topic: any) => {
                     : 'Create post'}
             </div>
             <Feed feedChoice={query} setFeedChoice={setQuery} />
-            <PostsList
-                postIds={postContext.feedsByQuery[query] || []}
-                loadMorePosts={loadMorePosts}
-            />
+            {/* if topicName is undefined then we are on a 'no-topic' page */}
+            {typeof topicName === 'undefined' ? (
+                <PostsList
+                    postIds={postContext.feedsByQuery[query] || []}
+                    loadMorePosts={loadMorePosts}
+                />
+            ) : (
+                <PostsList
+                    postIds={postContext.feedsByTopic[topic] || []}
+                    loadMorePosts={loadMorePosts}
+                />
+            )}
         </BasicPage>
     )
 }
