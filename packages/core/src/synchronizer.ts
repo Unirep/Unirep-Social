@@ -14,6 +14,7 @@ export enum ActionType {
     DeletePost = 'DeletePost',
     EditComment = 'EditComment',
     DeleteComment = 'DeleteComment',
+    SetUsername = 'SetUsername',
 }
 
 export interface UnirepSocialConfig {
