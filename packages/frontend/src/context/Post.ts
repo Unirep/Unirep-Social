@@ -339,7 +339,9 @@ export class Data {
                 await queueContext.afterTx(transaction)
                 const post = this.convertDataToPost(_post)
                 this.postsById[post.id] = post
-                this.feedsByQuery[QueryType.New].unshift(post.id)
+                if (this.feedsByQuery[QueryType.New] !== undefined) {
+                    this.feedsByQuery[QueryType.New].unshift(post.id)
+                }
                 this.postDraft = { title: '', content: '' }
                 this.save()
                 await userContext.loadReputation()
