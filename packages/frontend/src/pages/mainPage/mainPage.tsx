@@ -11,7 +11,7 @@ import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
 
-const MainPage = () => {
+const MainPage = (topic: any) => {
     const history = useHistory()
     const location = useLocation()
     const postContext = useContext(PostContext)
@@ -19,26 +19,21 @@ const MainPage = () => {
     const unirepConfig = useContext(UnirepContext)
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
-    const [topic, setTopic] = useState('') // used for `goToNewPost` function only
 
     useEffect(() => {
-        const pathname = location.pathname // will be '/topic'
-        const topicName = pathname.split('/')[1] // this will be 'topic'
-        setTopic(topicName)
-        loadMorePosts(topicName)
-    }, [])
+        loadMorePosts(topic)
+    }, [topic])
 
     const loadMorePosts = (topic: any) => {
-        // console.log(
-        //     'load more posts, now posts: ' +
-        //         postContext.feedsByTopic[topic]?.length
-        // )
-        if (topic.charAt(0) === '') {
+        console.log(topic.topic)
+        const topicName = topic.topic
+        if (typeof topicName === 'undefined') {
             console.log('query in the undefined topic logic:', query)
             postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
         } else {
+            console.log('loading topic feed....')
             postContext.loadFeedByTopic(
-                topic,
+                topicName,
                 postContext.feedsByTopic[topic] || []
             )
         }
