@@ -24,7 +24,7 @@ export class UnirepConfig {
     commentReputation = 0
     airdroppedReputation = 0
     attesterId = 0
-    defaultAirdropKarma = 30
+    subsidy = 0
     unirep = null as any as ethers.Contract
     unirepSocial = null as any as ethers.Contract
 
@@ -60,13 +60,15 @@ export class UnirepConfig {
             this.unirepSocial.postReputation(),
             this.unirepSocial.commentReputation(),
             this.unirepSocial.airdroppedReputation(),
+            this.unirepSocial.subsidy(),
             this.unirep.config(),
         ])
         this.attesterId = +v[0].toString()
         this.postReputation = +v[1].toString()
         this.commentReputation = +v[2].toString()
         this.airdroppedReputation = +v[3].toString()
-        const config = v[4]
+        this.subsidy = +v[4].toString()
+        const config = v[5]
         //   struct Config {
         //     // circuit config
         //     uint8 globalStateTreeDepth;

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
-import UIContext from '../context/UI'
+import UIContext, { EpochStatus } from '../context/UI'
 import MainPage from '../pages/mainPage/mainPage'
 
 jest.mock('react-router-dom', () => ({
@@ -88,6 +88,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     const UIData = {
         hasBanner: false,
         scrollTop: 0,
+        epochStatus: EpochStatus.default,
     }
 
     const postData = {
@@ -148,6 +149,7 @@ test('should page rerender after user clicks create post button', async () => {
 
     const uiData = {
         hasBanner: false,
+        epochStatus: EpochStatus.default,
     }
 
     renderMainPage(userData, unirepData, postData, uiData)

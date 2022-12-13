@@ -312,7 +312,7 @@ export class User {
 
         const { number: currentEpoch } =
             await this.userState?.loadCurrentEpoch()
-        const subsidy = await this.unirepConfig.unirepSocial.subsidy()
+        const subsidy = this.unirepConfig.subsidy
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
         // it uses nonce == maxNonce + 1
@@ -326,8 +326,8 @@ export class User {
             currentEpoch,
             subsidyKey
         )
-        console.log(subsidy, spentSubsidy)
-        this.subsidyReputation = subsidy.sub(spentSubsidy).toNumber()
+        console.log(subsidy, Number(spentSubsidy))
+        this.subsidyReputation = subsidy - Number(spentSubsidy)
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
@@ -340,15 +340,11 @@ export class User {
         if (this.reputation >= 0) throw new Error('do not need to airdrop')
 
         await this.unirepConfig.loadingPromise
-        const unirepSocial = new ethers.Contract(
-            this.unirepConfig.unirepSocialAddress,
-            config.UNIREP_SOCIAL_ABI,
-            config.DEFAULT_ETH_PROVIDER
-        )
+
         // generate an airdrop proof
         const negRep = Math.min(
             Math.abs(this.reputation),
-            this.unirepConfig.defaultAirdropKarma
+            this.unirepConfig.subsidy
         )
 
         const negRepProof = await this.userState.genNegativeRepProof(
@@ -356,16 +352,20 @@ export class User {
             BigInt(negRep)
         )
 
-        const epk = genEpochKey(
-            this.id.identityNullifier,
-            await this.userState.getUnirepStateCurrentEpoch(),
-            0
-        )
         // Check if the user already got airdropped
-        const subsidy = (
-            await this.unirepConfig.unirepSocial.subsidy()
-        ).toNumber()
-        if (subsidy !== this.unirepConfig.defaultAirdropKarma) {
+        const { number: currentEpoch } =
+            await this.userState?.loadCurrentEpoch()
+        const subsidyKey = genEpochKey(
+            this.id.identityNullifier,
+            currentEpoch,
+            0,
+            this.unirepConfig.epochTreeDepth
+        )
+        const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
+            currentEpoch,
+            subsidyKey
+        )
+        if (spentSubsidy >= this.unirepConfig.subsidy) {
             return {
                 error: 'The epoch key has been airdropped',
                 transaction: undefined,

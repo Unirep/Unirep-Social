@@ -187,7 +187,10 @@ const UserInfoWidget = () => {
                                 </h4>
                                 <div className="rep-handout">
                                     <strong>
-                                        {userContext.subsidyReputation}
+                                        {uiContext.epochStatus ===
+                                        EpochStatus.default
+                                            ? userContext.subsidyReputation
+                                            : 0}
                                     </strong>
                                     <div className="interline"></div>
                                     {userContext.currentEpochKeys[0]}
