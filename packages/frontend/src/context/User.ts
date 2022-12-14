@@ -456,6 +456,7 @@ export class User {
         const hasSignedUp = await this._hasSignedUp(idInput)
         if (!hasSignedUp) return false
 
+        await this.loadCurrentEpoch()
         await this.setIdentity(idInput)
         await this.calculateAllEpks()
         if (!this.userState) {
@@ -464,8 +465,11 @@ export class User {
         await this.startSync()
         this.userState.waitForSync().then(() => {
             this.loadReputation()
+            this.updateLatestTransitionedEpoch()
+            this.loadRecords()
             this.save()
         })
+
         return true
     }
 
