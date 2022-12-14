@@ -11,8 +11,13 @@ import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
 
+type Props = {
+    topic: string
+}
+
 // topic being passed in by TopicPage which is handling location state props
-const MainPage = (topic: any) => {
+const MainPage = ({ topic }: Props) => {
+    console.log('<----- topic being received', topic)
     const history = useHistory()
     const location = useLocation()
     const postContext = useContext(PostContext)
@@ -21,22 +26,18 @@ const MainPage = (topic: any) => {
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
 
-    let topicName: any
-
     useEffect(() => {
-        topicName = topic.topic
-
-        console.log('return statement in MainPage', topicName)
-        loadMorePosts(topicName)
+        loadMorePosts(topic)
     }, [topic])
 
-    const loadMorePosts = (topic: any) => {
+    const loadMorePosts = async (topic: string) => {
         if (typeof topic === 'undefined') {
-            console.log('query in the undefined topic logic:', query)
-            postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
+            await postContext.loadFeed(
+                query,
+                postContext.feedsByQuery[query] || []
+            )
         } else {
-            console.log('loading topic feed....')
-            postContext.loadFeedByTopic(
+            await postContext.loadFeedByTopic(
                 topic,
                 postContext.feedsByTopic[topic] || []
             )
@@ -52,7 +53,7 @@ const MainPage = (topic: any) => {
             history.push(
                 {
                     pathname: '/new',
-                    state: { topic: topicName },
+                    state: { topic: topic },
                 },
                 { isConfirmed: true }
             )
@@ -77,7 +78,7 @@ const MainPage = (topic: any) => {
             </div>
             <Feed feedChoice={query} setFeedChoice={setQuery} />
             {/* if topicName is undefined then we are on a 'no-topic' page */}
-            {typeof topicName === 'undefined' ? (
+            {typeof topic === 'undefined' ? (
                 <PostsList
                     postIds={postContext.feedsByQuery[query] || []}
                     loadMorePosts={loadMorePosts}

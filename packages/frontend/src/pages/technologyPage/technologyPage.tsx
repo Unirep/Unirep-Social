@@ -11,14 +11,10 @@ const TechnologyPage = () => {
     useEffect(() => {
         const pathname = location.pathname // will be '/topic'
         const topicName = pathname.split('/')[1] // this will be 'topic'
-        // prevent memory leak? not sure is this is necessary or only a local error
         setTopic(topicName)
+    }, [topic])
 
-        // clean up state to ensure no memory leaks
-        // return () => {
-        //     setTopic('')
-        // }
-    }, [])
+    console.log('topic being given ----->', topic)
 
     return <MainPage topic={topic} />
 }

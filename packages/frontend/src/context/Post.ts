@@ -173,6 +173,7 @@ export class Data {
                 return true
             }
         )
+        console.log(this.feedsByTopic[key])
     }
 
     async loadComments(
