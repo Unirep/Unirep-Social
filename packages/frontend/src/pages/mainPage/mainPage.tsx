@@ -28,7 +28,6 @@ const MainPage = (topic: any) => {
 
         console.log('return statement in MainPage', topicName)
         loadMorePosts(topicName)
-
     }, [topic])
 
     const loadMorePosts = (topic: any) => {
