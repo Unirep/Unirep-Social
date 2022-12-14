@@ -625,7 +625,44 @@ export class User {
 
     async setUsername(username: string) {
         console.log('user set user name', username)
-        return { transaction: '', error: '' }
+        if (!this.userState) throw new Error('user not login')
+
+        let preImage = 0 // what's preImage?
+        const hexlifiedPreImage =
+            preImage == 0
+                ? 0
+                : ethers.utils.hexlify(
+                      ethers.utils.toUtf8Bytes(preImage.toString())
+                  )
+
+        const usernameProof = await this.userState.genProveReputationProof(
+            BigInt(this.unirepConfig.attesterId),
+            0,
+            0,
+            hexlifiedPreImage == 0 ? BigInt(0) : BigInt(1),
+            BigInt(hexlifiedPreImage),
+            0
+        )
+
+        const apiURL = makeURL('usernames', {})
+        const r = await fetch(apiURL, {
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                newUsername: username,
+                publicSignals: usernameProof.publicSignals,
+                proof: usernameProof.proof,
+            }),
+            method: 'POST',
+        })
+
+        const { transaction, error } = await r.json()
+
+        if (!r.ok) {
+            return { error }
+        }
+        return { transaction }
     }
 }
 

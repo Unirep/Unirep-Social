@@ -23,25 +23,25 @@ const Username = () => {
     }
 
     const submit = () => {
-        console.log('==== start set your user name====')
-
-        console.log('==First  Step: check duplicate==')
-        // write functions in utils to check if user name duplicate, set up error messsage
-
-        console.log('==Second Step: add operation to queue==')
         queue.addOp(
             async (updateStatus) => {
                 updateStatus({
                     title: 'Performing Username Setup',
                     details: 'Generating ZK proof...',
                 })
-                const { transaction } = await user.setUsername(username)
+                const { transaction, error } = await user.setUsername(username)
+                if (error) {
+                    setErrorMsg(error)
+                    throw new Error(error)
+                }
+
                 updateStatus({
                     title: 'Performing Username Setup',
                     details: 'Waiting for transaction...',
                 })
                 await queue.afterTx(transaction)
                 await epochManager.updateWatch()
+                setIsApplied(true)
 
                 let metadata: Metadata = {
                     transactionId: transaction,
@@ -52,9 +52,6 @@ const Username = () => {
                 type: ActionType.Username,
             }
         )
-
-        // Setting up user name is only available once an epoch or unlimited??
-        setIsApplied(true)
     }
 
     return (

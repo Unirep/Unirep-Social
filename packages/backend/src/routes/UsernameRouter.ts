@@ -99,9 +99,10 @@ async function setUsername(req, res) {
         [epochKey, hashedCurrentUsername, hashedNewUsername]
     )
 
+    const { attestingFee } = await unirepContract.config()
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,
-        calldata
+        { data: calldata, value: attestingFee }
     )
     res.json({
         transaction: hash,
