@@ -7,12 +7,14 @@ import { ABOUT_URL } from '../../config'
 import { WebContext } from '../../context/WebContext'
 import UserContext from '../../context/User'
 import UIContext from '../../context/UI'
+import PostContext from '../../context/Post'
 
 const Overlay = () => {
     const { setIsMenuOpen } = useContext(WebContext)
     const history = useHistory()
     const userContext = useContext(UserContext)
     const uiContext = useContext(UIContext)
+    const postContext = useContext(PostContext)
 
     const [checkNotDownload, setCheckNotDownload] = useState<boolean>(false)
 
@@ -41,6 +43,7 @@ const Overlay = () => {
 
         await userContext.logout()
         uiContext.uiLogout()
+        postContext.logout()
         history.push('/')
         window.location.reload()
     }
