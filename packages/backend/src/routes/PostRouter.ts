@@ -73,24 +73,23 @@ async function loadPosts(req, res) {
         const { topic } = req.query
         const topicPosts = await req.db.findMany('Post', {
             where: {
-                topic: topic,
+                topic,
             },
         })
         res.json(
             topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
         )
+    } else if (req.query.query === undefined) {
+        const posts = await req.db.findMany('Post', {
+            where: {
+                status: 1,
+                topic: !req.query.topic,
+            },
+        })
+        res.json(posts)
+        return
     } else {
-        if (req.query.query === undefined) {
-            console.log('yo bro in the query')
-            const posts = await req.db.findMany('Post', {
-                where: {
-                    status: 1,
-                    topic: !req.query.topic,
-                },
-            })
-            res.json(posts)
-            return
-        }
+        
         const query = req.query.query.toString()
         // TODO: deal with this when there's an offset arg
         // const lastRead = req.query.lastRead || 0
@@ -113,8 +112,6 @@ async function loadPosts(req, res) {
                 },
             })
         ).filter((p) => !lastRead.includes(p._id))
-        console.log(posts)
-        console.log('-------------------------')
 
         res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     }

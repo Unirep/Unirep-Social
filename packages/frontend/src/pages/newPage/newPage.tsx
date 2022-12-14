@@ -29,7 +29,7 @@ const NewPage = () => {
             throw new Error('Should not be able to create post without login')
         }
         postContext.publishPost(title, content, topic, epkNonce, reputation)
-        history.push('/' + `${topic}`)
+        history.push(`/${topic}`)
     }
 
     return (
