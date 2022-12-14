@@ -6,7 +6,7 @@ import { LOAD_POST_COUNT } from '../config'
 
 type Props = {
     postIds: string[]
-    loadMorePosts: () => void
+    loadMorePosts: (topic: any) => void
 }
 
 const PostsList = ({ postIds, loadMorePosts }: Props) => {
@@ -36,8 +36,3 @@ const PostsList = ({ postIds, loadMorePosts }: Props) => {
 }
 
 export default observer(PostsList)
-
-/**
- * todo:
- * could reuse the postsList and postsList component- but need way to render the topics posts
- */

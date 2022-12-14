@@ -77,8 +77,8 @@ const WritingField = (props: Props) => {
             props.type === DataType.Post
         ) {
             // Set the topic state variable if the location.state.topic property exists
-            setTopic(location.state.topic)
             console.log(location.state.topic)
+            setTopic(location.state.topic)
         }
     }
 

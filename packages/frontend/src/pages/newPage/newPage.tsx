@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { useHistory, useLocation } from 'react-router-dom'
+import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
@@ -13,10 +13,6 @@ const NewPage = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
-
-    const location = useLocation()
-
-    console.log(location.state)
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
@@ -33,10 +29,8 @@ const NewPage = () => {
             throw new Error('Should not be able to create post without login')
         }
         postContext.publishPost(title, content, topic, epkNonce, reputation)
-        history.push('/')
+        history.push('/' + `${topic}`)
     }
-
-    // todo: new page can be resued to publish a post so the `submit` function gets the correct pathname for the topic
 
     return (
         <BasicPage title={'Create Post'}>

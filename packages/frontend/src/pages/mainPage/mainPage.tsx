@@ -11,6 +11,7 @@ import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
 
+// topic being passed in by TopicPage which is handling location state props
 const MainPage = (topic: any) => {
     const history = useHistory()
     const location = useLocation()
@@ -24,7 +25,10 @@ const MainPage = (topic: any) => {
 
     useEffect(() => {
         topicName = topic.topic
+
+        console.log('return statement in MainPage', topicName)
         loadMorePosts(topicName)
+
     }, [topic])
 
     const loadMorePosts = (topic: any) => {
@@ -59,6 +63,8 @@ const MainPage = (topic: any) => {
     }
 
     // todo: fix problem with rendering relevant topic posts
+
+    // todo: maybe re-render with a useEffect when the topic changes
 
     return (
         <BasicPage>

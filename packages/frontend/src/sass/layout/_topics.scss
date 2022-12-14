@@ -29,4 +29,11 @@
     .topic-buttons > div:hover {
         cursor: pointer;
     }
+
+    // todo: just for fun - will change later
+    .topic-buttons > div:active {
+        /* Add styles to highlight and underline the text of the button when clicked */
+        color: rgb(255, 30, 0);
+        text-decoration: underline;
+    }
 }

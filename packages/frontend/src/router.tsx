@@ -18,6 +18,7 @@ import StartPage from './pages/startPage/startPage'
 
 // Topics
 import PhilosophyPage from './pages/philosophyPage/philosophyPage'
+import TechnologyPage from './pages/technologyPage/technologyPage'
 
 import { WebContext } from './context/WebContext'
 import Favicon from 'react-favicon'
@@ -58,6 +59,7 @@ const AppRouter = () => {
                         <Route component={SettingPage} path="/setting" />
 
                         <Route component={PhilosophyPage} path="/philosophy" />
+                        <Route component={TechnologyPage} path="/technology" />
                         <Route component={() => <Redirect to="/" />} />
                     </Switch>
                 </WebContext.Provider>

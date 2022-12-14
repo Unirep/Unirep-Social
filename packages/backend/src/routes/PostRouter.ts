@@ -68,26 +68,24 @@ async function loadPostById(req, res) {
 }
 
 async function loadPosts(req, res) {
-    const { topic } = req.query
-
     // logic for topic that is truthy
-    if (topic) {
-        console.log('If statement in loadPosts')
+    if (typeof req.query.topic !== 'undefined') {
         const { topic } = req.query
-        console.log(topic)
         const topicPosts = await req.db.findMany('Post', {
             where: {
                 topic: topic,
             },
         })
-        console.log(topicPosts)
-        res.json(topicPosts)
+        res.json(
+            topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
+        )
     } else {
         if (req.query.query === undefined) {
             console.log('yo bro in the query')
             const posts = await req.db.findMany('Post', {
                 where: {
                     status: 1,
+                    topic: !req.query.topic,
                 },
             })
             res.json(posts)
@@ -103,6 +101,7 @@ async function loadPosts(req, res) {
             await req.db.findMany('Post', {
                 where: {
                     epochKey: epks,
+                    topic: '',
                 },
                 orderBy: {
                     createdAt: query === QueryType.New ? 'desc' : undefined,
@@ -114,6 +113,8 @@ async function loadPosts(req, res) {
                 },
             })
         ).filter((p) => !lastRead.includes(p._id))
+        console.log(posts)
+        console.log('-------------------------')
 
         res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     }

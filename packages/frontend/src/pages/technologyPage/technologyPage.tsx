@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import MainPage from '../mainPage/mainPage'
 
-const PhilosophyPage = () => {
+const TechnologyPage = () => {
     const location = useLocation()
 
     const [topic, setTopic] = useState('')
@@ -23,4 +23,4 @@ const PhilosophyPage = () => {
     return <MainPage topic={topic} />
 }
 
-export default observer(PhilosophyPage)
+export default observer(TechnologyPage)

@@ -115,7 +115,6 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
-        console.log('load feed in Post context')
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
@@ -148,7 +147,6 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
-        console.log('loadFeedByTopic() topic:', topic)
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
@@ -157,10 +155,10 @@ export class Data {
             lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
-        console.log('apiurl in the loadfeebytopic func', apiURL)
         const r = await fetch(apiURL)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
+        console.log(posts) // todo: posts are being loaded here but not rendering on mainPage
         this.ingestPosts(posts)
         const key = this.feedKey(topic, epks)
         if (!this.feedsByTopic[key]) {
