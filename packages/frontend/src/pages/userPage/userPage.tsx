@@ -164,7 +164,7 @@ const UserPage = () => {
         }
 
         getUserData()
-    }, [])
+    }, [user.recordsByEpk])
 
     const switchDropdown = () => {
         if (isDropdown) {
