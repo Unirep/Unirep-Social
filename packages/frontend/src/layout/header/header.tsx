@@ -19,7 +19,7 @@ const Header = () => {
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            history.push(`/new`, { isConfirmed: true })
+            history.push(`/general/new`, { isConfirmed: true })
         }
     }
 
