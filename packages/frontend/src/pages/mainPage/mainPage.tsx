@@ -27,14 +27,11 @@ const MainPage = ({ topic }: Props) => {
         loadMorePosts(topic)
     }, [topic])
 
-    const loadMorePosts = async (topic: string) => {
+    const loadMorePosts = (topic: string) => {
         if (typeof topic === 'undefined') {
-            await postContext.loadFeed(
-                query,
-                postContext.feedsByQuery[query] || []
-            )
+            postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
         } else {
-            await postContext.loadFeedByTopic(
+            postContext.loadFeedByTopic(
                 topic,
                 postContext.feedsByTopic[topic] || []
             )
@@ -49,7 +46,7 @@ const MainPage = ({ topic }: Props) => {
             // pass topic state to new page
             history.push(
                 {
-                    pathname: '/new',
+                    pathname: `/${topic}/new`,
                     state: { topic: topic },
                 },
                 { isConfirmed: true }
