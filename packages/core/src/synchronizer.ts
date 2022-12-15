@@ -10,11 +10,11 @@ export enum ActionType {
     UST = 'UST',
     Signup = 'Signup',
     Airdrop = 'Airdrop',
-    EditPost = 'EditPost',
-    DeletePost = 'DeletePost',
-    EditComment = 'EditComment',
-    DeleteComment = 'DeleteComment',
-    SetUsername = 'SetUsername',
+    EditPost = 'Edit post',
+    DeletePost = 'Delete post',
+    EditComment = 'Edit comment',
+    DeleteComment = 'Delete comment',
+    SetUsername = 'Set username',
 }
 
 export interface UnirepSocialConfig {
