@@ -143,6 +143,7 @@ export class Data {
     }
 
     async loadFeedByTopic(
+        query: string,
         topic: string,
         lastRead = [] as string[],
         epks = [] as string[]
@@ -151,6 +152,7 @@ export class Data {
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
+            query,
             topic,
             lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
@@ -158,7 +160,6 @@ export class Data {
         const r = await fetch(apiURL)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
-        console.log(posts)
         this.ingestPosts(posts)
         const key = this.feedKey(topic, epks)
         if (!this.feedsByTopic[key]) {

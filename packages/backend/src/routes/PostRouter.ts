@@ -69,14 +69,30 @@ async function loadPostById(req, res) {
 
 async function loadPosts(req, res) {
     // logic for topic that is truthy
-    if (typeof req.query.topic !== 'undefined') {
+    if (req.query.topic !== undefined) {
         const { topic } = req.query
-        const topicPosts = await req.db.findMany('Post', {
-            where: {
-                topic,
-            },
-        })
-        // todo: have query behavior like posts without topics below
+
+        const query = req.query.query.toString()
+        const epks = req.query.epks ? req.query.epks.split('_') : undefined
+        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
+
+        const topicPosts = (
+            await req.db.findMany('Post', {
+                where: {
+                    epochKey: epks,
+                    topic,
+                },
+                orderBy: {
+                    createdAt: query === QueryType.New ? 'desc' : undefined,
+                    posRep: query === QueryType.Boost ? 'desc' : undefined,
+                    negRep: query === QueryType.Squash ? 'desc' : undefined,
+                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                    commentCount:
+                        query === QueryType.Comments ? 'desc' : undefined,
+                },
+            })
+        ).filter((p) => !lastRead.includes(p._id))
+
         res.json(
             topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
         )

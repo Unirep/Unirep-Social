@@ -25,13 +25,14 @@ const MainPage = ({ topic }: Props) => {
 
     useEffect(() => {
         loadMorePosts(topic)
-    }, [topic])
+    }, [topic, query])
 
     const loadMorePosts = (topic: string) => {
         if (typeof topic === 'undefined') {
             postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
         } else {
             postContext.loadFeedByTopic(
+                query,
                 topic,
                 postContext.feedsByTopic[topic] || []
             )
