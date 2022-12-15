@@ -16,9 +16,7 @@ import AdminPage from './pages/adminPage/adminPage'
 import SettingPage from './pages/settingPage/settingPage'
 import StartPage from './pages/startPage/startPage'
 
-// Topics
-import PhilosophyPage from './pages/philosophyPage/philosophyPage'
-import TechnologyPage from './pages/technologyPage/technologyPage'
+import TopicPage from './pages/topicPage/topicPage'
 
 import { WebContext } from './context/WebContext'
 import Favicon from 'react-favicon'
@@ -58,8 +56,8 @@ const AppRouter = () => {
                         <Route component={AdminPage} path="/admin" />
                         <Route component={SettingPage} path="/setting" />
 
-                        <Route component={PhilosophyPage} path="/philosophy" />
-                        <Route component={TechnologyPage} path="/technology" />
+                        <Route path="/:topicId" component={TopicPage} />
+
                         <Route component={() => <Redirect to="/" />} />
                     </Switch>
                 </WebContext.Provider>

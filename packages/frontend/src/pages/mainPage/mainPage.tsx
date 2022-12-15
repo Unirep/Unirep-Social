@@ -15,11 +15,8 @@ type Props = {
     topic: string
 }
 
-// topic being passed in by TopicPage which is handling location state props
 const MainPage = ({ topic }: Props) => {
-    console.log('<----- topic being received', topic)
     const history = useHistory()
-    const location = useLocation()
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const unirepConfig = useContext(UnirepContext)
@@ -61,10 +58,6 @@ const MainPage = ({ topic }: Props) => {
             console.log(userContext.id)
         }
     }
-
-    // todo: fix problem with rendering relevant topic posts
-
-    // todo: maybe re-render with a useEffect when the topic changes
 
     return (
         <BasicPage>

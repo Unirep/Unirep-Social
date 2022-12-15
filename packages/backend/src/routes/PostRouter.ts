@@ -71,18 +71,16 @@ async function loadPosts(req, res) {
     // logic for topic that is truthy
     if (typeof req.query.topic !== 'undefined') {
         const { topic } = req.query
-        console.log('backend: topic if topic is truthy', req.query.topic)
         const topicPosts = await req.db.findMany('Post', {
             where: {
                 topic,
             },
         })
-        console.log(topicPosts)
+        // todo: have query behavior like posts without topics below
         res.json(
             topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
         )
     } else if (req.query.query === undefined) {
-        console.log('backend log if query is undefined')
         const posts = await req.db.findMany('Post', {
             where: {
                 status: 1,
@@ -92,7 +90,6 @@ async function loadPosts(req, res) {
         res.json(posts)
         return
     } else {
-        console.log('query is not undefined and topic is falsy')
         const query = req.query.query.toString()
         // TODO: deal with this when there's an offset arg
         // const lastRead = req.query.lastRead || 0

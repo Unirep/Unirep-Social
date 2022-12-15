@@ -158,7 +158,7 @@ export class Data {
         const r = await fetch(apiURL)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
-        console.log(posts) // todo: posts are being loaded here but not rendering on mainPage
+        console.log(posts)
         this.ingestPosts(posts)
         const key = this.feedKey(topic, epks)
         if (!this.feedsByTopic[key]) {
@@ -173,7 +173,6 @@ export class Data {
                 return true
             }
         )
-        console.log(this.feedsByTopic[key])
     }
 
     async loadComments(

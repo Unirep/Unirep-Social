@@ -207,10 +207,6 @@ const WritingField = (props: Props) => {
             {uiContext.epochStatus !== EpochStatus.default && (
                 <div className="disable-cover"></div>
             )}
-            {/* testing handle topic */}
-            <button onClick={handleTopic}>
-                handle topic - should console log the topic
-            </button>
         </div>
     )
 }
