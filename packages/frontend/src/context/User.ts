@@ -326,7 +326,6 @@ export class User {
             currentEpoch,
             subsidyKey
         )
-        console.log(subsidy, Number(spentSubsidy))
         this.subsidyReputation = subsidy - Number(spentSubsidy)
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
@@ -365,7 +364,7 @@ export class User {
             currentEpoch,
             subsidyKey
         )
-        if (spentSubsidy >= this.unirepConfig.subsidy) {
+        if (spentSubsidy > 0) {
             return {
                 error: 'The epoch key has been airdropped',
                 transaction: undefined,
@@ -488,7 +487,6 @@ export class User {
     }
 
     async logout() {
-        console.log('log out')
         if (this.userState) {
             await this.userState.stop()
             await (this.userState as any)._db.closeAndWipe()
