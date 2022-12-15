@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { NavLink, useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
@@ -14,12 +14,23 @@ const Header = () => {
     const unirepConfig = useContext(UnirepContext)
     const userContext = useContext(UserContext)
 
+    const [topic, setTopic] = useState('')
+
+    useEffect(() => {
+        const pathname = location.pathname
+        const topic = pathname.split('/')[1]
+        console.log(topic)
+        setTopic(topic)
+    }, [location])
+
     const gotoNewPage = () => {
         if (
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            history.push(`/general/new`, { isConfirmed: true })
+            history.push(`/${topic || 'general'}/new`, {
+                isConfirmed: true,
+            })
         }
     }
 

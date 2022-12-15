@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 import useLocalStorage from './hooks/useLocalStorage'
 import * as Constants from './constants'
-
 import Header from './layout/header/header'
 import TopicsMenu from './components/topicsMenu'
 import MainPage from './pages/mainPage/mainPage'

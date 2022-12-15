@@ -41,6 +41,7 @@ const NewPage = () => {
                 onClick={preventPropagation}
                 showDetail={true}
             />
+            e
         </BasicPage>
     )
 }
