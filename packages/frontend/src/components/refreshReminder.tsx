@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 
-import { ActionType } from '../constants'
+import { ActionType } from '@unirep-social/core'
 import UserContext from '../context/User'
 import QueueContext, { Metadata } from '../context/Queue'
 import EpochContetxt from '../context/EpochManager'
