@@ -1,5 +1,44 @@
 import { useHistory } from 'react-router-dom'
 
+const topics = [
+    {
+        id: 'philosophy',
+        name: 'Philosophy',
+    },
+    {
+        id: 'technology',
+        name: 'Technology',
+    },
+    {
+        id: 'politics',
+        name: 'Politics',
+    },
+    {
+        id: 'music',
+        name: 'Music',
+    },
+    {
+        id: 'business',
+        name: 'Business',
+    },
+    {
+        id: 'literature',
+        name: 'Literature',
+    },
+    {
+        id: 'fitness',
+        name: 'Fitness',
+    },
+    {
+        id: 'photography',
+        name: 'Photography',
+    },
+    {
+        id: 'news',
+        name: 'News',
+    },
+]
+
 const TopicsMenu = () => {
     const history = useHistory()
 
@@ -10,15 +49,11 @@ const TopicsMenu = () => {
     return (
         <div className="topics-menu">
             <div className="topic-buttons">
-                <div onClick={() => goToTopic('philosophy')}>Philosophy</div>
-                <div onClick={() => goToTopic('technology')}>Technology</div>
-                <div onClick={() => goToTopic('politics')}>Politics</div>
-                <div onClick={() => goToTopic('music')}>Music</div>
-                <div onClick={() => goToTopic('business')}>Business</div>
-                <div onClick={() => goToTopic('literature')}>Literature</div>
-                <div onClick={() => goToTopic('fitness')}>Fitness</div>
-                <div onClick={() => goToTopic('photography')}>Photography</div>
-                <div onClick={() => goToTopic('news')}>News</div>
+                {topics.map((topic) => (
+                    <div key={topic.id} onClick={() => goToTopic(topic.id)}>
+                        {topic.name}
+                    </div>
+                ))}
             </div>
         </div>
     )
