@@ -142,6 +142,11 @@ const UserInfoWidget = () => {
                                                             transaction,
                                                             error,
                                                         } = await userContext.getAirdrop()
+                                                        if (error)
+                                                            throw new Error(
+                                                                error
+                                                            )
+
                                                         updateStatus({
                                                             title: 'Performing Airdrop',
                                                             details:
@@ -151,6 +156,7 @@ const UserInfoWidget = () => {
                                                             transaction
                                                         )
                                                         await epochManager.updateWatch()
+                                                        await userContext.loadRecords()
 
                                                         let metadata: Metadata =
                                                             {
