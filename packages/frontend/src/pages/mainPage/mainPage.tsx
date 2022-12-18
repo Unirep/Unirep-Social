@@ -47,7 +47,7 @@ const MainPage = ({ topic }: Props) => {
             // pass topic state to new page
             history.push(
                 {
-                    pathname: `/${topic}/new`,
+                    pathname: `/${topic || 'general'}/new`,
                     state: { topic: topic },
                 },
                 { isConfirmed: true }
