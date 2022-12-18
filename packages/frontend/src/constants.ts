@@ -61,6 +61,7 @@ export interface Post {
     id: string
     title: string
     content: string
+    topic: string
     upvote: number
     downvote: number
     epoch_key: string

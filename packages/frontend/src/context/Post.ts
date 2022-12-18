@@ -756,6 +756,7 @@ export class Data {
             id: data._id,
             title: data.title,
             content: data.content,
+            topic: data.topic,
             // votes,
             upvote: data.posRep,
             downvote: data.negRep,
