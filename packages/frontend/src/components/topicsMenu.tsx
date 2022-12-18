@@ -1,6 +1,6 @@
 import { useHistory } from 'react-router-dom'
 
-const topics = [
+export const topics = [
     {
         id: 'philosophy',
         name: 'Philosophy',

@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { useHistory } from 'react-router-dom'
+import { useHistory, Redirect, useParams } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
@@ -9,6 +9,8 @@ import WritingField from '../../components/writingField'
 import BasicPage from '../basicPage/basicPage'
 import { DataType } from '../../constants'
 
+import { topics } from '../../components/topicsMenu'
+
 const NewPage = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
@@ -16,6 +18,16 @@ const NewPage = () => {
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
+    }
+
+    const { topicId }: any = useParams()
+
+    // Check if the topicId is in the topics array
+    const isValidTopic = topics.some((t) => t.id === topicId)
+
+    // If the topicId is not in the topics array, redirect the user to the '/' route
+    if (!isValidTopic) {
+        return <Redirect to="/" />
     }
 
     const submit = async (
