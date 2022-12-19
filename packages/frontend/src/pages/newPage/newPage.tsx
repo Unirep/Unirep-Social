@@ -22,14 +22,6 @@ const NewPage = () => {
 
     const { topicId }: any = useParams()
 
-    // Check if the topicId is in the topics array
-    const isValidTopic = topics.some((t) => t.id === topicId)
-
-    // If the topicId is not in the topics array, redirect the user to the '/' route
-    if (!isValidTopic) {
-        return <Redirect to="/" />
-    }
-
     const submit = async (
         title: string,
         content: string,
@@ -44,18 +36,24 @@ const NewPage = () => {
         history.push(`/${topic}`)
     }
 
-    return (
-        <BasicPage title={'Create Post'}>
-            <WritingField
-                type={DataType.Post}
-                submit={submit}
-                submitBtnName="Post - 5 points"
-                onClick={preventPropagation}
-                showDetail={true}
-            />
-            e
-        </BasicPage>
-    )
+    // Check if the route is 'general/new' and 'general' is not in the topics array
+    if (topicId === 'general' && !topics.some((t) => t.id === topicId)) {
+        // If the route is 'general/new' and 'general' is not in the topics array, render the new page
+        return (
+            <BasicPage title={'Create Post'}>
+                <WritingField
+                    type={DataType.Post}
+                    submit={submit}
+                    submitBtnName="Post - 5 points"
+                    onClick={preventPropagation}
+                    showDetail={true}
+                />
+            </BasicPage>
+        )
+    } else {
+        // If the route is not 'general/new' or 'general' is in the topics array, redirect the user to the '/' route
+        return <Redirect to="/" />
+    }
 }
 
 export default observer(NewPage)

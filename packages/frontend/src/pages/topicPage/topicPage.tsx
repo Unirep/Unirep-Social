@@ -12,11 +12,7 @@ const TopicPage = () => {
         return <Redirect to="/" />
     }
 
-    const topic: any = {
-        id: topicId,
-    }
-
-    return <MainPage topic={topic.id} />
+    return <MainPage topic={topicId} />
 }
 
 export default observer(TopicPage)
