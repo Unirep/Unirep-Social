@@ -2,6 +2,7 @@ import { useHistory } from 'react-router-dom'
 
 // todo: make this more dynamic and export it somewhere else
 export const topics = [
+    { id: 'general', name: 'General' },
     {
         id: 'philosophy',
         name: 'Philosophy',
