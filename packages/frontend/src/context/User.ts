@@ -365,7 +365,7 @@ export class User {
             currentEpoch,
             subsidyKey
         )
-        if (spentSubsidy > 0) {
+        if (spentSubsidy.toNumber() > 0) {
             return {
                 error: 'The epoch key has been airdropped',
                 transaction: undefined,
