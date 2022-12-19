@@ -36,10 +36,10 @@ const NewPage = () => {
         history.push(`/${topic}`)
     }
 
-    // Check if the route is 'general/new' and 'general' is not in the topics array
-    if (topicId === 'general' && !topics.some((t) => t.id === topicId)) {
-        // If the route is 'general/new' and 'general' is not in the topics array, render the new page
-        return (
+    return (
+        // Check if the route is 'general/new' or if the topicId is in the topics array
+        topicId === 'general' || topics.some((t) => t.id === topicId) ? (
+            // If the route is 'general/new' or the topicId is in the topics array, render the new page
             <BasicPage title={'Create Post'}>
                 <WritingField
                     type={DataType.Post}
@@ -49,11 +49,11 @@ const NewPage = () => {
                     showDetail={true}
                 />
             </BasicPage>
+        ) : (
+            // If the route is not 'general/new' and the topicId is not in the topics array, redirect the user to the '/' route
+            <Redirect to="/" />
         )
-    } else {
-        // If the route is not 'general/new' or 'general' is in the topics array, redirect the user to the '/' route
-        return <Redirect to="/" />
-    }
+    )
 }
 
 export default observer(NewPage)
