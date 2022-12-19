@@ -730,6 +730,12 @@ export class Data {
 
         return post
     }
+
+    logout() {
+        this.postDraft = { title: '', content: '' }
+        this.commentDraft = { title: '', content: '' }
+        this.save()
+    }
 }
 
 export default createContext(new Data())
