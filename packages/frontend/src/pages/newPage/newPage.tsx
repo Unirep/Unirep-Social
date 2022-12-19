@@ -50,7 +50,7 @@ const NewPage = () => {
                 />
             </BasicPage>
         ) : (
-            // If the route is not 'general/new' and the topicId is not in the topics array, redirect the user to the '/' route
+            // If the route is not 'general' and the topicId is not in the topics array, redirect the user to the '/' route
             <Redirect to="/" />
         )
     )
