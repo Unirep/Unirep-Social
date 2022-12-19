@@ -310,6 +310,24 @@ async function editComment(req, res) {
         })
     } else {
         const comment = await req.db.findOne('Comment', { where: { _id: id } })
+        const unirepContract = new ethers.Contract(
+            UNIREP,
+            UNIREP_ABI,
+            DEFAULT_ETH_PROVIDER
+        )
+        const currentEpoch = Number(await unirepContract.currentEpoch())
+        await req.db.create('Record', {
+            to: comment.epochKey,
+            from: comment.epochKey,
+            upvote: 0,
+            downvote: 0,
+            epoch: currentEpoch,
+            action: ActionType.EditComment,
+            data: id,
+            transactionHash: transaction,
+            confirmed: 0,
+            spentFromSubsidy: false,
+        })
 
         res.json({
             error,
@@ -337,6 +355,24 @@ async function deleteComment(req, res) {
         })
     } else {
         const comment = await req.db.findOne('Comment', { where: { _id: id } })
+        const unirepContract = new ethers.Contract(
+            UNIREP,
+            UNIREP_ABI,
+            DEFAULT_ETH_PROVIDER
+        )
+        const currentEpoch = Number(await unirepContract.currentEpoch())
+        await req.db.create('Record', {
+            to: comment.epochKey,
+            from: comment.epochKey,
+            upvote: 0,
+            downvote: 0,
+            epoch: currentEpoch,
+            action: ActionType.DeleteComment,
+            data: id,
+            transactionHash: transaction,
+            confirmed: 0,
+            spentFromSubsidy: false,
+        })
 
         res.json({
             error,

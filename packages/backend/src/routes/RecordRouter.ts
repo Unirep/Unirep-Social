@@ -40,7 +40,11 @@ async function loadRecordsForEpk(req, res) {
     })
     const out = await Promise.all(
         records.map(async (record) => {
-            if (record.action === 'Post') {
+            if (
+                record.action === ActionType.Post ||
+                record.action === ActionType.EditPost ||
+                record.action === ActionType.DeletePost
+            ) {
                 const p = await req.db.findOne('Post', {
                     where: { _id: record.data },
                 })
@@ -51,7 +55,11 @@ async function loadRecordsForEpk(req, res) {
                     content: p.content,
                 }
             }
-            if (record.action === 'Comment') {
+            if (
+                record.action === ActionType.Comment ||
+                record.action === ActionType.EditComment ||
+                record.action === ActionType.DeleteComment
+            ) {
                 const c = await req.db.findOne('Comment', {
                     where: {
                         _id: record.data,

@@ -334,6 +334,24 @@ async function editPost(req, res) {
         })
     } else {
         const post = await req.db.findOne('Post', { where: { _id: id } })
+        const unirepContract = new ethers.Contract(
+            UNIREP,
+            UNIREP_ABI,
+            DEFAULT_ETH_PROVIDER
+        )
+        const currentEpoch = Number(await unirepContract.currentEpoch())
+        await req.db.create('Record', {
+            to: post.epochKey,
+            from: post.epochKey,
+            upvote: 0,
+            downvote: 0,
+            epoch: currentEpoch,
+            action: ActionType.EditPost,
+            data: id,
+            transactionHash: transaction,
+            confirmed: 0,
+            spentFromSubsidy: false,
+        })
         res.json({
             error,
             transaction,
@@ -361,7 +379,24 @@ async function deletePost(req, res) {
         })
     } else {
         const post = await req.db.findOne('Post', { where: { _id: id } })
-
+        const unirepContract = new ethers.Contract(
+            UNIREP,
+            UNIREP_ABI,
+            DEFAULT_ETH_PROVIDER
+        )
+        const currentEpoch = Number(await unirepContract.currentEpoch())
+        await req.db.create('Record', {
+            to: post.epochKey,
+            from: post.epochKey,
+            upvote: 0,
+            downvote: 0,
+            epoch: currentEpoch,
+            action: ActionType.DeletePost,
+            data: id,
+            transactionHash: transaction,
+            confirmed: 0,
+            spentFromSubsidy: false,
+        })
         res.json({
             error,
             transaction,

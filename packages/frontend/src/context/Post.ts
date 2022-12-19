@@ -1,15 +1,8 @@
 import { createContext } from 'react'
 import { makeAutoObservable } from 'mobx'
+import { ActionType } from '@unirep-social/core'
 
-import {
-    Post,
-    Comment,
-    QueryType,
-    Vote,
-    Draft,
-    DataType,
-    ActionType,
-} from '../constants'
+import { Post, Comment, QueryType, Vote, Draft, DataType } from '../constants'
 import { makeURL } from '../utils'
 import UserContext, { User } from './User'
 import QueueContext, { Queue, Metadata } from './Queue'
@@ -406,7 +399,8 @@ export class Data {
             },
             {
                 successMessage: 'Update post is finalized',
-                type: ActionType.Post,
+                type: ActionType.EditPost,
+                metadata: { id: postId },
             }
         )
     }
@@ -455,7 +449,8 @@ export class Data {
             },
             {
                 successMessage: 'Delete post is finalized',
-                type: ActionType.Post,
+                type: ActionType.DeletePost,
+                metadata: { id: postId },
             }
         )
     }
@@ -657,7 +652,8 @@ export class Data {
             },
             {
                 successMessage: 'Update comment is finalized',
-                type: ActionType.Comment,
+                type: ActionType.EditComment,
+                metadata: { id: commentId },
             }
         )
     }
@@ -714,7 +710,8 @@ export class Data {
             },
             {
                 successMessage: 'Delete comment is finalized',
-                type: ActionType.Comment,
+                type: ActionType.DeleteComment,
+                metadata: { id: commentId },
             }
         )
     }
@@ -772,6 +769,12 @@ export class Data {
         }
 
         return post
+    }
+
+    logout() {
+        this.postDraft = { title: '', content: '' }
+        this.commentDraft = { title: '', content: '' }
+        this.save()
     }
 }
 
