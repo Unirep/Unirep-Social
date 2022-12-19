@@ -6,23 +6,36 @@ import EpochManager from '../../context/EpochManager'
 import CustomInput from '../../components/customInput'
 import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
-import { ActionType } from '../../constants'
+import { ActionType } from '@unirep-social/core'
+
+enum SetUsernameStatus {
+    default = 'Apply',
+    applying = 'Applying...',
+    applied = 'Applied',
+}
 
 const Username = () => {
     const [username, setUsername] = useState<string>('') // default put user.username
     const [errorMsg, setErrorMsg] = useState<string>('')
-    const [isApplied, setIsApplied] = useState<boolean>(false)
+    const [status, setStatus] = useState<SetUsernameStatus>(
+        SetUsernameStatus.default
+    )
     const queue = useContext(QueueContext)
     const user = useContext(UserContext)
     const epochManager = useContext(EpochManager)
 
     const onChange = (event: any) => {
+        if (status === SetUsernameStatus.applying) return
+
         setUsername(event.target.value)
         setErrorMsg('')
-        setIsApplied(false) // if setting up user name is unlimited in each epoch
+        setStatus(SetUsernameStatus.default)
     }
 
     const submit = () => {
+        if (status === SetUsernameStatus.applying) return
+
+        setStatus(SetUsernameStatus.applying)
         queue.addOp(
             async (updateStatus) => {
                 updateStatus({
@@ -41,7 +54,7 @@ const Username = () => {
                 })
                 await queue.afterTx(transaction)
                 await epochManager.updateWatch()
-                setIsApplied(true)
+                setStatus(SetUsernameStatus.applied)
 
                 let metadata: Metadata = {
                     transactionId: transaction,
@@ -49,7 +62,7 @@ const Username = () => {
                 return metadata
             },
             {
-                type: ActionType.Username,
+                type: ActionType.SetUsername,
             }
         )
     }
@@ -61,6 +74,7 @@ const Username = () => {
                     title={'User name'}
                     onChange={onChange}
                     conceal={false}
+                    disabled={status === SetUsernameStatus.applying}
                 />
                 <CustomGap times={2} />
                 <MyButton
@@ -69,9 +83,9 @@ const Username = () => {
                     fullSize={true}
                     textAlignMiddle={true}
                     fontWeight={600}
-                    disabled={isApplied}
+                    disabled={status !== SetUsernameStatus.default}
                 >
-                    {isApplied ? 'Applied' : 'Apply'}
+                    {status}
                 </MyButton>
                 {errorMsg.length > 0 && (
                     <div>
@@ -79,7 +93,7 @@ const Username = () => {
                         <div className="error-msg">{errorMsg}</div>
                     </div>
                 )}
-                {isApplied && (
+                {status === SetUsernameStatus.applied && (
                     <div>
                         <CustomGap times={2} />
                         <p>This user name will apply to next epoch.</p>

@@ -1,9 +1,10 @@
 import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
+
 import * as config from '../config'
-import { Record, ActionType } from '../constants'
+import { Record } from '../constants'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy, hash2 } from '@unirep/crypto'
+import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { makeURL } from '../utils'
 import { genEpochKey, schema } from '@unirep/core'
 import { SocialUserState } from '@unirep-social/core'
@@ -456,6 +457,7 @@ export class User {
         const hasSignedUp = await this._hasSignedUp(idInput)
         if (!hasSignedUp) return false
 
+        await this.loadCurrentEpoch()
         await this.setIdentity(idInput)
         await this.calculateAllEpks()
         if (!this.userState) {
@@ -464,8 +466,11 @@ export class User {
         await this.startSync()
         this.userState.waitForSync().then(() => {
             this.loadReputation()
+            this.updateLatestTransitionedEpoch()
+            this.loadRecords()
             this.save()
         })
+
         return true
     }
 

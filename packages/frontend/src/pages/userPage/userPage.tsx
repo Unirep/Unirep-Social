@@ -2,9 +2,7 @@ import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
-
-import { ActionType } from '../../constants'
-import { getRecords } from '../../utils'
+import { ActionType } from '@unirep-social/core'
 
 import BasicPage from '../basicPage/basicPage'
 import { Record, Page, QueryType } from '../../constants'
@@ -90,6 +88,7 @@ const UserPage = () => {
 
     const getUserRecords = async () => {
         if (!user.userState || !user.identity) return
+        await user.loadingPromise
 
         let r: number[] = [0, 0, 0]
         let s: number[] = [0, 0, 0, 0]
@@ -164,7 +163,7 @@ const UserPage = () => {
         }
 
         getUserData()
-    }, [])
+    }, [user.recordsByEpk])
 
     const switchDropdown = () => {
         if (isDropdown) {

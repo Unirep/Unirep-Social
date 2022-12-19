@@ -5,9 +5,10 @@ type Props = {
     title: string
     onChange: (event: any) => void
     conceal?: boolean
+    disabled?: boolean
 }
 
-const CustomInput = ({ id, title, onChange, conceal }: Props) => {
+const CustomInput = ({ id, title, onChange, conceal, disabled }: Props) => {
     const [visible, setVisible] = useState<boolean>(false)
 
     return (
@@ -18,6 +19,7 @@ const CustomInput = ({ id, title, onChange, conceal }: Props) => {
                     id={id}
                     onChange={onChange}
                     type={!conceal || visible ? 'text' : 'password'}
+                    disabled={disabled}
                 />
                 {conceal && (
                     <img
