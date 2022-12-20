@@ -25,6 +25,7 @@ export class User {
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: SocialUserState
+    username?: string
 
     syncStartBlock: any
     latestProcessedBlock: any
@@ -632,19 +633,19 @@ export class User {
         console.log('user set user name', username)
         if (!this.userState) throw new Error('user not login')
 
-        let preImage = 0 // what's preImage?
+        let preImage = '0' // get from user input
         const hexlifiedPreImage =
-            preImage == 0
+            preImage == '0'
                 ? 0
                 : ethers.utils.hexlify(
-                      ethers.utils.toUtf8Bytes(preImage.toString())
+                      ethers.utils.toUtf8Bytes(preImage)
                   )
-
+        
         const usernameProof = await this.userState.genProveReputationProof(
             BigInt(this.unirepConfig.attesterId),
             0,
             0,
-            hexlifiedPreImage == 0 ? BigInt(0) : BigInt(1),
+            BigInt(1),
             BigInt(hexlifiedPreImage),
             0
         )
