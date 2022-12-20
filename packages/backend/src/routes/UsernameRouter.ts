@@ -13,8 +13,9 @@ import {
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { ReputationProof } from '@unirep/contracts'
-import { verifyReputationProof, verifyGSTRoot } from '../utils'
+import { verifyReputationProof } from '../utils'
 import { hashOne } from '@unirep/crypto'
+import { ActionType } from '@unirep-social/core'
 
 export default (app: Express) => {
     app.post('/api/usernames', catchError(setUsername))
@@ -104,6 +105,19 @@ async function setUsername(req, res) {
         unirepSocialContract.address,
         { data: calldata, value: attestingFee }
     )
+
+    await req.db.create('Record', {
+        to: epochKey,
+        from: epochKey,
+        upvote: 0,
+        downvote: 0,
+        epoch: currentEpoch,
+        action: ActionType.SetUsername,
+        data: newUsername,
+        transactionHash: hash,
+        confirmed: 1, // this should be checked in synchronizer???
+    })
+
     res.json({
         transaction: hash,
     })

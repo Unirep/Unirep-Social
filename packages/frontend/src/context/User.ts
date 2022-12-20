@@ -2,12 +2,12 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
 
 import * as config from '../config'
-import { Record } from '../constants'
+import { Record, Username } from '../constants'
 import { ethers } from 'ethers'
 import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { makeURL } from '../utils'
 import { genEpochKey, schema } from '@unirep/core'
-import { SocialUserState } from '@unirep-social/core'
+import { SocialUserState, ActionType } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
@@ -25,7 +25,7 @@ export class User {
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: SocialUserState
-    username?: string
+    username = {} as Username
 
     syncStartBlock: any
     latestProcessedBlock: any
@@ -152,6 +152,32 @@ export class User {
                 this.recordsByEpk[epkOfRecord] = []
             }
             this.recordsByEpk[epkOfRecord].unshift(r)
+
+            if (r.action === ActionType.SetUsername) {
+                if (r.epoch < this.currentEpoch) {
+                    // records are sorted by time, so the latest one from previous epochs is also the preImage
+                    this.username = {
+                        oldUsername: r.data,
+                        username: r.data,
+                        epoch: r.epoch,
+                    }
+                } else {
+                    // if same epoch, should decide whether there is old username or not
+                    if (this.username.username) {
+                        this.username = {
+                            oldUsername: this.username.oldUsername,
+                            username: r.data,
+                            epoch: r.epoch,
+                        }
+                    } else {
+                        this.username = {
+                            oldUsername: '0',
+                            username: r.data,
+                            epoch: r.epoch,
+                        }
+                    }
+                }
+            }
         }
 
         // calculate rep spent of this epoch
@@ -629,23 +655,20 @@ export class User {
         }
     }
 
-    async setUsername(username: string) {
-        console.log('user set user name', username)
+    async setUsername(preImage: string, username: string) {
+        console.log('user change user name', preImage, 'to', username)
         if (!this.userState) throw new Error('user not login')
 
-        let preImage = '0' // get from user input
         const hexlifiedPreImage =
             preImage == '0'
                 ? 0
-                : ethers.utils.hexlify(
-                      ethers.utils.toUtf8Bytes(preImage)
-                  )
-        
+                : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+
         const usernameProof = await this.userState.genProveReputationProof(
             BigInt(this.unirepConfig.attesterId),
+            2,
             0,
-            0,
-            BigInt(1),
+            preImage === '0' ? BigInt(0) : BigInt(1),
             BigInt(hexlifiedPreImage),
             0
         )

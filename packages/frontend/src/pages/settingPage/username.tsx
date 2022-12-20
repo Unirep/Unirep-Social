@@ -15,14 +15,19 @@ enum SetUsernameStatus {
 }
 
 const Username = () => {
-    const [username, setUsername] = useState<string>('') // default put user.username
-    const [errorMsg, setErrorMsg] = useState<string>('')
-    const [status, setStatus] = useState<SetUsernameStatus>(
-        SetUsernameStatus.default
-    )
     const queue = useContext(QueueContext)
     const user = useContext(UserContext)
     const epochManager = useContext(EpochManager)
+
+    const [username, setUsername] = useState<string>(
+        user.username.username ?? ''
+    )
+    const [errorMsg, setErrorMsg] = useState<string>('')
+    const [status, setStatus] = useState<SetUsernameStatus>(
+        user.username.epoch === user.currentEpoch
+            ? SetUsernameStatus.applied
+            : SetUsernameStatus.default
+    )
 
     const onChange = (event: any) => {
         if (status === SetUsernameStatus.applying) return
@@ -34,6 +39,10 @@ const Username = () => {
 
     const submit = () => {
         if (status === SetUsernameStatus.applying) return
+        if (username.length === 0) {
+            setErrorMsg('Do not leave it blank')
+            return
+        }
 
         setStatus(SetUsernameStatus.applying)
         queue.addOp(
@@ -42,7 +51,10 @@ const Username = () => {
                     title: 'Performing Username Setup',
                     details: 'Generating ZK proof...',
                 })
-                const { transaction, error } = await user.setUsername(username)
+                const { transaction, error } = await user.setUsername(
+                    user.username.oldUsername ?? '0',
+                    username
+                )
                 if (error) {
                     setErrorMsg(error)
                     throw new Error(error)
@@ -54,6 +66,7 @@ const Username = () => {
                 })
                 await queue.afterTx(transaction)
                 await epochManager.updateWatch()
+                await user.loadRecords()
                 setStatus(SetUsernameStatus.applied)
 
                 let metadata: Metadata = {
@@ -72,6 +85,7 @@ const Username = () => {
             <div className="username">
                 <CustomInput
                     title={'User name'}
+                    value={username}
                     onChange={onChange}
                     conceal={false}
                     disabled={status === SetUsernameStatus.applying}

@@ -52,6 +52,11 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
             return { who: 'I (' + h.from + ')', action: 'edited a comment' }
         } else if (h.action === ActionType.DeleteComment) {
             return { who: 'I (' + h.from + ')', action: 'deleted a comment' }
+        } else if (h.action === ActionType.SetUsername) {
+            return {
+                who: 'I (' + h.from + ')',
+                action: 'set my username as ' + h.data,
+            }
         } else {
             if (isSpent) {
                 return {

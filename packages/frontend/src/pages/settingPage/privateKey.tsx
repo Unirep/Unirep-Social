@@ -116,12 +116,14 @@ const PrivateKey = () => {
                                 id="passwordInput"
                                 title="Password"
                                 onChange={onPwdChange}
+                                conceal={true}
                             />
                             <CustomGap times={1} />
                             <CustomInput
                                 id="passwordConfirmInput"
                                 title="Confirm password"
                                 onChange={onConfirmPwdChange}
+                                conceal={true}
                             />
                             <CustomGap times={1} />
 
