@@ -52,7 +52,7 @@ async function getAirdrop(req, res) {
         res.status(422).json({ error: error })
         return
     }
-    if (negRepProof.publicSignals[4] > DEFAULT_AIRDROPPED_KARMA) {
+    if (negRepProof.negRep > DEFAULT_AIRDROPPED_KARMA) {
         console.log('airdrop error: wrong neg req')
         res.status(422).json({ error: 'wrong neg req' })
         return
