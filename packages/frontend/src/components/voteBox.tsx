@@ -39,6 +39,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
             ? postContext.postsById[dataId].epoch_key
             : postContext.commentsById[dataId].epoch_key
     )
+    const [useUsername, setUseUsername] = useState<boolean>(false)
 
     useEffect(() => {
         if (isPost) {
@@ -188,6 +189,13 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         chooseToUsePersona={chooseToUsePersona}
                         epkNonce={epkNonce}
                         setEpkNonce={setEpkNonce}
+                        username={userContext.username.username}
+                        showUsername={
+                            userContext.username.epoch !== undefined &&
+                            userContext.username.epoch <
+                                userContext.currentEpoch
+                        }
+                        setUseUsername={setUseUsername}
                     />
                     <MyButton
                         type={MyButtonType.dark}

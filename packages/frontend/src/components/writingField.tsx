@@ -62,6 +62,7 @@ const WritingField = (props: Props) => {
     })
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
+    const [useUsername, setUseUsername] = useState<boolean>(false)
 
     const defaultRep =
         props.type === DataType.Post
@@ -168,6 +169,13 @@ const WritingField = (props: Props) => {
                             chooseToUsePersona={chooseToUsePersona}
                             epkNonce={epkNonce}
                             setEpkNonce={setEpkNonce}
+                            username={userContext.username.username}
+                            showUsername={
+                                userContext.username.epoch !== undefined &&
+                                userContext.username.epoch <
+                                    userContext.currentEpoch
+                            }
+                            setUseUsername={setUseUsername}
                         />
                     ) : (
                         <>somethings wrong...</>
