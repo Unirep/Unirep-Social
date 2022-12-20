@@ -23,11 +23,6 @@
             margin: 10px 0;
             padding: 10px;
         }
-
-        /* Show the button only on mobile devices */
-        button.show-button {
-            display: block;
-        }
     }
 
     .topic-buttons {
@@ -43,16 +38,15 @@
         margin: 10px 30px;
         justify-content: center;
         align-items: center;
+        cursor: pointer; /* add cursor: pointer to show that the div is clickable */
     }
+}
 
-    .topic-buttons > div:hover {
-        cursor: pointer;
-    }
-
-    // todo: just for fun - will change later
-    .topic-buttons > div:active {
-        /* Add styles to highlight and underline the text of the button when clicked */
-        color: rgb(255, 30, 0);
-        text-decoration: underline;
-    }
+/* Move styles for .topic-buttons > div:hover outside of .topics-menu block */
+.topic-buttons > div:hover {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0.1)
+    );
 }

@@ -40,7 +40,10 @@ const NewPage = () => {
         // Check if the route is 'general/new' or if the topicId is in the topics array
         topicId === 'general' || topics.some((t) => t.id === topicId) ? (
             // If the route is 'general/new' or the topicId is in the topics array, render the new page
-            <BasicPage title={'Create Post'}>
+            <BasicPage
+                title={'Create Post'}
+                topic={topicId.charAt(0).toUpperCase() + topicId.slice(1)}
+            >
                 <WritingField
                     type={DataType.Post}
                     submit={submit}
