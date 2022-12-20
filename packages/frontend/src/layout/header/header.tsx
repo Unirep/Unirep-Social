@@ -19,7 +19,6 @@ const Header = () => {
     useEffect(() => {
         const pathname = location.pathname
         const topic = pathname.split('/')[1]
-        console.log(topic)
         setTopic(topic)
     }, [location])
 

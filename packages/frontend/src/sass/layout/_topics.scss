@@ -11,6 +11,25 @@
     width: 100%;
     border-top: solid lightgrey 1px;
     border-bottom: solid lightgrey 1px;
+
+    @media (max-width: 600px) {
+        /* Change the layout to stack the topic buttons vertically */
+        .topic-buttons {
+            flex-direction: column;
+        }
+
+        /* Adjust the padding and margins for smaller screens */
+        .topic-buttons > div {
+            margin: 10px 0;
+            padding: 10px;
+        }
+
+        /* Show the button only on mobile devices */
+        button.show-button {
+            display: block;
+        }
+    }
+
     .topic-buttons {
         display: flex;
         justify-content: center;
