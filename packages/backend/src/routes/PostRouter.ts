@@ -239,9 +239,6 @@ async function createPostSubsidy(req, res) {
     // Parse Inputs
     const { publicSignals, proof, title, content, topic } = req.body
 
-    // topic logs out so how can i request to the backend to get topic?
-    console.log('logging topic in createPostSubsidy', topic)
-
     const subsidyProof = new SubsidyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
