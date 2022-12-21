@@ -19,7 +19,6 @@ type Props = {
 }
 
 const BasicPage = ({ hasBack, title, children, topic }: Props) => {
-    console.log(topic)
     const { isMenuOpen } = useContext(WebContext)
     const history = useHistory()
 

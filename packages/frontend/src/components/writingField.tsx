@@ -70,14 +70,11 @@ const WritingField = (props: Props) => {
     const [topic, setTopic] = useState<string>('')
 
     const handleTopic = () => {
-        // Check if location.state is defined, topic property exists, and user is on Post page
         if (
             location.state &&
             location.state.topic &&
             props.type === DataType.Post
         ) {
-            // Set the topic state variable if the location.state.topic property exists
-            console.log(location.state.topic)
             setTopic(location.state.topic)
         }
     }
