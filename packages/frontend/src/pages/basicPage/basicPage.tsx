@@ -19,6 +19,7 @@ type Props = {
 }
 
 const BasicPage = ({ hasBack, title, children, topic }: Props) => {
+    console.log(topic)
     const { isMenuOpen } = useContext(WebContext)
     const history = useHistory()
 
@@ -35,10 +36,11 @@ const BasicPage = ({ hasBack, title, children, topic }: Props) => {
             <div className="content">
                 <Banner />
                 <div className="main-content">
-                    <h2 className="topic-landing">
-                        <i className="fas fa-book">{topic}</i>
-                    </h2>
-
+                    {topic !== undefined && (
+                        <h2 className="topic-landing">
+                            <i>{topic}</i>
+                        </h2>
+                    )}
                     <div className="main-content-bar">
                         {hasBack && (
                             <img
