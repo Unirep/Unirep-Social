@@ -38,15 +38,12 @@
         margin: 10px 30px;
         justify-content: center;
         align-items: center;
-        cursor: pointer; /* add cursor: pointer to show that the div is clickable */
+        cursor: pointer;
     }
-}
 
-/* Move styles for .topic-buttons > div:hover outside of .topics-menu block */
-.topic-buttons > div:hover {
-    background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0),
-        rgba(255, 255, 255, 0.1)
-    );
+    .topic-buttons > div:active {
+        color: rgb(77, 77, 77);
+        box-shadow: 4px 4px 4px 4px rgba(48, 48, 48, 0.5);
+        border-radius: 5%;
+    }
 }
