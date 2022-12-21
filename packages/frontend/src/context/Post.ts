@@ -251,7 +251,8 @@ export class Data {
         title: string = '',
         content: string = '',
         epkNonce: number = 0,
-        minRep = 0
+        minRep = 0,
+        graffiti: string = '0'
     ) {
         queueContext.addOp(
             async (updateStatus) => {
@@ -265,9 +266,10 @@ export class Data {
                     ? userContext.genRepProof(
                           unirepConfig.postReputation,
                           epkNonce,
-                          minRep
+                          minRep,
+                          graffiti
                       )
-                    : userContext.genSubsidyProof(minRep))
+                    : userContext.genSubsidyProof(minRep, 0, graffiti))
                 updateStatus({
                     title: 'Creating post',
                     details: 'Waiting for TX inclusion...',
@@ -423,7 +425,8 @@ export class Data {
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
-        minRep = 0
+        minRep = 0,
+        graffiti: string = '0'
     ) {
         const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
@@ -436,11 +439,13 @@ export class Data {
                     ? userContext.genRepProof(
                           upvote + downvote,
                           epkNonce,
-                          minRep
+                          minRep,
+                          graffiti
                       )
                     : userContext.genSubsidyProof(
                           minRep,
-                          `0x${_receiver.replace('0x', '')}`
+                          `0x${_receiver.replace('0x', '')}`,
+                          graffiti
                       ))
                 updateStatus({
                     title: 'Creating Vote',
@@ -495,7 +500,8 @@ export class Data {
         content: string,
         postId: string,
         epkNonce: number = 0,
-        minRep = 0
+        minRep = 0,
+        graffiti: string = '0'
     ) {
         queueContext.addOp(
             async (updateStatus) => {
@@ -507,9 +513,10 @@ export class Data {
                     ? userContext.genRepProof(
                           unirepConfig.commentReputation,
                           epkNonce,
-                          minRep
+                          minRep,
+                          graffiti
                       )
-                    : userContext.genSubsidyProof(minRep))
+                    : userContext.genSubsidyProof(minRep, 0, graffiti))
                 updateStatus({
                     title: 'Creating comment',
                     details: 'Waiting for transaction...',

@@ -22,12 +22,20 @@ const NewPage = () => {
         title: string,
         content: string,
         epkNonce: number,
-        reputation: number
+        reputation: number,
+        useUsername: boolean
     ) => {
         if (!userContext.userState) {
             throw new Error('Should not be able to create post without login')
         }
-        postContext.publishPost(title, content, epkNonce, reputation)
+        postContext.publishPost(
+            title,
+            content,
+            epkNonce,
+            reputation,
+            useUsername ? userContext.username.username : '0'
+        )
+
         history.push('/')
     }
 

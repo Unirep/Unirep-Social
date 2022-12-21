@@ -517,7 +517,11 @@ export class User {
         window.localStorage.removeItem('identity')
     }
 
-    async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
+    async genSubsidyProof(
+        minRep = 0,
+        notEpochKey: string | number = 0,
+        graffiti: string = '0'
+    ) {
         const currentEpoch = await this.loadCurrentEpoch()
         if (!this.userState) throw new Error('User state not initialized')
 
@@ -530,7 +534,12 @@ export class User {
         return { proof, publicSignals, currentEpoch }
     }
 
-    async genRepProof(proveKarma: number, epkNonce: number, minRep = 0) {
+    async genRepProof(
+        proveKarma: number,
+        epkNonce: number,
+        minRep = 0,
+        graffiti: string = '0'
+    ) {
         if (epkNonce >= this.unirepConfig.numEpochKeyNoncePerEpoch) {
             throw new Error('Invalid epk nonce')
         }
@@ -546,8 +555,11 @@ export class User {
         if (this.spent + Math.max(proveKarma, minRep) > this.reputation) {
             throw new Error('Not enough reputation')
         }
-        const proveGraffiti = BigInt(0)
-        const graffitiPreImage = BigInt(0)
+        const proveGraffiti = graffiti === '0' ? BigInt(0) : BigInt(1)
+        const graffitiPreImage =
+            graffiti === '0'
+                ? BigInt(0)
+                : BigInt(ethers.utils.hexlify(graffiti))
         if (!this.userState) throw new Error('User state not initialized')
 
         await this.userState.waitForSync()

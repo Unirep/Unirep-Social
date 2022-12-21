@@ -18,7 +18,8 @@ type Props = {
         title: string,
         content: string,
         epkNonce: number,
-        reputation: number
+        reputation: number,
+        useUsername: boolean
     ) => void
     submitBtnName: string
     onClick: (event: any) => void
@@ -105,7 +106,7 @@ const WritingField = (props: Props) => {
                     'Please change your content to update, else click cancel to leave edit mode.'
                 )
             } else {
-                props.submit(title, content, epkNonce, reputation)
+                props.submit(title, content, epkNonce, reputation, useUsername)
             }
         }
     }

@@ -71,7 +71,9 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                 obj.epoch_key,
                 epkNonce,
                 upvote,
-                downvote
+                downvote,
+                0,
+                useUsername ? userContext.username.username : '0'
             )
             closeVote()
         }

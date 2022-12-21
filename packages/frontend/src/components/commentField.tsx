@@ -25,7 +25,8 @@ const CommentField = (props: Props) => {
         title: string = '',
         content: string,
         epkNonce: number,
-        reputation: number
+        reputation: number,
+        useUsername: boolean
     ) => {
         if (!userContext.userState) {
             console.error('user not login!')
@@ -40,7 +41,8 @@ const CommentField = (props: Props) => {
                 content,
                 props.post.id,
                 epkNonce,
-                reputation
+                reputation,
+                useUsername ? userContext.username.username : '0'
             )
             props.closeComment()
         }
