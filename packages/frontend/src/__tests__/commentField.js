@@ -4,17 +4,6 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import CommentField from '../components/commentField'
 
-jest.mock('react-router-dom', () => ({
-    ...jest.requireActual('react-router-dom'),
-    useLocation: () => ({
-        state: {
-            test: {
-                test: 'test',
-            },
-        },
-    }),
-}))
-
 const renderCommentField = (
     userData,
     postData,

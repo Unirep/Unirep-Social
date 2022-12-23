@@ -54,7 +54,7 @@ describe('visit and interact with home page', () => {
         cy.get('.user-info-widget > .rep-info').contains('0')
         cy.go('back')
     })
-    it.skip('ensures that user can submit a post', () => {
+    it('ensures that user can submit a post', () => {
         // todo: find way to target title (might have to add id in UI)
         const loremPost =
             '*Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.*'

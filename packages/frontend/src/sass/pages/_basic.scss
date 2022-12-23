@@ -27,7 +27,7 @@ h4 {
 }
 
 .body-columns {
-    // margin-top: 104px;
+    margin-top: 104px;
     height: auto;
     display: flex;
     flex-direction: row;
@@ -69,19 +69,6 @@ h4 {
                     height: 24px;
                     cursor: pointer;
                 }
-            }
-            .topic-landing {
-                text-align: center;
-                font-size: 1.5em;
-                font-weight: 600;
-                background-color: #f2f2f2;
-                border: 0.5px solid rgb(77, 77, 77);
-                padding: 15px;
-            }
-
-            .topic-landing i {
-                margin-right: 10px;
-                color: #333;
             }
         }
 

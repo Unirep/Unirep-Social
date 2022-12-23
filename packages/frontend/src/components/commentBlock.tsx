@@ -60,7 +60,6 @@ const CommentBlock = ({ commentId, page }: Props) => {
     const updateComment = (
         title: string,
         content: string,
-        topic: string,
         epkNonce: number,
         reputation: number
     ) => {
