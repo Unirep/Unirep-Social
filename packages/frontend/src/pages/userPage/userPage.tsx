@@ -109,7 +109,7 @@ const UserPage = () => {
                         } else {
                             s[1] += record.downvote
                         }
-                    } else if (record.action === ActionType.UST) {
+                    } else if (record.action === ActionType.Airdrop) {
                         r[0] += record.upvote
                     } else if (record.action === ActionType.Vote) {
                         if (record.from === epk && record.spentFromSubsidy) {
