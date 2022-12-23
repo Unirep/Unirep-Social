@@ -559,7 +559,9 @@ export class User {
         const graffitiPreImage =
             graffiti === '0'
                 ? BigInt(0)
-                : BigInt(ethers.utils.hexlify(graffiti))
+                : BigInt(
+                      ethers.utils.hexlify(ethers.utils.toUtf8Bytes(graffiti))
+                  )
         if (!this.userState) throw new Error('User state not initialized')
 
         await this.userState.waitForSync()

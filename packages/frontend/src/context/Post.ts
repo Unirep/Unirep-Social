@@ -503,6 +503,7 @@ export class Data {
         minRep = 0,
         graffiti: string = '0'
     ) {
+        console.log('leave comment with graffiti:', graffiti)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({

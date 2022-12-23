@@ -44,6 +44,7 @@ const _schema = [
             ['hashedContent', 'String'],
             ['epoch', 'Int'],
             ['epochKey', 'String'],
+            ['graffiti', 'String', { optional: true }],
             ['proveMinRep', 'Bool', { optional: true }],
             ['minRep', 'Int', { optional: true }],
             {
@@ -77,6 +78,7 @@ const _schema = [
                 type: 'Int',
                 default: () => +new Date(),
             },
+            ['graffiti', 'String', { optional: true }],
             ['onChainId', 'String', { optional: true }],
             ['transactionHash', 'String', { optional: true }],
             ['title', 'String', { optional: true }],
