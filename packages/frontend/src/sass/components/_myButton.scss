@@ -25,8 +25,10 @@
     background-color: $black;
     color: $white;
     border: none;
+    transition: background-image 0.5s, background-color 0.5s;
 
     &:hover {
+        background-image: linear-gradient(to right, $grey-400, transparent);
         background-color: $grey-400;
     }
 
@@ -36,7 +38,6 @@
         cursor: not-allowed;
     }
 }
-
 .button-light {
     background-color: $grey-100;
     color: $black;
