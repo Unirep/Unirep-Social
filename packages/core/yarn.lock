@@ -957,10 +957,10 @@
     ethers "^5.6.8"
     solc "^0.8.16"
 
-"@unirep/core@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.1.tgz#00bf476ea298541ddd762848eac8a8e41896ef9f"
-  integrity sha512-kAJdukXWToUpmi9u9XeV8U14K4zxs+N9fWXmK/VSAnyEvYrhBMpTfYQpDvanF91g7xvTP3sKQ1r6O2jWX00iIA==
+"@unirep/core@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@unirep/core/-/core-1.0.3.tgz#9513efceae134464e8071e0abf5c33424c977207"
+  integrity sha512-L3alNYVmLFeOHahsw/XLOE9NQzisisatBIkQYdCJHDrQz99kZW1nlTu4ppftA1/zQKvmxAUK9M3q21UmVuruDQ==
   dependencies:
     "@unirep/circuits" "1.0.1"
     "@unirep/contracts" "1.0.1"

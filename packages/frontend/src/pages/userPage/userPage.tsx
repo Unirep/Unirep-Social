@@ -88,6 +88,7 @@ const UserPage = () => {
 
     const getUserRecords = async () => {
         if (!user.userState || !user.identity) return
+        await user.loadingPromise
 
         let r: number[] = [0, 0, 0]
         let s: number[] = [0, 0, 0, 0]
@@ -162,7 +163,7 @@ const UserPage = () => {
         }
 
         getUserData()
-    }, [])
+    }, [user.recordsByEpk])
 
     const switchDropdown = () => {
         if (isDropdown) {
