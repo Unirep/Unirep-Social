@@ -76,7 +76,8 @@ const MainPage = ({ topic }: Props) => {
                         : 'Create post'}
                 </div>
                 <Feed feedChoice={query} setFeedChoice={setQuery} />
-                {/* if topicName is undefined then we are on a 'no-topic' page */}
+                {/* if topicName is undefined then we are on a 'general' page */}
+                {/* this logic should render existing posts _without_ a topic field*/}
                 {typeof topic === 'undefined' ? (
                     <PostsList
                         postIds={postContext.feedsByQuery[query] || []}
