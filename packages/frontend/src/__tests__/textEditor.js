@@ -23,7 +23,6 @@ const renderTextEditor = () => {
 
 test('type text into textbox', async () => {
     renderTextEditor()
-    jest.setTimeout(10000)
     const textbox = screen.getByRole('textbox')
     await userEvent.type(textbox, loremText)
     expect(textbox).toHaveValue(loremText)

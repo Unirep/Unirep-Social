@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import NewPage from '../pages/newPage/newPage'
-import { BrowserRouter, Redirect } from 'react-router-dom'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -13,7 +12,6 @@ jest.mock('react-router-dom', () => ({
             },
         },
     }),
-    useParams: jest.fn().mockReturnValue({ id: '1' }),
 }))
 
 test('should render NewPage correctly with mocked .Provider data and props', async () => {
@@ -42,19 +40,13 @@ test('should render NewPage correctly with mocked .Provider data and props', asy
     }
 
     render(
-        <BrowserRouter>
-            <Redirect Redirect to="/">
-                <UserContext.Provider value={userData}>
-                    <PostContext.Provider value={postData}>
-                        <NewPage />
-                    </PostContext.Provider>
-                </UserContext.Provider>
-            </Redirect>
-        </BrowserRouter>
+        <UserContext.Provider value={userData}>
+            <PostContext.Provider value={postData}>
+                <NewPage />
+            </PostContext.Provider>
+        </UserContext.Provider>
     )
-
-    // todo: why doesn't anything render for NewPage here
-    // expect(screen.getByText(/create post/i)).toBeInTheDocument()
-    // expect(screen.getByText(/post - 5 points/i)).toBeInTheDocument()
-    // expect(screen.getByText(/transition at:/i)).toBeInTheDocument()
+    expect(screen.getByText(/create post/i)).toBeInTheDocument()
+    expect(screen.getByText(/post - 5 points/i)).toBeInTheDocument()
+    expect(screen.getByText(/transition at:/i)).toBeInTheDocument()
 })

@@ -24,7 +24,6 @@ const CommentField = (props: Props) => {
     const submitComment = async (
         title: string = '',
         content: string,
-        topic: string,
         epkNonce: number,
         reputation: number
     ) => {
@@ -50,7 +49,7 @@ const CommentField = (props: Props) => {
     return (
         <div className="comment-field">
             <WritingField
-                type={DataType.Comment} // todo: use this field to negate topic logic
+                type={DataType.Comment}
                 submit={submitComment}
                 submitBtnName="Comment - 3 points"
                 onClick={preventPropagation}

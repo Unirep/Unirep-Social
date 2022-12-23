@@ -30,7 +30,6 @@ export default (app: Express) => {
     app.get('/api/post/:id', catchError(loadPostById))
     app.get('/api/post/:postId/comments', catchError(loadCommentsByPostId))
     app.get('/api/post/:postId/votes', catchError(loadVotesByPostId))
-
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
@@ -68,69 +67,37 @@ async function loadPostById(req, res) {
 }
 
 async function loadPosts(req, res) {
-    // logic for topic that is truthy
-    if (req.query.topic !== undefined) {
-        const { topic } = req.query
-
-        const query = req.query.query.toString()
-        const epks = req.query.epks ? req.query.epks.split('_') : undefined
-        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-
-        const topicPosts = (
-            await req.db.findMany('Post', {
-                where: {
-                    epochKey: epks,
-                    topic,
-                },
-                orderBy: {
-                    createdAt: query === QueryType.New ? 'desc' : undefined,
-                    posRep: query === QueryType.Boost ? 'desc' : undefined,
-                    negRep: query === QueryType.Squash ? 'desc' : undefined,
-                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                    commentCount:
-                        query === QueryType.Comments ? 'desc' : undefined,
-                },
-            })
-        ).filter((p) => !lastRead.includes(p._id))
-
-        res.json(
-            topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
-        )
-    } else if (req.query.query === undefined) {
+    if (req.query.query === undefined) {
         const posts = await req.db.findMany('Post', {
             where: {
                 status: 1,
-                topic: !req.query.topic,
             },
         })
         res.json(posts)
         return
-    } else {
-        const query = req.query.query.toString()
-        // TODO: deal with this when there's an offset arg
-        // const lastRead = req.query.lastRead || 0
-        const epks = req.query.epks ? req.query.epks.split('_') : undefined
-        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-
-        const posts = (
-            await req.db.findMany('Post', {
-                where: {
-                    epochKey: epks,
-                    topic: '',
-                },
-                orderBy: {
-                    createdAt: query === QueryType.New ? 'desc' : undefined,
-                    posRep: query === QueryType.Boost ? 'desc' : undefined,
-                    negRep: query === QueryType.Squash ? 'desc' : undefined,
-                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                    commentCount:
-                        query === QueryType.Comments ? 'desc' : undefined,
-                },
-            })
-        ).filter((p) => !lastRead.includes(p._id))
-
-        res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     }
+    const query = req.query.query.toString()
+    // TODO: deal with this when there's an offset arg
+    // const lastRead = req.query.lastRead || 0
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
+
+    const posts = (
+        await req.db.findMany('Post', {
+            where: {
+                epochKey: epks,
+            },
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            },
+        })
+    ).filter((p) => !lastRead.includes(p._id))
+
+    res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 
 async function createPost(req, res) {
@@ -149,8 +116,7 @@ async function createPost(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, title, content, topic } = req.body
-
+    const { publicSignals, proof, title, content } = req.body
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -188,12 +154,11 @@ async function createPost(req, res) {
             value: attestingFee,
         }
     )
-    // adding topic when creating this post
+
     const post = await req.db.create('Post', {
         content,
         hashedContent,
         title,
-        topic,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,
@@ -237,8 +202,7 @@ async function createPostSubsidy(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, title, content, topic } = req.body
-
+    const { publicSignals, proof, title, content } = req.body
     const subsidyProof = new SubsidyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
@@ -281,7 +245,6 @@ async function createPostSubsidy(req, res) {
         content,
         hashedContent,
         title,
-        topic,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,

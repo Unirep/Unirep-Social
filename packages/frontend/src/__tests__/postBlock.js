@@ -8,17 +8,6 @@ import PostContext from '../context/Post'
 import EpochContext from '../context/EpochManager'
 import QueueContext from '../context/Queue'
 
-jest.mock('react-router-dom', () => ({
-    ...jest.requireActual('react-router-dom'),
-    useLocation: () => ({
-        state: {
-            test: {
-                test: 'test',
-            },
-        },
-    }),
-}))
-
 // abstracted render function
 const renderPostBlock = (
     queueData,

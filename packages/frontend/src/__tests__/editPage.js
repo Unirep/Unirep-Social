@@ -10,13 +10,6 @@ const mockHistoryPush = jest.fn()
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
-    useLocation: () => ({
-        state: {
-            test: {
-                test: 'test',
-            },
-        },
-    }),
     useHistory: () => ({
         push: mockHistoryPush,
         goBack: mockHistoryPush,

@@ -1,5 +1,4 @@
 import { useState, useContext, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
 import 'react-circular-progressbar/dist/styles.css'
 import { observer } from 'mobx-react-lite'
 
@@ -18,7 +17,6 @@ type Props = {
     submit: (
         title: string,
         content: string,
-        topic: string,
         epkNonce: number,
         reputation: number
     ) => void
@@ -35,8 +33,6 @@ const WritingField = (props: Props) => {
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
     const uiContext = useContext(UIContext)
-
-    const location = useLocation<{ topic: string }>()
 
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
@@ -67,18 +63,6 @@ const WritingField = (props: Props) => {
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
-    const [topic, setTopic] = useState<string>('')
-
-    const handleTopic = () => {
-        if (
-            location.state &&
-            location.state.topic &&
-            props.type === DataType.Post
-        ) {
-            setTopic(location.state.topic)
-        }
-    }
-
     const defaultRep =
         props.type === DataType.Post
             ? unirepConfig.postReputation
@@ -87,7 +71,6 @@ const WritingField = (props: Props) => {
 
     useEffect(() => {
         setErrorMsg('')
-        handleTopic()
     }, [title, content, reputation, epkNonce])
 
     const onClickField = (event: any) => {
@@ -121,7 +104,7 @@ const WritingField = (props: Props) => {
                     'Please change your content to update, else click cancel to leave edit mode.'
                 )
             } else {
-                props.submit(title, content, topic, epkNonce, reputation)
+                props.submit(title, content, epkNonce, reputation)
             }
         }
     }
