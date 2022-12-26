@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 import PostContext from '../../context/Post'
@@ -11,7 +11,11 @@ import BasicPage from '../basicPage/basicPage'
 import PostsList from '../../components/postsList'
 import Feed from '../../components/feed'
 
-const MainPage = () => {
+type Props = {
+    topic: string
+}
+
+const MainPage = ({ topic }: Props) => {
     const history = useHistory()
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
@@ -19,45 +23,74 @@ const MainPage = () => {
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
 
-    const loadMorePosts = () => {
-        console.log(
-            'load more posts, now posts: ' +
-                postContext.feedsByQuery[query]?.length
-        )
-        postContext.loadFeed(query, postContext.feedsByQuery[query])
-    }
-
     useEffect(() => {
-        postContext.loadFeed(query)
-    }, [query])
+        loadMorePosts(topic)
+    }, [topic, query])
+
+    const loadMorePosts = (topic: string) => {
+        if (typeof topic === 'undefined') {
+            postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
+        } else {
+            postContext.loadFeedByTopic(
+                query,
+                topic,
+                postContext.feedsByTopic[topic] || []
+            )
+        }
+    }
 
     const gotoNewPost = () => {
         if (
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            history.push('/new', { isConfirmed: true })
+            // pass topic state to new page
+            history.push(
+                {
+                    pathname: `/${topic || 'general'}/new`,
+                    state: { topic: topic },
+                },
+                { isConfirmed: true }
+            )
         } else {
             console.log(userContext.id)
         }
     }
 
+    // topic string formatter
+    const formatTopic = (topic: string) => {
+        return topic
+            ? topic.charAt(0).toUpperCase() + topic.slice(1)
+            : 'General'
+    }
+
     return (
-        <BasicPage>
-            <div className="create-post" onClick={gotoNewPost}>
-                {!userContext.userState
-                    ? AlertType.postNotLogin
-                    : userContext.spendableReputation <
-                      unirepConfig.postReputation
-                    ? AlertType.postNotEnoughPoints
-                    : 'Create post'}
-            </div>
-            <Feed feedChoice={query} setFeedChoice={setQuery} />
-            <PostsList
-                postIds={postContext.feedsByQuery[query] || []}
-                loadMorePosts={loadMorePosts}
-            />
-        </BasicPage>
+        <>
+            <BasicPage topic={formatTopic(topic)}>
+                <div className="create-post" onClick={gotoNewPost}>
+                    {!userContext.userState
+                        ? AlertType.postNotLogin
+                        : userContext.spendableReputation <
+                          unirepConfig.postReputation
+                        ? AlertType.postNotEnoughPoints
+                        : 'Create post'}
+                </div>
+                <Feed feedChoice={query} setFeedChoice={setQuery} />
+                {/* if topicName is undefined then we are on a 'general' page */}
+                {/* this logic should render existing posts _without_ a topic field*/}
+                {typeof topic === 'undefined' ? (
+                    <PostsList
+                        postIds={postContext.feedsByQuery[query] || []}
+                        loadMorePosts={loadMorePosts}
+                    />
+                ) : (
+                    <PostsList
+                        postIds={postContext.feedsByTopic[topic] || []}
+                        loadMorePosts={loadMorePosts}
+                    />
+                )}
+            </BasicPage>
+        </>
     )
 }
 

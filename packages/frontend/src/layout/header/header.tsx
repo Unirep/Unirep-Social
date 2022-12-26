@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { NavLink, useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
@@ -14,12 +14,22 @@ const Header = () => {
     const unirepConfig = useContext(UnirepContext)
     const userContext = useContext(UserContext)
 
+    const [topic, setTopic] = useState('')
+
+    useEffect(() => {
+        const pathname = location.pathname
+        const topic = pathname.split('/')[1]
+        setTopic(topic)
+    }, [location])
+
     const gotoNewPage = () => {
         if (
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            history.push(`/new`, { isConfirmed: true })
+            history.push(`/${topic || 'general'}/new`, {
+                isConfirmed: true,
+            })
         }
     }
 
@@ -65,19 +75,22 @@ const Header = () => {
                         />
                         {userContext.netReputation}
                     </div>
-                    <div
-                        id="new"
-                        className={
-                            location.pathname === '/new'
-                                ? 'navBtn chosen'
-                                : 'navBtn'
-                        }
-                    >
-                        <img
-                            src={require('../../../public/images/newpost.svg')}
-                            onClick={gotoNewPage}
-                        />
-                    </div>
+                    {/* do not show new icon on /user or /setting page */}
+                    {topic !== 'user' && topic !== 'setting' && (
+                        <div
+                            id="new"
+                            className={
+                                location.pathname === '/new'
+                                    ? 'navBtn chosen'
+                                    : 'navBtn'
+                            }
+                        >
+                            <img
+                                src={require('../../../public/images/newpost.svg')}
+                                onClick={gotoNewPage}
+                            />
+                        </div>
+                    )}
                     <div
                         id="user"
                         className={

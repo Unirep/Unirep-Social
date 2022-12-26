@@ -37,6 +37,7 @@ const EditPage = () => {
     const submit = (
         title: string,
         content: string,
+        topic: string,
         epkNonce: number,
         reputation: number
     ) => {

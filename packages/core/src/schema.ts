@@ -81,6 +81,7 @@ const _schema = [
             ['transactionHash', 'String', { optional: true }],
             ['title', 'String', { optional: true }],
             ['content', 'String', { optional: true }],
+            ['topic', 'String', { optional: true }],
             ['hashedContent', 'String'],
             ['epoch', 'Int'],
             ['epochKey', 'String'],
