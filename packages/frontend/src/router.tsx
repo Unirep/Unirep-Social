@@ -4,8 +4,7 @@ import { useState } from 'react'
 import useLocalStorage from './hooks/useLocalStorage'
 import * as Constants from './constants'
 import Header from './layout/header/header'
-import TopicsMenu from './components/topicsMenu'
-import MainPage from './pages/mainPage/mainPage'
+import HomePage from './pages/homePage/homePage'
 import PostPage from './pages/postPage/postPage'
 import EditPage from './pages/editPage/editPage'
 import UserPage from './pages/userPage/userPage'
@@ -41,10 +40,9 @@ const AppRouter = () => {
                     }}
                 >
                     <Header />
-                    <TopicsMenu />
 
                     <Switch>
-                        <Route component={MainPage} path="/" exact={true} />
+                        <Route component={HomePage} path="/" exact={true} />
                         <Route component={StartPage} path="/start" />
                         <Route component={StartPage} path="/start/callback" />
                         <Route component={PostPage} path="/post/:id" />
@@ -54,7 +52,6 @@ const AppRouter = () => {
                         <Route component={FeedbackPage} path="/feedback" />
                         <Route component={AdminPage} path="/admin" />
                         <Route component={SettingPage} path="/setting" />
-
                         <Route component={TopicPage} path="/:topicId" />
 
                         <Route component={() => <Redirect to="/" />} />

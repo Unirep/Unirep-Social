@@ -4,7 +4,7 @@ import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import UIContext, { EpochStatus } from '../context/UI'
-import MainPage from '../pages/mainPage/mainPage'
+import MainPage from '../pages/homePage/homePage'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),

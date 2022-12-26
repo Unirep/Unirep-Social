@@ -20,8 +20,6 @@ const NewPage = () => {
         event.stopPropagation()
     }
 
-    const { topicId }: any = useParams()
-
     const submit = async (
         title: string,
         content: string,
@@ -37,25 +35,15 @@ const NewPage = () => {
     }
 
     return (
-        // Check if the route is 'general/new' or if the topicId is in the topics array
-        topicId === 'general' || topics.some((t) => t.id === topicId) ? (
-            // If the route is 'general/new' or the topicId is in the topics array, render the new page
-            <BasicPage
-                title={'Create Post'}
-                topic={topicId.charAt(0).toUpperCase() + topicId.slice(1)}
-            >
-                <WritingField
-                    type={DataType.Post}
-                    submit={submit}
-                    submitBtnName="Post - 5 points"
-                    onClick={preventPropagation}
-                    showDetail={true}
-                />
-            </BasicPage>
-        ) : (
-            // If the route is not 'general' and the topicId is not in the topics array, redirect the user to the '/' route
-            <Redirect to="/" />
-        )
+        <BasicPage title={'Create Post'}>
+            <WritingField
+                type={DataType.Post}
+                submit={submit}
+                submitBtnName="Post - 5 points"
+                onClick={preventPropagation}
+                showDetail={true}
+            />
+        </BasicPage>
     )
 }
 

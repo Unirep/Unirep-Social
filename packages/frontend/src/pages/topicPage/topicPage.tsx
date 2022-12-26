@@ -1,7 +1,7 @@
 import { useParams, useLocation, Redirect } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 import { topics } from '../../components/topicsMenu'
-import MainPage from '../mainPage/mainPage'
+import MainPage from '../homePage/homePage'
 
 const TopicPage = () => {
     const { topicId }: any = useParams()

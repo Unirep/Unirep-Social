@@ -20,3 +20,52 @@
     color: white;
     cursor: pointer;
 }
+
+.dropdown {
+    width: 100%;
+    position: relative;
+
+    .choice {
+        width: 100%;
+        height: 40px;
+        padding: 32px;
+
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+        font-size: $title-sm;
+        font-weight: 600;
+        color: $grey-700;
+        cursor: pointer;
+        background-color: $white;
+
+        &:hover {
+            background-color: $grey-100;
+        }
+
+        img {
+            width: 32px;
+            height: 32px;
+        }
+
+        span {
+            margin-right: auto;
+        }
+    }
+
+    .isChosen {
+        background-color: $grey-100;
+        justify-content: space-between;
+    }
+}
+
+.isDropdown {
+    box-shadow: 0px 5px 23px 2px #00000014;
+}
+
+.interline {
+    width: 100%;
+    border-bottom: 5px dashed $grey-200;
+}
