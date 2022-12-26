@@ -12,13 +12,13 @@
     display: flex;
     align-items: center;
 
-    transition: background-color 0.5s ease-in-out, color 0.3s ease-in-out;
-}
+    // transition: background-color 0.5s ease-in-out, color 0.3s ease-in-out;
 
-.create-post:hover {
-    background-color: #333;
-    color: white;
-    cursor: pointer;
+    &:hover {
+        // background-color: #333;
+        // color: white;
+        cursor: pointer;
+    }
 }
 
 .dropdown {
@@ -49,20 +49,16 @@
             width: 32px;
             height: 32px;
         }
-
-        span {
-            margin-right: auto;
-        }
     }
 
     .isChosen {
         background-color: $grey-100;
         justify-content: space-between;
-    }
-}
 
-.isDropdown {
-    box-shadow: 0px 5px 23px 2px #00000014;
+        &:hover {
+            background-color: $grey-200;
+        }
+    }
 }
 
 .interline {

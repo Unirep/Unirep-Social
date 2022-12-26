@@ -1,6 +1,7 @@
 import { useContext } from 'react'
-import { useHistory, Redirect, useParams } from 'react-router-dom'
+import { useHistory } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
+import { useLocation } from 'react-router-dom'
 
 import UserContext from '../../context/User'
 import PostContext from '../../context/Post'
@@ -9,12 +10,14 @@ import WritingField from '../../components/writingField'
 import BasicPage from '../basicPage/basicPage'
 import { DataType } from '../../constants'
 
-import { topics } from '../../components/topicsMenu'
-
 const NewPage = () => {
     const history = useHistory()
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
+
+    const location = useLocation<Location>()
+    const state = JSON.parse(JSON.stringify(location.state))
+    const isConfirmed = state.isConfirmed
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
@@ -42,6 +45,7 @@ const NewPage = () => {
                 submitBtnName="Post - 5 points"
                 onClick={preventPropagation}
                 showDetail={true}
+                showTopic={true}
             />
         </BasicPage>
     )

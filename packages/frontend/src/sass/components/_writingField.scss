@@ -55,4 +55,38 @@
         background-color: $white;
         opacity: 0.5;
     }
+
+    .set-topic {
+        display: flex;
+        margin-top: 8px;
+
+        .dropdown {
+            position: absolute;
+            left: 60px;
+
+            .choice {
+                width: 156px;
+                height: 32px;
+                padding: 8px 16px;
+                font-size: $text-sm;
+                font-weight: 600;
+                color: $grey-700;
+                cursor: pointer;
+                background-color: $white;
+
+                &:hover {
+                    background-color: $grey-100;
+                }
+
+                img {
+                    width: 20px;
+                    height: 20px;
+                }
+            }
+
+            .isChosen {
+                background-color: $grey-100;
+            }
+        }
+    }
 }
