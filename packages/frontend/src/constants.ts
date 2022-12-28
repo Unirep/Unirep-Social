@@ -157,6 +157,10 @@ export interface Draft {
 
 export const Topics = [
     {
+        id: 'general',
+        name: 'General',
+    },
+    {
         id: 'philosophy',
         name: 'Philosophy',
     },

@@ -65,7 +65,7 @@ const MainPage = ({ topic }: Props) => {
         return topic.charAt(0).toUpperCase() + topic.slice(1)
     }
 
-    const formattedTopic = topic ? formatTopic(topic) : 'General'
+    const formattedTopic = topic ? formatTopic(topic) : '[Choose a topic]'
 
     return (
         <>
@@ -87,7 +87,7 @@ const MainPage = ({ topic }: Props) => {
                         onClick={() => setDropdown(false)}
                     >
                         <div className="choice" onClick={() => gotoTopic()}>
-                            General
+                            {'[Choose a topic]'}
                         </div>
                         {Topics.map((t) => (
                             <div

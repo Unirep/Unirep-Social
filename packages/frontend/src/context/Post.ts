@@ -146,7 +146,7 @@ export class Data {
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
-            topic,
+            topic: topic === 'general' ? '' : topic, // should find a way to connect with Topics in /constants.ts, instead of a string
             lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
