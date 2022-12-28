@@ -91,7 +91,6 @@ async function loadPosts(req, res) {
             },
         })
     ).filter((p) => !lastRead.includes(p._id))
-
     res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 

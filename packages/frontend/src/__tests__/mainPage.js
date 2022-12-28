@@ -4,7 +4,7 @@ import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import UIContext, { EpochStatus } from '../context/UI'
-import MainPage from '../pages/homePage/homePage'
+import HomePage from '../pages/homePage/homePage'
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -20,7 +20,7 @@ const renderMainPage = (userData, unirepData, postData, UIData) => {
             <UserContext.Provider value={userData}>
                 <UnirepContext.Provider value={unirepData}>
                     <PostContext.Provider value={postData}>
-                        <MainPage />
+                        <HomePage />
                     </PostContext.Provider>
                 </UnirepContext.Provider>
             </UserContext.Provider>

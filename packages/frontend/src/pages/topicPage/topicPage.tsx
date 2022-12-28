@@ -1,7 +1,7 @@
 import { useParams, useLocation, Redirect } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 import { Topics } from '../../constants'
-import MainPage from '../homePage/homePage'
+import HomePage from '../homePage/homePage'
 
 const TopicPage = () => {
     const { topicId }: any = useParams()
@@ -12,7 +12,7 @@ const TopicPage = () => {
         return <Redirect to="/" />
     }
 
-    return <MainPage topic={topicId} />
+    return <HomePage topic={topicId} />
 }
 
 export default observer(TopicPage)

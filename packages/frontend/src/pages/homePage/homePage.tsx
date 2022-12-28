@@ -16,7 +16,7 @@ type Props = {
     topic?: string
 }
 
-const MainPage = ({ topic }: Props) => {
+const HomePage = ({ topic }: Props) => {
     const history = useHistory()
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
@@ -30,15 +30,9 @@ const MainPage = ({ topic }: Props) => {
     }, [topic, query])
 
     const loadMorePosts = () => {
-        if (topic) {
-            postContext.loadFeedByTopic(
-                query,
-                topic,
-                postContext.feedsByTopic[topic] || []
-            )
-        } else {
-            postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
-        }
+        const key = `${query}${topic ? '-' + topic : ''}`
+        console.log(key)
+        postContext.loadFeed(query, topic, postContext.feeds[key] || [])
     }
 
     const gotoNewPost = () => {
@@ -66,6 +60,10 @@ const MainPage = ({ topic }: Props) => {
     }
 
     const formattedTopic = topic ? formatTopic(topic) : '[Choose a topic]'
+    const getPostIds = () => {
+        if (topic) return postContext.feeds[`${query}-${topic}`] || []
+        else return postContext.feeds[query] || []
+    }
 
     return (
         <>
@@ -113,22 +111,12 @@ const MainPage = ({ topic }: Props) => {
                 )}
 
                 <Feed feedChoice={query} setFeedChoice={setQuery} />
-                {/* if topicName is undefined then we are on a 'general' page */}
-                {/* this logic should render existing posts _without_ a topic field*/}
-                {typeof topic === 'undefined' ? (
-                    <PostsList
-                        postIds={postContext.feedsByQuery[query] || []}
-                        loadMorePosts={loadMorePosts}
-                    />
-                ) : (
-                    <PostsList
-                        postIds={postContext.feedsByTopic[topic] || []}
-                        loadMorePosts={loadMorePosts}
-                    />
-                )}
+                <PostsList
+                    postIds={getPostIds()}
+                    loadMorePosts={loadMorePosts}
+                />
             </BasicPage>
         </>
     )
 }
-
-export default observer(MainPage)
+export default observer(HomePage)
