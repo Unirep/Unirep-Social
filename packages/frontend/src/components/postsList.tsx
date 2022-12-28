@@ -12,6 +12,7 @@ type Props = {
 }
 
 const PostsList = ({ postIds, loadMorePosts }: Props) => {
+    console.log(postIds)
     return (
         <div className="post-list">
             {postIds.length > 0 ? (

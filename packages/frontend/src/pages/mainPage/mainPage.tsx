@@ -28,15 +28,9 @@ const MainPage = ({ topic }: Props) => {
     }, [topic, query])
 
     const loadMorePosts = (topic: string) => {
-        if (typeof topic === 'undefined') {
-            postContext.loadFeed(query, postContext.feedsByQuery[query] || [])
-        } else {
-            postContext.loadFeedByTopic(
-                query,
-                topic,
-                postContext.feedsByTopic[topic] || []
-            )
-        }
+        const key = `${query}-${topic || 'general'}`
+        console.log(key)
+        postContext.loadFeed(query, topic, postContext.feeds[key] || [])
     }
 
     const gotoNewPost = () => {
@@ -64,6 +58,13 @@ const MainPage = ({ topic }: Props) => {
             : 'General'
     }
 
+    const getPostIds = () => {
+        if (typeof topic === 'undefined') {
+            return postContext.feeds[query] || []
+        }
+        return postContext.feeds[`${query}-${topic}`] || []
+    }
+
     return (
         <>
             <BasicPage topic={formatTopic(topic)}>
@@ -76,22 +77,12 @@ const MainPage = ({ topic }: Props) => {
                         : 'Create post'}
                 </div>
                 <Feed feedChoice={query} setFeedChoice={setQuery} />
-                {/* if topicName is undefined then we are on a 'general' page */}
-                {/* this logic should render existing posts _without_ a topic field*/}
-                {typeof topic === 'undefined' ? (
-                    <PostsList
-                        postIds={postContext.feedsByQuery[query] || []}
-                        loadMorePosts={loadMorePosts}
-                    />
-                ) : (
-                    <PostsList
-                        postIds={postContext.feedsByTopic[topic] || []}
-                        loadMorePosts={loadMorePosts}
-                    />
-                )}
+                <PostsList
+                    postIds={getPostIds()}
+                    loadMorePosts={loadMorePosts}
+                />
             </BasicPage>
         </>
     )
 }
-
 export default observer(MainPage)

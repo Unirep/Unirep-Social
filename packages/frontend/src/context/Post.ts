@@ -15,8 +15,9 @@ const unirepConfig = (UnirepContext as any)._currentValue as UnirepConfig
 export class Data {
     commentsById = {} as { [id: string]: Comment }
     postsById = {} as { [id: string]: Post }
-    feedsByQuery = {} as { [query: string]: string[] }
-    feedsByTopic = {} as { [topic: string]: string[] }
+    // feedsByQuery = {} as { [query: string]: string[] }
+    // feedsByTopic = {} as { [topic: string]: string[] }
+    feeds = {} as { [key: string]: string[] }
     commentsByPostId = {} as { [postId: string]: string[] }
     commentsByQuery = {} as { [commentId: string]: string[] }
     votesById = {} as { [id: string]: Vote }
@@ -89,8 +90,8 @@ export class Data {
         }
     }
 
-    feedKey(query: string, epks = [] as string[]) {
-        return epks.length === 0 ? query : `${query}-user`
+    feedKey(query: string, topic: string | undefined, epks = [] as string[]) {
+        return `${query}-${topic || 'general'}`
     }
 
     async loadPost(id: string) {
@@ -105,6 +106,7 @@ export class Data {
 
     async loadFeed(
         query: string,
+        topic?: string,
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
@@ -113,60 +115,28 @@ export class Data {
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
+            // only include topic if it is truthy!
+            // topic would be `undefined` otherwise
+            ...(topic ? { topic } : {}),
             lastRead: lastRead.join('_'),
             epks: epksBase10.join('_'),
         })
         const r = await fetch(apiURL)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
+        console.log('posts are in frontend', posts)
         this.ingestPosts(posts)
-        const key = this.feedKey(query, epks)
-        if (!this.feedsByQuery[key]) {
-            this.feedsByQuery[key] = []
+        const key = this.feedKey(query, topic, epks)
+        if (!this.feeds[key]) {
+            this.feeds[key] = []
         }
         const ids = {} as { [key: string]: boolean }
         const postIds = posts.map((p) => p.id)
-        this.feedsByQuery[key] = [...this.feedsByQuery[key], ...postIds].filter(
-            (id) => {
-                if (ids[id]) return false
-                ids[id] = true
-                return true
-            }
-        )
-    }
-
-    async loadFeedByTopic(
-        query: string,
-        topic: string,
-        lastRead = [] as string[],
-        epks = [] as string[]
-    ) {
-        await unirepConfig.loadingPromise
-
-        const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
-        const apiURL = makeURL(`post`, {
-            query,
-            topic,
-            lastRead: lastRead.join('_'),
-            epks: epksBase10.join('_'),
+        this.feeds[key] = [...this.feeds[key], ...postIds].filter((id) => {
+            if (ids[id]) return false
+            ids[id] = true
+            return true
         })
-        const r = await fetch(apiURL)
-        const data = await r.json()
-        const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
-        this.ingestPosts(posts)
-        const key = this.feedKey(topic, epks)
-        if (!this.feedsByTopic[key]) {
-            this.feedsByTopic[key] = []
-        }
-        const ids = {} as { [key: string]: boolean }
-        const postIds = posts.map((p) => p.id)
-        this.feedsByTopic[key] = [...this.feedsByTopic[key], ...postIds].filter(
-            (id) => {
-                if (ids[id]) return false
-                ids[id] = true
-                return true
-            }
-        )
     }
 
     async loadComments(
@@ -187,7 +157,7 @@ export class Data {
         const comments = data.map((p: any) =>
             this.convertDataToComment(p)
         ) as Comment[]
-        const key = this.feedKey(query, epks)
+        const key = this.feedKey(query, undefined, epks)
         this.ingestComments(comments)
         if (!this.commentsByQuery[key]) {
             this.commentsByQuery[key] = []
@@ -331,8 +301,9 @@ export class Data {
                 await queueContext.afterTx(transaction)
                 const post = this.convertDataToPost(_post)
                 this.postsById[post.id] = post
-                if (this.feedsByQuery[QueryType.New] !== undefined) {
-                    this.feedsByQuery[QueryType.New].unshift(post.id)
+                // todo: make sure this works
+                if (this.feeds[QueryType.New] !== undefined) {
+                    this.feeds[QueryType.New].unshift(post.id)
                 }
                 this.postDraft = { title: '', content: '' }
                 this.save()

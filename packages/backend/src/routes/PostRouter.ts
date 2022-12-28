@@ -68,69 +68,53 @@ async function loadPostById(req, res) {
 }
 
 async function loadPosts(req, res) {
-    // logic for topic that is truthy
-    if (req.query.topic !== undefined) {
-        const { topic } = req.query
-
-        const query = req.query.query.toString()
-        const epks = req.query.epks ? req.query.epks.split('_') : undefined
-        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-
-        const topicPosts = (
-            await req.db.findMany('Post', {
-                where: {
-                    epochKey: epks,
-                    topic,
-                },
-                orderBy: {
-                    createdAt: query === QueryType.New ? 'desc' : undefined,
-                    posRep: query === QueryType.Boost ? 'desc' : undefined,
-                    negRep: query === QueryType.Squash ? 'desc' : undefined,
-                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                    commentCount:
-                        query === QueryType.Comments ? 'desc' : undefined,
-                },
-            })
-        ).filter((p) => !lastRead.includes(p._id))
-
-        res.json(
-            topicPosts.slice(0, Math.min(LOAD_POST_COUNT, topicPosts.length))
-        )
-    } else if (req.query.query === undefined) {
+    if (req.query.topic === undefined) {
+        console.log('making sure this is hit')
         const posts = await req.db.findMany('Post', {
             where: {
-                status: 1,
-                topic: !req.query.topic,
+                // status: 1,
+                topic: '',
             },
         })
         res.json(posts)
+        console.log(posts)
         return
-    } else {
-        const query = req.query.query.toString()
-        // TODO: deal with this when there's an offset arg
-        // const lastRead = req.query.lastRead || 0
-        const epks = req.query.epks ? req.query.epks.split('_') : undefined
-        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-
-        const posts = (
-            await req.db.findMany('Post', {
-                where: {
-                    epochKey: epks,
-                    topic: '',
-                },
-                orderBy: {
-                    createdAt: query === QueryType.New ? 'desc' : undefined,
-                    posRep: query === QueryType.Boost ? 'desc' : undefined,
-                    negRep: query === QueryType.Squash ? 'desc' : undefined,
-                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                    commentCount:
-                        query === QueryType.Comments ? 'desc' : undefined,
-                },
-            })
-        ).filter((p) => !lastRead.includes(p._id))
-
-        res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     }
+
+    const { topic } = req.query
+    const query = req.query.query.toString()
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
+
+    const queryObject: any = {
+        where: {},
+        orderBy: {},
+    }
+
+    if (epks) {
+        queryObject.where.epochKey = epks
+    }
+    if (topic) {
+        queryObject.where.topic = topic
+    }
+
+    if (query === QueryType.New) {
+        queryObject.orderBy.createdAt = 'desc'
+    } else if (query === QueryType.Boost) {
+        queryObject.orderBy.posRep = 'desc'
+    } else if (query === QueryType.Squash) {
+        queryObject.orderBy.negRep = 'desc'
+    } else if (query === QueryType.Rep) {
+        queryObject.orderBy.totalRep = 'desc'
+    } else if (query === QueryType.Comments) {
+        queryObject.orderBy.commentCount = 'desc'
+    }
+
+    const posts = (await req.db.findMany('Post', queryObject)).filter(
+        (p) => !lastRead.includes(p._id)
+    )
+
+    res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 
 async function createPost(req, res) {
