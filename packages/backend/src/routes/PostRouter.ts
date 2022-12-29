@@ -68,7 +68,7 @@ async function loadPostById(req, res) {
 }
 
 async function loadPosts(req, res) {
-    if (req.query.topic === undefined) {
+    if (req.query.query === undefined) {
         console.log('making sure this is hit')
         const posts = await req.db.findMany('Post', {
             where: {
