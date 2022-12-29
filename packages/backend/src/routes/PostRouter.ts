@@ -69,15 +69,13 @@ async function loadPostById(req, res) {
 
 async function loadPosts(req, res) {
     if (req.query.query === undefined) {
-        console.log('making sure this is hit')
         const posts = await req.db.findMany('Post', {
             where: {
-                // status: 1,
-                topic: '',
+                status: 1,
+                // topic: '',
             },
         })
         res.json(posts)
-        console.log(posts)
         return
     }
 
@@ -92,7 +90,7 @@ async function loadPosts(req, res) {
         await req.db.findMany('Post', {
             where: {
                 epochKey: epks,
-                topic,
+                topic: topic ? topic : '',
             },
             orderBy: {
                 createdAt: query === QueryType.New ? 'desc' : undefined,
