@@ -29,7 +29,6 @@ const MainPage = ({ topic }: Props) => {
 
     const loadMorePosts = (topic: string) => {
         const key = `${query}-${topic || 'general'}`
-        console.log(key)
         postContext.loadFeed(query, topic, postContext.feeds[key] || [])
     }
 
@@ -59,10 +58,8 @@ const MainPage = ({ topic }: Props) => {
     }
 
     const getPostIds = () => {
-        if (typeof topic === 'undefined') {
-            return postContext.feeds[query] || []
-        }
-        return postContext.feeds[`${query}-${topic}`] || []
+        const key = `${query}-${topic || 'general'}`
+        return postContext.feeds[key] || []
     }
 
     return (

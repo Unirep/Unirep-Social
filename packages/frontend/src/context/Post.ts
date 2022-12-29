@@ -124,7 +124,6 @@ export class Data {
         const r = await fetch(apiURL)
         const data = await r.json()
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
-        console.log('posts are in frontend', posts)
         this.ingestPosts(posts)
         const key = this.feedKey(query, topic, epks)
         if (!this.feeds[key]) {
