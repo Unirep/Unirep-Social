@@ -90,7 +90,7 @@ export class Data {
         }
     }
 
-    feedKey(query: string, topic?: string, epks = [] as string[]) {
+    feedKey(query: string, topic?: string) {
         return `${query}${topic ? '-' + topic : ''}`
     }
 
@@ -124,7 +124,11 @@ export class Data {
         const posts = data.map((p: any) => this.convertDataToPost(p)) as Post[]
         console.log('posts are in frontend', posts)
         this.ingestPosts(posts)
-        const key = this.feedKey(query, topic, epks)
+
+        let topicFeedKey
+        if (topic) topicFeedKey = topic
+        else if (epks.length > 0) topicFeedKey = 'user'
+        const key = this.feedKey(query, topicFeedKey)
         if (!this.feeds[key]) {
             this.feeds[key] = []
         }
@@ -155,7 +159,7 @@ export class Data {
         const comments = data.map((p: any) =>
             this.convertDataToComment(p)
         ) as Comment[]
-        const key = this.feedKey(query, undefined, epks)
+        const key = this.feedKey(query, 'user')
         this.ingestComments(comments)
         if (!this.commentsByQuery[key]) {
             this.commentsByQuery[key] = []

@@ -60,10 +60,6 @@ const HomePage = ({ topic }: Props) => {
     }
 
     const formattedTopic = topic ? formatTopic(topic) : '[Choose a topic]'
-    const getPostIds = () => {
-        if (topic) return postContext.feeds[`${query}-${topic}`] || []
-        else return postContext.feeds[query] || []
-    }
 
     return (
         <>
@@ -112,7 +108,10 @@ const HomePage = ({ topic }: Props) => {
 
                 <Feed feedChoice={query} setFeedChoice={setQuery} />
                 <PostsList
-                    postIds={getPostIds()}
+                    postIds={
+                        postContext.feeds[postContext.feedKey(query, topic)] ||
+                        []
+                    }
                     loadMorePosts={loadMorePosts}
                 />
             </BasicPage>

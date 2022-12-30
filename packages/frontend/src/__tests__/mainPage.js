@@ -47,12 +47,13 @@ test('should render MainPage with mocked data and false UserState', () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
             },
         },
+        feedKey: jest.fn(),
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData, UIData)
@@ -92,12 +93,13 @@ test('should render MainPage with mocked data and true UserState', () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
             },
         },
+        feedKey: jest.fn(),
         loadFeed: jest.fn(),
     }
     renderMainPage(userData, unirepData, postData, UIData)
@@ -138,12 +140,13 @@ test('should page rerender after user clicks create post button', async () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
             },
         },
+        feedKey: jest.fn(),
         loadFeed: jest.fn(),
     }
 
