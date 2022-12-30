@@ -90,7 +90,7 @@ async function loadPosts(req, res) {
         await req.db.findMany('Post', {
             where: {
                 epochKey: epks,
-                topic: topic ? topic : '',
+                topic: '' ? topic && '' : topic,
             },
             orderBy: {
                 createdAt: query === QueryType.New ? 'desc' : undefined,
