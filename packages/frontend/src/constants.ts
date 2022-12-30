@@ -155,6 +155,45 @@ export interface Draft {
     content: string
 }
 
+export const Topics = [
+    {
+        id: 'philosophy',
+        name: 'Philosophy',
+    },
+    {
+        id: 'technology',
+        name: 'Technology',
+    },
+    {
+        id: 'politics',
+        name: 'Politics',
+    },
+    {
+        id: 'music',
+        name: 'Music',
+    },
+    {
+        id: 'business',
+        name: 'Business',
+    },
+    {
+        id: 'literature',
+        name: 'Literature',
+    },
+    {
+        id: 'fitness',
+        name: 'Fitness',
+    },
+    {
+        id: 'photography',
+        name: 'Photography',
+    },
+    {
+        id: 'news',
+        name: 'News',
+    },
+]
+
 export const getDaysByString = (value: string) => {
     if (value === 'today') return 1
     else if (value === 'this week') return 7

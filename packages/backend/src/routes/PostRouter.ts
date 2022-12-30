@@ -72,7 +72,6 @@ async function loadPosts(req, res) {
         const posts = await req.db.findMany('Post', {
             where: {
                 status: 1,
-                // topic: '',
             },
         })
         res.json(posts)

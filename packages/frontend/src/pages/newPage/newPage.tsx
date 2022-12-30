@@ -7,9 +7,7 @@ import PostContext from '../../context/Post'
 
 import WritingField from '../../components/writingField'
 import BasicPage from '../basicPage/basicPage'
-import { DataType } from '../../constants'
-
-import { topics } from '../../components/topicsMenu'
+import { DataType, Topics } from '../../constants'
 
 const NewPage = () => {
     const history = useHistory()
@@ -38,7 +36,7 @@ const NewPage = () => {
 
     return (
         // Check if the route is 'general/new' or if the topicId is in the topics array
-        topicId === 'general' || topics.some((t) => t.id === topicId) ? (
+        topicId === 'general' || Topics.some((t) => t.id === topicId) ? (
             // If the route is 'general/new' or the topicId is in the topics array, render the new page
             <BasicPage
                 title={'Create Post'}
