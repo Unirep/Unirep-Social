@@ -1,6 +1,6 @@
 import { useHistory, useLocation } from 'react-router-dom'
 import { Topics } from '../constants'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const TopicsMenu = () => {
     const history = useHistory()
@@ -10,6 +10,14 @@ const TopicsMenu = () => {
     const goToTopic = (topicId: string) => {
         history.push(`/${topicId}`, { isConfirmed: true })
     }
+
+    const generalTopicId = Topics.find((topic) => topic.name === 'General')?.id
+
+    useEffect(() => {
+        if (location.pathname === '/') {
+            setSelected('')
+        }
+    }, [location.pathname])
 
     return (
         <div>
@@ -21,7 +29,11 @@ const TopicsMenu = () => {
                             <div
                                 key={topic.id}
                                 className={`topic ${
-                                    selected === topic.id ? 'selected' : ''
+                                    selected === topic.id ||
+                                    (location.pathname === '/' &&
+                                        topic.id === generalTopicId)
+                                        ? 'selected'
+                                        : ''
                                 }`}
                                 onClick={() => {
                                     goToTopic(topic.id)
