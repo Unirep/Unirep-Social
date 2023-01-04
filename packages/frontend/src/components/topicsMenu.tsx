@@ -5,7 +5,7 @@ import { useState } from 'react'
 const TopicsMenu = () => {
     const history = useHistory()
     const location = useLocation()
-    const [selected, setSelected] = useState(null)
+    const [selected, setSelected] = useState('')
 
     const goToTopic = (topicId: string) => {
         history.push(`/${topicId}`, { isConfirmed: true })

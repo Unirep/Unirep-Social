@@ -17,8 +17,7 @@
         justify-content: center;
         text-align: center;
         align-items: center;
-        padding-left: 50px;
-        padding-right: 50px;
+        padding-left: 50px 10px 50px 10px;
     }
 
     .topic {
@@ -29,14 +28,16 @@
     }
 
     .topic:active {
-        color: rgb(77, 77, 77);
+        color: rgb(187, 187, 187);
         box-shadow: 4px 4px 4px 4px rgba(48, 48, 48, 0.5);
         border-radius: 5%;
     }
 
     .topic.selected {
-        /* styles for selected items */
-        color: red;
+        color: black;
+        background-color: rgb(240, 238, 238);
+        border-radius: 13%;
+        text-decoration: underline;
     }
 }
 
