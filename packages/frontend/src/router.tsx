@@ -50,7 +50,7 @@ const AppRouter = () => {
                         <Route component={PostPage} path="/post/:id" />
                         <Route component={EditPage} path="/edit/:id" />
                         <Route component={UserPage} path="/user" />
-                        <Route component={NewPage} path="/:topicId/new" />
+                        <Route component={NewPage} path="/new" />
                         <Route component={FeedbackPage} path="/feedback" />
                         <Route component={AdminPage} path="/admin" />
                         <Route component={SettingPage} path="/setting" />

@@ -11,7 +11,7 @@ import UIContext, { EpochStatus } from '../context/UI'
 import TextEditor from './textEditor'
 import ActionDetail from './actionDetail'
 import MyButton, { MyButtonType } from './myButton'
-import { DataType } from '../constants'
+import { DataType, Topics } from '../constants'
 
 type Props = {
     type: DataType
@@ -27,6 +27,7 @@ type Props = {
     title?: string
     content?: string
     showDetail?: boolean
+    showTopic?: boolean
     isEdit?: boolean
 }
 
@@ -35,8 +36,6 @@ const WritingField = (props: Props) => {
     const userContext = useContext(UserContext)
     const postContext = useContext(PostContext)
     const uiContext = useContext(UIContext)
-
-    const location = useLocation<{ topic: string }>()
 
     const [useSubsidy, setUseSubsidy] = useState<boolean>(true)
     const [title, setTitle] = useState<string>(() => {
@@ -69,15 +68,7 @@ const WritingField = (props: Props) => {
 
     const [topic, setTopic] = useState<string>('')
 
-    const handleTopic = () => {
-        if (
-            location.state &&
-            location.state.topic &&
-            props.type === DataType.Post
-        ) {
-            setTopic(location.state.topic)
-        }
-    }
+    const [isTopicDropdown, setTopicDropdown] = useState<boolean>(false)
 
     const defaultRep =
         props.type === DataType.Post
@@ -87,7 +78,6 @@ const WritingField = (props: Props) => {
 
     useEffect(() => {
         setErrorMsg('')
-        handleTopic()
     }, [title, content, reputation, epkNonce])
 
     const onClickField = (event: any) => {
@@ -121,7 +111,13 @@ const WritingField = (props: Props) => {
                     'Please change your content to update, else click cancel to leave edit mode.'
                 )
             } else {
-                props.submit(title, content, topic, epkNonce, reputation)
+                props.submit(
+                    title,
+                    content,
+                    topic.toLowerCase(),
+                    epkNonce,
+                    reputation
+                )
             }
         }
     }
@@ -161,6 +157,44 @@ const WritingField = (props: Props) => {
                     setContent={handleTextEditorInput}
                     autoFocus={true}
                 />
+            )}
+            {props.showTopic && (
+                <div className="set-topic">
+                    <h4>Topic:</h4>
+                    {isTopicDropdown ? (
+                        <div
+                            className="dropdown"
+                            onClick={() => setTopicDropdown(false)}
+                        >
+                            <div
+                                className="choice"
+                                onClick={() => setTopic('')}
+                            >
+                                None
+                            </div>
+                            {Topics.map((t) => (
+                                <div
+                                    className="choice"
+                                    onClick={() => setTopic(t.name)}
+                                >
+                                    {t.name}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            className="dropdown"
+                            onClick={() => setTopicDropdown(true)}
+                        >
+                            <div className="choice isChosen">
+                                {topic.length > 0 ? topic : 'None'}
+                                <img
+                                    src={require('../../public/images/arrow-down.svg')}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
             <div style={{ marginBottom: '32px' }}></div>
             {props.showDetail && (

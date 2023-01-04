@@ -37,11 +37,9 @@ const MainPage = ({ topic }: Props) => {
             userContext.userState &&
             userContext.spendableReputation >= unirepConfig.postReputation
         ) {
-            // pass topic state to new page
             history.push(
                 {
-                    pathname: `/${topic || 'general'}/new`,
-                    state: { topic: topic },
+                    pathname: `/new`,
                 },
                 { isConfirmed: true }
             )
