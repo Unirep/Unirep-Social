@@ -22,17 +22,6 @@ const Header = () => {
         setTopic(topic)
     }, [location])
 
-    const gotoNewPage = () => {
-        if (
-            userContext.userState &&
-            userContext.spendableReputation >= unirepConfig.postReputation
-        ) {
-            history.push(`/${topic || 'general'}/new`, {
-                isConfirmed: true,
-            })
-        }
-    }
-
     const gotoUserPage = () => {
         history.push(`/user`, { isConfirmed: true })
     }
@@ -75,22 +64,6 @@ const Header = () => {
                         />
                         {userContext.netReputation}
                     </div>
-                    {/* do not show new icon on /user or /setting page */}
-                    {topic !== 'user' && topic !== 'setting' && (
-                        <div
-                            id="new"
-                            className={
-                                location.pathname === '/new'
-                                    ? 'navBtn chosen'
-                                    : 'navBtn'
-                            }
-                        >
-                            <img
-                                src={require('../../../public/images/newpost.svg')}
-                                onClick={gotoNewPage}
-                            />
-                        </div>
-                    )}
                     <div
                         id="user"
                         className={
