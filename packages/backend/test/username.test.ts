@@ -46,14 +46,17 @@ test.serial('should set a username', async (t: any) => {
     await userStateTransition(t, iden)
 
     // change the username to something else
-    await setUsername(
-        t,
-        iden,
-        'initial-test-username123',
-        'second-test-username123'
-    )
-
-    t.pass()
+    try {
+        await setUsername(
+            t,
+            iden,
+            'initial-test-username123',
+            'second-test-username123'
+        )
+        t.pass('pass the test!')
+    } catch (e) {
+        t.fail('set username failed with error ' + e)
+    }
 })
 
 test.serial(
