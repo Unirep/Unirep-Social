@@ -73,7 +73,9 @@ async function setUsername(req, res) {
     const regex = new RegExp('^[a-zA-Z0-9_-]{3,40}$')
 
     if (!regex.test(newUsername)) {
-        res.status(409).json({ error: 'Username invalid' })
+        res.status(409).json({
+            error: 'Username invalid: please set a username length between 3 to 40, and do not use special characters and spaces, only letters and numbers are allowed.',
+        })
         return
     }
 
