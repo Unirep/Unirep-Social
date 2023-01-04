@@ -21,17 +21,22 @@
         padding-right: 50px;
     }
 
-    .topic-buttons > div {
+    .topic {
         margin: 10px 30px;
         justify-content: center;
         align-items: center;
         cursor: pointer;
     }
 
-    .topic-buttons > div:active {
+    .topic:active {
         color: rgb(77, 77, 77);
         box-shadow: 4px 4px 4px 4px rgba(48, 48, 48, 0.5);
         border-radius: 5%;
+    }
+
+    .topic.selected {
+        /* styles for selected items */
+        color: red;
     }
 }
 

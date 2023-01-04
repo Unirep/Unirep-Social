@@ -1,9 +1,11 @@
 import { useHistory, useLocation } from 'react-router-dom'
 import { Topics } from '../constants'
+import { useState } from 'react'
 
 const TopicsMenu = () => {
     const history = useHistory()
     const location = useLocation()
+    const [selected, setSelected] = useState(null)
 
     const goToTopic = (topicId: string) => {
         history.push(`/${topicId}`, { isConfirmed: true })
@@ -18,7 +20,13 @@ const TopicsMenu = () => {
                         {Topics.map((topic) => (
                             <div
                                 key={topic.id}
-                                onClick={() => goToTopic(topic.id)}
+                                className={`topic ${
+                                    selected === topic.id ? 'selected' : ''
+                                }`}
+                                onClick={() => {
+                                    goToTopic(topic.id)
+                                    setSelected(topic.id)
+                                }}
                             >
                                 {topic.name}
                             </div>
