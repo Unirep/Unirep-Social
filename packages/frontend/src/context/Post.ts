@@ -15,8 +15,6 @@ const unirepConfig = (UnirepContext as any)._currentValue as UnirepConfig
 export class Data {
     commentsById = {} as { [id: string]: Comment }
     postsById = {} as { [id: string]: Post }
-    // feedsByQuery = {} as { [query: string]: string[] }
-    // feedsByTopic = {} as { [topic: string]: string[] }
     feeds = {} as { [key: string]: string[] }
     commentsByPostId = {} as { [postId: string]: string[] }
     commentsByQuery = {} as { [commentId: string]: string[] }
