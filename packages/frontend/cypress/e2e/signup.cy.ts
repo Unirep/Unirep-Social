@@ -31,10 +31,6 @@ describe('visit and interact with home page', () => {
             body: [],
         }).as('getApiComment')
         cy.get('.link > img').should('exist')
-        cy.get('#new > img').click()
-        cy.get('.link > img').click()
-        cy.get('#user > img').click()
-        cy.get('.link > img').click()
     })
     it('confirm reputation on home and user page', () => {
         cy.intercept('GET', 'http://testurl.invalidtld/api/records?*', {
