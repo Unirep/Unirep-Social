@@ -33,20 +33,14 @@
     }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 1076px) {
     .topics-menu {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 
         .topic-buttons {
             display: grid;
-            grid-template-columns: 1fr;
-
-            > div {
-                &:nth-child(n + 10) {
-                    grid-column: 2;
-                }
-            }
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
         }
     }
 }
