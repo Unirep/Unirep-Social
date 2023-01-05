@@ -33,7 +33,8 @@ const TopicsMenu = () => {
 
     return (
         <div>
-            {location.pathname !== '/user' &&
+            {location.pathname !== '/new' &&
+            location.pathname !== '/user' &&
             location.pathname !== '/setting' ? (
                 <div className="topics-menu">
                     {screenWidth < 680 ? (
