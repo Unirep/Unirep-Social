@@ -27,16 +27,8 @@
         cursor: pointer;
     }
 
-    .topic:active {
-        color: rgb(187, 187, 187);
-        box-shadow: 4px 4px 4px 4px rgba(48, 48, 48, 0.5);
-        border-radius: 5%;
-    }
-
     .topic.selected {
         color: black;
-        background-color: rgb(214, 214, 214);
-        border-radius: 13%;
         text-decoration: underline;
     }
 }
@@ -51,7 +43,7 @@
             grid-template-columns: 1fr;
 
             > div {
-                &:nth-child(n + 8) {
+                &:nth-child(n + 10) {
                     grid-column: 2;
                 }
             }
