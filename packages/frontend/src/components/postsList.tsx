@@ -1,7 +1,4 @@
 import { observer } from 'mobx-react-lite'
-
-import { useEffect } from 'react'
-
 import PostBlock from './postBlock'
 import { Page } from '../constants'
 import { LOAD_POST_COUNT } from '../config'
@@ -12,7 +9,6 @@ type Props = {
 }
 
 const PostsList = ({ postIds, loadMorePosts }: Props) => {
-    console.log(postIds)
     return (
         <div className="post-list">
             {postIds.length > 0 ? (
