@@ -40,6 +40,7 @@ const MainPage = ({ topic }: Props) => {
             history.push(
                 {
                     pathname: `/new`,
+                    state: { topic: formatTopic(topic) },
                 },
                 { isConfirmed: true }
             )

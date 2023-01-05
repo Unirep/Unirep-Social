@@ -29,6 +29,7 @@ type Props = {
     showDetail?: boolean
     showTopic?: boolean
     isEdit?: boolean
+    topicProp?: string
 }
 
 const WritingField = (props: Props) => {
@@ -66,7 +67,7 @@ const WritingField = (props: Props) => {
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
-    const [topic, setTopic] = useState<string>('')
+    const [topic, setTopic] = useState<any>(props.topicProp)
 
     const [isTopicDropdown, setTopicDropdown] = useState<boolean>(false)
 
