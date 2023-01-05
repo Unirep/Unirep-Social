@@ -67,7 +67,7 @@ const WritingField = (props: Props) => {
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
 
-    const [topic, setTopic] = useState<any>(props.topicProp)
+    const [topic, setTopic] = useState<string>(props.topicProp || '')
 
     const [isTopicDropdown, setTopicDropdown] = useState<boolean>(false)
 
@@ -177,6 +177,7 @@ const WritingField = (props: Props) => {
                                 <div
                                     className="choice"
                                     onClick={() => setTopic(t.name)}
+                                    key={t.id}
                                 >
                                     {t.name}
                                 </div>
