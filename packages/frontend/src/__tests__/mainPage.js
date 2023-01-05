@@ -47,7 +47,7 @@ test('should render MainPage with mocked data and false UserState', () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
@@ -92,7 +92,7 @@ test('should render MainPage with mocked data and true UserState', () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
@@ -138,7 +138,7 @@ test('should page rerender after user clicks create post button', async () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',
