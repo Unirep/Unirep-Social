@@ -66,3 +66,6 @@ const AppRouter = () => {
 }
 
 export default AppRouter
+
+// todo: right now the `/` route is just rendering all posts exactly like the 'general' topic page
+// todo: might just be better to have the `/` route redirect to the 'general' topic page
