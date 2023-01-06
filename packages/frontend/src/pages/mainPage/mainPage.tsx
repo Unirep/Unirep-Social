@@ -20,15 +20,16 @@ const MainPage = ({ topic }: Props) => {
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const unirepConfig = useContext(UnirepContext)
+    const location = useLocation()
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
 
     useEffect(() => {
         loadMorePosts(topic)
-    }, [topic, query])
+    }, [topic, query, location])
 
     const loadMorePosts = (topic: string) => {
-        const key = `${query}-${topic || 'general'}`
+        const key = `${query}-${topic}`
         console.log(key)
         postContext.loadFeed(query, topic, postContext.feeds[key] || [])
     }
@@ -52,13 +53,11 @@ const MainPage = ({ topic }: Props) => {
 
     // topic string formatter
     const formatTopic = (topic: string) => {
-        return topic
-            ? topic.charAt(0).toUpperCase() + topic.slice(1)
-            : 'General'
+        return topic ? topic.charAt(0).toUpperCase() + topic.slice(1) : 'All'
     }
 
     const getPostIds = () => {
-        const key = `${query}-${topic || 'general'}`
+        const key = `${query}-${topic}`
         return postContext.feeds[key] || []
     }
 

@@ -26,6 +26,10 @@ const TopicsMenu = () => {
     useEffect(() => {
         if (location.pathname === '/') {
             setSelected('')
+        } else {
+            // Set the selected topic based on the current pathname
+            const pathname = location.pathname.slice(1)
+            setSelected(pathname)
         }
     }, [location.pathname])
 
@@ -45,6 +49,7 @@ const TopicsMenu = () => {
                                 setSelected(topicId)
                             }}
                         >
+                            <option value="">All</option>
                             {Topics.map((topic) => (
                                 <option key={topic.id} value={topic.id}>
                                     {topic.name}
