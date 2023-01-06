@@ -11,6 +11,13 @@ jest.mock('react-router-dom', () => ({
     useHistory: () => ({
         push: jest.fn(),
     }),
+    useLocation: () => ({
+        state: {
+            test: {
+                test: 'test',
+            },
+        },
+    }),
 }))
 
 // abstracted render function
