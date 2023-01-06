@@ -16,7 +16,7 @@ const NewPage = () => {
 
     const location = useLocation<{ topic: string }>() // Use the useLocation hook to get the location object
     const topic = location.state.topic // Access the topic state from the location.state
-    console.log({topic})
+    console.log({ topic })
 
     const preventPropagation = (event: any) => {
         event.stopPropagation()
