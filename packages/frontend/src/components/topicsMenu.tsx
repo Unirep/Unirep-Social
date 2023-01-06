@@ -23,8 +23,6 @@ const TopicsMenu = () => {
         }
     }, [])
 
-    const generalTopicId = Topics.find((topic) => topic.name === 'General')?.id
-
     useEffect(() => {
         if (location.pathname === '/') {
             setSelected('')
@@ -60,11 +58,7 @@ const TopicsMenu = () => {
                                 <div
                                     key={topic.id}
                                     className={`topic ${
-                                        selected === topic.id ||
-                                        (location.pathname === '/' &&
-                                            topic.id === generalTopicId)
-                                            ? 'selected'
-                                            : ''
+                                        selected === topic.id ? 'selected' : ''
                                     }`}
                                     onClick={() => {
                                         goToTopic(topic.id)
