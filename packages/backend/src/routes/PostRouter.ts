@@ -80,7 +80,6 @@ async function loadPosts(req, res) {
     if (req.query.topic === undefined) {
         // we want to return ALL posts here
         const { topic } = req.query
-        console.log('if:', topic)
         const query = req.query.query.toString()
         const epks = req.query.epks ? req.query.epks.split('_') : undefined
         const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
@@ -88,7 +87,7 @@ async function loadPosts(req, res) {
         const posts = (
             await req.db.findMany('Post', {
                 where: {
-                    epks: epks,
+                    epochKey: epks,
                     topic: topic,
                 },
                 orderBy: {
@@ -105,7 +104,6 @@ async function loadPosts(req, res) {
         res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     } else {
         const { topic } = req.query
-        console.log('else statement:', topic)
         const query = req.query.query.toString()
         // TODO: deal with this when there's an offset arg
         // const lastRead = req.query.lastRead || 0
