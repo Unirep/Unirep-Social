@@ -40,7 +40,7 @@
         "@typechain/ethers-v5": "^9.0.0",
         "@typechain/hardhat": "^5.0.0",
         "@unirep-social/circuits": "^0.0.1",
-        "@unirep/core": "1.0.3",
+        "@unirep/core": "1.0.4",
         "@zk-kit/incremental-merkle-tree.sol": "^1.2.0",
         "anondb": "^0.0.12",
         "argparse": "^2.0.1",

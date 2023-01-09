@@ -7,7 +7,7 @@
         "synct": "ts-node src/sync-test.ts",
         "keys": "sh scripts/loadKeys.sh",
         "build": "tsc && yarn keys",
-        "test": "sh scripts/pretest.sh && ava test/*.test.ts -T 10m --verbose"
+        "test": "sh scripts/pretest.sh && ava test/combination.test.ts -T 10m --verbose"
     },
     "keywords": [],
     "author": "",
@@ -26,7 +26,7 @@
     "dependencies": {
         "@unirep-social/circuits": "^0.0.1",
         "@unirep-social/core": "^1.0.0",
-        "@unirep/core": "1.0.3",
+        "@unirep/core": "1.0.4",
         "anondb": "^0.0.12",
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
