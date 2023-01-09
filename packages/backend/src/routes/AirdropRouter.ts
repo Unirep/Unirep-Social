@@ -44,8 +44,10 @@ async function getAirdrop(req, res) {
     const spentSubsidy = (
         await unirepSocialContract.subsidies(currentEpoch, negRepProof.epochKey)
     ).toNumber()
-    if (spentSubsidy)
+    if (spentSubsidy) {
         res.status(422).json({ error: 'Error: airdrop requested' })
+        return
+    }
     const error = await verifyNegRepProof(
         req.db,
         negRepProof,
