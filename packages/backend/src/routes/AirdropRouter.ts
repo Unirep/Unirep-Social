@@ -41,6 +41,11 @@ async function getAirdrop(req, res) {
     const { attestingFee } = await unirepContract.config()
 
     // Verify proof
+    const spentSubsidy = (
+        await unirepSocialContract.subsidies(currentEpoch, negRepProof.epochKey)
+    ).toNumber()
+    if (spentSubsidy)
+        res.status(422).json({ error: 'Error: airdrop requested' })
     const error = await verifyNegRepProof(
         req.db,
         negRepProof,
@@ -48,13 +53,11 @@ async function getAirdrop(req, res) {
         currentEpoch
     )
     if (error !== undefined) {
-        console.log('get airdrop error: ' + error)
         res.status(422).json({ error: error })
         return
     }
     if (negRepProof.negRep > DEFAULT_AIRDROPPED_KARMA) {
-        console.log('airdrop error: wrong neg req')
-        res.status(422).json({ error: 'wrong neg req' })
+        res.status(422).json({ error: 'Error: wrong neg req' })
         return
     }
 
