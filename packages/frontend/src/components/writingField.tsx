@@ -170,9 +170,7 @@ const WritingField = (props: Props) => {
                             <div
                                 className="choice"
                                 onClick={() => setTopic('')}
-                            >
-                                None
-                            </div>
+                            ></div>
                             {Topics.map((t) => (
                                 <div
                                     className="choice"
@@ -189,7 +187,8 @@ const WritingField = (props: Props) => {
                             onClick={() => setTopicDropdown(true)}
                         >
                             <div className="choice isChosen">
-                                {topic.length > 0 ? topic : 'None'}
+                                {topic === 'All' ? 'General' : topic}
+
                                 <img
                                     src={require('../../public/images/arrow-down.svg')}
                                 />
