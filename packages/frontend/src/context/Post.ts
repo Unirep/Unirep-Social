@@ -89,7 +89,7 @@ export class Data {
     }
 
     feedKey(query: string, topic: string | undefined, epks = [] as string[]) {
-        return `${query}-${topic}`
+        return epks.length === 0 ? `${query}-${topic}` : `${query}-user`
     }
 
     async loadPost(id: string) {
