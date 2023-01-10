@@ -108,7 +108,6 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
-        console.log({ topic })
         await unirepConfig.loadingPromise
 
         const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())

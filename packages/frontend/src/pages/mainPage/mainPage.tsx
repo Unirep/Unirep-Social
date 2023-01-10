@@ -30,7 +30,6 @@ const MainPage = ({ topic }: Props) => {
 
     const loadMorePosts = (topic: string) => {
         const key = `${query}-${topic}`
-        console.log(key)
         postContext.loadFeed(query, topic, postContext.feeds[key] || [])
     }
 
