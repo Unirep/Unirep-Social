@@ -126,9 +126,15 @@ export class User {
         const rawRecords = data.map((r: Record) => {
             return {
                 ...r,
-                from: BigInt(r.from)
-                    .toString(16)
-                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
+                from:
+                    r.from === 'UnirepSocial'
+                        ? 'UnirepSocial'
+                        : BigInt(r.from)
+                              .toString(16)
+                              .padStart(
+                                  this.unirepConfig.epochTreeDepth / 4,
+                                  '0'
+                              ),
                 to: BigInt(r.to)
                     .toString(16)
                     .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
@@ -334,7 +340,7 @@ export class User {
 
         const { number: currentEpoch } =
             await this.userState?.loadCurrentEpoch()
-        const subsidy = await this.unirepConfig.unirepSocial.subsidy()
+        const subsidy = this.unirepConfig.subsidy
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
         // it uses nonce == maxNonce + 1
@@ -348,8 +354,7 @@ export class User {
             currentEpoch,
             subsidyKey
         )
-        console.log(subsidy, spentSubsidy)
-        this.subsidyReputation = subsidy.sub(spentSubsidy).toNumber()
+        this.subsidyReputation = subsidy - Number(spentSubsidy)
         const rep = await this.userState.getRepByAttester(
             BigInt(this.unirepConfig.attesterId)
         )
@@ -359,26 +364,37 @@ export class User {
 
     async getAirdrop() {
         if (!this.id || !this.userState) throw new Error('Identity not loaded')
-        await this.unirepConfig.loadingPromise
-        const unirepSocial = new ethers.Contract(
-            this.unirepConfig.unirepSocialAddress,
-            config.UNIREP_SOCIAL_ABI,
-            config.DEFAULT_ETH_PROVIDER
-        )
-        // generate an airdrop proof
-        const attesterId = this.unirepConfig.attesterId
-        const { proof, publicSignals } =
-            await this.userState.genUserSignUpProof(BigInt(attesterId))
+        if (this.reputation >= 0) throw new Error('do not need to airdrop')
 
-        const epk = genEpochKey(
-            this.id.identityNullifier,
-            await this.userState.getUnirepStateCurrentEpoch(),
-            0
+        await this.unirepConfig.loadingPromise
+
+        // generate an airdrop proof
+        const negRep = Math.min(
+            Math.abs(this.reputation),
+            this.unirepConfig.subsidy
         )
-        const gotAirdrop = await unirepSocial.isEpochKeyGotAirdrop(epk)
-        if (gotAirdrop) {
+
+        const negRepProof = await this.userState.genNegativeRepProof(
+            BigInt(this.unirepConfig.attesterId),
+            BigInt(negRep)
+        )
+
+        // Check if the user already got airdropped
+        const { number: currentEpoch } =
+            await this.userState?.loadCurrentEpoch()
+        const subsidyKey = genEpochKey(
+            this.id.identityNullifier,
+            currentEpoch,
+            0,
+            this.unirepConfig.epochTreeDepth
+        )
+        const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
+            currentEpoch,
+            subsidyKey
+        )
+        if (spentSubsidy.toNumber() > 0) {
             return {
-                error: 'The epoch key has been airdropped.',
+                error: 'The epoch key has been airdropped',
                 transaction: undefined,
             }
         }
@@ -389,8 +405,9 @@ export class User {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                proof,
-                publicSignals,
+                proof: negRepProof.proof,
+                publicSignals: negRepProof.publicSignals,
+                negRep,
             }),
             method: 'POST',
         })
@@ -502,7 +519,6 @@ export class User {
     }
 
     async logout() {
-        console.log('log out')
         if (this.userState) {
             await this.userState.stop()
             await (this.userState as any)._db.closeAndWipe()

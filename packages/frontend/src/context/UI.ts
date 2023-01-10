@@ -10,6 +10,7 @@ export enum EpochStatus {
     syncing,
     doingUST,
     needsUST,
+    airdrop,
     default,
 }
 
@@ -88,6 +89,8 @@ export class UI {
             return EpochStatus.needsUST
         } else if (queue.queuedOp(ActionType.UST)) {
             return EpochStatus.doingUST
+        } else if (queue.queuedOp(ActionType.Airdrop)) {
+            return EpochStatus.airdrop
         } else {
             return EpochStatus.default
         }

@@ -89,6 +89,7 @@ export const airdrop = async (t, iden, negRep) => {
         body: JSON.stringify({
             proof: negRepProof.proof,
             publicSignals: negRepProof.publicSignals,
+            negRep,
         }),
     })
     const data = await r.json()

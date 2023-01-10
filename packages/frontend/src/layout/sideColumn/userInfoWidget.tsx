@@ -130,6 +130,47 @@ const UserInfoWidget = () => {
                                             await userContext.calculateAllEpks()
                                             await userContext.loadReputation()
 
+                                            if (userContext.reputation < 0) {
+                                                queue.addOp(
+                                                    async (updateStatus) => {
+                                                        updateStatus({
+                                                            title: 'Performing Airdrop',
+                                                            details:
+                                                                'generating ZK proof...',
+                                                        })
+                                                        const {
+                                                            transaction,
+                                                            error,
+                                                        } = await userContext.getAirdrop()
+                                                        if (error)
+                                                            throw new Error(
+                                                                error
+                                                            )
+
+                                                        updateStatus({
+                                                            title: 'Performing Airdrop',
+                                                            details:
+                                                                'Waiting for transaction...',
+                                                        })
+                                                        await queue.afterTx(
+                                                            transaction
+                                                        )
+                                                        await epochManager.updateWatch()
+                                                        await userContext.loadRecords()
+
+                                                        let metadata: Metadata =
+                                                            {
+                                                                transactionId:
+                                                                    transaction,
+                                                            }
+                                                        return metadata
+                                                    },
+                                                    {
+                                                        type: ActionType.Airdrop,
+                                                    }
+                                                )
+                                            }
+
                                             let metadata: Metadata = {
                                                 transactionId: transaction,
                                             }
@@ -153,7 +194,10 @@ const UserInfoWidget = () => {
                                 </h4>
                                 <div className="rep-handout">
                                     <strong>
-                                        {userContext.subsidyReputation}
+                                        {uiContext.epochStatus ===
+                                        EpochStatus.default
+                                            ? userContext.subsidyReputation
+                                            : 0}
                                     </strong>
                                     <div className="interline"></div>
                                     {userContext.currentEpochKeys[0]}

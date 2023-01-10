@@ -193,7 +193,8 @@ const WritingField = (props: Props) => {
                 {props.submitBtnName}
             </MyButton>
             {errorMsg.length > 0 && <div className="error">{errorMsg}</div>}
-            {uiContext.epochStatus !== EpochStatus.default && (
+            {(uiContext.epochStatus !== EpochStatus.default ||
+                userContext.spendableReputation < defaultRep) && (
                 <div className="disable-cover"></div>
             )}
         </div>
