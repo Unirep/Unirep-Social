@@ -26,7 +26,7 @@
     "dependencies": {
         "@unirep-social/circuits": "^0.0.1",
         "@unirep-social/core": "^1.0.0",
-        "@unirep/core": "1.0.3",
+        "@unirep/core": "1.0.4",
         "anondb": "^0.0.12",
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
