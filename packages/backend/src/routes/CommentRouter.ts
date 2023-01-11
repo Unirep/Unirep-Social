@@ -157,9 +157,13 @@ async function createComment(req, res) {
         }
     )
 
-    const graffiti = ethers.utils.toUtf8String(
-        '0x' + BigInt(reputationProof.graffitiPreImage as string).toString(16)
-    )
+    let graffiti
+    if (reputationProof.graffitiPreImage != '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' +
+                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+        )
+    }
     console.log('leave comment username:', graffiti)
 
     const comment = await req.db.create('Comment', {

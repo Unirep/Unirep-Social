@@ -155,6 +155,15 @@ async function createPost(req, res) {
         }
     )
 
+    let graffiti
+    if (reputationProof.graffitiPreImage != '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' +
+                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+        )
+    }
+    console.log('leave post with username:', graffiti)
+
     const post = await req.db.create('Post', {
         content,
         hashedContent,
@@ -167,6 +176,7 @@ async function createPost(req, res) {
         negRep: 0,
         status: 0,
         transactionHash: hash,
+        graffiti,
     })
     await req.db.create('Record', {
         to: epochKey,

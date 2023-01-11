@@ -503,7 +503,6 @@ export class Data {
         minRep = 0,
         graffiti: string = '0'
     ) {
-        console.log('leave comment with graffiti:', graffiti)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
@@ -704,7 +703,7 @@ export class Data {
             upvote: data.posRep,
             downvote: data.negRep,
             epoch_key: this.convertEpochKeyToHexString(data.epochKey),
-            username: '',
+            username: data.graffiti,
             createdAt: data.createdAt,
             reputation: data.minRep,
             current_epoch: data.epoch,
@@ -726,7 +725,7 @@ export class Data {
             upvote: data.posRep,
             downvote: data.negRep,
             epoch_key: this.convertEpochKeyToHexString(data.epochKey),
-            username: '',
+            username: data.graffiti,
             createdAt: data.createdAt,
             reputation: data.minRep,
             commentCount: data.commentCount,
@@ -735,6 +734,7 @@ export class Data {
             transactionHash: data.transactionHash,
             lastUpdatedAt: data.lastUpdatedAt,
         }
+        console.log(post)
 
         return post
     }
