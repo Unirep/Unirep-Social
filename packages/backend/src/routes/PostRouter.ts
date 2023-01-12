@@ -103,34 +103,6 @@ async function loadPosts(req, res) {
 
         res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
     }
-
-    // else {
-    //     const { topic } = req.query
-    //     const query = req.query.query.toString()
-    //     // TODO: deal with this when there's an offset arg
-    //     // const lastRead = req.query.lastRead || 0
-    //     const epks = req.query.epks ? req.query.epks.split('_') : undefined
-    //     const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
-
-    //     const posts = (
-    //         await req.db.findMany('Post', {
-    //             where: {
-    //                 epochKey: epks,
-    //                 topic: topic,
-    //             },
-    //             orderBy: {
-    //                 createdAt: query === QueryType.New ? 'desc' : undefined,
-    //                 posRep: query === QueryType.Boost ? 'desc' : undefined,
-    //                 negRep: query === QueryType.Squash ? 'desc' : undefined,
-    //                 totalRep: query === QueryType.Rep ? 'desc' : undefined,
-    //                 commentCount:
-    //                     query === QueryType.Comments ? 'desc' : undefined,
-    //             },
-    //         })
-    //     ).filter((p) => !lastRead.includes(p._id))
-
-    //     res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
-    // }
 }
 
 async function createPost(req, res) {
