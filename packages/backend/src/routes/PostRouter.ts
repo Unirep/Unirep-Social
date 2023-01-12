@@ -223,6 +223,22 @@ async function createPostSubsidy(req, res) {
     )
     const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
 
+    const totalSubsidy = (await unirepSocialContract.subsidy()).toNumber()
+    const spentSubsidy = (
+        await unirepSocialContract.subsidies(
+            currentEpoch,
+            subsidyProof.epochKey
+        )
+    ).toNumber()
+    if (spentSubsidy + DEFAULT_POST_KARMA > totalSubsidy) {
+        const error = `Error: Request too much subsidy, only ${
+            totalSubsidy - spentSubsidy
+        } subsidy left`
+        res.status(422).json({
+            error,
+        })
+        return
+    }
     const error = await verifySubsidyProof(
         req.db,
         subsidyProof,

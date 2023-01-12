@@ -524,6 +524,42 @@ export const createComment = async (t, iden, postId) => {
     return data
 }
 
+export const createCommentSubsidy = async (t, iden, postId) => {
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden
+    )
+    const subsidyProof = await userState.genSubsidyProof(t.context.attesterId)
+    const isValid = await subsidyProof.verify()
+    t.true(isValid)
+    await userState.stop()
+
+    const r = await fetch(`${t.context.url}/api/comment/subsidy`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            postId,
+            content: 'some content!',
+            publicSignals: subsidyProof.publicSignals,
+            proof: subsidyProof.proof,
+        }),
+    })
+
+    const data = await r.json()
+    if (!r.ok) {
+        throw new Error(`/comment error ${JSON.stringify(data)}`)
+    }
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
+    return data
+}
+
 export const vote = async (
     t,
     iden,
