@@ -77,32 +77,28 @@ async function loadPosts(req, res) {
         res.json(posts)
         return
     }
-    if (req.query.topic === undefined || req.query.topic) {
-        // we want to return ALL posts here
-        const { topic } = req.query
-        const query = req.query.query.toString()
-        const epks = req.query.epks ? req.query.epks.split('_') : undefined
-        const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
+    const { topic } = req.query
+    const query = req.query.query.toString()
+    const epks = req.query.epks ? req.query.epks.split('_') : undefined
+    const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
 
-        const posts = (
-            await req.db.findMany('Post', {
-                where: {
-                    epochKey: epks,
-                    topic: topic,
-                },
-                orderBy: {
-                    createdAt: query === QueryType.New ? 'desc' : undefined,
-                    posRep: query === QueryType.Boost ? 'desc' : undefined,
-                    negRep: query === QueryType.Squash ? 'desc' : undefined,
-                    totalRep: query === QueryType.Rep ? 'desc' : undefined,
-                    commentCount:
-                        query === QueryType.Comments ? 'desc' : undefined,
-                },
-            })
-        ).filter((p) => !lastRead.includes(p._id))
+    const posts = (
+        await req.db.findMany('Post', {
+            where: {
+                epochKey: epks,
+                topic: topic,
+            },
+            orderBy: {
+                createdAt: query === QueryType.New ? 'desc' : undefined,
+                posRep: query === QueryType.Boost ? 'desc' : undefined,
+                negRep: query === QueryType.Squash ? 'desc' : undefined,
+                totalRep: query === QueryType.Rep ? 'desc' : undefined,
+                commentCount: query === QueryType.Comments ? 'desc' : undefined,
+            },
+        })
+    ).filter((p) => !lastRead.includes(p._id))
 
-        res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
-    }
+    res.json(posts.slice(0, Math.min(LOAD_POST_COUNT, posts.length)))
 }
 
 async function createPost(req, res) {
