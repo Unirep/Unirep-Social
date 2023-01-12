@@ -27,6 +27,7 @@ test('should render PostPage with mocked post data and props', () => {
         netReputation: 30,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        username: {},
     }
 
     const postData = {

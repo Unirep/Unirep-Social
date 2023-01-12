@@ -58,6 +58,7 @@ test('should render CommentField correctly with .Provider data', () => {
     const userData = {
         userState: 'userState',
         currentEpochKeys: ['user epoch_key test'],
+        username: {},
     }
 
     renderCommentField(userData, postData, page, post, jest.fn())

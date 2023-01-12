@@ -37,6 +37,7 @@ test('should render VoteBox correctly with mocked .Provider data and props', asy
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
         subsidyReputation: 30,
         netReputation: 10,
+        username: {},
     }
 
     const postData = {

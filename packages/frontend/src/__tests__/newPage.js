@@ -19,6 +19,7 @@ test('should render NewPage correctly with mocked .Provider data and props', asy
         userState: true,
         id: {},
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        username: {},
     }
 
     const postData = {
