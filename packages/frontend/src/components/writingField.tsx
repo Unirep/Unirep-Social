@@ -117,7 +117,7 @@ const WritingField = (props: Props) => {
                 props.submit(
                     title,
                     content,
-                    topic.toLowerCase(),
+                    topic?.toLowerCase(),
                     epkNonce,
                     reputation
                 )

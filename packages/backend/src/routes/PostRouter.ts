@@ -156,7 +156,6 @@ async function createPost(req, res) {
             value: attestingFee,
         }
     )
-    console.log(topic)
     // adding topic when creating this post
     const post = await req.db.create('Post', {
         content,
