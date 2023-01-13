@@ -133,7 +133,7 @@ test('after setting up username and get reputation, the user can still pass the 
     const { post } = await createPost(t, user1.iden)
 
     // set up username
-    await setUsername(t, user1.iden, 0, 'test5')
+    await setUsername(t, user1.iden, 0, 'test6')
 
     // epoch transition
     await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
