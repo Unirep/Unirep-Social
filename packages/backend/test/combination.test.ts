@@ -149,6 +149,7 @@ test('after setting up username and get reputation, the user can still pass the 
 
     // user state transition
     await userStateTransition(t, user1.iden)
+    await userStateTransition(t, user2.iden)
 
     // vote
     {
