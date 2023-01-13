@@ -57,6 +57,7 @@ const Username = () => {
                 )
                 if (error) {
                     setErrorMsg(error)
+                    setStatus(SetUsernameStatus.default)
                     throw new Error(error)
                 }
 

@@ -226,6 +226,7 @@ const WritingField = (props: Props) => {
                             setEpkNonce={setEpkNonce}
                             username={userContext.username.username}
                             showUsername={
+                                !useSubsidy &&
                                 userContext.username.epoch !== undefined &&
                                 userContext.username.epoch <
                                     userContext.currentEpoch
