@@ -75,7 +75,7 @@ const UserPage = () => {
 
     const getUserPosts = async (sort: QueryType, lastRead = [] as string[]) => {
         await user.loadingPromise
-        await postContext.loadFeed(sort, lastRead, user.allEpks)
+        await postContext.loadFeed(sort, undefined, lastRead, user.allEpks)
     }
 
     const getUserComments = async (
@@ -196,13 +196,14 @@ const UserPage = () => {
 
     const loadMorePosts = async () => {
         let posts =
-            postContext.feedsByQuery[postContext.feedKey(sort, user.allEpks)] ??
-            []
+            postContext.feeds[
+                postContext.feedKey(sort, undefined, user.allEpks)
+            ] ?? []
         if (posts.length > 0) {
             await getUserPosts(
                 sort,
-                postContext.feedsByQuery[
-                    postContext.feedKey(sort, user.allEpks)
+                postContext.feeds[
+                    postContext.feedKey(sort, undefined, user.allEpks)
                 ]
             )
         } else {
@@ -213,13 +214,13 @@ const UserPage = () => {
     const loadMoreComments = async () => {
         let comments =
             postContext.commentsByQuery[
-                postContext.feedKey(sort, user.allEpks)
+                postContext.feedKey(sort, undefined, user.allEpks)
             ] ?? []
         if (comments.length > 0) {
             await getUserComments(
                 sort,
                 postContext.commentsByQuery[
-                    postContext.feedKey(sort, user.allEpks)
+                    postContext.feedKey(sort, undefined, user.allEpks)
                 ]
             )
         } else {
@@ -446,8 +447,12 @@ const UserPage = () => {
                 {tag === Tag.Posts ? (
                     <PostsList
                         postIds={
-                            postContext.feedsByQuery[
-                                postContext.feedKey(sort, user.allEpks)
+                            postContext.feeds[
+                                postContext.feedKey(
+                                    sort,
+                                    undefined,
+                                    user.allEpks
+                                )
                             ] ?? []
                         }
                         loadMorePosts={loadMorePosts}
@@ -456,7 +461,11 @@ const UserPage = () => {
                     <CommentsList
                         commentIds={
                             postContext.commentsByQuery[
-                                postContext.feedKey(sort, user.allEpks)
+                                postContext.feedKey(
+                                    sort,
+                                    undefined,
+                                    user.allEpks
+                                )
                             ] ?? []
                         }
                         page={Page.User}

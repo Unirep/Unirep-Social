@@ -37,7 +37,7 @@ test('should render correctly with UserContext and PostContext', () => {
     }
 
     const postData = {
-        feedsByQuery: {
+        feeds: {
             new: {
                 createdAt: '00',
                 content: 'mocked post content',

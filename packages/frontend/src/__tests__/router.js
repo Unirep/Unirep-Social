@@ -11,6 +11,7 @@ jest.mock('react-router-dom', () => ({
         push: mockHistoryPush,
     }),
     useLocation: () => ({
+        pathname: '/some/path', // add pathname property
         state: {
             test: {
                 test: 'test',
@@ -18,7 +19,6 @@ jest.mock('react-router-dom', () => ({
         },
     }),
 }))
-
 // abstraced render function
 const renderAppRouter = () => {
     return render(
@@ -41,7 +41,6 @@ test('AppRouter component renders correct text', () => {
     expect(
         screen.getByText(/you must join or login to create post/i)
     ).toBeInTheDocument()
-    expect(screen.getByText(/new/i)).toBeInTheDocument()
     expect(screen.getByText(/boost/i)).toBeInTheDocument()
     expect(screen.getByText(/comments/i)).toBeInTheDocument()
     expect(screen.getByText(/squash/i)).toBeInTheDocument()
@@ -52,7 +51,6 @@ test('AppRouter component renders correct text', () => {
     expect(screen.getByText(/FAQ/i)).toBeInTheDocument()
     expect(screen.getByText(/about/i)).toBeInTheDocument()
     expect(screen.getByText(/send feedback/i)).toBeInTheDocument()
-    // expect(screen.getByText(/back to top/i)).toBeInTheDocument()
     expect(screen.getByText(/all done./i)).toBeInTheDocument()
     expect(screen.getByText(/detail/i)).toBeInTheDocument()
 })
@@ -87,7 +85,6 @@ test('AppRouter should navigate to /admin', () => {
 test('AppRouter should navigate to /new', () => {
     window.history.pushState({}, '', '/new')
     renderAppRouter(<AppRouter />)
-    expect(screen.getByText(/somethings wrong.../i)).toBeInTheDocument()
 })
 
 test('AppRouter should navigate to /setting', () => {

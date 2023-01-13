@@ -5,6 +5,21 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import WritingField from '../components/writingField'
 
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useHistory: () => ({
+        push: mockHistoryPush,
+    }),
+    useLocation: () => ({
+        pathname: '/some/path', // add pathname property
+        state: {
+            test: {
+                test: 'test',
+            },
+        },
+    }),
+}))
+
 // abstracted render function
 const renderWritingField = (
     userData,

@@ -1,12 +1,11 @@
 import { observer } from 'mobx-react-lite'
-
 import PostBlock from './postBlock'
 import { Page } from '../constants'
 import { LOAD_POST_COUNT } from '../config'
 
 type Props = {
     postIds: string[]
-    loadMorePosts: () => void
+    loadMorePosts: (topic: any) => void
 }
 
 const PostsList = ({ postIds, loadMorePosts }: Props) => {
