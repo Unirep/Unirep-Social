@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { NavLink, useHistory, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
@@ -14,14 +14,13 @@ const Header = () => {
     const unirepConfig = useContext(UnirepContext)
     const userContext = useContext(UserContext)
 
-    const gotoNewPage = () => {
-        if (
-            userContext.userState &&
-            userContext.spendableReputation >= unirepConfig.postReputation
-        ) {
-            history.push(`/new`, { isConfirmed: true })
-        }
-    }
+    const [topic, setTopic] = useState('')
+
+    useEffect(() => {
+        const pathname = location.pathname
+        const topic = pathname.split('/')[1]
+        setTopic(topic)
+    }, [location])
 
     const gotoUserPage = () => {
         history.push(`/user`, { isConfirmed: true })
@@ -64,19 +63,6 @@ const Header = () => {
                             src={require('../../../public/images/lighting.svg')}
                         />
                         {userContext.netReputation}
-                    </div>
-                    <div
-                        id="new"
-                        className={
-                            location.pathname === '/new'
-                                ? 'navBtn chosen'
-                                : 'navBtn'
-                        }
-                    >
-                        <img
-                            src={require('../../../public/images/newpost.svg')}
-                            onClick={gotoNewPage}
-                        />
                     </div>
                     <div
                         id="user"

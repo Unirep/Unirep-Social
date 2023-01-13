@@ -15,9 +15,10 @@ type Props = {
     children: any
     hasBack?: boolean
     title?: string
+    topic?: string
 }
 
-const BasicPage = ({ hasBack, title, children }: Props) => {
+const BasicPage = ({ hasBack, title, children, topic }: Props) => {
     const { isMenuOpen } = useContext(WebContext)
     const history = useHistory()
 
@@ -34,6 +35,11 @@ const BasicPage = ({ hasBack, title, children }: Props) => {
             <div className="content">
                 <Banner />
                 <div className="main-content">
+                    {topic !== undefined && (
+                        <h2 className="topic-landing">
+                            <i>{topic}</i>
+                        </h2>
+                    )}
                     <div className="main-content-bar">
                         {hasBack && (
                             <img

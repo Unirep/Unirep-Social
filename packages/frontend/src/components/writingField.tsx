@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import 'react-circular-progressbar/dist/styles.css'
 import { observer } from 'mobx-react-lite'
 
@@ -10,13 +11,14 @@ import UIContext, { EpochStatus } from '../context/UI'
 import TextEditor from './textEditor'
 import ActionDetail from './actionDetail'
 import MyButton, { MyButtonType } from './myButton'
-import { DataType } from '../constants'
+import { DataType, Topics } from '../constants'
 
 type Props = {
     type: DataType
     submit: (
         title: string,
         content: string,
+        topic: string,
         epkNonce: number,
         reputation: number
     ) => void
@@ -25,7 +27,9 @@ type Props = {
     title?: string
     content?: string
     showDetail?: boolean
+    showTopic?: boolean
     isEdit?: boolean
+    topicProp?: string
 }
 
 const WritingField = (props: Props) => {
@@ -62,6 +66,12 @@ const WritingField = (props: Props) => {
     })
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
+
+    const [topic, setTopic] = useState<any>(
+        props.topicProp === 'All' ? 'General' : props.topicProp
+    )
+
+    const [isTopicDropdown, setTopicDropdown] = useState<boolean>(false)
 
     const defaultRep =
         props.type === DataType.Post
@@ -104,7 +114,13 @@ const WritingField = (props: Props) => {
                     'Please change your content to update, else click cancel to leave edit mode.'
                 )
             } else {
-                props.submit(title, content, epkNonce, reputation)
+                props.submit(
+                    title,
+                    content,
+                    topic?.toLowerCase(),
+                    epkNonce,
+                    reputation
+                )
             }
         }
     }
@@ -145,6 +161,44 @@ const WritingField = (props: Props) => {
                     autoFocus={true}
                 />
             )}
+            {props.showTopic && (
+                <div className="set-topic">
+                    <h4>Topic:</h4>
+                    {isTopicDropdown ? (
+                        <div
+                            className="dropdown"
+                            onClick={() => setTopicDropdown(false)}
+                        >
+                            <div
+                                className="choice"
+                                onClick={() => setTopic('')}
+                            ></div>
+                            {Topics.map((t) => (
+                                <div
+                                    className="choice"
+                                    onClick={() => setTopic(t.name)}
+                                    key={t.id}
+                                >
+                                    {t.name}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            className="dropdown"
+                            onClick={() => setTopicDropdown(true)}
+                        >
+                            <div className="choice isChosen">
+                                {topic === 'All' ? 'General' : topic}
+
+                                <img
+                                    src={require('../../public/images/arrow-down.svg')}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
             <div style={{ marginBottom: '32px' }}></div>
             {props.showDetail && (
                 <>
@@ -184,8 +238,7 @@ const WritingField = (props: Props) => {
                 {props.submitBtnName}
             </MyButton>
             {errorMsg.length > 0 && <div className="error">{errorMsg}</div>}
-            {(uiContext.epochStatus !== EpochStatus.default ||
-                userContext.spendableReputation < defaultRep) && (
+            {uiContext.epochStatus !== EpochStatus.default && (
                 <div className="disable-cover"></div>
             )}
         </div>

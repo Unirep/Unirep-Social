@@ -3,8 +3,8 @@ import { useState } from 'react'
 
 import useLocalStorage from './hooks/useLocalStorage'
 import * as Constants from './constants'
-
 import Header from './layout/header/header'
+import TopicsMenu from './components/topicsMenu'
 import MainPage from './pages/mainPage/mainPage'
 import PostPage from './pages/postPage/postPage'
 import EditPage from './pages/editPage/editPage'
@@ -14,6 +14,8 @@ import FeedbackPage from './pages/feedbackPage/feedbackPage'
 import AdminPage from './pages/adminPage/adminPage'
 import SettingPage from './pages/settingPage/settingPage'
 import StartPage from './pages/startPage/startPage'
+
+import TopicPage from './pages/topicPage/topicPage'
 
 import { WebContext } from './context/WebContext'
 import Favicon from 'react-favicon'
@@ -39,6 +41,7 @@ const AppRouter = () => {
                     }}
                 >
                     <Header />
+                    <TopicsMenu />
 
                     <Switch>
                         <Route component={MainPage} path="/" exact={true} />
@@ -51,6 +54,9 @@ const AppRouter = () => {
                         <Route component={FeedbackPage} path="/feedback" />
                         <Route component={AdminPage} path="/admin" />
                         <Route component={SettingPage} path="/setting" />
+
+                        <Route component={TopicPage} path="/:topicId" />
+
                         <Route component={() => <Redirect to="/" />} />
                     </Switch>
                 </WebContext.Provider>
@@ -60,3 +66,6 @@ const AppRouter = () => {
 }
 
 export default AppRouter
+
+// todo: right now the `/` route is just rendering all posts exactly like the 'general' topic page
+// todo: might just be better to have the `/` route redirect to the 'general' topic page

@@ -31,10 +31,6 @@ describe('visit and interact with home page', () => {
             body: [],
         }).as('getApiComment')
         cy.get('.link > img').should('exist')
-        cy.get('#new > img').click()
-        cy.get('.link > img').click()
-        cy.get('#user > img').click()
-        cy.get('.link > img').click()
     })
     it('confirm reputation on home and user page', () => {
         cy.intercept('GET', 'http://testurl.invalidtld/api/records?*', {
@@ -67,7 +63,7 @@ describe('visit and interact with home page', () => {
         cy.intercept('GET', 'http://testurl.invalidtld/api/comment?*', {
             body: [],
         }).as('getApiComment')
-        cy.get('#new > img').click()
+        cy.get('.create-post').click()
         cy.location('pathname').should('eq', '/new')
         cy.get('.rep-handout').contains('30')
         cy.get('#inputTextArea').type(loremPost)
@@ -75,6 +71,6 @@ describe('visit and interact with home page', () => {
         cy.get('.block-content').should('exist')
         // submit post and check for reputation
         cy.get('.my-button').contains('Post - 5 points').click()
-        cy.location('pathname').should('eq', '/')
+        cy.location('pathname').should('eq', '/general')
     })
 })

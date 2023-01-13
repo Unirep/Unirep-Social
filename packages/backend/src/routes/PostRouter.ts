@@ -30,6 +30,7 @@ export default (app: Express) => {
     app.get('/api/post/:id', catchError(loadPostById))
     app.get('/api/post/:postId/comments', catchError(loadCommentsByPostId))
     app.get('/api/post/:postId/votes', catchError(loadVotesByPostId))
+
     app.post('/api/post', catchError(createPost))
     app.post('/api/post/subsidy', catchError(createPostSubsidy))
     app.post('/api/post/edit/:id', catchError(editPost))
@@ -76,9 +77,8 @@ async function loadPosts(req, res) {
         res.json(posts)
         return
     }
+    const { topic } = req.query
     const query = req.query.query.toString()
-    // TODO: deal with this when there's an offset arg
-    // const lastRead = req.query.lastRead || 0
     const epks = req.query.epks ? req.query.epks.split('_') : undefined
     const lastRead = req.query.lastRead ? req.query.lastRead.split('_') : []
 
@@ -86,6 +86,7 @@ async function loadPosts(req, res) {
         await req.db.findMany('Post', {
             where: {
                 epochKey: epks,
+                topic: topic,
             },
             orderBy: {
                 createdAt: query === QueryType.New ? 'desc' : undefined,
@@ -116,7 +117,8 @@ async function createPost(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, title, content } = req.body
+    const { publicSignals, proof, title, content, topic } = req.body
+
     const reputationProof = new ReputationProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof)
@@ -154,11 +156,12 @@ async function createPost(req, res) {
             value: attestingFee,
         }
     )
-
+    // adding topic when creating this post
     const post = await req.db.create('Post', {
         content,
         hashedContent,
         title,
+        topic,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,
@@ -202,7 +205,8 @@ async function createPostSubsidy(req, res) {
     const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
-    const { publicSignals, proof, title, content } = req.body
+    const { publicSignals, proof, title, content, topic } = req.body
+
     const subsidyProof = new SubsidyProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
@@ -261,6 +265,7 @@ async function createPostSubsidy(req, res) {
         content,
         hashedContent,
         title,
+        topic,
         epochKey,
         epoch: currentEpoch,
         proveMinRep: minRep !== null ? true : false,

@@ -55,6 +55,7 @@ export interface Post {
     id: string
     title: string
     content: string
+    topic: string
     upvote: number
     downvote: number
     epoch_key: string
@@ -153,6 +154,49 @@ export interface Draft {
     title: string
     content: string
 }
+
+export const Topics = [
+    {
+        id: 'general',
+        name: 'General',
+    },
+    {
+        id: 'philosophy',
+        name: 'Philosophy',
+    },
+    {
+        id: 'technology',
+        name: 'Technology',
+    },
+    {
+        id: 'politics',
+        name: 'Politics',
+    },
+    {
+        id: 'music',
+        name: 'Music',
+    },
+    {
+        id: 'business',
+        name: 'Business',
+    },
+    {
+        id: 'literature',
+        name: 'Literature',
+    },
+    {
+        id: 'fitness',
+        name: 'Fitness',
+    },
+    {
+        id: 'photography',
+        name: 'Photography',
+    },
+    {
+        id: 'news',
+        name: 'News',
+    },
+]
 
 export const getDaysByString = (value: string) => {
     if (value === 'today') return 1
