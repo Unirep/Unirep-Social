@@ -435,6 +435,7 @@ export class Data {
         minRep = 0,
         graffiti: string = '0'
     ) {
+        console.log('vote by graffiti:', graffiti)
         const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {

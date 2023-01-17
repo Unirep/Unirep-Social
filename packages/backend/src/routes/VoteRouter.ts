@@ -94,6 +94,16 @@ async function vote(req, res) {
             value: attestingFee.mul(2),
         }
     )
+
+    let graffiti
+    if (reputationProof.graffitiPreImage != '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' +
+                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+        )
+    }
+    console.log('leave post with username:', graffiti)
+
     const newVote = await req.db.create('Vote', {
         transactionHash: hash,
         epoch: currentEpoch,
@@ -101,7 +111,7 @@ async function vote(req, res) {
         receiver: receiver,
         posRep: upvote,
         negRep: downvote,
-        graffiti: '0',
+        graffiti,
         overwriteGraffiti: false,
         postId: post ? dataId : '',
         commentId: comment ? dataId : '',

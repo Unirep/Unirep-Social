@@ -193,6 +193,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         setEpkNonce={setEpkNonce}
                         username={userContext.username.username}
                         showUsername={
+                            !useSubsidy &&
                             userContext.username.epoch !== undefined &&
                             userContext.username.epoch <
                                 userContext.currentEpoch
@@ -245,10 +246,14 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                     return shown ? (
                                         <div className="record" key={i}>
                                             <div className="record-epk">
-                                                {
-                                                    postContext.votesById[id]
-                                                        .voter
-                                                }
+                                                {postContext.votesById[id]
+                                                    .graffiti &&
+                                                postContext.votesById[id]
+                                                    .graffiti !== '0'
+                                                    ? postContext.votesById[id]
+                                                          .graffiti
+                                                    : postContext.votesById[id]
+                                                          .voter}
                                             </div>
                                             <span>
                                                 {isUpvote ? v.posRep : v.negRep}
