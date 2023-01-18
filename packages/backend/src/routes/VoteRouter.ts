@@ -102,7 +102,6 @@ async function vote(req, res) {
                 BigInt(reputationProof.graffitiPreImage as string).toString(16)
         )
     }
-    console.log('leave post with username:', graffiti)
 
     const newVote = await req.db.create('Vote', {
         transactionHash: hash,

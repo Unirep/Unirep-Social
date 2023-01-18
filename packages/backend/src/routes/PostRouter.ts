@@ -164,7 +164,6 @@ async function createPost(req, res) {
                 BigInt(reputationProof.graffitiPreImage as string).toString(16)
         )
     }
-    console.log('leave post with username:', graffiti)
 
     const post = await req.db.create('Post', {
         content,

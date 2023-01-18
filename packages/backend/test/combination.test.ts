@@ -129,9 +129,6 @@ test('after setting up username and get reputation, the user can still pass the 
     const user1 = await signUp(t)
     const user2 = await signUp(t)
 
-    // create posts
-    const { post } = await createPost(t, user1.iden)
-
     // set up username
     await setUsername(t, user1.iden, 0, 'test6')
 
@@ -150,6 +147,9 @@ test('after setting up username and get reputation, the user can still pass the 
     // user state transition
     await userStateTransition(t, user1.iden)
     await userStateTransition(t, user2.iden)
+
+    // create posts
+    const { post } = await createPost(t, user1.iden)
 
     // vote
     {
