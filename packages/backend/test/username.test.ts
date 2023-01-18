@@ -32,15 +32,7 @@ test.serial('should set a username', async (t: any) => {
     await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
 
     // execute the epoch transition
-    const prevEpoch = await t.context.unirep.currentEpoch()
     await epochTransition(t)
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const findEpoch = await t.context.db.findOne('Epoch', {
-            where: { number: Number(prevEpoch) },
-        })
-        if (findEpoch) break
-    }
 
     // user state transition
     await userStateTransition(t, iden)
@@ -72,15 +64,7 @@ test.serial(
         await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
 
         // execute the epoch transition
-        const prevEpoch = await t.context.unirep.currentEpoch()
         await epochTransition(t)
-        for (;;) {
-            await new Promise((r) => setTimeout(r, 1000))
-            const findEpoch = await t.context.db.findOne('Epoch', {
-                where: { number: Number(prevEpoch) },
-            })
-            if (findEpoch) break
-        }
 
         // user state transition
         await userStateTransition(t, iden)
