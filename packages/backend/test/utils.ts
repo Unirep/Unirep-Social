@@ -693,7 +693,9 @@ export const genUsernameProof = async (t, iden, preImage) => {
     )
 
     const isValid = await usernameProof.verify()
-    t.true(isValid)
+    if (!isValid) {
+        throw new Error('usernameProof is not valid')
+    }
     await userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on

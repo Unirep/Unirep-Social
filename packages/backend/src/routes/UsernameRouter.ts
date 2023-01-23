@@ -94,12 +94,19 @@ async function setUsername(req, res) {
     // claim username via Unirep Social contract
     const epochKey = reputationProof.epochKey.toString()
     const currentUsername = reputationProof.graffitiPreImage.toString()
-    const hashedCurrentUsername = hashOne(
-        ethers.utils.hexlify(ethers.utils.toUtf8Bytes(currentUsername))
-    ).toString()
+    const hashedCurrentUsername =
+        currentUsername === '0'
+            ? '0'
+            : hashOne(ethers.utils.hexlify(BigInt(currentUsername))).toString()
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'setUsername',
         [epochKey, hashedCurrentUsername, hashedNewUsername]
+    )
+    console.log(
+        'hashedCurrentUsername:',
+        hashedCurrentUsername,
+        ', hashedNewUsername:',
+        hashedNewUsername
     )
 
     const { attestingFee } = await unirepContract.config()
