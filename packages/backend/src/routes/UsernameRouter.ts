@@ -69,6 +69,25 @@ async function setUsername(req, res) {
         return
     }
 
+    // check if user has already set username in current epoch before
+    const epochKey = reputationProof.epochKey.toString()
+    const records = (
+        await req.db.findMany('Record', {
+            where: {
+                from: epochKey,
+                to: epochKey,
+            },
+        })
+    ).filter(
+        (r) => r.action === ActionType.SetUsername && r.epoch === currentEpoch
+    )
+    if (records.length > 0) {
+        res.status(409).json({
+            error: 'Set username invalid: could not set username more than once in same epoch.',
+        })
+        return
+    }
+
     // username validation
     const regex = new RegExp('^[a-zA-Z0-9_-]{3,40}$')
 
@@ -92,7 +111,6 @@ async function setUsername(req, res) {
     }
 
     // claim username via Unirep Social contract
-    const epochKey = reputationProof.epochKey.toString()
     const currentUsername = reputationProof.graffitiPreImage.toString()
     const hashedCurrentUsername =
         currentUsername === '0'
@@ -101,12 +119,6 @@ async function setUsername(req, res) {
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'setUsername',
         [epochKey, hashedCurrentUsername, hashedNewUsername]
-    )
-    console.log(
-        'hashedCurrentUsername:',
-        hashedCurrentUsername,
-        ', hashedNewUsername:',
-        hashedNewUsername
     )
 
     const { attestingFee } = await unirepContract.config()
