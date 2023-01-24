@@ -323,7 +323,7 @@ export class Data {
         epk: string = ''
     ) {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
@@ -375,7 +375,7 @@ export class Data {
 
     deletePost(postId: string = '', epk: string = '') {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
@@ -569,7 +569,7 @@ export class Data {
         epk: string = ''
     ) {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
@@ -628,7 +628,7 @@ export class Data {
 
     deleteComment(commentId: string = '', epk: string = '') {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = i / unirepConfig.numEpochKeyNoncePerEpoch + 1
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
         const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
