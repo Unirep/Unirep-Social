@@ -105,7 +105,6 @@ test.serial(
         await setUsername(t, user3.iden, 0, 'test6')
 
         {
-            console.log('user3 and user4 do epoch transition')
             // epoch transition
             await epochTransition(t)
 

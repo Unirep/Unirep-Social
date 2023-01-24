@@ -119,20 +119,17 @@ test.serial('should be able to use unused username', async (t: any) => {
     const { iden, commitment } = await signUp(t)
 
     // set username to test1
-    console.log('set username from 0 to test1')
     await setUsername(t, iden, 0, 'test1')
     await epochTransition(t)
     await userStateTransition(t, iden)
 
     // set username to test2
-    console.log('set username from test1 to test2')
     await setUsername(t, iden, 'test1', 'test2')
     await epochTransition(t)
     await userStateTransition(t, iden)
 
     // set username to test1 again
     try {
-        console.log('set username from test2 to test1')
         await setUsername(t, iden, 'test2', 'test1')
         t.pass('successfully set unused username')
     } catch (e) {

@@ -164,7 +164,6 @@ async function createComment(req, res) {
                 BigInt(reputationProof.graffitiPreImage as string).toString(16)
         )
     }
-    console.log('leave comment username:', graffiti)
 
     const comment = await req.db.create('Comment', {
         postId,
