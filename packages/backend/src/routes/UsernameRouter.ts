@@ -71,17 +71,14 @@ async function setUsername(req, res) {
 
     // check if user has already set username in current epoch before
     const epochKey = reputationProof.epochKey.toString()
-    const records = (
-        await req.db.findMany('Record', {
-            where: {
-                from: epochKey,
-                to: epochKey,
-            },
-        })
-    ).filter(
-        (r) => r.action === ActionType.SetUsername && r.epoch === currentEpoch
-    )
-    if (records.length > 0) {
+    const recordsCount = await req.db.count('Record', {
+        from: epochKey,
+        to: epochKey,
+        action: ActionType.SetUsername,
+        epoch: currentEpoch,
+    })
+
+    if (recordsCount > 0) {
         res.status(409).json({
             error: 'Set username invalid: could not set username more than once in same epoch.',
         })
