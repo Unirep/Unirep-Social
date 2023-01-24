@@ -615,7 +615,7 @@ export class User {
         const { transaction, error } = await r.json()
 
         if (error && error.length > 0) {
-            console.log(error)
+            console.error(error)
         }
 
         return { error, transaction }
@@ -659,7 +659,7 @@ export class User {
     // encrypt the current id using aes 256 cbc and bcrypt
     async encrypt(password: string) {
         if (!this.id) throw new Error('Iden is not set')
-        console.log(this.id)
+
         const passwordBytes = aes.utils.utf8.toBytes(password)
         const saltBytes = await ethers.utils.randomBytes(32)
         const passwordHash = ethers.utils.sha256([
@@ -686,7 +686,6 @@ export class User {
     }
 
     async setUsername(preImage: string, username: string) {
-        console.log('user change user name', preImage, 'to', username)
         if (!this.userState) throw new Error('user not login')
 
         const hexlifiedPreImage =

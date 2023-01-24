@@ -221,10 +221,7 @@ export class Data {
                     details: 'Synchronizing with blockchain...',
                 })
 
-                console.log('before userContext wait for sync')
                 await userContext.userState?.waitForSync(blockNumber)
-                console.log('sync complete')
-
                 await userContext.calculateAllEpks()
                 update({
                     title: 'Creating Airdrop',
@@ -435,7 +432,6 @@ export class Data {
         minRep = 0,
         graffiti: string = '0'
     ) {
-        console.log('vote by graffiti:', graffiti)
         const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
@@ -743,7 +739,6 @@ export class Data {
             transactionHash: data.transactionHash,
             lastUpdatedAt: data.lastUpdatedAt,
         }
-        console.log(post)
 
         return post
     }
