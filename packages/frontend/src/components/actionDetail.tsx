@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { InfoType } from '../constants'
 import HelpWidget from './helpWidget'
 import { shortenEpochKey } from '../utils'
@@ -18,6 +17,9 @@ type Props = {
     chooseToUsePersona: () => void
     epkNonce: number
     setEpkNonce: (epkNonce: number) => void
+    username?: string
+    showUsername: boolean
+    setUseUsername: (value: boolean) => void
 }
 
 const ActionDetail = ({
@@ -35,13 +37,27 @@ const ActionDetail = ({
     chooseToUsePersona,
     epkNonce,
     setEpkNonce,
+    username,
+    showUsername,
+    setUseUsername,
 }: Props) => {
     const onRepChange = (event: any) => {
         setShowoffRep(+event.target.value)
     }
 
+    const onCheckboxChange = (event: any) => {
+        setUseUsername(event.target.value)
+    }
+
     return (
         <div className="action-detail">
+            {showUsername && (
+                <label className="use-username">
+                    <input type="checkbox" onChange={onCheckboxChange} />
+                    <span className="style-check-box"></span>
+                    <span>Use Username: {username}</span>
+                </label>
+            )}
             <div className="choose-from">
                 <div className="choices">
                     <div

@@ -1,5 +1,4 @@
 import { useState, useContext, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
 import 'react-circular-progressbar/dist/styles.css'
 import { observer } from 'mobx-react-lite'
 
@@ -20,7 +19,8 @@ type Props = {
         content: string,
         topic: string,
         epkNonce: number,
-        reputation: number
+        reputation: number,
+        useUsername: boolean
     ) => void
     submitBtnName: string
     onClick: (event: any) => void
@@ -66,6 +66,7 @@ const WritingField = (props: Props) => {
     })
     const [epkNonce, setEpkNonce] = useState<number>(-1)
     const [errorMsg, setErrorMsg] = useState<string>('')
+    const [useUsername, setUseUsername] = useState<boolean>(false)
 
     const [topic, setTopic] = useState<any>(
         props.topicProp === 'All' ? 'General' : props.topicProp
@@ -119,7 +120,8 @@ const WritingField = (props: Props) => {
                     content,
                     topic?.toLowerCase(),
                     epkNonce,
-                    reputation
+                    reputation,
+                    useUsername
                 )
             }
         }
@@ -222,6 +224,14 @@ const WritingField = (props: Props) => {
                             chooseToUsePersona={chooseToUsePersona}
                             epkNonce={epkNonce}
                             setEpkNonce={setEpkNonce}
+                            username={userContext.username.username}
+                            showUsername={
+                                !useSubsidy &&
+                                userContext.username.epoch !== undefined &&
+                                userContext.username.epoch <
+                                    userContext.currentEpoch
+                            }
+                            setUseUsername={setUseUsername}
                         />
                     ) : (
                         <>somethings wrong...</>

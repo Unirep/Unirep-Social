@@ -39,6 +39,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
             ? postContext.postsById[dataId].epoch_key
             : postContext.commentsById[dataId].epoch_key
     )
+    const [useUsername, setUseUsername] = useState<boolean>(false)
 
     useEffect(() => {
         if (isPost) {
@@ -70,7 +71,9 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                 obj.epoch_key,
                 epkNonce,
                 upvote,
-                downvote
+                downvote,
+                0,
+                useUsername ? userContext.username.username : '0'
             )
             closeVote()
         }
@@ -188,6 +191,14 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         chooseToUsePersona={chooseToUsePersona}
                         epkNonce={epkNonce}
                         setEpkNonce={setEpkNonce}
+                        username={userContext.username.username}
+                        showUsername={
+                            !useSubsidy &&
+                            userContext.username.epoch !== undefined &&
+                            userContext.username.epoch <
+                                userContext.currentEpoch
+                        }
+                        setUseUsername={setUseUsername}
                     />
                     <MyButton
                         type={MyButtonType.dark}
@@ -235,10 +246,14 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                     return shown ? (
                                         <div className="record" key={i}>
                                             <div className="record-epk">
-                                                {
-                                                    postContext.votesById[id]
-                                                        .voter
-                                                }
+                                                {postContext.votesById[id]
+                                                    .graffiti &&
+                                                postContext.votesById[id]
+                                                    .graffiti !== '0'
+                                                    ? postContext.votesById[id]
+                                                          .graffiti
+                                                    : postContext.votesById[id]
+                                                          .voter}
                                             </div>
                                             <span>
                                                 {isUpvote ? v.posRep : v.negRep}

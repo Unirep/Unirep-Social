@@ -32,28 +32,23 @@ test.serial('should set a username', async (t: any) => {
     await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
 
     // execute the epoch transition
-    const prevEpoch = await t.context.unirep.currentEpoch()
     await epochTransition(t)
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const findEpoch = await t.context.db.findOne('Epoch', {
-            where: { number: Number(prevEpoch) },
-        })
-        if (findEpoch) break
-    }
 
     // user state transition
     await userStateTransition(t, iden)
 
     // change the username to something else
-    await setUsername(
-        t,
-        iden,
-        'initial-test-username123',
-        'second-test-username123'
-    )
-
-    t.pass()
+    try {
+        await setUsername(
+            t,
+            iden,
+            'initial-test-username123',
+            'second-test-username123'
+        )
+        t.pass('pass the test!')
+    } catch (e) {
+        t.fail('set username failed with error ' + e)
+    }
 })
 
 test.serial(
@@ -69,15 +64,7 @@ test.serial(
         await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
 
         // execute the epoch transition
-        const prevEpoch = await t.context.unirep.currentEpoch()
         await epochTransition(t)
-        for (;;) {
-            await new Promise((r) => setTimeout(r, 1000))
-            const findEpoch = await t.context.db.findOne('Epoch', {
-                where: { number: Number(prevEpoch) },
-            })
-            if (findEpoch) break
-        }
 
         // user state transition
         await userStateTransition(t, iden)
@@ -92,7 +79,7 @@ test.serial(
     }
 )
 
-test('should fail to set with invalid proof', async (t: any) => {
+test.serial('should fail to set with invalid proof', async (t: any) => {
     // sign up and sign in user
     const { iden, commitment } = await signUp(t)
 
@@ -106,6 +93,10 @@ test('should fail to set with invalid proof', async (t: any) => {
         0
     )
     await waitForBackendBlock(t, blockNumber)
+
+    // epoch transition and ust
+    await epochTransition(t)
+    await userStateTransition(t, iden)
 
     // send a invalid proof
     const r = await fetch(`${t.context.url}/api/usernames`, {
@@ -122,3 +113,66 @@ test('should fail to set with invalid proof', async (t: any) => {
 
     t.is(r.ok, false)
 })
+
+test.serial('should be able to use unused username', async (t: any) => {
+    // sign up
+    const { iden, commitment } = await signUp(t)
+
+    // set username to test1
+    await setUsername(t, iden, 0, 'test1')
+    await epochTransition(t)
+    await userStateTransition(t, iden)
+
+    // set username to test2
+    await setUsername(t, iden, 'test1', 'test2')
+    await epochTransition(t)
+    await userStateTransition(t, iden)
+
+    // set username to test1 again
+    try {
+        await setUsername(t, iden, 'test2', 'test1')
+        t.pass('successfully set unused username')
+    } catch (e) {
+        t.fail('fail to set unused username: ' + e)
+    }
+})
+
+test.serial(
+    'if preImage is wrong, not able to set new username',
+    async (t: any) => {
+        // sign up
+        const { iden, commitment } = await signUp(t)
+
+        // set username to test3
+        await setUsername(t, iden, 0, 'test3')
+        await epochTransition(t)
+        await userStateTransition(t, iden)
+
+        // try to set username from test_wrong to test4 before ust
+        try {
+            await setUsername(t, iden, 'test_wrong', 'test4')
+            t.fail('set preImage as test_wrong successfully')
+        } catch (e) {
+            t.pass('set preImage as test_wrong failed')
+        }
+    }
+)
+
+test.serial(
+    'cannot set username multiple times in an epoch',
+    async (t: any) => {
+        // sign up
+        const { iden, commitment } = await signUp(t)
+
+        // set username to test5
+        await setUsername(t, iden, 0, 'test5')
+
+        // set username to test6
+        try {
+            await setUsername(t, iden, 0, 'test6')
+            t.fail('should not allow user to set username twice')
+        } catch (e) {
+            t.pass('should fail to set username twice or more')
+        }
+    }
+)

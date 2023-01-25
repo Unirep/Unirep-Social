@@ -157,6 +157,14 @@ async function createComment(req, res) {
         }
     )
 
+    let graffiti
+    if (reputationProof.graffitiPreImage != '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' +
+                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+        )
+    }
+
     const comment = await req.db.create('Comment', {
         postId,
         content,
@@ -169,6 +177,7 @@ async function createComment(req, res) {
         negRep: 0,
         status: 0,
         transactionHash: hash,
+        graffiti,
     })
     await req.db.create('Record', {
         to: epochKey,

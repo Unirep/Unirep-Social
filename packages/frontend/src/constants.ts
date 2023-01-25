@@ -7,6 +7,12 @@ export const loadingText = 'Some action is pending, please wait...'
 export const expiredText = 'You cannot vote on posts with expired epoch key.'
 export const offChainText = 'This post is not able to be voted yet.'
 
+export interface Username {
+    oldUsername: string
+    username: string
+    epoch: number
+}
+
 export interface User {
     identity: string
     epoch_keys: string[]

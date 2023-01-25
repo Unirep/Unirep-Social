@@ -53,7 +53,7 @@ const PostBlock = ({ postId, page }: Props) => {
     const uiContext = useContext(UIContext)
 
     const post = postContext.postsById[postId]
-    const postHtml = markdown.render(post.content)
+    const postHtml = markdown.render(post.content ?? '')
     const comments = postContext.commentsByPostId[postId] || []
     const isAuthor = userContext.allEpks?.includes(post.epoch_key)
 
@@ -104,7 +104,7 @@ const PostBlock = ({ postId, page }: Props) => {
                         onMouseLeave={() => setEpkHovered(false)}
                         onClick={() => setEpkHovered(!isEpkHovered)}
                     >
-                        Post by {post.epoch_key}
+                        Post by {post.username ?? post.epoch_key}
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />

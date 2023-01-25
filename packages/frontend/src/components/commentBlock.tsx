@@ -33,7 +33,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const comment = postContext.commentsById[commentId]
-    const commentHtml = markdown.render(comment.content)
+    const commentHtml = markdown.render(comment.content ?? '')
     const unirepConfig = useContext(UnirepContext)
     const date = dateformat(new Date(comment.createdAt), 'dd/mm/yyyy hh:MM TT')
     const [isEpkHovered, setEpkHovered] = useState<boolean>(false)
@@ -91,7 +91,7 @@ const CommentBlock = ({ commentId, page }: Props) => {
                         onMouseEnter={() => setEpkHovered(true)}
                         onMouseLeave={() => setEpkHovered(false)}
                     >
-                        Post by {comment.epoch_key}{' '}
+                        Post by {comment.username ?? comment.epoch_key}{' '}
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />

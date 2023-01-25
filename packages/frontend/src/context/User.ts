@@ -2,12 +2,12 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
 
 import * as config from '../config'
-import { Record } from '../constants'
+import { Record, Username } from '../constants'
 import { ethers } from 'ethers'
 import { ZkIdentity, Strategy } from '@unirep/crypto'
 import { makeURL } from '../utils'
 import { genEpochKey, schema } from '@unirep/core'
-import { SocialUserState } from '@unirep-social/core'
+import { SocialUserState, ActionType } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
 import { IndexedDBConnector } from 'anondb/web'
@@ -25,6 +25,7 @@ export class User {
     latestTransitionedEpoch?: number
     loadingPromise
     userState?: SocialUserState
+    username = {} as Username
 
     syncStartBlock: any
     latestProcessedBlock: any
@@ -157,6 +158,32 @@ export class User {
                 this.recordsByEpk[epkOfRecord] = []
             }
             this.recordsByEpk[epkOfRecord].unshift(r)
+
+            if (r.action === ActionType.SetUsername) {
+                if (r.epoch < this.currentEpoch) {
+                    // records are sorted by time, so the latest one from previous epochs is also the preImage
+                    this.username = {
+                        oldUsername: r.data,
+                        username: r.data,
+                        epoch: r.epoch,
+                    }
+                } else {
+                    // if same epoch, should decide whether there is old username or not
+                    if (this.username.username) {
+                        this.username = {
+                            oldUsername: this.username.oldUsername,
+                            username: r.data,
+                            epoch: r.epoch,
+                        }
+                    } else {
+                        this.username = {
+                            oldUsername: '0',
+                            username: r.data,
+                            epoch: r.epoch,
+                        }
+                    }
+                }
+            }
         }
 
         // calculate rep spent of this epoch
@@ -506,7 +533,11 @@ export class User {
         window.localStorage.removeItem('identity')
     }
 
-    async genSubsidyProof(minRep = 0, notEpochKey: string | number = 0) {
+    async genSubsidyProof(
+        minRep = 0,
+        notEpochKey: string | number = 0,
+        graffiti: string = '0'
+    ) {
         const currentEpoch = await this.loadCurrentEpoch()
         if (!this.userState) throw new Error('User state not initialized')
 
@@ -519,7 +550,12 @@ export class User {
         return { proof, publicSignals, currentEpoch }
     }
 
-    async genRepProof(proveKarma: number, epkNonce: number, minRep = 0) {
+    async genRepProof(
+        proveKarma: number,
+        epkNonce: number,
+        minRep = 0,
+        graffiti: string = '0'
+    ) {
         if (epkNonce >= this.unirepConfig.numEpochKeyNoncePerEpoch) {
             throw new Error('Invalid epk nonce')
         }
@@ -535,8 +571,13 @@ export class User {
         if (this.spent + Math.max(proveKarma, minRep) > this.reputation) {
             throw new Error('Not enough reputation')
         }
-        const proveGraffiti = BigInt(0)
-        const graffitiPreImage = BigInt(0)
+        const proveGraffiti = graffiti === '0' ? BigInt(0) : BigInt(1)
+        const graffitiPreImage =
+            graffiti === '0'
+                ? BigInt(0)
+                : BigInt(
+                      ethers.utils.hexlify(ethers.utils.toUtf8Bytes(graffiti))
+                  )
         if (!this.userState) throw new Error('User state not initialized')
 
         await this.userState.waitForSync()
@@ -574,7 +615,7 @@ export class User {
         const { transaction, error } = await r.json()
 
         if (error && error.length > 0) {
-            console.log(error)
+            console.error(error)
         }
 
         return { error, transaction }
@@ -618,7 +659,7 @@ export class User {
     // encrypt the current id using aes 256 cbc and bcrypt
     async encrypt(password: string) {
         if (!this.id) throw new Error('Iden is not set')
-        console.log(this.id)
+
         const passwordBytes = aes.utils.utf8.toBytes(password)
         const saltBytes = await ethers.utils.randomBytes(32)
         const passwordHash = ethers.utils.sha256([
@@ -642,6 +683,44 @@ export class User {
             iv: ethers.utils.hexlify(iv),
             salt: ethers.utils.hexlify(saltBytes),
         }
+    }
+
+    async setUsername(preImage: string, username: string) {
+        if (!this.userState) throw new Error('user not login')
+
+        const hexlifiedPreImage =
+            preImage == '0'
+                ? 0
+                : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+
+        const usernameProof = await this.userState.genProveReputationProof(
+            BigInt(this.unirepConfig.attesterId),
+            2,
+            0,
+            preImage === '0' ? BigInt(0) : BigInt(1),
+            BigInt(hexlifiedPreImage),
+            0
+        )
+
+        const apiURL = makeURL('usernames', {})
+        const r = await fetch(apiURL, {
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                newUsername: username,
+                publicSignals: usernameProof.publicSignals,
+                proof: usernameProof.proof,
+            }),
+            method: 'POST',
+        })
+
+        const { transaction, error } = await r.json()
+
+        if (!r.ok) {
+            return { error }
+        }
+        return { transaction }
     }
 }
 

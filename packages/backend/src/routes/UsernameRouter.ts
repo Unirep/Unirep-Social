@@ -13,8 +13,9 @@ import {
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { ReputationProof } from '@unirep/contracts'
-import { verifyReputationProof, verifyGSTRoot } from '../utils'
+import { verifyReputationProof } from '../utils'
 import { hashOne } from '@unirep/crypto'
+import { ActionType } from '@unirep-social/core'
 
 export default (app: Express) => {
     app.post('/api/usernames', catchError(setUsername))
@@ -68,11 +69,29 @@ async function setUsername(req, res) {
         return
     }
 
+    // check if user has already set username in current epoch before
+    const epochKey = reputationProof.epochKey.toString()
+    const recordsCount = await req.db.count('Record', {
+        from: epochKey,
+        to: epochKey,
+        action: ActionType.SetUsername,
+        epoch: currentEpoch,
+    })
+
+    if (recordsCount > 0) {
+        res.status(409).json({
+            error: 'Set username invalid: could not set username more than once in same epoch.',
+        })
+        return
+    }
+
     // username validation
     const regex = new RegExp('^[a-zA-Z0-9_-]{3,40}$')
 
     if (!regex.test(newUsername)) {
-        res.status(409).json({ error: 'Username invalid' })
+        res.status(409).json({
+            error: 'Username invalid: please set a username length between 3 to 40, and do not use special characters and spaces, only letters and numbers are allowed.',
+        })
         return
     }
 
@@ -89,20 +108,34 @@ async function setUsername(req, res) {
     }
 
     // claim username via Unirep Social contract
-    const epochKey = reputationProof.epochKey.toString()
     const currentUsername = reputationProof.graffitiPreImage.toString()
-    const hashedCurrentUsername = hashOne(
-        ethers.utils.hexlify(ethers.utils.toUtf8Bytes(currentUsername))
-    ).toString()
+    const hashedCurrentUsername =
+        currentUsername === '0'
+            ? '0'
+            : hashOne(ethers.utils.hexlify(BigInt(currentUsername))).toString()
     const calldata = unirepSocialContract.interface.encodeFunctionData(
         'setUsername',
         [epochKey, hashedCurrentUsername, hashedNewUsername]
     )
 
+    const { attestingFee } = await unirepContract.config()
     const hash = await TransactionManager.queueTransaction(
         unirepSocialContract.address,
-        calldata
+        { data: calldata, value: attestingFee }
     )
+
+    await req.db.create('Record', {
+        to: epochKey,
+        from: epochKey,
+        upvote: 0,
+        downvote: 0,
+        epoch: currentEpoch,
+        action: ActionType.SetUsername,
+        data: newUsername,
+        transactionHash: hash,
+        confirmed: 1, // this should be checked in synchronizer???
+    })
+
     res.json({
         transaction: hash,
     })

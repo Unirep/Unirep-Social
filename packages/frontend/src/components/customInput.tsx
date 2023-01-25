@@ -4,9 +4,19 @@ type Props = {
     id?: string
     title: string
     onChange: (event: any) => void
+    value?: string
+    conceal?: boolean
+    disabled?: boolean
 }
 
-const CustomInput = ({ id, title, onChange }: Props) => {
+const CustomInput = ({
+    id,
+    title,
+    value,
+    onChange,
+    conceal,
+    disabled,
+}: Props) => {
     const [visible, setVisible] = useState<boolean>(false)
 
     return (
@@ -16,14 +26,18 @@ const CustomInput = ({ id, title, onChange }: Props) => {
                 <input
                     id={id}
                     onChange={onChange}
-                    type={visible ? 'text' : 'password'}
+                    type={!conceal || visible ? 'text' : 'password'}
+                    disabled={disabled}
+                    value={value ?? undefined}
                 />
-                <img
-                    src={require(`../../public/images/eye${
-                        visible ? '-slash' : ''
-                    }.svg`)}
-                    onClick={() => setVisible(!visible)}
-                />
+                {conceal && (
+                    <img
+                        src={require(`../../public/images/eye${
+                            visible ? '-slash' : ''
+                        }.svg`)}
+                        onClick={() => setVisible(!visible)}
+                    />
+                )}
             </div>
         </div>
     )

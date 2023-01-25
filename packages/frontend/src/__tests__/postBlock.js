@@ -115,6 +115,7 @@ test("should display commentField when user's net reputation > unirep commentRep
         netReputation: 100,
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        username: {},
     }
 
     const postData = {
@@ -167,6 +168,7 @@ test('test if queue and epoch context functions are triggered with correct props
         commentReputation: 30,
         currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
         isInitialSyncing: null,
+        username: {},
     }
 
     const postData = {

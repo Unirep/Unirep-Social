@@ -70,6 +70,7 @@ test('should render WritingField correctly with .Provider data', () => {
     const userData = {
         userState: 'userState',
         currentEpochKeys: ['user epoch_key test'],
+        username: {},
     }
 
     renderWritingField(userData, unirepData, postData, type, page, true)

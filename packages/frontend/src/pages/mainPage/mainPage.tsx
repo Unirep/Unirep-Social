@@ -45,8 +45,6 @@ const MainPage = ({ topic }: Props) => {
                 },
                 { isConfirmed: true }
             )
-        } else {
-            console.log(userContext.id)
         }
     }
 
