@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { expect } from 'chai'
-import { genRandomSalt, ZkIdentity } from '@unirep/crypto'
+import { genRandomSalt, ZkIdentity, hashOne } from '@unirep/crypto'
 import { genEpochKey, Reputation } from '@unirep/core'
 import * as crypto from '@unirep/crypto'
 import * as snarkjs from 'snarkjs'
@@ -11,11 +11,14 @@ import {
 
 const circuitName = 'proveGraffitiPreimage'
 
+const graffitiPreImage = 0
+
 const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
     reputationRecords,
-    attesterId
+    attesterId,
+    graffiti_pre_image
 ) => {
     if (reputationRecords[attesterId] === undefined) {
         reputationRecords[attesterId] = new Reputation(
@@ -61,6 +64,7 @@ const genCircuitInput = (
         graffiti: reputationRecords[attesterId].graffiti,
         sign_up: reputationRecords[attesterId].signUp,
         UST_path_elements: USTPathElements,
+        graffiti_pre_image: graffitiPreImage,
     }
     return crypto.stringifyBigInts(circuitInputs)
 }
@@ -99,7 +103,7 @@ describe('Prove grafitti preimage', function () {
             [attesterId]: new Reputation(
                 BigInt(10),
                 BigInt(0),
-                BigInt(1),
+                hashOne(BigInt(graffitiPreImage)),
                 BigInt(1)
             ),
         }
@@ -107,7 +111,8 @@ describe('Prove grafitti preimage', function () {
             new ZkIdentity(),
             epoch,
             reputationRecords,
-            attesterId
+            attesterId,
+            graffitiPreImage
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
@@ -122,24 +127,30 @@ describe('Prove grafitti preimage', function () {
         const reputationRecords = {
             [attesterId]: new Reputation(
                 BigInt(10),
-                BigInt(20),
                 BigInt(0),
+                hashOne(BigInt(graffitiPreImage)),
                 BigInt(1)
             ),
         }
         const id = new ZkIdentity()
+        const wrongGraffitiPreImage = graffitiPreImage + 1
         const circuitInputs = genCircuitInput(
             id,
             epoch,
             reputationRecords,
-            attesterId
+            attesterId,
+            wrongGraffitiPreImage
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
             circuitInputs
         )
         const isValid = await verifyProof(publicSignals, proof)
-        expect(isValid).to.be.true
+        expect(isValid).to.be.false // should fail with a wrong graffiti preimage
+
+        expect(hashOne(BigInt(graffitiPreImage))).to.not.eqaul(
+            wrongGraffitiPreImage
+        )
 
         const epk = genEpochKey(id.identityNullifier, epoch, 0)
         expect(publicSignals[1]).to.equal(epk.toString())
