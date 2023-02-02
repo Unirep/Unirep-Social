@@ -17,8 +17,7 @@ const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
     reputationRecords,
-    attesterId,
-    graffiti_pre_image
+    attesterId
 ) => {
     if (reputationRecords[attesterId] === undefined) {
         reputationRecords[attesterId] = new Reputation(
@@ -111,8 +110,7 @@ describe('Prove grafitti preimage', function () {
             new ZkIdentity(),
             epoch,
             reputationRecords,
-            attesterId,
-            graffitiPreImage
+            attesterId
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
@@ -138,8 +136,7 @@ describe('Prove grafitti preimage', function () {
             id,
             epoch,
             reputationRecords,
-            attesterId,
-            graffitiPreImage
+            attesterId
         )
 
         circuitInputs.graffiti_pre_image = wrongGraffitiPreImage
