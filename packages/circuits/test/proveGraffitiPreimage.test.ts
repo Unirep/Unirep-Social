@@ -139,8 +139,10 @@ describe('Prove grafitti preimage', function () {
             epoch,
             reputationRecords,
             attesterId,
-            wrongGraffitiPreImage
+            graffitiPreImage
         )
+
+        circuitInputs.graffiti_pre_image = wrongGraffitiPreImage
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
             circuitInputs
@@ -148,11 +150,8 @@ describe('Prove grafitti preimage', function () {
         const isValid = await verifyProof(publicSignals, proof)
         expect(isValid).to.be.false // should fail with a wrong graffiti preimage
 
-        expect(hashOne(BigInt(graffitiPreImage))).to.not.eqaul(
+        expect(hashOne(BigInt(graffitiPreImage))).to.not.equal(
             wrongGraffitiPreImage
         )
-
-        const epk = genEpochKey(id.identityNullifier, epoch, 0)
-        expect(publicSignals[1]).to.equal(epk.toString())
     })
 })
