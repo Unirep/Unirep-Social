@@ -17,7 +17,8 @@ const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
     reputationRecords,
-    attesterId
+    attesterId,
+    graffiti_pre_image
 ) => {
     if (reputationRecords[attesterId] === undefined) {
         reputationRecords[attesterId] = new Reputation(
@@ -110,7 +111,35 @@ describe('Prove grafitti preimage', function () {
             new ZkIdentity(),
             epoch,
             reputationRecords,
-            attesterId
+            attesterId,
+            graffitiPreImage
+        )
+
+        const { proof, publicSignals } = await genProofAndPublicSignals(
+            circuitInputs
+        )
+        const isValid = await verifyProof(publicSignals, proof)
+        expect(isValid).to.be.true
+    })
+
+    it('successfully prove non-zero graffiti preimage', async () => {
+        const attesterId = 1
+        const nonzeroPreimage = 3
+
+        const reputationRecords = {
+            [attesterId]: new Reputation(
+                BigInt(10),
+                BigInt(0),
+                hashOne(BigInt(nonzeroPreimage)),
+                BigInt(1)
+            ),
+        }
+        const circuitInputs = genCircuitInput(
+            new ZkIdentity(),
+            epoch,
+            reputationRecords,
+            attesterId,
+            nonzeroPreimage
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
@@ -136,10 +165,9 @@ describe('Prove grafitti preimage', function () {
             id,
             epoch,
             reputationRecords,
-            attesterId
+            attesterId,
+            wrongGraffitiPreImage
         )
-
-        circuitInputs.graffiti_pre_image = wrongGraffitiPreImage
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
             circuitInputs
