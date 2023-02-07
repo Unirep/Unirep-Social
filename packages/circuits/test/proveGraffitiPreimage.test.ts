@@ -64,7 +64,7 @@ const genCircuitInput = (
         graffiti: reputationRecords[attesterId].graffiti,
         sign_up: reputationRecords[attesterId].signUp,
         UST_path_elements: USTPathElements,
-        graffiti_pre_image: graffitiPreImage,
+        graffiti_pre_image: graffiti_pre_image,
     }
     return crypto.stringifyBigInts(circuitInputs)
 }
