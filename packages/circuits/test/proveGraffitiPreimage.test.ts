@@ -11,8 +11,6 @@ import {
 
 const circuitName = 'proveGraffitiPreimage'
 
-const graffitiPreImage = 0
-
 const genCircuitInput = (
     id: crypto.ZkIdentity,
     epoch: number,
@@ -99,6 +97,7 @@ describe('Prove grafitti preimage', function () {
 
     it('successfully prove graffiti preimage', async () => {
         const attesterId = 1
+        const graffitiPreImage = 0
         const reputationRecords = {
             [attesterId]: new Reputation(
                 BigInt(10),
@@ -124,13 +123,13 @@ describe('Prove grafitti preimage', function () {
 
     it('successfully prove non-zero graffiti preimage', async () => {
         const attesterId = 1
-        const nonzeroPreimage = 3
+        const graffitiPreimage = 3
 
         const reputationRecords = {
             [attesterId]: new Reputation(
                 BigInt(10),
                 BigInt(0),
-                hashOne(BigInt(nonzeroPreimage)),
+                hashOne(BigInt(graffitiPreimage)),
                 BigInt(1)
             ),
         }
@@ -139,7 +138,7 @@ describe('Prove grafitti preimage', function () {
             epoch,
             reputationRecords,
             attesterId,
-            nonzeroPreimage
+            graffitiPreimage
         )
 
         const { proof, publicSignals } = await genProofAndPublicSignals(
@@ -151,6 +150,7 @@ describe('Prove grafitti preimage', function () {
 
     it('should fail to prove a reputation with wrong graffiti preimage', async () => {
         const attesterId = 1
+        const graffitiPreImage = 0
         const reputationRecords = {
             [attesterId]: new Reputation(
                 BigInt(10),
