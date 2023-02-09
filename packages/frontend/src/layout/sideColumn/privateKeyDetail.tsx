@@ -5,7 +5,7 @@ const PrivateKeyDetail = () => {
             <p>
                 The private key in UniRep social is actually the Semaphore
                 identity. Semaphore enable users online to be freely and fully
-                anonymously. You can learn more about Semaphore{' '}
+                anonymous. You can learn more about Semaphore{' '}
                 <a href="https://semaphore.appliedzkp.org/" target="_blank">
                     here
                 </a>

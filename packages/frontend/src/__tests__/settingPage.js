@@ -22,7 +22,7 @@ test('should render SettingPage properly with BasicPage and PrivateKey component
 
     expect(
         screen.getByText(
-            /It seems like you haven’t download your private key yet, please do so soon./i
+            /It seems like you haven’t downloaded your private key yet, please do so soon./i
         )
     ).toBeInTheDocument()
     expect(screen.getByText(/reveal my private key/i)).toBeInTheDocument()
