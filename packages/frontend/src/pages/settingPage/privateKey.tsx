@@ -155,8 +155,8 @@ const PrivateKey = () => {
                     />
                     {!uiContext.hasDownloadPrivateKey && (
                         <p>
-                            It seems like you haven’t downloaded your private key
-                            yet, please do so soon.
+                            It seems like you haven’t downloaded your private
+                            key yet, please do so soon.
                         </p>
                     )}
                     <CustomGap times={2} />
