@@ -7,7 +7,7 @@
         "synct": "ts-node src/sync-test.ts",
         "keys": "sh scripts/loadKeys.sh",
         "build": "tsc && yarn keys",
-        "test": "npx hardhat test test/username.test.ts"
+        "test": "npx hardhat test test/*.test.ts"
     },
     "keywords": [],
     "author": "",

@@ -30,7 +30,7 @@ export default {
             },
         ],
         settings: {
-            optimizer: { enabled: true, runs: 2 ** 32 - 1  },
+            optimizer: { enabled: true, runs: 2 ** 32 - 1 },
         },
     },
     typechain: {
