@@ -1,5 +1,5 @@
 import { Express } from 'express'
-import { ActionType } from '@unirep-social/core'
+import { ActionType } from '../Synchronizer'
 import catchError from '../catchError'
 
 export default (app: Express) => {

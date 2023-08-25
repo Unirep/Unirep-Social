@@ -20,7 +20,7 @@ const server = setupServer(
     rest.get('http://testurl.invalidtld/*', (req, res, ctx) => {
         return res(ctx.json({}))
     }),
-    rest.post('http://localhost:18545/', (req, res, ctx) => {
+    rest.post('http://127.0.0.1:18545/', (req, res, ctx) => {
         // a geth request
         const { method, params, id } = req.body
         if (method === 'eth_chainId') {

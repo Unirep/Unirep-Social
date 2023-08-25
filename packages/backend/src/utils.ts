@@ -1,52 +1,72 @@
-import { Circuit, formatProofForSnarkjsVerification } from '@unirep/circuits'
+import { formatProofForSnarkjsVerification } from '@unirep/circuits'
 import { Prover } from './daemons/Prover'
 import {
-    ReputationProof,
-    UserTransitionProof,
-    StartTransitionProof,
-    ProcessAttestationsProof,
-    EpochKeyProof,
-} from '@unirep/contracts'
+    SignupProof,
+    UserStateTransitionProof,
+    EpochKeyLiteProof,
+} from '@unirep/circuits'
 import { DB } from 'anondb'
-import { UNIREP, UNIREP_ABI, DEFAULT_ETH_PROVIDER } from './constants'
 import { ethers } from 'ethers'
-import { NegativeRepProof, SubsidyProof } from '@unirep-social/core'
+import { ActionProof } from '@unirep-social/circuits'
 
-const unirepContract = new ethers.Contract(
-    UNIREP,
-    UNIREP_ABI,
-    DEFAULT_ETH_PROVIDER
-)
+export const calcEpoch = (startTimestamp: number, epochLength: number) => {
+    const now = Math.floor(+new Date() / 1000)
+    const current = Math.floor((now - startTimestamp) / epochLength)
+    return current
+}
 
-const verifyGSTRoot = async (
-    db: DB,
+export const verifySignUpProof = async (req, publicSignals, proof) => {
+    const signupProof = new SignupProof(
+        publicSignals,
+        formatProofForSnarkjsVerification(proof),
+        Prover
+    )
+    const currentEpoch = await req.unirep.attesterCurrentEpoch(
+        req.unirepSocial.address
+    )
+    if (Number(signupProof.epoch) !== currentEpoch) {
+        return 'Error: epoch of the proof mismatches current epoch'
+    }
+
+    if (
+        signupProof.attesterId.toString() !==
+        BigInt(req.unirepSocial.address).toString()
+    ) {
+        return 'Error: attester ID mismatches'
+    }
+
+    const valid = await signupProof.verify()
+    if (!valid) {
+        return 'Error: sign up proof is invalid'
+    }
+
+    return
+}
+
+export const verifyGSTRoot = async (
     epoch: number,
-    gstRoot: string
+    gstRoot: string,
+    attesterId: string | bigint,
+    unirepContract: ethers.Contract
 ): Promise<boolean> => {
-    return unirepContract.globalStateTreeRoots(epoch, gstRoot)
+    return unirepContract.attesterStateTreeRootExists(
+        attesterId,
+        epoch,
+        gstRoot
+    )
 }
 
-const verifyEpochTreeRoot = async (
-    db: DB,
-    epoch: number,
-    epochTreeRoot: string
-) => {
-    const root = await unirepContract.epochRoots(epoch)
-    return root.eq(ethers.BigNumber.from(epochTreeRoot))
-}
-
-const verifyReputationProof = async (
-    db: DB,
-    reputationProof: ReputationProof,
+export const verifyReputationProof = async (
+    req: any,
+    actionProof: ActionProof,
     spendReputation: number,
-    unirepSocialId: number,
+    unirepSocialId: bigint,
     currentEpoch: number
 ): Promise<string | undefined> => {
-    const repNullifiers = reputationProof.repNullifiers.map((n) => n.toString())
-    const epoch = Number(reputationProof.epoch)
-    const gstRoot = reputationProof.globalStateTree.toString()
-    const attesterId = Number(reputationProof.attesterId)
-    const repNullifiersAmount = Number(reputationProof.proveReputationAmount)
+    const repNullifiers = actionProof.repNullifiers.map((n) => n.toString())
+    const epoch = Number(actionProof.epoch)
+    const gstRoot = actionProof.stateTreeRoot.toString()
+    const attesterId = Number(actionProof.attesterId)
 
     // check if epoch is correct
     if (epoch !== Number(currentEpoch)) {
@@ -58,45 +78,41 @@ const verifyReputationProof = async (
         return 'Error: proof with wrong attester ID'
     }
 
-    // check reputation amount
-    // if (repNullifiersAmount !== spendReputation) {
-    //     return 'Error: proof with wrong reputation amount'
-    // }
+    // TODO: check rep nullifiers
+    for (let i = 0; i < spendReputation; i++) {
+        const exist = await req.unirepSocial.usedRepNullifier(repNullifiers[i])
+        if (exist) {
+            return `Error: the nullifier is already used`
+        }
+    }
 
-    const isProofValid = await Prover.verifyProof(
-        Circuit.proveReputation,
-        (reputationProof as any).publicSignals,
-        reputationProof._snarkProof
-    )
+    const isProofValid = await actionProof.verify()
     if (!isProofValid) {
         return 'Error: invalid reputation proof'
     }
 
     // check GST root
     {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        const exists = await verifyGSTRoot(
+            epoch,
+            gstRoot,
+            unirepSocialId,
+            req.unirep
+        )
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
     }
 }
 
-const verifyEpochKeyProof = async (
-    db: DB,
-    epochKeyProof: EpochKeyProof,
+export const verifyEpochKeyLiteProof = async (
+    req: any,
+    epochKeyLiteProof: EpochKeyLiteProof,
     epoch: number,
     epochKey: string
 ): Promise<string | undefined> => {
-    const proofEpoch = Number(epochKeyProof.epoch)
-    const gstRoot = epochKeyProof.globalStateTree.toString()
+    const proofEpoch = Number(epochKeyLiteProof.epoch)
 
-    // check GST root
-    {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot)
-        if (!exists) {
-            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
-        }
-    }
     // check post/comment epoch and epk proof epoch
     {
         if (proofEpoch !== epoch)
@@ -104,30 +120,26 @@ const verifyEpochKeyProof = async (
     }
     // check post/comment epoch key and the proof
     {
-        if (epochKey !== epochKeyProof.epochKey)
-            return `Proof epoch key: ${epochKeyProof.epochKey} is not the post/comment epoch: ${epochKey}`
+        if (epochKey !== epochKeyLiteProof.epochKey.toString())
+            return `Proof epoch key: ${epochKeyLiteProof.epochKey} is not the post/comment epoch: ${epochKey}`
     }
 
-    const isProofValid = await Prover.verifyProof(
-        Circuit.verifyEpochKey,
-        (epochKeyProof as any).publicSignals,
-        formatProofForSnarkjsVerification(epochKeyProof.proof as string[])
-    )
+    const isProofValid = await epochKeyLiteProof.verify()
     if (!isProofValid) {
         return 'Error: invalid epoch key proof'
     }
 }
 
-const verifySubsidyProof = async (
-    db: DB,
-    subsidyProof: SubsidyProof,
+export const verifySubsidyProof = async (
+    req: any,
+    actionProof: ActionProof,
     currentEpoch: number,
-    unirepSocialId: number,
+    unirepSocialId: bigint | string,
     voteReceiver?: string
 ): Promise<string | undefined> => {
-    const epoch = Number(subsidyProof.epoch)
-    const gstRoot = subsidyProof.globalStateTreeRoot.toString()
-    const attesterId = Number(subsidyProof.attesterId)
+    const epoch = Number(actionProof.epoch)
+    const gstRoot = actionProof.stateTreeRoot.toString()
+    const attesterId = actionProof.attesterId
 
     // check if epoch is correct
     if (epoch !== Number(currentEpoch)) {
@@ -136,38 +148,43 @@ const verifySubsidyProof = async (
 
     // check GST root
     {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        const exists = await verifyGSTRoot(
+            epoch,
+            gstRoot,
+            attesterId,
+            req.unirep
+        )
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
     }
 
     // check attester ID
-    if (Number(unirepSocialId) !== attesterId) {
+    if (unirepSocialId.toString() !== attesterId.toString()) {
         return 'Error: proof with wrong attester ID'
     }
 
     // check vote receiver is not the proof owner
-    if (voteReceiver && voteReceiver !== subsidyProof.notEpochKey) {
+    if (voteReceiver && voteReceiver !== actionProof.notEpochKey) {
         return 'Error: prove wrong receiver'
     }
 
-    const isProofValid = await subsidyProof.verify()
+    const isProofValid = await actionProof.verify()
     if (!isProofValid) {
         return 'Error: invalid subsidy proof'
     }
 }
 
-const verifyNegRepProof = async (
-    db: DB,
-    negRepProof: NegativeRepProof,
+export const verifyNegRepProof = async (
+    req: any,
+    actionProof: ActionProof,
     unirepSocialId: number,
     currentEpoch: number
 ): Promise<string | undefined> => {
-    const epoch = Number(negRepProof.epoch)
-    const epk = negRepProof.epochKey
-    const gstRoot = negRepProof.globalStateTreeRoot.toString()
-    const attesterId = negRepProof.attesterId
+    const epoch = Number(actionProof.epoch)
+    const epk = actionProof.epochKey
+    const gstRoot = actionProof.stateTreeRoot.toString()
+    const attesterId = actionProof.attesterId
 
     // check if epoch is correct
     if (epoch !== Number(currentEpoch)) {
@@ -179,21 +196,26 @@ const verifyNegRepProof = async (
         return 'Error: proof with wrong attester ID'
     }
 
-    const isProofValid = await negRepProof.verify()
+    const isProofValid = await actionProof.verify()
     if (!isProofValid) {
         return 'Error: invalid negative reputation proof'
     }
 
     // check GST root
     {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot)
+        const exists = await verifyGSTRoot(
+            epoch,
+            gstRoot,
+            attesterId,
+            req.unirep
+        )
         if (!exists) {
             return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
         }
     }
 
     // Has been airdropped before
-    const findRecord = await db.findOne('Record', {
+    const findRecord = await req.db.findOne('Record', {
         where: { to: epk, from: 'UnirepSocial' },
     })
     if (findRecord) {
@@ -201,89 +223,44 @@ const verifyNegRepProof = async (
     }
 }
 
-const verifyUSTProof = async (
+export const verifyUSTProof = async (
     db: DB,
     results: any,
     currentEpoch: number
 ): Promise<string | undefined> => {
-    // Check if the fromEpoch is less than the current epoch
-    if (
-        Number(results.finalTransitionProof.transitionedFromEpoch) >=
-        currentEpoch
-    ) {
-        return 'Error: user transitions from an invalid epoch'
-    }
-
-    // Start user state transition proof
-    let isValid = await new StartTransitionProof(
-        results.startTransitionProof.publicSignals,
-        results.startTransitionProof.proof,
-        Prover
-    ).verify()
-    if (!isValid) {
-        return 'Error: start state transition proof generated is not valid!'
-    }
-
-    // Process attestations proofs
-    for (let i = 0; i < results.processAttestationProofs.length; i++) {
-        const isValid = await new ProcessAttestationsProof(
-            results.processAttestationProofs[i].publicSignals,
-            results.processAttestationProofs[i].proof,
-            Prover
-        ).verify()
-        if (!isValid) {
-            return 'Error: process attestations proof generated is not valid!'
-        }
-    }
-
     // User state transition proof
-    const USTProof = new UserTransitionProof(
-        results.finalTransitionProof.publicSignals,
-        results.finalTransitionProof.proof,
+    const USTProof = new UserStateTransitionProof(
+        results.publicSignals,
+        results.proof,
         Prover
     )
-    isValid = await USTProof.verify()
+    const isValid = await USTProof.verify()
     if (!isValid) {
         return 'Error: user state transition proof generated is not valid!'
     }
 
-    // Check epoch tree root
-    const epoch = Number(USTProof.transitionFromEpoch)
-    const gstRoot = USTProof.fromGlobalStateTree
-    const epochTreeRoot = USTProof.fromEpochTree
-    {
-        const exists = await verifyGSTRoot(db, epoch, gstRoot.toString())
-        if (!exists) {
-            return `Global state tree root ${gstRoot} is not in epoch ${epoch}`
-        }
-    }
-    {
-        const exists = await verifyEpochTreeRoot(
-            db,
-            epoch,
-            epochTreeRoot.toString()
-        )
-        if (!exists) {
-            return `Epoch tree root ${epochTreeRoot} is not in epoch ${epoch}`
-        }
+    // Check history tree root
+    // const root = USTProof.historyTreeRoot.toString()
+    // const attesterId = USTProof.attesterId.toString()
+    // {
+    //     const exists = await verifyHistoryTree(db, root, attesterId)
+    //     if (!exists) {
+    //         return `History tree root ${root} does not exist`
+    //     }
+    // }
+
+    const toEpoch = Number(USTProof.toEpoch)
+    if (toEpoch !== currentEpoch) {
+        return `To epoch (${toEpoch}) mismatches current epoch: ${currentEpoch}`
     }
 
     // check nullifiers
     const exists = await db.findOne('Nullifier', {
         where: {
-            nullifier: results.finalTransitionProof.epkNullifiers,
+            nullifier: USTProof.epochKeys[0].toString(),
         },
     })
     if (exists) {
         return `Error: invalid epoch key nullifier`
     }
-}
-
-export {
-    verifyReputationProof,
-    verifyUSTProof,
-    verifyEpochKeyProof,
-    verifyNegRepProof,
-    verifySubsidyProof,
-    verifyGSTRoot,
 }

@@ -1,14 +1,9 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "target": "es2018",
-        "module": "commonjs",
-        "strict": true,
-        "esModuleInterop": true,
-        "resolveJsonModule": true,
-        "noImplicitAny": false,
-        "outDir": "./build",
-        "declaration": true
+        "lib": ["ES2021.String"],
+        "outDir": "./build"
     },
-    "include": ["./src"],
+    "include": ["./src", "./deploy", "./typechain"],
     "files": ["./hardhat.config.ts"]
 }

@@ -17,6 +17,7 @@ import CustomGap from './customGap'
 import { DataType } from '../constants'
 import { Page } from '../constants'
 import BlockButton, { BlockButtonType } from './blockButton'
+import { shortenEpochKey } from '../utils'
 
 const markdown = new MarkdownIt({
     breaks: true,
@@ -91,7 +92,8 @@ const CommentBlock = ({ commentId, page }: Props) => {
                         onMouseEnter={() => setEpkHovered(true)}
                         onMouseLeave={() => setEpkHovered(false)}
                     >
-                        Post by {comment.username ?? comment.epoch_key}{' '}
+                        Post by{' '}
+                        {comment.username ?? shortenEpochKey(comment.epoch_key)}{' '}
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />

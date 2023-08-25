@@ -1,8 +1,15 @@
 import { createContext } from 'react'
 import { makeAutoObservable } from 'mobx'
-import { ActionType } from '@unirep-social/core'
 
-import { Post, Comment, QueryType, Vote, Draft, DataType } from '../constants'
+import {
+    Post,
+    Comment,
+    QueryType,
+    Vote,
+    Draft,
+    DataType,
+    ActionType,
+} from '../constants'
 import { makeURL } from '../utils'
 import UserContext, { User } from './User'
 import QueueContext, { Queue, Metadata } from './Queue'
@@ -61,12 +68,6 @@ export class Data {
         )
     }
 
-    private convertEpochKeyToHexString(epochKey: string) {
-        return BigInt(epochKey)
-            .toString(16)
-            .padStart(unirepConfig.epochTreeDepth / 4, '0')
-    }
-
     private ingestPosts(_posts: Post | Post[]) {
         const posts = [_posts].flat()
         for (const post of posts) {
@@ -110,14 +111,13 @@ export class Data {
     ) {
         await unirepConfig.loadingPromise
 
-        const epksBase10 = epks.map((epk) => BigInt('0x' + epk).toString())
         const apiURL = makeURL(`post`, {
             query,
             // only include topic if it is truthy!
             // topic would be `undefined` otherwise
             ...(topic ? { topic } : {}),
             lastRead: lastRead.join('_'),
-            epks: epksBase10.join('_'),
+            epks: epks.join('_'),
         })
         const r = await fetch(apiURL)
         const data = await r.json()
@@ -143,11 +143,10 @@ export class Data {
     ) {
         await unirepConfig.loadingPromise
 
-        const epksBase10 = epks.map((epk) => Number('0x' + epk))
         const apiURL = makeURL(`comment`, {
             query,
             lastRead: lastRead.join('_'),
-            epks: epksBase10.join('_'),
+            epks: epks.join('_'),
         })
         const r = await fetch(apiURL)
         const data = await r.json()
@@ -198,15 +197,9 @@ export class Data {
 
     async loadVotesForPostId(postId: string) {
         const r = await fetch(makeURL(`post/${postId}/votes`))
-        const votesResult = await r.json()
-        if (votesResult === null) return
+        const votes = await r.json()
+        if (votes === null) return
 
-        const votes = (votesResult as Vote[]).map((vote) => {
-            return {
-                ...vote,
-                voter: this.convertEpochKeyToHexString(vote.voter),
-            }
-        })
         this.ingestVotes(votes)
         this.votesByPostId[postId] = votes.map((v: Vote) => v._id)
     }
@@ -252,7 +245,7 @@ export class Data {
         topic: string = '',
         epkNonce: number = 0,
         minRep = 0,
-        graffiti: string = '0'
+        graffiti?: string
     ) {
         queueContext.addOp(
             async (updateStatus) => {
@@ -269,7 +262,7 @@ export class Data {
                           minRep,
                           graffiti
                       )
-                    : userContext.genSubsidyProof(minRep, 0, graffiti))
+                    : userContext.genSubsidyProof(minRep, '0', graffiti))
                 updateStatus({
                     title: 'Creating post',
                     details: 'Waiting for TX inclusion...',
@@ -322,8 +315,8 @@ export class Data {
         epk: string = ''
     ) {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
-        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch)
+        const nonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
             async (updateStatus) => {
@@ -332,11 +325,14 @@ export class Data {
                         title: 'Updating post',
                         details: 'Generating zk proof...',
                     })
-                    const { publicSignals, proof } =
-                        await userContext.userState.genVerifyEpochKeyProof(
-                            epkNonce,
-                            epoch
-                        )
+                    const { publicSignals: _publicSignals, proof } =
+                        await userContext.userState.genEpochKeyLiteProof({
+                            nonce,
+                            epoch,
+                        })
+                    const publicSignals = _publicSignals.map((n) =>
+                        n.toString()
+                    )
                     updateStatus({
                         title: 'Updating post',
                         details: 'Waiting for TX inclusion...',
@@ -374,8 +370,8 @@ export class Data {
 
     deletePost(postId: string = '', epk: string = '') {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
-        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch)
+        const nonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
             async (updateStatus) => {
@@ -384,11 +380,14 @@ export class Data {
                         title: 'Deleting post',
                         details: 'Generating zk proof...',
                     })
-                    const { publicSignals, proof } =
-                        await userContext.userState.genVerifyEpochKeyProof(
-                            epkNonce,
-                            epoch
-                        )
+                    const { publicSignals: _publicSignals, proof } =
+                        await userContext.userState.genEpochKeyLiteProof({
+                            nonce,
+                            epoch,
+                        })
+                    const publicSignals = _publicSignals.map((n) =>
+                        n.toString()
+                    )
                     updateStatus({
                         title: 'Deleting post',
                         details: 'Waiting for TX inclusion...',
@@ -425,14 +424,13 @@ export class Data {
     vote(
         postId: string = '',
         commentId: string = '',
-        _receiver: string,
+        receiver: string,
         epkNonce: number = 0,
         upvote: number = 0,
         downvote: number = 0,
         minRep = 0,
-        graffiti: string = '0'
+        graffiti?: string
     ) {
-        const receiverIn10 = BigInt('0x' + _receiver).toString(10)
         queueContext.addOp(
             async (updateStatus) => {
                 updateStatus({
@@ -446,18 +444,12 @@ export class Data {
                           minRep,
                           graffiti
                       )
-                    : userContext.genSubsidyProof(
-                          minRep,
-                          `0x${_receiver.replace('0x', '')}`,
-                          graffiti
-                      ))
+                    : userContext.genSubsidyProof(minRep, receiver, graffiti))
                 updateStatus({
                     title: 'Creating Vote',
                     details: 'Broadcasting vote...',
                 })
-                const receiver = _receiver.startsWith('0x')
-                    ? parseInt(_receiver, 16).toString()
-                    : _receiver
+
                 const url = makeURL(epkNonce >= 0 ? 'vote' : 'vote/subsidy')
                 const r = await fetch(url, {
                     headers: {
@@ -469,7 +461,7 @@ export class Data {
                         proof,
                         minRep,
                         publicSignals,
-                        receiver: receiverIn10,
+                        receiver,
                         dataId: postId.length > 0 ? postId : commentId,
                         isPost: !!postId,
                     }),
@@ -505,7 +497,7 @@ export class Data {
         postId: string,
         epkNonce: number = 0,
         minRep = 0,
-        graffiti: string = '0'
+        graffiti?: string
     ) {
         queueContext.addOp(
             async (updateStatus) => {
@@ -520,7 +512,7 @@ export class Data {
                           minRep,
                           graffiti
                       )
-                    : userContext.genSubsidyProof(minRep, 0, graffiti))
+                    : userContext.genSubsidyProof(minRep, '0', graffiti))
                 updateStatus({
                     title: 'Creating comment',
                     details: 'Waiting for transaction...',
@@ -573,8 +565,8 @@ export class Data {
         epk: string = ''
     ) {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
-        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch)
+        const nonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
             async (updateStatus) => {
@@ -583,11 +575,14 @@ export class Data {
                         title: 'Updating comment',
                         details: 'Generating zk proof...',
                     })
-                    const { publicSignals, proof } =
-                        await userContext.userState.genVerifyEpochKeyProof(
-                            epkNonce,
-                            epoch
-                        )
+                    const { publicSignals: _publicSignals, proof } =
+                        await userContext.userState.genEpochKeyLiteProof({
+                            nonce,
+                            epoch,
+                        })
+                    const publicSignals = _publicSignals.map((n) =>
+                        n.toString()
+                    )
                     updateStatus({
                         title: 'Updating comment',
                         details: 'Waiting for TX inclusion...',
@@ -632,8 +627,8 @@ export class Data {
 
     deleteComment(commentId: string = '', epk: string = '') {
         const i = userContext.allEpks.findIndex((e) => e === epk)
-        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch) + 1
-        const epkNonce = i % unirepConfig.numEpochKeyNoncePerEpoch
+        const epoch = Math.floor(i / unirepConfig.numEpochKeyNoncePerEpoch)
+        const nonce = i % unirepConfig.numEpochKeyNoncePerEpoch
 
         queueContext.addOp(
             async (updateStatus) => {
@@ -642,11 +637,14 @@ export class Data {
                         title: 'Deleting comment',
                         details: 'Generating zk proof...',
                     })
-                    const { publicSignals, proof } =
-                        await userContext.userState.genVerifyEpochKeyProof(
-                            epkNonce,
-                            epoch
-                        )
+                    const { publicSignals: _publicSignals, proof } =
+                        await userContext.userState.genEpochKeyLiteProof({
+                            epoch,
+                            nonce,
+                        })
+                    const publicSignals = _publicSignals.map((n) =>
+                        n.toString()
+                    )
                     updateStatus({
                         title: 'Deleting comment',
                         details: 'Waiting for TX inclusion...',
@@ -706,7 +704,7 @@ export class Data {
             // votes,
             upvote: data.posRep,
             downvote: data.negRep,
-            epoch_key: this.convertEpochKeyToHexString(data.epochKey),
+            epoch_key: data.epochKey,
             username: data.graffiti,
             createdAt: data.createdAt,
             reputation: data.minRep,
@@ -729,7 +727,7 @@ export class Data {
             // votes,
             upvote: data.posRep,
             downvote: data.negRep,
-            epoch_key: this.convertEpochKeyToHexString(data.epochKey),
+            epoch_key: data.epochKey,
             username: data.graffiti,
             createdAt: data.createdAt,
             reputation: data.minRep,

@@ -1,85 +1,124 @@
 import fetch from 'node-fetch'
-// import { defaultProver } from '@unirep-social/circuits/provers/defaultProver'
+import { expect } from 'chai'
 import { defaultProver } from './prover'
-import { ZkIdentity } from '@unirep/crypto'
-import { genEpochKey, schema } from '@unirep/core'
-import { getUnirepContract } from '@unirep/contracts'
-import { DB, SQLiteConnector } from 'anondb/node'
+import { Identity } from '@semaphore-protocol/identity'
+import { DB } from 'anondb/node'
 import { ethers } from 'ethers'
 import { SocialUserState } from '@unirep-social/core'
+import { UnirepSocialSynchronizer } from '../src/Synchronizer'
+import { stringifyBigInts } from '@unirep/utils'
+export const genUnirepState = async (
+    provider: ethers.providers.Provider,
+    unirepAddress: string,
+    unirepSocialAddress: string,
+    db?: DB
+) => {
+    const unirep = new UnirepSocialSynchronizer({
+        unirepAddress,
+        provider,
+        unirepSocialAddress,
+        db: db,
+    })
+    unirep.pollRate = 150
+    await unirep.start()
+    await unirep.waitForSync()
+    return unirep
+}
 
 export const genUserState = async (
     provider: ethers.providers.Provider,
     address: string,
-    userIdentity: ZkIdentity,
-    _db?: DB
+    id: Identity,
+    unirepSocialAddress: string,
+    db?: DB
 ) => {
-    const unirepContract = getUnirepContract(address, provider)
-    let db: DB = _db ?? (await SQLiteConnector.create(schema, ':memory:'))
-    const userState = new SocialUserState(
-        db,
-        defaultProver,
-        unirepContract,
-        userIdentity
+    const synchronizer = await genUnirepState(
+        provider,
+        address,
+        unirepSocialAddress,
+        db
     )
-    await userState.start()
-    await userState.waitForSync()
-    return userState
+    return new SocialUserState({
+        synchronizer,
+        id,
+        unirepSocialAddress,
+        prover: defaultProver,
+    })
 }
 
 export const waitForBackendBlock = async (t, blockNumber) => {
     for (;;) {
-        const { blockNumber: latestBlock } = await fetch(
+        const { blockNumber: latestBlock } = (await fetch(
             `${t.context.url}/api/block`
-        ).then((r) => r.json())
+        ).then((r) => r.json())) as any
         if (latestBlock >= +blockNumber) break
         await new Promise((r) => setTimeout(r, 2000))
     }
 }
 
 export const signUp = async (t) => {
-    const iden = new ZkIdentity()
-    // const iden = genIdentity()
-    const commitment = iden
-        .genIdentityCommitment()
-        .toString(16)
-        .padStart(64, '0')
-    const currentEpoch = await t.context.unirep.currentEpoch()
-
-    const params = new URLSearchParams({
-        commitment,
-        signupCode: 'test',
+    const iden = new Identity()
+    const userState = await genUserState(
+        t.context.provider,
+        t.context.unirep.address,
+        iden,
+        t.context.unirepSocial.address
+    )
+    const epoch = await t.context.unirep.attesterCurrentEpoch(
+        t.context.unirepSocial.address
+    )
+    const { publicSignals, proof } = await userState.genUserSignUpProof({
+        epoch,
     })
-    const r = await fetch(`${t.context.url}/api/signup?${params}`)
+    userState.sync.stop()
+
+    const r = await fetch(`${t.context.url}/api/signup`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            proof: proof.map((n) => n.toString()),
+            publicSignals: publicSignals.map((n) => n.toString()),
+        }),
+    })
+    if (r.status !== 200)
+        throw new Error(`/signup error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/signup error ${JSON.stringify(r)}`)
     const data = await r.json()
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    t.assert(/^0x[0-9a-fA-F]{64}$/.test(data.transaction))
-    t.is(currentEpoch.toString(), data.epoch.toString())
-    t.is(r.status, 200)
+    const regex = new RegExp('^0x[0-9a-fA-F]{64}$')
+    expect(regex.test(data.transaction)).to.be.true
 
     await waitForBackendBlock(t, receipt.blockNumber)
-    // sign in should success
-    await signIn(t, commitment)
 
-    return { iden, commitment }
+    return { iden }
 }
 
-export const airdrop = async (t, iden, negRep) => {
+export const airdrop = async (t, iden) => {
     const userState = await genUserState(
-        t.context.unirepSocial.provider,
+        t.context.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
-    const negRepProof = await userState.genNegativeRepProof(
-        t.context.attesterId,
-        negRep
-    )
-    const isValid = await negRepProof.verify()
-    t.true(isValid)
-    await userState.stop()
+    const epoch = await userState?.sync.loadCurrentEpoch()
+    const userData = await userState.getData(epoch - 1)
+    const airdropRep = (await t.context.unirepSocial.subsidy()).toNumber()
+    const negRep = Number(userData[1])
+    const revealNonce = true
+    const epkNonce = 0
+    const actionProof = await userState.genActionProof({
+        epkNonce,
+        revealNonce,
+        maxRep: negRep > airdropRep ? airdropRep : negRep,
+    })
+    const isValid = await actionProof.verify()
+    expect(isValid).to.be.true
+    userState.sync.stop()
 
     const r = await fetch(`${t.context.url}/api/airdrop`, {
         method: 'POST',
@@ -87,98 +126,33 @@ export const airdrop = async (t, iden, negRep) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            proof: negRepProof.proof,
-            publicSignals: negRepProof.publicSignals,
-            negRep,
+            proof: actionProof.proof.map((n) => n.toString()),
+            publicSignals: actionProof.publicSignals.map((n) => n.toString()),
         }),
     })
+    if (r.status !== 200)
+        throw new Error(`/airdrop error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/airdrop error ${JSON.stringify(r)}`)
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/airdrop error ${JSON.stringify(data)}`)
-    }
+
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
     await waitForBackendBlock(t, receipt.blockNumber)
-    t.pass()
-}
-
-export const signIn = async (t, commitment) => {
-    // now try signing in using this identity
-    const params = new URLSearchParams({
-        commitment,
-    })
-    const r = await fetch(`${t.context.url}/api/signin?${params}`)
-    if (!r.ok) {
-        throw new Error(`/signin error`)
-    }
-    t.is(r.status, 200)
-}
-
-export const getSpent = async (t, iden) => {
-    const currentEpoch = Number(await t.context.unirep.currentEpoch())
-    const epks: string[] = []
-    for (let i = 0; i < t.context.constants.EPOCH_KEY_NONCE_PER_EPOCH; i++) {
-        epks.push(
-            genEpochKey(iden.identityNullifier, currentEpoch, i).toString()
-        )
-    }
-    const paramStr = epks.join('_')
-    const r = await fetch(`${t.context.url}/api/records/${paramStr}`)
-    if (!r.ok) {
-        throw new Error(`/records error ${JSON.stringify(r)}`)
-    }
-    const data = await r.json()
-
-    let spent = 0
-    for (var i = 0; i < data.length; i++) {
-        if (epks.indexOf(data[i].from) !== -1 && !data[i].spentFromSubsidy) {
-            spent = spent + data[i].upvote + data[i].downvote
-        }
-    }
-
-    return spent
-}
-
-const genReputationProof = async (t, iden, proveAmount) => {
-    const userState = await genUserState(
-        t.context.unirepSocial.provider,
-        t.context.unirep.address,
-        iden
-    )
-    // find valid nonce starter
-    // gen proof
-    const epkNonce = 0
-    const repProof = await userState.genProveReputationProof(
-        t.context.attesterId,
-        epkNonce,
-        proveAmount,
-        BigInt(0),
-        BigInt(0),
-        proveAmount
-    )
-    const isValid = await repProof.verify()
-    t.true(isValid)
-    await userState.stop()
-    // we need to wait for the backend to process whatever block our provider is on
-    const blockNumber = await t.context.provider.getBlockNumber()
-    return {
-        proof: repProof.proof,
-        publicSignals: repProof.publicSignals,
-        blockNumber,
-    }
 }
 
 export const createPost = async (t, iden) => {
-    const prevSpent = await getSpent(t, iden)
-
-    const proveAmount = t.context.constants.DEFAULT_POST_KARMA
-    const { blockNumber, proof, publicSignals } = await genReputationProof(
-        t,
+    const proveAmount = t.context.constants.DEFAULT_POST_REP
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
         iden,
-        proveAmount
+        t.context.unirepSocial.address
     )
-    await waitForBackendBlock(t, blockNumber)
+    const { publicSignals, proof } = await userState.genActionProof({
+        spentRep: proveAmount,
+    })
+    userState.sync.stop()
     const r = await fetch(`${t.context.url}/api/post`, {
         method: 'POST',
         headers: {
@@ -187,31 +161,20 @@ export const createPost = async (t, iden) => {
         body: JSON.stringify({
             title: 'test',
             content: 'some content!',
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(r)}`)
-    }
+    if (r.status !== 200)
+        throw new Error(`/post error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/post error ${JSON.stringify(r)}`)
 
     const data = await r.json()
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
+    await waitForBackendBlock(t, receipt.blockNumber)
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const currentSpent = await getSpent(t, iden)
-        if (prevSpent + proveAmount !== currentSpent) continue
-        t.is(prevSpent + proveAmount, currentSpent)
-
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
     return data
 }
 
@@ -219,12 +182,18 @@ export const createPostSubsidy = async (t, iden) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
-    const subsidyProof = await userState.genSubsidyProof(t.context.attesterId)
+    const epkNonce = 0
+    const revealNonce = true
+    const subsidyProof = await userState.genActionProof({
+        epkNonce,
+        revealNonce,
+    })
     const isValid = await subsidyProof.verify()
-    t.true(isValid)
-    await userState.stop()
+    expect(isValid).to.be.true
+    userState.sync.stop()
 
     const r = await fetch(`${t.context.url}/api/post/subsidy`, {
         method: 'POST',
@@ -234,15 +203,16 @@ export const createPostSubsidy = async (t, iden) => {
         body: JSON.stringify({
             title: 'test',
             content: 'some content!',
-            publicSignals: subsidyProof.publicSignals,
-            proof: subsidyProof.proof,
+            publicSignals: subsidyProof.publicSignals.map((n) => n.toString()),
+            proof: subsidyProof.proof.map((n) => n.toString()),
         }),
     })
 
+    if (r.status !== 200)
+        throw new Error(`/post error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/post error ${JSON.stringify(r)}`)
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(data)}`)
-    }
+
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
@@ -256,15 +226,16 @@ export const editPost = async (t, iden, title, content) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
     // find valid nonce starter
     // gen proof
-    const epkNonce = 0
-    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
-        epkNonce
-    )
-    await userState.stop()
+    const nonce = 0
+    const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
+        nonce,
+    })
+    userState.sync.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -278,27 +249,20 @@ export const editPost = async (t, iden, title, content) => {
         body: JSON.stringify({
             title,
             content,
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
+    if (r.status !== 200)
+        throw new Error(`/post error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/post error ${JSON.stringify(r)}`)
 
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -307,15 +271,16 @@ export const deletePost = async (t, iden) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
     // find valid nonce starter
     // gen proof
-    const epkNonce = 0
-    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
-        epkNonce
-    )
-    await userState.stop()
+    const nonce = 0
+    const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
+        nonce,
+    })
+    userState.sync.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -327,27 +292,20 @@ export const deletePost = async (t, iden) => {
             'content-type': 'application/json',
         },
         body: JSON.stringify({
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
+    if (r.status !== 200)
+        throw new Error(`/post error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/post error ${JSON.stringify(r)}`)
 
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -356,15 +314,16 @@ export const editComment = async (t, iden, postId, content) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
     // find valid nonce starter
     // gen proof
-    const epkNonce = 0
-    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
-        epkNonce
-    )
-    await userState.stop()
+    const nonce = 0
+    const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
+        nonce,
+    })
+    userState.sync.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -377,27 +336,21 @@ export const editComment = async (t, iden, postId, content) => {
         },
         body: JSON.stringify({
             content,
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
 
+    if (r.status !== 200)
+        throw new Error(`/comment error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/comment error ${JSON.stringify(r)}`)
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/comment error ${JSON.stringify(data)}`)
-    }
+
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -406,15 +359,16 @@ export const deleteComment = async (t, iden, postId) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
     // find valid nonce starter
     // gen proof
-    const epkNonce = 0
-    const { publicSignals, proof } = await userState.genVerifyEpochKeyProof(
-        epkNonce
-    )
-    await userState.stop()
+    const nonce = 0
+    const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
+        nonce,
+    })
+    userState.sync.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -428,28 +382,22 @@ export const deleteComment = async (t, iden, postId) => {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                publicSignals,
-                proof,
+                publicSignals: publicSignals.map((n) => n.toString()),
+                proof: proof.map((n) => n.toString()),
             }),
         }
     )
 
+    if (r.status !== 200)
+        throw new Error(`/comment error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/comment error ${JSON.stringify(r)}`)
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/comment error ${JSON.stringify(data)}`)
-    }
+
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -458,7 +406,7 @@ export const queryPost = async (t, id) => {
         await new Promise((r) => setTimeout(r, 1000))
         const r = await fetch(`${t.context.url}/api/post/${id}`)
         if (r.status === 404) continue
-        t.is(r.status, 200)
+        expect(r.status).to.equal(200)
         const data = await r.json()
         return data
     }
@@ -470,7 +418,7 @@ export const queryComment = async (t, id) => {
         await new Promise((r) => setTimeout(r, 1000))
         const r = await fetch(`${t.context.url}/api/comment/${id}`)
         if (r.status === 404) continue
-        t.is(r.status, 200)
+        expect(r.status).to.equal(200)
         const data = await r.json()
         return data
     }
@@ -478,15 +426,17 @@ export const queryComment = async (t, id) => {
 }
 
 export const createComment = async (t, iden, postId) => {
-    const prevSpent = await getSpent(t, iden)
-
-    const proveAmount = t.context.constants.DEFAULT_COMMENT_KARMA
-    const { blockNumber, proof, publicSignals } = await genReputationProof(
-        t,
+    const proveAmount = t.context.constants.DEFAULT_COMMENT_REP
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
         iden,
-        proveAmount
+        t.context.unirepSocial.address
     )
-    await waitForBackendBlock(t, blockNumber)
+    const { publicSignals, proof } = await userState.genActionProof({
+        spentRep: proveAmount,
+    })
+    userState.sync.stop()
 
     const r = await fetch(`${t.context.url}/api/comment`, {
         method: 'POST',
@@ -496,31 +446,20 @@ export const createComment = async (t, iden, postId) => {
         body: JSON.stringify({
             postId,
             content: 'this is a comment!',
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
-    if (!r.ok) {
-        throw new Error(`/comment error ${JSON.stringify(r)}`)
-    }
+    if (r.status !== 200)
+        throw new Error(`/comment error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/comment error ${JSON.stringify(r)}`)
 
     const data = await r.json()
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const currentSpent = await getSpent(t, iden)
-        if (prevSpent + proveAmount !== currentSpent) continue
-        t.is(prevSpent + proveAmount, currentSpent)
-
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
+    await waitForBackendBlock(t, receipt.blockNumber)
     return data
 }
 
@@ -528,12 +467,18 @@ export const createCommentSubsidy = async (t, iden, postId) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
     )
-    const subsidyProof = await userState.genSubsidyProof(t.context.attesterId)
+    const epkNonce = 0
+    const revealNonce = true
+    const subsidyProof = await userState.genActionProof({
+        epkNonce,
+        revealNonce,
+    })
     const isValid = await subsidyProof.verify()
-    t.true(isValid)
-    await userState.stop()
+    expect(isValid).to.be.true
+    userState.sync.stop()
 
     const r = await fetch(`${t.context.url}/api/comment/subsidy`, {
         method: 'POST',
@@ -543,15 +488,15 @@ export const createCommentSubsidy = async (t, iden, postId) => {
         body: JSON.stringify({
             postId,
             content: 'some content!',
-            publicSignals: subsidyProof.publicSignals,
-            proof: subsidyProof.proof,
+            publicSignals: subsidyProof.publicSignals.map((n) => n.toString()),
+            proof: subsidyProof.proof.map((n) => n.toString()),
         }),
     })
 
+    if (r.status !== 200)
+        throw new Error(`/comment error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/comment error ${JSON.stringify(r)}`)
     const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/comment error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
@@ -569,15 +514,17 @@ export const vote = async (
     upvote,
     downvote
 ) => {
-    const prevSpent = await getSpent(t, iden)
-
     const proveAmount = upvote + downvote
-    const { blockNumber, proof, publicSignals } = await genReputationProof(
-        t,
+    const userState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
         iden,
-        proveAmount
+        t.context.unirepSocial.address
     )
-    await waitForBackendBlock(t, blockNumber)
+    const { publicSignals, proof } = await userState.genActionProof({
+        spentRep: proveAmount,
+    })
+    userState.sync.stop()
 
     const r = await fetch(`${t.context.url}/api/vote`, {
         method: 'POST',
@@ -587,136 +534,169 @@ export const vote = async (
         body: JSON.stringify({
             dataId,
             isPost,
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
             upvote,
             downvote,
             receiver,
         }),
     })
-    if (!r.ok) {
-        throw new Error(`/vote error ${JSON.stringify(r)}`)
-    }
+    if (r.status !== 200)
+        throw new Error(`/vote error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/vote error ${JSON.stringify(r)}`)
     const data = await r.json()
 
-    const receipt = await t.context.provider.waitForTransaction(
-        data.transaction
-    )
-
-    for (;;) {
-        await new Promise((r) => setTimeout(r, 1000))
-        const currentSpent = await getSpent(t, iden)
-        if (prevSpent + proveAmount !== currentSpent) continue
-        t.is(prevSpent + proveAmount, currentSpent)
-
-        const { blockNumber: latestBlock } = await fetch(
-            `${t.context.url}/api/block`
-        ).then((r) => r.json())
-        if (latestBlock < receipt.blockNumber) continue
-        else break
-    }
-    t.pass()
-}
-
-export const epochTransition = async (t) => {
-    const prevEpoch = await t.context.unirep.currentEpoch()
-    const calldata = (t.context.unirep as any).interface.encodeFunctionData(
-        'beginEpochTransition',
-        []
-    )
-    // wait for epoch transition
-    for (;;) {
-        try {
-            const hash = await t.context.txManager.queueTransaction(
-                t.context.unirep.address,
-                {
-                    data: calldata,
-                }
-            )
-            await t.context.txManager.wait(hash)
-        } catch (_) {}
-        const currentEpoch = await t.context.unirep.currentEpoch()
-        if (+currentEpoch === +prevEpoch + 1) break
-        await new Promise((r) => setTimeout(r, 1000))
-    }
-}
-
-export const userStateTransition = async (t, iden) => {
-    const userState = await genUserState(
-        t.context.unirepSocial.provider,
-        t.context.unirep.address,
-        iden
-    )
-
-    const results = await userState.genUserStateTransitionProofs()
-    const fromEpoch = userState.latestTransitionedEpoch
-    await userState.stop()
-
-    const r = await fetch(`${t.context.url}/api/userStateTransition`, {
-        method: 'POST',
-        body: JSON.stringify({
-            results,
-            fromEpoch,
-        }),
-        headers: {
-            'content-type': 'application/json',
-        },
-    })
-    const data = await r.json()
-    if (!r.ok) {
-        throw new Error(`/userStateTransition error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )
 
     await waitForBackendBlock(t, receipt.blockNumber)
-    t.pass()
 }
 
-export const genUsernameProof = async (t, iden, preImage) => {
+export const voteSubsidy = async (
+    t,
+    iden,
+    receiver,
+    dataId,
+    isPost,
+    upvote,
+    downvote
+) => {
     const userState = await genUserState(
         t.context.unirepSocial.provider,
         t.context.unirep.address,
-        iden
+        iden,
+        t.context.unirepSocial.address
+    )
+    const epkNonce = 0
+    const revealNonce = true
+    const subsidyProof = await userState.genActionProof({
+        epkNonce,
+        revealNonce,
+        notEpochKey: receiver,
+    })
+    const isValid = await subsidyProof.verify()
+    expect(isValid).to.be.true
+    userState.sync.stop()
+
+    const { publicSignals, proof } = subsidyProof
+    const r = await fetch(`${t.context.url}/api/vote/subsidy`, {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            dataId,
+            isPost,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
+            upvote,
+            downvote,
+            receiver,
+        }),
+    })
+
+    if (r.status !== 200)
+        throw new Error(`/vote error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/vote error ${JSON.stringify(r)}`)
+    const data = await r.json()
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
+    return data
+}
+
+export const userStateTransition = async (t, iden) => {
+    const userState: SocialUserState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden,
+        t.context.unirepSocial.address
+    )
+
+    const latestEpoch = await t.context.unirep.attesterCurrentEpoch(
+        t.context.unirepSocial.address
+    )
+    const remainingTime = await t.context.unirep.attesterEpochRemainingTime(
+        t.context.unirepSocial.address
+    )
+    // epoch transition
+    await t.context.unirepSocial.provider.send('evm_increaseTime', [
+        remainingTime,
+    ])
+    await t.context.unirepSocial.provider.send('evm_mine', [])
+
+    const toEpoch = latestEpoch + 1
+    const results = await userState.genUserStateTransitionProof({ toEpoch })
+    userState.sync.stop()
+
+    const r = await fetch(`${t.context.url}/api/userStateTransition`, {
+        method: 'POST',
+        body: JSON.stringify({
+            results: stringifyBigInts(results),
+        }),
+        headers: {
+            'content-type': 'application/json',
+        },
+    })
+    if (r.status !== 200)
+        throw new Error(
+            `/userStateTransition error ${JSON.stringify(await r.json())}`
+        )
+    else if (!r.ok)
+        throw new Error(`/userStateTransition error ${JSON.stringify(r)}`)
+    const data = await r.json()
+
+    const receipt = await t.context.provider.waitForTransaction(
+        data.transaction
+    )
+
+    await waitForBackendBlock(t, receipt.blockNumber)
+}
+
+export const genUsernameProof = async (t, iden, username) => {
+    const userState: SocialUserState = await genUserState(
+        t.context.unirepSocial.provider,
+        t.context.unirep.address,
+        iden,
+        t.context.unirepSocial.address
     )
 
     const epkNonce = 0
+    const graffiti = username !== 0 ? BigInt(username) : undefined
 
-    const usernameProof = await userState.genProveReputationProof(
-        t.context.attesterId,
+    const usernameProof = await userState.genActionProof({
         epkNonce,
-        0,
-        preImage == 0 ? BigInt(0) : BigInt(1),
-        preImage,
-        0
-    )
+        graffiti,
+    })
 
     const isValid = await usernameProof.verify()
     if (!isValid) {
         throw new Error('usernameProof is not valid')
     }
-    await userState.stop()
+    userState.sync.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
 
     return {
-        proof: usernameProof.proof,
-        publicSignals: usernameProof.publicSignals,
+        proof: usernameProof.proof.map((n) => n.toString()),
+        publicSignals: usernameProof.publicSignals.map((n) => n.toString()),
         blockNumber,
     }
 }
 
-export const setUsername = async (t, iden, preImage, newUsername) => {
-    const hexlifiedPreImage =
-        preImage == 0
+export const setUsername = async (t, iden, username, newUsername) => {
+    const hexlifiedUsername =
+        username === 0
             ? 0
-            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+            : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(username))
     const { proof, publicSignals, blockNumber } = await genUsernameProof(
         t,
         iden,
-        hexlifiedPreImage
+        hexlifiedUsername
     )
     await waitForBackendBlock(t, blockNumber)
 
@@ -727,16 +707,16 @@ export const setUsername = async (t, iden, preImage, newUsername) => {
         },
         body: JSON.stringify({
             newUsername,
-            publicSignals,
-            proof,
+            publicSignals: publicSignals.map((n) => n.toString()),
+            proof: proof.map((n) => n.toString()),
         }),
     })
 
+    if (r.status !== 200)
+        throw new Error(`/username error ${JSON.stringify(await r.json())}`)
+    else if (!r.ok) throw new Error(`/username error ${JSON.stringify(r)}`)
     const data = await r.json()
 
-    if (!r.ok) {
-        throw new Error(`/post error ${JSON.stringify(data)}`)
-    }
     const receipt = await t.context.provider.waitForTransaction(
         data.transaction
     )

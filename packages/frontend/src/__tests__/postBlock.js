@@ -1,5 +1,4 @@
-import { screen, render, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { screen, render } from '@testing-library/react'
 import PostBlock from '../components/postBlock'
 
 import UnirepContext from '../context/Unirep'
@@ -114,7 +113,7 @@ test("should display commentField when user's net reputation > unirep commentRep
         userState: true,
         netReputation: 100,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
         username: {},
     }
 
@@ -166,7 +165,7 @@ test('test if queue and epoch context functions are triggered with correct props
         userState: true,
         netReputation: 100,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
         isInitialSyncing: null,
         username: {},
     }

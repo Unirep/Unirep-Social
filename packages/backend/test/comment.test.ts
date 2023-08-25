@@ -1,4 +1,6 @@
-import test from 'ava'
+// @ts-ignore
+import { ethers } from 'hardhat'
+import { expect } from 'chai'
 import { startServer } from './environment'
 
 import {
@@ -7,55 +9,91 @@ import {
     editComment,
     deleteComment,
     queryComment,
-    signIn,
     signUp,
+    createPostSubsidy,
+    voteSubsidy,
+    userStateTransition,
 } from './utils'
+import express from 'express'
+import { DELETED_CONTENT } from '../src/constants'
 
-test.before(async (t: any) => {
-    const context = await startServer()
-    Object.assign(t.context, context)
-})
+const epochLength = 200
+let iden: any
+let postId: string
 
-test('should create a comment', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
+describe('comment', function () {
+    this.timeout(0)
+    let t = {
+        context: {},
+    }
+    const app = express()
+    before(async () => {
+        const accounts = await ethers.getSigners()
+        const deployer = new ethers.Wallet(
+            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+            accounts[0].provider
+        )
+        const context = await startServer(deployer, app, { epochLength })
+        Object.assign(t, {
+            ...t,
+            epochLength,
+            context,
+        })
 
-    // first create a post
-    const { post } = await createPost(t, iden)
+        // sign up first user
+        const user1 = await signUp(t)
 
-    // leave a comment
-    const { comment } = await createComment(t, iden, post._id)
-    const data = await queryComment(t, comment._id)
-    t.is(comment.content, data.content)
-})
+        // first create a post
+        const { post } = await createPostSubsidy(t, user1.iden)
 
-test('should edit a comment', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
+        // sign up second user
+        const user2 = await signUp(t)
 
-    // first create a post
-    const { post } = await createPost(t, iden)
-    const newContent = 'new content'
+        // upvote the post
+        {
+            const upvote = 15
+            const downvote = 0
+            const receiver = post.epochKey.toString()
+            await voteSubsidy(
+                t,
+                user2.iden,
+                receiver,
+                post._id,
+                true,
+                upvote,
+                downvote
+            )
+        }
 
-    // edit a comment
-    const { comment } = await editComment(t, iden, post._id, newContent)
-    const data = await queryComment(t, comment._id)
-    t.is(data.content, newContent)
-    t.not(data.lastUpdatedAt, data.createdAt)
-})
+        // user state transition
+        await userStateTransition(t, user1.iden)
 
-test('should delete a comment', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-    await signIn(t, commitment)
+        // create post
+        const { post: post2 } = await createPost(t, user1.iden)
+        iden = user1.iden
+        postId = post2._id
+    })
 
-    // first create a post
-    const { post } = await createPost(t, iden)
+    it('should create a comment', async () => {
+        // leave a comment
+        const { comment } = await createComment(t, iden, postId)
+        const data = await queryComment(t, comment._id)
+        expect(comment.content).to.equal(data.content)
+    })
 
-    // edit a comment
-    const { comment } = await deleteComment(t, iden, post._id)
-    t.is(comment.content, '[This has been deleted...]')
-    t.not(comment.lastUpdatedAt, comment.createdAt)
+    it('should edit a comment', async () => {
+        // edit a comment
+        const newContent = 'new content'
+        const { comment } = await editComment(t, iden, postId, newContent)
+        const data = await queryComment(t, comment._id)
+        expect(data.content).to.equal(newContent)
+        expect(data.lastUpdatedAt).to.not.equal(data.createdAt)
+    })
+
+    it('should delete a comment', async () => {
+        // delete a comment
+        const { comment } = await deleteComment(t, iden, postId)
+        expect(comment.content).to.equal(DELETED_CONTENT)
+        expect(comment.lastUpdatedAt).to.not.equal(comment.createdAt)
+    })
 })

@@ -38,7 +38,7 @@ const NewPage = () => {
             topic,
             epkNonce,
             reputation,
-            useUsername ? userContext.username.username : '0'
+            useUsername ? userContext.username.username : undefined
         )
         history.push(`/${topic}`)
     }

@@ -2,19 +2,22 @@ import { createContext } from 'react'
 import { makeObservable, observable, computed, runInAction } from 'mobx'
 
 import * as config from '../config'
-import { Record, Username } from '../constants'
+import { ActionType, Record, Username } from '../constants'
 import { ethers } from 'ethers'
-import { ZkIdentity, Strategy } from '@unirep/crypto'
+import { genEpochKey, stringifyBigInts } from '@unirep/utils'
+import { Identity } from '@semaphore-protocol/identity'
 import { makeURL } from '../utils'
-import { genEpochKey, schema } from '@unirep/core'
-import { SocialUserState, ActionType } from '@unirep-social/core'
+import { schema } from '@unirep/core'
+import { Prover } from '@unirep/circuits'
+import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
-import { IndexedDBConnector } from 'anondb/web'
+import { DB, MemoryConnector } from 'anondb/web'
+import { constructSchema } from 'anondb/types'
 import aes from 'aes-js'
 
 export class User {
-    id?: ZkIdentity
+    id?: Identity
     allEpks = [] as string[]
     currentEpoch = 0
     reputation = 0
@@ -76,17 +79,15 @@ export class User {
         await this.unirepConfig.loadingPromise
         const storedIdentity = window.localStorage.getItem('identity')
         if (storedIdentity) {
-            const id = new ZkIdentity(Strategy.SERIALIZED, storedIdentity)
+            const id = new Identity(storedIdentity)
             await this.loadCurrentEpoch()
             await this.setIdentity(id)
             await this.calculateAllEpks()
             await this.startSync()
+            await this.userState?.waitForSync()
+            await this.loadReputation()
             await this.updateLatestTransitionedEpoch()
-            this.userState?.waitForSync().then(() => {
-                this.loadReputation()
-                this.updateLatestTransitionedEpoch()
-                this.loadRecords()
-            })
+            await this.loadRecords()
         }
 
         // start listening for new epochs
@@ -99,24 +100,31 @@ export class User {
 
     save() {
         if (this.id) {
-            window.localStorage.setItem('identity', this.id.serializeIdentity())
+            window.localStorage.setItem('identity', this.id.toString())
         }
     }
 
     async loadCurrentEpoch() {
         await this.unirepConfig.loadingPromise
         this.currentEpoch = Number(
-            await this.unirepConfig.unirep.currentEpoch()
+            await this.unirepConfig.unirep.attesterCurrentEpoch(
+                this.unirepConfig.unirepSocialAddress
+            )
         )
         return this.currentEpoch
     }
 
-    async loadRecords() {
-        const epksBase10 = this.allEpks.map((epk) =>
-            BigInt('0x' + epk).toString()
+    calcEpoch() {
+        const now = Math.floor(+new Date() / 1000)
+        const current = Math.floor(
+            (now - this.unirepConfig.startTimestamp) /
+                this.unirepConfig.epochLength
         )
+        return current
+    }
 
-        const apiURL = makeURL(`records/${epksBase10.join('_')}`, {})
+    async loadRecords() {
+        const apiURL = makeURL(`records/${this.allEpks.join('_')}`, {})
         const res = await fetch(apiURL)
         if (!res || res.status === 404) {
             throw new Error('load records from server error')
@@ -129,15 +137,8 @@ export class User {
                 from:
                     r.from === 'UnirepSocial'
                         ? 'UnirepSocial'
-                        : BigInt(r.from)
-                              .toString(16)
-                              .padStart(
-                                  this.unirepConfig.epochTreeDepth / 4,
-                                  '0'
-                              ),
-                to: BigInt(r.to)
-                    .toString(16)
-                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0'),
+                        : BigInt(r.from).toString(),
+                to: BigInt(r.to).toString(),
             }
         })
 
@@ -206,26 +207,26 @@ export class User {
             .map((_, i) => {
                 if (!this.id) throw new Error('No id set')
                 return genEpochKey(
-                    this.id.identityNullifier,
-                    this.currentEpoch,
-                    i,
-                    this.unirepConfig.epochTreeDepth
-                )
-                    .toString(16)
-                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
+                    this.id.secret,
+                    this.unirepConfig.unirepSocialAddress,
+                    BigInt(this.currentEpoch),
+                    i
+                ).toString()
             })
     }
 
     get identity() {
         if (!this.id) return undefined
-        const serializedIdentity = this.id.serializeIdentity()
+        const serializedIdentity = this.id.toString()
         return serializedIdentity
     }
 
     get needsUST() {
-        if (!this.userState || !this.latestTransitionedEpoch) return false
+        if (!this.userState) return false
 
-        return this.currentEpoch > (this.latestTransitionedEpoch || -1)
+        const currentEpoch = this.calcEpoch()
+        const latestEpoch = this.latestTransitionedEpoch ?? this.currentEpoch
+        return currentEpoch > latestEpoch
     }
 
     get syncPercent() {
@@ -240,7 +241,7 @@ export class User {
 
     async startSync() {
         this.isInitialSyncing = true
-        const syncState = await (this.userState as any)._db.findOne(
+        const syncState = await this.userState?.sync.db.findOne(
             'SynchronizerState',
             {
                 where: {},
@@ -249,8 +250,8 @@ export class User {
         const latestBlock = await config.DEFAULT_ETH_PROVIDER.getBlockNumber()
         this.syncStartBlock = syncState?.latestCompleteBlock ?? 0
         this.initialSyncFinalBlock = latestBlock
-        await this.userState?.start()
-        this.userState?.on('processedEvent', (event) => {
+        await this.userState?.waitForSync()
+        this.userState?.sync.on('processedEvent', (event) => {
             this.latestProcessedBlock = event.blockNumber
         })
         this.userState?.waitForSync(this.initialSyncFinalBlock).then(() => {
@@ -258,28 +259,33 @@ export class User {
         })
     }
 
-    async setIdentity(identity: string | ZkIdentity) {
+    async setIdentity(identity: string | Identity) {
         if (this.userState) {
             throw new Error('Identity already set, change is not supported')
         }
         if (typeof identity === 'string') {
-            this.id = new ZkIdentity(Strategy.SERIALIZED, identity)
+            this.id = new Identity(identity)
         } else {
             this.id = identity
         }
-        const db = await IndexedDBConnector.create(schema, 1)
-        this.userState = new SocialUserState(
-            db,
-            prover as any,
-            this.unirepConfig.unirep,
-            this.id
-        )
+        const db = new MemoryConnector(constructSchema(schema))
+        this.userState = new SocialUserState({
+            db: db as DB,
+            provider: this.unirepConfig.unirep.provider,
+            unirepAddress: this.unirepConfig.unirep.address,
+            attesterId: this.unirepConfig.unirepSocialAddress,
+            id: this.id,
+            unirepSocialAddress: this.unirepConfig.unirepSocialAddress,
+            prover: prover as Prover,
+        })
+        await this.userState.start()
+        await this.userState.waitForSync()
         const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
             .topics as string[]
         // const [AttestationSubmitted] =
         //     this.unirepConfig.unirep.filters.AttestationSubmitted()
         //         .topics as string[]
-        this.userState.on(EpochEnded, this.epochEnded.bind(this))
+        this.userState.sync.on(EpochEnded, this.epochEnded.bind(this))
         // this.userState.on(
         //     AttestationSubmitted,
         //     this.attestationSubmitted.bind(this)
@@ -295,7 +301,7 @@ export class User {
     async calculateAllEpks() {
         if (!this.id) throw new Error('No identity loaded')
         await this.unirepConfig.loadingPromise
-        const { identityNullifier } = this.id
+        const { secret } = this.id
         const getEpochKeys = (epoch: number) => {
             const epks: string[] = []
             for (
@@ -304,61 +310,42 @@ export class User {
                 i++
             ) {
                 const tmp = genEpochKey(
-                    identityNullifier,
+                    secret,
+                    this.unirepConfig.unirepSocialAddress,
                     epoch,
-                    i,
-                    this.unirepConfig.epochTreeDepth
-                )
-                    .toString(16)
-                    .padStart(this.unirepConfig.epochTreeDepth / 4, '0')
+                    i
+                ).toString()
                 epks.push(tmp)
             }
             return epks
         }
         this.allEpks = [] as string[]
-        for (let x = 1; x <= this.currentEpoch; x++) {
+        for (let x = 0; x <= this.currentEpoch; x++) {
             this.allEpks.push(...getEpochKeys(x))
         }
-    }
-
-    private getEpochKey(
-        epkNonce: number,
-        identityNullifier: any,
-        epoch: number
-    ) {
-        const epochKey = genEpochKey(
-            identityNullifier,
-            epoch,
-            epkNonce,
-            this.unirepConfig.epochTreeDepth
-        )
-        return epochKey.toString(16)
     }
 
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
-        const { number: currentEpoch } =
-            await this.userState?.loadCurrentEpoch()
+        const epoch = await this.userState?.sync.loadCurrentEpoch()
         const subsidy = this.unirepConfig.subsidy
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
         // it uses nonce == maxNonce + 1
         const subsidyKey = genEpochKey(
-            this.id.identityNullifier,
-            currentEpoch,
-            0,
-            this.unirepConfig.epochTreeDepth
+            this.id.secret,
+            this.unirepConfig.unirepSocialAddress,
+            epoch,
+            0
         )
         const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
-            currentEpoch,
+            epoch,
             subsidyKey
         )
         this.subsidyReputation = subsidy - Number(spentSubsidy)
-        const rep = await this.userState.getRepByAttester(
-            BigInt(this.unirepConfig.attesterId)
-        )
-        this.reputation = Number(rep.posRep) - Number(rep.negRep)
+        const rep = await this.userState.getData(epoch - 1)
+        this.reputation = Number(rep[0]) - Number(rep[1])
         return rep
     }
 
@@ -369,25 +356,20 @@ export class User {
         await this.unirepConfig.loadingPromise
 
         // generate an airdrop proof
+        await this.userState.waitForSync()
         const negRep = Math.min(
             Math.abs(this.reputation),
             this.unirepConfig.subsidy
         )
 
-        const negRepProof = await this.userState.genNegativeRepProof(
-            BigInt(this.unirepConfig.attesterId),
-            BigInt(negRep)
-        )
+        const negRepProof = await this.userState.genActionProof({
+            maxRep: negRep,
+        })
 
         // Check if the user already got airdropped
-        const { number: currentEpoch } =
-            await this.userState?.loadCurrentEpoch()
-        const subsidyKey = genEpochKey(
-            this.id.identityNullifier,
-            currentEpoch,
-            0,
-            this.unirepConfig.epochTreeDepth
-        )
+        const currentEpoch = await this.userState?.sync.loadCurrentEpoch()
+        const subsidyKey = negRepProof.epochKey
+
         const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
             currentEpoch,
             subsidyKey
@@ -406,7 +388,9 @@ export class User {
             },
             body: JSON.stringify({
                 proof: negRepProof.proof,
-                publicSignals: negRepProof.publicSignals,
+                publicSignals: negRepProof.publicSignals.map((n) =>
+                    n.toString()
+                ),
                 negRep,
             }),
             method: 'POST',
@@ -427,18 +411,16 @@ export class User {
         return true
     }
 
-    private async _hasSignedUp(identity: string | ZkIdentity) {
+    private async _hasSignedUp(identity: string | Identity) {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
         const id =
-            typeof identity === 'string'
-                ? new ZkIdentity(Strategy.SERIALIZED, identity)
-                : identity
-        const commitment = id.genIdentityCommitment()
+            typeof identity === 'string' ? new Identity(identity) : identity
+        const commitment = id.commitment
         return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
 
-    async signUp(signupCode: string) {
+    async signUp() {
         if (this.id) {
             return { error: 'Identity already exists!' }
             // throw new Error('Identity already exists!')
@@ -446,7 +428,7 @@ export class User {
         const unirepConfig = (UnirepContext as any)._currentValue
         await unirepConfig.loadingPromise
 
-        const id = new ZkIdentity()
+        const id = new Identity()
         await this.setIdentity(id)
         if (!this.id) {
             return { error: 'Iden is not set' }
@@ -454,25 +436,24 @@ export class User {
         }
         this.save()
 
-        const commitment = id
-            .genIdentityCommitment()
-            .toString(16)
-            .padStart(64, '0')
-
-        const serializedIdentity = id.serializeIdentity()
-        const epk1 = this.getEpochKey(
-            0,
-            (this.id as any).identityNullifier,
-            this.currentEpoch
-        )
-
+        if (!this.userState) throw new Error('User state not initialized')
+        await this.userState.waitForSync()
+        const { publicSignals: _publicSignals, proof } =
+            await this.userState.genUserSignUpProof()
+        const publicSignals = _publicSignals.map((n) => n.toString())
         // call server user sign up
-        const apiURL = makeURL('signup', {
-            commitment: commitment,
-            epk: epk1,
-            signupCode,
+
+        const apiURL = makeURL('signup')
+        const r = await fetch(apiURL, {
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                publicSignals,
+                proof,
+            }),
+            method: 'POST',
         })
-        const r = await fetch(apiURL)
         const { epoch, transaction, error } = await r.json()
         if (error) {
             this.id = undefined
@@ -488,8 +469,8 @@ export class User {
         await this.startSync()
         await this.loadReputation()
         return {
-            i: serializedIdentity,
-            c: commitment,
+            i: id.toString(),
+            c: id.commitment,
             epoch,
             blockNumber,
         }
@@ -497,7 +478,7 @@ export class User {
         // return await this.updateUser(epoch)
     }
 
-    async login(idInput: string | ZkIdentity) {
+    async login(idInput: string | Identity) {
         const hasSignedUp = await this._hasSignedUp(idInput)
         if (!hasSignedUp) return false
 
@@ -508,20 +489,19 @@ export class User {
             throw new Error('User state is not set')
         }
         await this.startSync()
-        this.userState.waitForSync().then(() => {
-            this.loadReputation()
-            this.updateLatestTransitionedEpoch()
-            this.loadRecords()
-            this.save()
-        })
+        await this.userState.waitForSync()
+        await this.loadReputation()
+        await this.updateLatestTransitionedEpoch()
+        await this.loadRecords()
+        this.save()
 
         return true
     }
 
     async logout() {
         if (this.userState) {
-            await this.userState.stop()
-            await (this.userState as any)._db.closeAndWipe()
+            this.userState.sync.stop()
+            await (this.userState as any).db.closeAndWipe()
             this.userState = undefined
         }
         runInAction(() => {
@@ -535,18 +515,28 @@ export class User {
 
     async genSubsidyProof(
         minRep = 0,
-        notEpochKey: string | number = 0,
-        graffiti: string = '0'
+        notEpochKey: string | bigint = '0',
+        username?: string
     ) {
         const currentEpoch = await this.loadCurrentEpoch()
         if (!this.userState) throw new Error('User state not initialized')
 
+        let graffiti = username
+        if (username)
+            graffiti = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(username))
         await this.userState.waitForSync()
-        const { proof, publicSignals } = await this.userState.genSubsidyProof(
-            BigInt(this.unirepConfig.attesterId),
-            BigInt(minRep),
-            BigInt(notEpochKey)
-        )
+        const epkNonce = 0
+        const revealNonce = true
+        const { proof, publicSignals: _publicSignals } =
+            await this.userState.genActionProof({
+                epkNonce,
+                revealNonce,
+                notEpochKey,
+                minRep,
+                graffiti,
+            })
+        const publicSignals = _publicSignals.map((n) => n.toString())
+
         return { proof, publicSignals, currentEpoch }
     }
 
@@ -554,7 +544,7 @@ export class User {
         proveKarma: number,
         epkNonce: number,
         minRep = 0,
-        graffiti: string = '0'
+        username?: string
     ) {
         if (epkNonce >= this.unirepConfig.numEpochKeyNoncePerEpoch) {
             throw new Error('Invalid epk nonce')
@@ -564,6 +554,9 @@ export class User {
             this.loadReputation(),
         ])
         const epk = this.currentEpochKeys[epkNonce]
+        let graffiti = username
+        if (username)
+            graffiti = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(username))
 
         if (this.spent === -1) {
             throw new Error('All nullifiers are spent')
@@ -571,25 +564,17 @@ export class User {
         if (this.spent + Math.max(proveKarma, minRep) > this.reputation) {
             throw new Error('Not enough reputation')
         }
-        const proveGraffiti = graffiti === '0' ? BigInt(0) : BigInt(1)
-        const graffitiPreImage =
-            graffiti === '0'
-                ? BigInt(0)
-                : BigInt(
-                      ethers.utils.hexlify(ethers.utils.toUtf8Bytes(graffiti))
-                  )
         if (!this.userState) throw new Error('User state not initialized')
 
         await this.userState.waitForSync()
-        const { proof, publicSignals } =
-            await this.userState.genProveReputationProof(
-                BigInt(this.unirepConfig.attesterId),
-                epkNonce,
+        const { proof, publicSignals: _publicSignals } =
+            await this.userState.genActionProof({
+                graffiti,
+                spentRep: proveKarma,
                 minRep,
-                proveGraffiti,
-                graffitiPreImage,
-                proveKarma
-            )
+                epkNonce,
+            })
+        const publicSignals = _publicSignals.map((n) => n.toString())
 
         this.save()
         return { epk, proof, publicSignals, currentEpoch }
@@ -601,13 +586,16 @@ export class User {
         }
 
         await this.userState.waitForSync()
-        const results = await this.userState.genUserStateTransitionProofs()
+        const toEpoch = this.calcEpoch()
+        const results = await this.userState.genUserStateTransitionProof({
+            toEpoch,
+        })
         const r = await fetch(makeURL('userStateTransition'), {
             headers: {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                results,
+                results: stringifyBigInts(results),
                 fromEpoch: this.userState.latestTransitionedEpoch,
             }),
             method: 'POST',
@@ -648,7 +636,7 @@ export class User {
             ethers.utils.hexlify(decryptedBytes.slice(32, 64))
         )
         // now lets build a zk identity from it
-        const id = new ZkIdentity()
+        const id = new Identity()
         // TODO: add a new zk identity strategy for manually settings this more cleanly
         ;(id as any)._identityNullifier = nullifier
         ;(id as any)._identityTrapdoor = trapdoor
@@ -673,7 +661,7 @@ export class User {
         const hexString = [
             '0x',
             this.id.trapdoor.toString(16).padStart(64, '0'),
-            this.id.identityNullifier.toString(16).padStart(64, '0'),
+            this.id.nullifier.toString(16).padStart(64, '0'),
         ].join('')
         const dataBytes = ethers.utils.arrayify(hexString)
         const encryptedBytes = aesCbc.encrypt(dataBytes)
@@ -685,22 +673,23 @@ export class User {
         }
     }
 
-    async setUsername(preImage: string, username: string) {
+    async setUsername(username: string, oldUsername?: string) {
         if (!this.userState) throw new Error('user not login')
 
-        const hexlifiedPreImage =
-            preImage == '0'
-                ? 0
-                : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(preImage))
+        let graffiti = oldUsername
+        if (oldUsername)
+            graffiti = ethers.utils.hexlify(
+                ethers.utils.toUtf8Bytes(oldUsername)
+            )
 
-        const usernameProof = await this.userState.genProveReputationProof(
-            BigInt(this.unirepConfig.attesterId),
-            2,
-            0,
-            preImage === '0' ? BigInt(0) : BigInt(1),
-            BigInt(hexlifiedPreImage),
-            0
-        )
+        const epkNonce = 0
+        const revealNonce = true
+
+        const usernameProof = await this.userState.genActionProof({
+            graffiti,
+            epkNonce,
+            revealNonce,
+        })
 
         const apiURL = makeURL('usernames', {})
         const r = await fetch(apiURL, {
@@ -709,7 +698,9 @@ export class User {
             },
             body: JSON.stringify({
                 newUsername: username,
-                publicSignals: usernameProof.publicSignals,
+                publicSignals: usernameProof.publicSignals.map((n) =>
+                    n.toString()
+                ),
                 proof: usernameProof.proof,
             }),
             method: 'POST',

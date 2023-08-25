@@ -2,10 +2,9 @@ import { useContext, useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 
 import UserContext from '../../context/User'
-import { ActionType } from '@unirep-social/core'
 
 import BasicPage from '../basicPage/basicPage'
-import { Record, Page, QueryType } from '../../constants'
+import { Record, Page, QueryType, ActionType } from '../../constants'
 import ActivityWidget from './activityWidget'
 import CustomGap from '../../components/customGap'
 import PostsList from '../../components/postsList'

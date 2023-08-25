@@ -1,5 +1,4 @@
 import { screen, render } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import CommentField from '../components/commentField'
@@ -45,7 +44,7 @@ test('should render CommentField correctly with .Provider data', () => {
         content: 'content',
         upvote: 4,
         downvote: 5,
-        epoch_key: 'epoch_key test',
+        epoch_key: '123',
         username: 'username',
         post_time: '00',
         reputation: 30,
@@ -61,14 +60,14 @@ test('should render CommentField correctly with .Provider data', () => {
                 content: 'string',
                 post_time: '00',
                 reputation: 30,
-                epoch_key: 'epoch_key test',
+                epoch_key: '456',
             },
         },
     }
 
     const userData = {
         userState: 'userState',
-        currentEpochKeys: ['user epoch_key test'],
+        currentEpochKeys: ['123'],
         username: {},
     }
 
@@ -85,7 +84,7 @@ test(`should display "somethings wrong..." if user's state is null`, () => {
                 content: 'string',
                 post_time: '00',
                 reputation: 30,
-                epoch_key: 'epoch_key test',
+                epoch_key: '123',
             },
         },
     }
@@ -93,7 +92,7 @@ test(`should display "somethings wrong..." if user's state is null`, () => {
     const userData = {
         // null user state
         userState: null,
-        currentEpochKeys: ['user epoch_key test'],
+        currentEpochKeys: ['123'],
     }
 
     renderCommentField(userData, postData, page.post, jest.fn())

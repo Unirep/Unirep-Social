@@ -1,345 +1,381 @@
-// // @ts-ignore
-// import { ethers as hardhatEthers } from 'hardhat'
-// import { expect } from 'chai'
-// import { BigNumber, ethers } from 'ethers'
-// import { ZkIdentity } from '@unirep/crypto'
-// import { deployUnirep } from '@unirep/contracts/deploy'
-// import { genUserState } from './utils'
-// import * as config from '@unirep/circuits'
-// import { UserState } from '@unirep/core'
+// @ts-ignore
+import { ethers } from 'hardhat'
+import { expect } from 'chai'
+import { deployUnirep } from '@unirep/contracts/deploy'
+import { Identity } from '@semaphore-protocol/identity'
+import { genEpochKey } from '@unirep/utils'
+import { deployUnirepSocial, Unirep, UnirepSocial } from '../deploy'
+import { genUserState } from './utils'
+import { defaultEpochLength } from '../src/config'
+import { EpochKeyProof } from '@unirep/circuits'
 
-// import { getTreeDepthsForTesting } from './utils'
-// import { deployUnirepSocial, UnirepSocial } from '../src/utils'
-// import { defaultAirdroppedReputation } from '../config/socialMedia'
+describe('Subsidy Airdrop', function () {
+    this.timeout(1000000)
+    let unirepContract: Unirep
+    let unirepSocialContract: UnirepSocial
+    let admin
+    let attesterId
+    const id = new Identity()
 
-// describe('Airdrop', function () {
-//     this.timeout(100000)
+    const epkNonce = 0
+    const revealNonce = true
+    const downvote = 20
 
-//     let unirepContract, unirepSocialContract: UnirepSocial
-//     let userState: UserState
-//     const iden = new ZkIdentity()
-//     const userCommitment = iden.genIdentityCommitment()
+    before(async () => {
+        const accounts = await ethers.getSigners()
+        admin = accounts[0]
 
-//     let accounts: ethers.Signer[]
-//     let attester, attesterId, unirepContractCalledByAttester
-//     let airdropAmount
+        unirepContract = await deployUnirep(admin)
+        unirepSocialContract = await deployUnirepSocial(
+            admin,
+            unirepContract.address
+        )
+        attesterId = unirepSocialContract.address
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        // user sign up
+        {
+            const { publicSignals, proof } =
+                await userState.genUserSignUpProof()
 
-//     const epkNonce = 0
-//     const proofIndexes: BigNumber[] = []
-//     let duplicatedProof
-//     const attestingFee = ethers.utils.parseEther('0.1')
+            await unirepSocialContract
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
+                .then((t) => t.wait())
+        }
+        // user 1 epoch key
+        const epoch = await unirepContract.attesterCurrentEpoch(attesterId)
+        const nonce = 0
+        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
 
-//     before(async () => {
-//         accounts = await hardhatEthers.getSigners()
-//         const _treeDepths = getTreeDepthsForTesting('circuit')
-//         const _settings = {
-//             maxUsers: config.MAX_USERS,
-//             maxAttesters: config.MAX_ATTESTERS,
-//             numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-//             maxReputationBudget: config.MAX_REPUTATION_BUDGET,
-//             epochLength: config.EPOCH_LENGTH,
-//             attestingFee: attestingFee,
-//         }
-//         unirepContract = await deployUnirep(
-//             <ethers.Wallet>accounts[0],
-//             _settings
-//         )
-//         unirepSocialContract = await deployUnirepSocial(
-//             <ethers.Wallet>accounts[0],
-//             unirepContract.address
-//         )
-//     })
+        // sign up another user and vote
+        {
+            const id2 = new Identity()
+            const userState2 = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id2,
+                attesterId
+            )
+            const { publicSignals, proof } =
+                await userState2.genUserSignUpProof()
 
-//     it('attester signs up and attester sets airdrop amount should succeed', async () => {
-//         console.log('Attesters sign up')
-//         attester = accounts[1]
-//         unirepContractCalledByAttester = unirepContract.connect(attester)
-//         let tx = await unirepContractCalledByAttester.attesterSignUp()
-//         let receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
+            await unirepSocialContract
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
+                .then((t) => t.wait())
+            await userState2.waitForSync()
 
-//         attesterId = BigInt(
-//             await unirepContract.attesters(unirepSocialContract.address)
-//         )
-//         expect(attesterId).not.equal(0)
-//         airdropAmount = await unirepContract.airdropAmount(
-//             unirepSocialContract.address
-//         )
-//         expect(airdropAmount).equal(defaultAirdroppedReputation)
-//     })
+            const voteProof = await userState2.genActionProof({
+                revealNonce: true,
+                notEpochKey: epochKey,
+            })
 
-//     it('user signs up through unirep social should get airdrop pos rep', async () => {
-//         console.log('User sign up')
-//         let tx = await unirepSocialContract.userSignUp(
-//             BigNumber.from(userCommitment)
-//         )
-//         let receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
+            const upvote = 0
+            await unirepSocialContract
+                .connect(admin)
+                .voteSubsidy(
+                    upvote,
+                    downvote,
+                    epochKey,
+                    voteProof.publicSignals,
+                    voteProof.proof
+                )
+                .then((t) => t.wait())
+            userState2.sync.stop()
+        }
 
-//         userState = await genUserState(
-//             hardhatEthers.provider,
-//             unirepContract.address,
-//             iden
-//         )
-//         const reputationProof = await userState.genProveReputationProof(
-//             attesterId,
-//             epkNonce,
-//             defaultAirdroppedReputation
-//         )
-//         const isValid = await reputationProof.verify()
-//         expect(isValid, 'Verify reputation proof off-chain failed').to.be.true
-//     })
+        // epoch transition
+        await ethers.provider.send('evm_increaseTime', [defaultEpochLength])
+        await ethers.provider.send('evm_mine', [])
 
-//     it('user can get airdrop positive reputation through calling airdrop function in Unirep Social', async () => {
-//         const signUpProof = await userState.genUserSignUpProof(attesterId)
-//         duplicatedProof = signUpProof
+        // user state transition
+        {
+            await userState.waitForSync()
+            const toEpoch = await unirepContract.attesterCurrentEpoch(
+                attesterId
+            )
+            const { publicSignals, proof } =
+                await userState.genUserStateTransitionProof({ toEpoch })
+            await unirepContract
+                .connect(admin)
+                .userStateTransition(publicSignals, proof)
+                .then((t) => t.wait())
+        }
+        userState.sync.stop()
+    })
 
-//         const isSignUpProofValid = await signUpProof.verify()
-//         expect(isSignUpProofValid, 'Sign up proof is not valid').to.be.true
+    {
+        let snapshot
 
-//         // submit epoch key
-//         let tx = await unirepSocialContract.airdrop(
-//             signUpProof.publicSignals,
-//             signUpProof.proof,
-//             {
-//                 value: attestingFee,
-//             }
-//         )
-//         let receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
-//     })
+        beforeEach(async () => {
+            snapshot = await ethers.provider.send('evm_snapshot', [])
+        })
 
-//     it('submit a duplicated airdrop proof should fail', async () => {
-//         await expect(
-//             unirepSocialContract.airdrop(
-//                 duplicatedProof.publicSignals,
-//                 duplicatedProof.proof,
-//                 {
-//                     value: attestingFee,
-//                 }
-//             )
-//         ).to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
-//     })
+        afterEach(async () => {
+            await ethers.provider.send('evm_revert', [snapshot])
+        })
+    }
 
-//     it('submit an epoch key twice should fail (different proof)', async () => {
-//         const signUpProof = await userState.genUserSignUpProof(attesterId)
-//         expect(signUpProof.proof[0]).not.equal(duplicatedProof.proof[0])
-//         await expect(
-//             unirepSocialContract.airdrop(
-//                 signUpProof.publicSignals,
-//                 signUpProof.proof,
-//                 { value: attestingFee }
-//             )
-//         ).to.be.revertedWith('Unirep Social: the epoch key has been airdropped')
-//     })
+    it('reputation proof should be verified valid off-chain and on-chain', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
 
-//     it('user can receive airdrop after user state transition', async () => {
-//         // epoch transition
-//         await hardhatEthers.provider.send('evm_increaseTime', [
-//             config.EPOCH_LENGTH,
-//         ]) // Fast-forward epochLength of seconds
-//         let tx = await unirepContract.beginEpochTransition()
-//         let receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
+        const proof = await userState.genActionProof({
+            maxRep: downvote,
+        })
+        const isValid = await proof.verify()
+        expect(isValid).to.be.true
+        expect(proof.proveMaxRep).to.equal('1')
+        expect(proof.maxRep).to.equal(downvote.toString())
 
-//         userState = await genUserState(
-//             hardhatEthers.provider,
-//             unirepContract.address,
-//             iden
-//         )
-//         const {
-//             startTransitionProof,
-//             processAttestationProofs,
-//             finalTransitionProof,
-//         } = await userState.genUserStateTransitionProofs()
+        const isProofValid = await unirepSocialContract.verifyActionProof(
+            proof.publicSignals,
+            proof.proof
+        )
+        expect(isProofValid).to.be.true
+    })
 
-//         expect(
-//             await startTransitionProof.verify(),
-//             'Verify start transition circuit off-chain failed'
-//         ).to.be.true
+    it('submit airdrop subsidy should succeed', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, epoch, epochKey } =
+            await userState.genActionProof({
+                maxRep: downvote,
+                revealNonce,
+                epkNonce,
+            })
+        const tx = await unirepSocialContract.getSubsidyAirdrop(
+            publicSignals,
+            proof
+        )
+        const posRepField = await unirepSocialContract.posRepFieldIndex()
+        await expect(tx)
+            .to.emit(unirepContract, 'Attestation')
+            .withArgs(epoch, epochKey, attesterId, posRepField, downvote)
+        userState.sync.stop()
+    })
 
-//         // Verify start transition proof on-chain
-//         {
-//             const isProofValid =
-//                 await unirepContract.verifyStartTransitionProof(
-//                     startTransitionProof.publicSignals,
-//                     startTransitionProof.proof
-//                 )
-//             expect(
-//                 isProofValid,
-//                 'Verify start transition circuit on-chain failed'
-//             ).to.be.true
-//         }
+    it('submit airdrop subsidy without revealing epoch key nonce should fail', async () => {
+        const falseReveal = false
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce,
+            revealNonce: falseReveal,
+        })
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
+        userState.sync.stop()
+    })
 
-//         {
-//             const receipt = await unirepContract
-//                 .startUserStateTransition(
-//                     startTransitionProof.publicSignals,
-//                     startTransitionProof.proof
-//                 )
-//                 .then((t) => t.wait())
-//             expect(
-//                 receipt.status,
-//                 'Submit user state transition proof failed'
-//             ).to.equal(1)
-//             console.log(
-//                 'Gas cost of submit a start transition proof:',
-//                 receipt.gasUsed.toString()
-//             )
-//         }
+    it('submit airdrop subsidy with wrong epoch key nonce should fail', async () => {
+        const wrongNonce = 2
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce: wrongNonce,
+            revealNonce,
+        })
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
+        userState.sync.stop()
+    })
 
-//         const proofNullifier = startTransitionProof.hash()
-//         const proofIndex = await unirepContract.getProofIndex(proofNullifier)
-//         proofIndexes.push(BigNumber.from(proofIndex))
+    it('submit airdrop subsidy without prove max rep flag should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, proveMaxRep } =
+            await userState.genActionProof({
+                epkNonce,
+                revealNonce,
+            })
+        expect(proveMaxRep).to.equal('0')
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: should prove max reputation')
+        userState.sync.stop()
+    })
 
-//         for (let i = 0; i < processAttestationProofs.length; i++) {
-//             const isValid = await processAttestationProofs[i].verify()
-//             expect(
-//                 isValid,
-//                 'Verify process attestations circuit off-chain failed'
-//             ).to.be.true
+    it('submit airdrop subsidy with the same proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce,
+            revealNonce,
+        })
+        await unirepSocialContract
+            .getSubsidyAirdrop(publicSignals, proof)
+            .then((t) => t.wait())
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
+        userState.sync.stop()
+    })
 
-//             // Verify processAttestations proof on-chain
-//             const isProofValid =
-//                 await unirepContract.verifyProcessAttestationProof(
-//                     processAttestationProofs[i].publicSignals,
-//                     processAttestationProofs[i].proof
-//                 )
-//             expect(
-//                 isProofValid,
-//                 'Verify process attestations circuit on-chain failed'
-//             ).to.be.true
+    it('submit airdrop subsidy with the invalid proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals } = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce,
+            revealNonce,
+        })
+        const proof = Array(8).fill(0)
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: proof is invalid')
+        userState.sync.stop()
+    })
 
-//             const tx = await unirepSocialContract.processAttestations(
-//                 processAttestationProofs[i].publicSignals,
-//                 processAttestationProofs[i].proof
-//             )
-//             const receipt = await tx.wait()
-//             expect(
-//                 receipt.status,
-//                 'Submit process attestations proof failed'
-//             ).to.equal(1)
-//             console.log(
-//                 'Gas cost of submit a process attestations proof:',
-//                 receipt.gasUsed.toString()
-//             )
+    it('submit airdrop subsidy with the invalid state tree root should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, idx } = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce,
+            revealNonce,
+        })
+        publicSignals[idx.stateTreeRoot] = '1234'
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+        ).to.be.revertedWith('Unirep Social: GST root does not exist in epoch')
+        userState.sync.stop()
+    })
 
-//             const proofNullifier = processAttestationProofs[i].hash()
-//             const proofIndex = await unirepContract.getProofIndex(
-//                 proofNullifier
-//             )
-//             proofIndexes.push(BigNumber.from(proofIndex))
-//         }
+    it('submit airdrop subsidy with the wrong epoch should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const wrongEpoch = 0
+        const proof = await userState.genActionProof({
+            maxRep: downvote,
+            epkNonce,
+            revealNonce,
+        })
+        const stateTree = await userState.sync.genStateTree(wrongEpoch)
+        const wrongEpochControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(unirepSocialContract.address),
+            epoch: wrongEpoch,
+            nonce: epkNonce,
+            revealNonce,
+        })
+        proof.publicSignals[proof.idx.stateTreeRoot] = stateTree.root.toString()
+        proof.publicSignals[proof.idx.control0] = wrongEpochControl
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(
+                proof.publicSignals,
+                proof.proof
+            )
+        ).to.be.revertedWith('Unirep Social: epoch mismatches')
+        userState.sync.stop()
+    })
 
-//         expect(
-//             await finalTransitionProof.verify(),
-//             'Verify user state transition circuit off-chain failed'
-//         ).to.be.true
+    it('submit post subsidy with the wrong attester ID should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const proof = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
 
-//         // Verify userStateTransition proof on-chain
-//         {
-//             const isProofValid = await unirepContract.verifyUserStateTransition(
-//                 finalTransitionProof.publicSignals,
-//                 finalTransitionProof.proof
-//             )
-//             expect(
-//                 isProofValid,
-//                 'Verify user state transition circuit on-chain failed'
-//             ).to.be.true
-//         }
+        const wrongControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(1234),
+            epoch: proof.epoch,
+            nonce: epkNonce,
+            revealNonce,
+        })
+        proof.publicSignals[proof.idx.control0] = wrongControl
+        await expect(
+            unirepSocialContract.getSubsidyAirdrop(
+                proof.publicSignals,
+                proof.proof
+            )
+        ).to.be.revertedWith('Unirep Social: attesterId mismatches')
+        userState.sync.stop()
+    })
 
-//         {
-//             const receipt = await unirepSocialContract
-//                 .updateUserStateRoot(
-//                     finalTransitionProof.publicSignals,
-//                     finalTransitionProof.proof,
-//                     proofIndexes
-//                 )
-//                 .then((t) => t.wait())
-//             expect(
-//                 receipt.status,
-//                 'Submit user state transition proof failed'
-//             ).to.equal(1)
-//             console.log(
-//                 'Gas cost of submit a user state transition proof:',
-//                 receipt.gasUsed.toString()
-//             )
-//         }
-//         await userState.waitForSync()
-
-//         // generate reputation proof should success
-//         const proveGraffiti = BigInt(0)
-//         const minPosRep = 30,
-//             graffitiPreImage = BigInt(0)
-//         const reputationProof = await userState.genProveReputationProof(
-//             attesterId,
-//             epkNonce,
-//             minPosRep,
-//             proveGraffiti,
-//             graffitiPreImage
-//         )
-//         expect(
-//             await reputationProof.verify(),
-//             'Verify reputation proof off-chain failed'
-//         ).to.be.true
-//     })
-
-//     it('user signs up through a signed up attester with 0 airdrop should not get airdrop', async () => {
-//         console.log('User sign up')
-//         const userId2 = new ZkIdentity()
-//         const userCommitment2 = userId2.genIdentityCommitment()
-//         const tx = await unirepContractCalledByAttester.userSignUp(
-//             userCommitment2
-//         )
-//         const receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
-
-//         const userState2 = await genUserState(
-//             hardhatEthers.provider,
-//             unirepContract.address,
-//             userId2
-//         )
-//         const reputationProof = await userState2.genProveReputationProof(
-//             attesterId,
-//             epkNonce,
-//             defaultAirdroppedReputation
-//         )
-//         const isValid = await reputationProof.verify()
-//         expect(isValid, 'Verify reputation proof off-chain should fail').to.be
-//             .false
-//     })
-
-//     it('user signs up through a non-signed up attester should succeed and gets no airdrop', async () => {
-//         console.log('User sign up')
-//         const userId3 = new ZkIdentity()
-//         const userCommitment3 = userId3.genIdentityCommitment()
-//         const tx = await unirepContractCalledByAttester.userSignUp(
-//             userCommitment3
-//         )
-//         const receipt = await tx.wait()
-//         expect(receipt.status).equal(1)
-
-//         const userState3 = await genUserState(
-//             hardhatEthers.provider,
-//             unirepContract.address,
-//             userId3
-//         )
-//         const minRep = 1
-//         const reputationProof = await userState3.genProveReputationProof(
-//             attesterId,
-//             epkNonce,
-//             minRep
-//         )
-//         const isValid = await reputationProof.verify()
-//         expect(isValid, 'Verify reputation proof off-chain should fail').to.be
-//             .false
-//     })
-
-//     it('query airdrop event', async () => {
-//         const airdropFilter = unirepSocialContract.filters.AirdropSubmitted()
-//         const airdropEvents = await unirepSocialContract.queryFilter(
-//             airdropFilter
-//         )
-//         expect(airdropEvents).not.equal(0)
-//     })
-// })
+    it('requesting airdrop subsidy twice should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        // submit first time
+        {
+            const { publicSignals, proof, epoch, epochKey } =
+                await userState.genActionProof({
+                    maxRep: downvote,
+                    epkNonce,
+                    revealNonce,
+                })
+            await unirepSocialContract
+                .getSubsidyAirdrop(publicSignals, proof)
+                .then((t) => t.wait())
+            const subsidy = await unirepSocialContract.subsidy()
+            const used = await unirepSocialContract.subsidies(epoch, epochKey)
+            expect(used.toString()).to.equal(subsidy.toString())
+        }
+        // submit second time with different proof
+        {
+            const { publicSignals, proof } = await userState.genActionProof({
+                maxRep: downvote,
+                epkNonce,
+                revealNonce,
+            })
+            await expect(
+                unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
+            ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
+        }
+        userState.sync.stop()
+    })
+})

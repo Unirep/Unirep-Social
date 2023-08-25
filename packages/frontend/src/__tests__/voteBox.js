@@ -1,8 +1,19 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import VoteBox from '../components/voteBox'
+
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useLocation: () => ({
+        state: {
+            test: {
+                test: 'test',
+            },
+        },
+    }),
+}))
 
 const renderVoteBox = (
     userData,
@@ -34,7 +45,7 @@ test('should render VoteBox correctly with mocked .Provider data and props', asy
 
     const userData = {
         userState: true,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
         subsidyReputation: 30,
         netReputation: 10,
         username: {},
@@ -67,9 +78,10 @@ test('should render VoteBox correctly with mocked .Provider data and props', asy
     const choosePersonas = screen.getByText(/personas/i)
     expect(choosePersonas).toBeInTheDocument()
     expect(screen.getByText('30')).toBeInTheDocument()
-    await userEvent.click(choosePersonas)
-    expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
-    expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
+    await waitFor(() => {
+        userEvent.click(choosePersonas)
+    })
+    expect(screen.getByText('123')).toBeInTheDocument()
 
     expect(screen.getByText(/outdated/i)).toBeInTheDocument()
     expect(screen.getByText(/history/i)).toBeInTheDocument()
@@ -88,7 +100,7 @@ test('should display empty div with false userState', async () => {
 
     const userData = {
         userState: false,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
         currentEpoch: 1,
     }
 

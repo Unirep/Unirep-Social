@@ -1,29 +1,24 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof, EpochKeyProof } from '@unirep/contracts'
+import { EpochKeyLiteProof } from '@unirep/circuits'
+import { ActionProof } from '@unirep-social/circuits'
 import { ethers } from 'ethers'
 import {
-    UNIREP_SOCIAL,
-    DEFAULT_ETH_PROVIDER,
-    DEFAULT_POST_KARMA,
+    DEFAULT_POST_REP,
     QueryType,
-    UNIREP_SOCIAL_ATTESTER_ID,
     LOAD_POST_COUNT,
-    UNIREP,
-    UNIREP_ABI,
-    UNIREP_SOCIAL_ABI,
     TITLE_LABEL,
     DELETED_CONTENT,
 } from '../constants'
-import { ActionType, SubsidyProof } from '@unirep-social/core'
 import {
-    verifyEpochKeyProof,
+    verifyEpochKeyLiteProof,
     verifyReputationProof,
     verifySubsidyProof,
 } from '../utils'
 import TransactionManager from '../daemons/TransactionManager'
 import { Prover } from '../daemons/Prover'
+import { ActionType } from '../Synchronizer'
 
 export default (app: Express) => {
     app.get('/api/post', catchError(loadPosts))
@@ -103,25 +98,17 @@ async function loadPosts(req, res) {
 
 async function createPost(req, res) {
     // should have content, epk, proof, minRep, nullifiers, publicSignals
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
     const { publicSignals, proof, title, content, topic } = req.body
 
-    const reputationProof = new ReputationProof(
+    const reputationProof = new ActionProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
@@ -130,10 +117,10 @@ async function createPost(req, res) {
     )
 
     const error = await verifyReputationProof(
-        req.db,
+        req,
         reputationProof,
-        DEFAULT_POST_KARMA,
-        unirepSocialId,
+        DEFAULT_POST_REP,
+        BigInt(req.unirepSocial.address),
         currentEpoch
     )
     if (error !== undefined) {
@@ -143,25 +130,24 @@ async function createPost(req, res) {
         return
     }
 
-    const { attestingFee } = await unirepContract.config()
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'publishPost',
         [hashedContent, reputationProof.publicSignals, reputationProof.proof]
     )
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
-            value: attestingFee,
         }
     )
 
     let graffiti
-    if (reputationProof.graffitiPreImage != '0') {
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti =
+        BigInt(reputationProof.graffiti) >> BigInt(replNonceBits)
+    if (reputationProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' +
-                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+            '0x' + BigInt(shiftGraffiti).toString(16)
         )
     }
 
@@ -184,7 +170,7 @@ async function createPost(req, res) {
         to: epochKey,
         from: epochKey,
         upvote: 0,
-        downvote: DEFAULT_POST_KARMA,
+        downvote: DEFAULT_POST_REP,
         epoch: currentEpoch,
         action: ActionType.Post,
         data: post._id,
@@ -201,22 +187,14 @@ async function createPost(req, res) {
 
 async function createPostSubsidy(req, res) {
     // should have content, epk, proof, minRep, nullifiers, publicSignals
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
     const { publicSignals, proof, title, content, topic } = req.body
 
-    const subsidyProof = new SubsidyProof(
+    const subsidyProof = new ActionProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
         Prover
@@ -224,16 +202,12 @@ async function createPostSubsidy(req, res) {
     const hashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
     )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
 
-    const totalSubsidy = (await unirepSocialContract.subsidy()).toNumber()
+    const totalSubsidy = (await req.unirepSocial.subsidy()).toNumber()
     const spentSubsidy = (
-        await unirepSocialContract.subsidies(
-            currentEpoch,
-            subsidyProof.epochKey
-        )
+        await req.unirepSocial.subsidies(currentEpoch, subsidyProof.epochKey)
     ).toNumber()
-    if (spentSubsidy + DEFAULT_POST_KARMA > totalSubsidy) {
+    if (spentSubsidy + DEFAULT_POST_REP > totalSubsidy) {
         const error = `Error: Request too much subsidy, only ${
             totalSubsidy - spentSubsidy
         } subsidy left`
@@ -243,10 +217,10 @@ async function createPostSubsidy(req, res) {
         return
     }
     const error = await verifySubsidyProof(
-        req.db,
+        req,
         subsidyProof,
         currentEpoch,
-        unirepSocialId
+        BigInt(req.unirepSocial.address)
     )
     if (error !== undefined) {
         res.status(422).json({
@@ -255,21 +229,27 @@ async function createPostSubsidy(req, res) {
         return
     }
 
-    const { attestingFee } = await unirepContract.config()
-
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'publishPostSubsidy',
         [hashedContent, subsidyProof.publicSignals, subsidyProof.proof]
     )
-    const epochKey = publicSignals[1]
-    const minRep = publicSignals[4]
+    const epochKey = subsidyProof.epochKey.toString()
+    const minRep = subsidyProof.minRep
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
-            value: attestingFee,
         }
     )
+
+    let graffiti
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti = BigInt(subsidyProof.graffiti) >> BigInt(replNonceBits)
+    if (subsidyProof.graffiti.toString() !== '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' + BigInt(shiftGraffiti).toString(16)
+        )
+    }
     const post = await req.db.create('Post', {
         content,
         hashedContent,
@@ -283,13 +263,14 @@ async function createPostSubsidy(req, res) {
         negRep: 0,
         status: 0,
         transactionHash: hash,
+        graffiti,
     })
 
     await req.db.create('Record', {
         to: epochKey,
         from: epochKey,
         upvote: 0,
-        downvote: DEFAULT_POST_KARMA,
+        downvote: DEFAULT_POST_REP,
         epoch: currentEpoch,
         action: ActionType.Post,
         data: post._id,
@@ -311,7 +292,7 @@ async function editPost(req, res) {
 
     const { transaction, error } = await editPostOnChain(
         id,
-        req.db,
+        req,
         publicSignals,
         proof,
         title,
@@ -324,15 +305,13 @@ async function editPost(req, res) {
         })
     } else {
         const post = await req.db.findOne('Post', { where: { _id: id } })
-        const unirepContract = new ethers.Contract(
-            UNIREP,
-            UNIREP_ABI,
-            DEFAULT_ETH_PROVIDER
+
+        const currentEpoch = Number(
+            await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
         )
-        const currentEpoch = Number(await unirepContract.currentEpoch())
         await req.db.create('Record', {
-            to: post.epochKey,
-            from: post.epochKey,
+            to: post.epochKey.toString(),
+            from: post.epochKey.toString(),
             upvote: 0,
             downvote: 0,
             epoch: currentEpoch,
@@ -356,7 +335,7 @@ async function deletePost(req, res) {
 
     const { transaction, error } = await editPostOnChain(
         id,
-        req.db,
+        req,
         publicSignals,
         proof,
         '',
@@ -369,15 +348,12 @@ async function deletePost(req, res) {
         })
     } else {
         const post = await req.db.findOne('Post', { where: { _id: id } })
-        const unirepContract = new ethers.Contract(
-            UNIREP,
-            UNIREP_ABI,
-            DEFAULT_ETH_PROVIDER
+        const currentEpoch = Number(
+            await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
         )
-        const currentEpoch = Number(await unirepContract.currentEpoch())
         await req.db.create('Record', {
-            to: post.epochKey,
-            from: post.epochKey,
+            to: post.epochKey.toString(),
+            from: post.epochKey.toString(),
             upvote: 0,
             downvote: 0,
             epoch: currentEpoch,
@@ -395,17 +371,12 @@ async function deletePost(req, res) {
     }
 }
 
-async function editPostOnChain(id, db, publicSignals, proof, title, content) {
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
+async function editPostOnChain(id, req, publicSignals, proof, title, content) {
     // Parse Inputs
-    const epkProof = new EpochKeyProof(
+    const epkProof = new EpochKeyLiteProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const newHashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(TITLE_LABEL + title + TITLE_LABEL + content)
@@ -416,18 +387,18 @@ async function editPostOnChain(id, db, publicSignals, proof, title, content) {
         onChainId,
         epoch,
         epochKey,
-    } = await db.findOne('Post', {
+    } = await req.db.findOne('Post', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
+    const error = await verifyEpochKeyLiteProof(req, epkProof, epoch, epochKey)
     if (error !== undefined) {
         return { error }
     }
 
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+    const calldata = req.unirepSocial.interface.encodeFunctionData('edit', [
         onChainId,
         oldHashedContent,
         newHashedContent,
@@ -436,13 +407,13 @@ async function editPostOnChain(id, db, publicSignals, proof, title, content) {
     ])
 
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
         }
     )
 
-    await db.update('Post', {
+    await req.db.update('Post', {
         where: {
             _id: id,
             onChainId,

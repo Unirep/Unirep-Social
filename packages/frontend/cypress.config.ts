@@ -4,7 +4,7 @@ import { startServer } from './cypress/support/e2e'
 let deployed
 export default defineConfig({
     e2e: {
-        baseUrl: 'http://localhost:3000',
+        baseUrl: 'http://127.0.0.1:3000',
         viewportHeight: 900,
         viewportWidth: 1200,
         video: false,

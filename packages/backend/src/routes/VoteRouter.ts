@@ -1,20 +1,12 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof } from '@unirep/contracts'
 import { ethers } from 'ethers'
-import {
-    UNIREP,
-    UNIREP_SOCIAL_ABI,
-    UNIREP_ABI,
-    UNIREP_SOCIAL,
-    DEFAULT_ETH_PROVIDER,
-    UNIREP_SOCIAL_ATTESTER_ID,
-} from '../constants'
-import { ActionType, SubsidyProof } from '@unirep-social/core'
 import { verifyReputationProof, verifySubsidyProof } from '../utils'
 import TransactionManager from '../daemons/TransactionManager'
 import { Prover } from '../daemons/Prover'
+import { ActionType } from '../Synchronizer'
+import { ActionProof } from '@unirep-social/circuits'
 
 export default (app: Express) => {
     app.post('/api/vote', catchError(vote))
@@ -22,24 +14,16 @@ export default (app: Express) => {
 }
 
 async function vote(req, res) {
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     const { publicSignals, proof, dataId, receiver, upvote, downvote } =
         req.body
-    const reputationProof = new ReputationProof(
+    const reputationProof = new ActionProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const epochKey = reputationProof.epochKey.toString()
 
@@ -60,10 +44,10 @@ async function vote(req, res) {
     }
 
     const error = await verifyReputationProof(
-        req.db,
+        req,
         reputationProof,
         upvote + downvote,
-        unirepSocialId,
+        BigInt(req.unirepSocial.address),
         currentEpoch
     )
     if (error !== undefined) {
@@ -77,8 +61,7 @@ async function vote(req, res) {
         `Attesting to epoch key ${receiver} with pos rep ${upvote}, neg rep ${downvote}`
     )
 
-    const { attestingFee } = await unirepContract.config()
-    const calldata = unirepSocialContract.interface.encodeFunctionData('vote', [
+    const calldata = req.unirepSocial.interface.encodeFunctionData('vote', [
         upvote,
         downvote,
         ethers.BigNumber.from(receiver),
@@ -86,21 +69,24 @@ async function vote(req, res) {
         reputationProof.proof,
     ])
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
             // TODO: make this more clear?
             // 2 attestation calls into unirep: https://github.com/Unirep/Unirep-Social/blob/alpha/contracts/UnirepSocial.sol#L200
-            value: attestingFee.mul(2),
         }
     )
 
     let graffiti
-    if (reputationProof.graffitiPreImage != '0') {
+    let overwriteGraffiti = false
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti =
+        BigInt(reputationProof.graffiti) >> BigInt(replNonceBits)
+    if (reputationProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' +
-                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+            '0x' + BigInt(shiftGraffiti).toString(16)
         )
+        overwriteGraffiti = true
     }
 
     const newVote = await req.db.create('Vote', {
@@ -111,7 +97,7 @@ async function vote(req, res) {
         posRep: upvote,
         negRep: downvote,
         graffiti,
-        overwriteGraffiti: false,
+        overwriteGraffiti,
         postId: post ? dataId : '',
         commentId: comment ? dataId : '',
         status: 0,
@@ -170,26 +156,18 @@ async function vote(req, res) {
 }
 
 async function voteSubsidy(req, res) {
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     const { publicSignals, proof, dataId, receiver, upvote, downvote } =
         req.body
-    const subsidyProof = new SubsidyProof(
+    const subsidyProof = new ActionProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
         Prover
     )
-    const epochKey = publicSignals[1]
+    const epochKey = subsidyProof.epochKey.toString()
 
     const [post, comment] = await Promise.all([
         req.db.findOne('Post', { where: { _id: dataId } }),
@@ -207,13 +185,11 @@ async function voteSubsidy(req, res) {
         return
     }
 
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
-
     const error = await verifySubsidyProof(
-        req.db,
+        req,
         subsidyProof,
         currentEpoch,
-        unirepSocialId,
+        BigInt(req.unirepSocial.address),
         receiver
     )
     if (error !== undefined) {
@@ -227,8 +203,7 @@ async function voteSubsidy(req, res) {
         `Attesting to epoch key ${receiver} with pos rep ${upvote}, neg rep ${downvote}`
     )
 
-    const { attestingFee } = await unirepContract.config()
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'voteSubsidy',
         [
             upvote,
@@ -240,14 +215,23 @@ async function voteSubsidy(req, res) {
     )
 
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
             // TODO: make this more clear?
             // 2 attestation calls into unirep: https://github.com/Unirep/Unirep-Social/blob/alpha/contracts/UnirepSocial.sol#L200
-            value: attestingFee.mul(2),
         }
     )
+
+    let graffiti
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti = BigInt(subsidyProof.graffiti) >> BigInt(replNonceBits)
+    if (subsidyProof.graffiti.toString() !== '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' + BigInt(shiftGraffiti).toString(16)
+        )
+    }
+
     const newVote = await req.db.create('Vote', {
         transactionHash: hash,
         epoch: currentEpoch,
@@ -255,7 +239,7 @@ async function voteSubsidy(req, res) {
         voter: epochKey,
         posRep: upvote,
         negRep: downvote,
-        graffiti: '0',
+        graffiti,
         overwriteGraffiti: false,
         postId: post ? dataId : '',
         commentId: comment ? dataId : '',

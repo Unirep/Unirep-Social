@@ -7,7 +7,7 @@ COPY . /src
 WORKDIR /src
 
 RUN yarn && yarn build
-RUN rm /src/packages/circuits/zksnarkBuild/powersOfTau28_hez_final_17.ptau
+RUN rm /src/packages/circuits/zksnarkBuild/powersOfTau28_hez_final_18.ptau
 RUN rm -rf /src/packages/frontend
 WORKDIR /src/packages/backend
 

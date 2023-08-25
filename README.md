@@ -1,11 +1,87 @@
-# unirep-social [![CircleCI](https://img.shields.io/circleci/build/github/Unirep/Unirep-Social/main)](https://dl.circleci.com/status-badge/redirect/gh/Unirep/Unirep-Social/tree/main)
+<p align="center">
+    <h1 align="center">Unirep Social</h1>
+</p>
 
-A social network system built on top of Unirep.
+<p align="center">
+    <a href="https://github.com/unirep/unirep">
+        <img src="https://img.shields.io/badge/project-unirep-blue.svg?style=flat-square">
+    </a>
+    <a href="https://github.com/unirep/unirep/blob/master/LICENSE">
+        <img alt="Github license" src="https://img.shields.io/github/license/unirep/unirep.svg?style=flat-square">
+    </a>
+    <a href="https://eslint.org/">
+        <img alt="Linter eslint" src="https://img.shields.io/badge/linter-eslint-8080f2?style=flat-square&logo=eslint">
+    </a>
+    <a href="https://prettier.io/">
+        <img alt="Code style prettier" src="https://img.shields.io/badge/code%20style-prettier-f8bc45?style=flat-square&logo=prettier">
+    </a>
+    <a href="https://dl.circleci.com/status-badge/redirect/gh/Unirep/Unirep-Social/tree/main">
+        <img alt="Circle CI" src="https://img.shields.io/circleci/build/github/Unirep/Unirep-Social/main?style=flat-square">
+    </a>
+</p>
 
-## Getting started
 
-Install
+
+## 💡 About Unirep Social
+**UniRep Social** is a social media that is built upon the [Unirep Protocol](https://github.com/Unirep/Unirep). The users of Unirep Social can publish posts, leave comments anonymously, and also give boost/squash to other users anonymously. User can also prove how much reputation he has when posting/commenting.
+
+## 🔋 Requirements
+
+- Intall [rust](https://www.rust-lang.org/tools/install) and [circom 2](https://docs.circom.io/getting-started/installation/)
+- Node.js >=16.14
+
+## 🛠 Installation
+
+Install and build
+
+```bash
+yarn & yarn build
+```
+
+## Run Unirep Social in local
+
+### 1. Start a blockchain environment
 
 ```sh
-yarn
+cd packages/core && npx hardhat node
 ```
+
+### 2. Deploy Unirep and Unirep Social smart contracts
+
+```sh
+yarn core deploy --network local
+```
+
+### 3 Start a relayer (backend)
+
+Copy the [.env.example](https://github.com/Unirep/Unirep-Social/blob/main/packages/backend/.env.example) file to an `.env` file in `packages/backend`
+Then grant permission from Twitter and [Github Oauth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
+
+Start a backend server by
+
+```sh
+yarn backend start
+```
+
+### 4. Start a frontend
+
+```sh
+yarn frontend start
+```
+
+It will be running at: http://127.0.0.1:3000/ by default.
+
+## 🎯 Contributing
+
+Contributions are always welcome! Feel free to open any issue or send a pull request.
+Go to [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) to learn about how to contribute to Unirep project!
+
+## 🙌🏻 Join our community
+- Discord server: <a href="https://discord.gg/VzMMDJmYc5"><img src="https://img.shields.io/discord/931582072152281188?label=Discord&style=flat-square&logo=discord"></a>
+- Twitter account: <a href="https://twitter.com/UniRep_Protocol"><img src="https://img.shields.io/twitter/follow/UniRep_Protocol?style=flat-square&logo=twitter"></a>
+- Telegram group: <a href="https://t.me/unirep"><img src="https://img.shields.io/badge/telegram-@unirep-blue.svg?style=flat-square&logo=telegram"></a>
+
+## <img height="24" src="https://ethereum.org/static/a183661dd70e0e5c70689a0ec95ef0ba/13c43/eth-diamond-purple.png"> Privacy & Scaling Explorations
+
+This project is supported by [Privacy & Scaling Explorations](https://github.com/privacy-scaling-explorations) in Ethereum Foundation.
+See more projects on: https://appliedzkp.org/.

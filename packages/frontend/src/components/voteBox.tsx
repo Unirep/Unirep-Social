@@ -5,6 +5,7 @@ import UserContext from '../context/User'
 import PostContext from '../context/Post'
 import ActionDetail from './actionDetail'
 import MyButton, { MyButtonType } from './myButton'
+import { shortenEpochKey } from '../utils'
 
 type Props = {
     isUpvote: boolean
@@ -73,7 +74,7 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                 upvote,
                 downvote,
                 0,
-                useUsername ? userContext.username.username : '0'
+                useUsername ? userContext.username.username : undefined
             )
             closeVote()
         }
@@ -193,7 +194,6 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                         setEpkNonce={setEpkNonce}
                         username={userContext.username.username}
                         showUsername={
-                            !useSubsidy &&
                             userContext.username.epoch !== undefined &&
                             userContext.username.epoch <
                                 userContext.currentEpoch
@@ -246,14 +246,10 @@ const VoteBox = ({ isUpvote, closeVote, dataId, isPost }: Props) => {
                                     return shown ? (
                                         <div className="record" key={i}>
                                             <div className="record-epk">
-                                                {postContext.votesById[id]
-                                                    .graffiti &&
-                                                postContext.votesById[id]
-                                                    .graffiti !== '0'
-                                                    ? postContext.votesById[id]
-                                                          .graffiti
-                                                    : postContext.votesById[id]
-                                                          .voter}
+                                                {v.graffiti &&
+                                                v.graffiti !== '0'
+                                                    ? v.graffiti
+                                                    : shortenEpochKey(v.voter)}
                                             </div>
                                             <span>
                                                 {isUpvote ? v.posRep : v.negRep}

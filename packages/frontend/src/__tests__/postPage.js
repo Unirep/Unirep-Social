@@ -26,7 +26,7 @@ test('should render PostPage with mocked post data and props', () => {
         userState: true,
         netReputation: 30,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
         username: {},
     }
 

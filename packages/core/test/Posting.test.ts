@@ -1,705 +1,612 @@
 // @ts-ignore
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
-import { BigNumber } from 'ethers'
-import * as config from '@unirep/circuits'
-import * as ContractConfig from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
-import { ZkIdentity } from '@unirep/crypto'
-
-import { genUserState, leaveComment, publishPost } from './utils'
-import {
-    defaultCommentReputation,
-    defaultPostReputation,
-    maxReputationBudget,
-} from '../config/socialMedia'
-import { deployUnirepSocial, UnirepSocial } from '../src/utils'
-
-const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
+import { genEpochKey } from '@unirep/utils'
+import { Identity } from '@semaphore-protocol/identity'
+import { deployUnirepSocial, Unirep, UnirepSocial } from '../deploy'
+import { genUserState } from './utils'
+import { defaultEpochLength } from '../src/config'
+import { EpochKeyProof } from '@unirep/circuits'
 
 describe('Post', function () {
-    this.timeout(300000)
-
-    let unirepContract
+    this.timeout(1000000)
+    let unirepContract: Unirep
     let unirepSocialContract: UnirepSocial
+    let admin
+    let attesterId
+    const id = new Identity()
+    const content = 'some post text'
+    const hashedContent = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(content)
+    )
+    let postReputation
+    const postId = 1
+    const epkNonce = 0
+    const revealNonce = true
 
     before(async () => {
         const accounts = await ethers.getSigners()
+        admin = accounts[0]
 
-        const _settings = {
-            // maxUsers: config.MAX_USERS,
-            // maxAttesters: config.MAX_ATTESTERS,
-            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-            maxReputationBudget,
-            epochLength: ContractConfig.EPOCH_LENGTH,
-            attestingFee: DEFAULT_ATTESTING_FEE,
-        }
-        unirepContract = await deployUnirep(accounts[0], _settings)
+        unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
-            accounts[0],
-            unirepContract.address,
-            {
-                airdropReputation: 30,
-            }
+            admin,
+            unirepContract.address
         )
-    })
+        attesterId = unirepSocialContract.address
+        postReputation = (
+            await unirepSocialContract.postReputation()
+        ).toNumber()
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        // user sign up
+        {
+            const { publicSignals, proof } =
+                await userState.genUserSignUpProof()
 
-    describe('Generate reputation proof for verification', () => {
-        it('reputation proof should be verified valid off-chain and on-chain', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
             await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
                 .then((t) => t.wait())
-            const userState = await genUserState(
+        }
+        // user 1 epoch key
+        const epoch = await unirepContract.attesterCurrentEpoch(attesterId)
+        const nonce = 0
+        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
+
+        // sign up another user and vote
+        {
+            const id2 = new Identity()
+            const userState2 = await genUserState(
                 ethers.provider,
                 unirepContract.address,
-                id
+                id2,
+                attesterId
             )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultPostReputation
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
+            const { publicSignals, proof } =
+                await userState2.genUserSignUpProof()
 
-            const isProofValid = await unirepContract.verifyReputation(
-                reputationProof.publicSignals,
-                reputationProof.proof
-            )
-            expect(isProofValid, 'proof is not valid').to.be.true
-        })
-    })
-
-    describe('Publishing a post', () => {
-        it('submit post should succeed', async () => {
-            await publishPost(unirepSocialContract, ethers.provider)
-        })
-
-        it('submit post with different amount of nullifiers should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
             await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
                 .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultPostReputation + 1
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
+            await userState2.waitForSync()
 
-            const content = 'some other post text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            await expect(
-                unirepSocialContract.publishPost(
-                    hashedContent,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    {
-                        value: DEFAULT_ATTESTING_FEE,
-                    }
+            const voteProof = await userState2.genActionProof({
+                revealNonce: true,
+                epkNonce: 0,
+                notEpochKey: epochKey,
+            })
+
+            const upvote = 30
+            const downvote = 0
+            await unirepSocialContract
+                .connect(admin)
+                .voteSubsidy(
+                    upvote,
+                    downvote,
+                    epochKey,
+                    voteProof.publicSignals,
+                    voteProof.proof
                 )
-            ).to.be.revertedWith(
-                'Unirep Social: submit different nullifiers amount from the required amount for post'
+                .then((t) => t.wait())
+            userState2.sync.stop()
+        }
+
+        // epoch transition
+        await ethers.provider.send('evm_increaseTime', [defaultEpochLength])
+        await ethers.provider.send('evm_mine', [])
+
+        // user state transition
+        {
+            await userState.waitForSync()
+            const toEpoch = await unirepContract.attesterCurrentEpoch(
+                attesterId
             )
+            const { publicSignals, proof } =
+                await userState.genUserStateTransitionProof({ toEpoch })
+            await unirepContract
+                .connect(admin)
+                .userStateTransition(publicSignals, proof)
+                .then((t) => t.wait())
+        }
+        userState.sync.stop()
+    })
+
+    {
+        let snapshot
+
+        beforeEach(async () => {
+            snapshot = await ethers.provider.send('evm_snapshot', [])
         })
 
-        it('submit post with the same proof should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultPostReputation
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
+        afterEach(async () => {
+            await ethers.provider.send('evm_revert', [snapshot])
+        })
+    }
 
-            const content = 'some post text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            const tx = await unirepSocialContract.publishPost(
+    it('reputation proof should be verified valid off-chain and on-chain', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+
+        const epkNonce = 0
+        const proof = await userState.genActionProof({
+            epkNonce,
+            spentRep: postReputation,
+        })
+        const isValid = await proof.verify()
+        expect(isValid).to.be.true
+
+        const isProofValid = await unirepSocialContract.verifyActionProof(
+            proof.publicSignals,
+            proof.proof
+        )
+        expect(isProofValid).to.be.true
+    })
+
+    it('submit post should succeed', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, epoch, epochKey } =
+            await userState.genActionProof({ spentRep: postReputation })
+        const tx = await unirepSocialContract.publishPost(
+            hashedContent,
+            publicSignals,
+            proof
+        )
+        await expect(tx)
+            .to.emit(unirepSocialContract, 'PostSubmitted')
+            .withArgs(epoch, postId, epochKey, hashedContent, 0)
+        userState.sync.stop()
+    })
+
+    it('submit post with min rep should succeed', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const minRep = 10
+        const { publicSignals, proof, epoch, epochKey, proveMinRep } =
+            await userState.genActionProof({ spentRep: postReputation, minRep })
+        const tx = await unirepSocialContract.publishPost(
+            hashedContent,
+            publicSignals,
+            proof
+        )
+        expect(proveMinRep).to.equal('1')
+        await expect(tx)
+            .to.emit(unirepSocialContract, 'PostSubmitted')
+            .withArgs(epoch, postId, epochKey, hashedContent, minRep)
+        userState.sync.stop()
+    })
+
+    it('submit post with different amount of nullifiers should fail', async () => {
+        const spentRep = 3
+        expect(spentRep).not.equal(postReputation)
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            spentRep,
+        })
+        await expect(
+            unirepSocialContract.publishPost(
                 hashedContent,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE }
+                publicSignals,
+                proof
             )
-            const receipt = await tx.wait()
-            expect(receipt.status, 'Submit post failed').to.equal(1)
-
-            await expect(
-                unirepSocialContract.publishPost(
-                    hashedContent,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    {
-                        value: DEFAULT_ATTESTING_FEE,
-                    }
-                )
-            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        })
+        ).to.be.revertedWith('Unirep Social: invalid rep nullifier')
+        userState.sync.stop()
     })
 
-    describe('Comment a post', () => {
-        it('submit comment should succeed', async () => {
-            const receipt = await publishPost(
-                unirepSocialContract,
-                ethers.provider
-            )
-            const data = unirepSocialContract.interface.parseLog(
-                receipt.logs[2]
-            )
-            const postId = data.args._postId
-            await leaveComment(unirepSocialContract, ethers.provider, postId)
+    it('submit post with the same proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            spentRep: postReputation,
         })
-
-        it('submit comment with different amount of nullifiers should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const receipt = await publishPost(
-                unirepSocialContract,
-                ethers.provider
-            )
-            const data = unirepSocialContract.interface.parseLog(
-                receipt.logs[2]
-            )
-            const postId = data.args._postId
-
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultCommentReputation + 1
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
-
-            const content = 'a comment that should fail'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            await expect(
-                unirepSocialContract.leaveComment(
-                    postId,
-                    hashedContent,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    { value: DEFAULT_ATTESTING_FEE }
-                )
-            ).to.be.revertedWith(
-                'Unirep Social: submit different nullifiers amount from the required amount for comment'
-            )
-        })
-
-        it('submit comment with the same proof should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-
-            const { logs } = await publishPost(
-                unirepSocialContract,
-                ethers.provider
-            )
-            const data = unirepSocialContract.interface.parseLog(logs[2])
-            const postId = data.args._postId
-
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 20,
-                graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const reputationProof = await userState.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                defaultCommentReputation
-            )
-            const isValid = await reputationProof.verify()
-            expect(isValid, 'Verify reputation proof off-chain failed').to.be
-                .true
-
-            const isProofValid = await unirepContract.verifyReputation(
-                reputationProof.publicSignals,
-                reputationProof.proof
-            )
-            expect(isProofValid, 'proof is not valid').to.be.true
-            const content = 'some comment text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            const tx = await unirepSocialContract.leaveComment(
-                postId,
+        await unirepSocialContract
+            .publishPost(hashedContent, publicSignals, proof)
+            .then((t) => t.wait())
+        await expect(
+            unirepSocialContract.publishPost(
                 hashedContent,
-                reputationProof.publicSignals,
-                reputationProof.proof,
-                { value: DEFAULT_ATTESTING_FEE }
+                publicSignals,
+                proof
             )
-            const receipt = await tx.wait()
-            expect(receipt.status, 'Submit comment failed').to.equal(1)
-
-            await expect(
-                unirepSocialContract.leaveComment(
-                    postId,
-                    hashedContent,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    { value: DEFAULT_ATTESTING_FEE }
-                )
-            ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        })
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
+        userState.sync.stop()
     })
 
-    describe('Edit a post', () => {
-        it('edit a post should succeed', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            const id = new ZkIdentity()
-            let postId
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const epkNonce = 0
-            const content = 'some post text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            {
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                postId = data.args._postId
-            }
-
-            {
-                const { publicSignals, proof } =
-                    await userState.genVerifyEpochKeyProof(epkNonce)
-
-                const newContent = 'new post'
-                const newHashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(newContent)
-                )
-                const tx = await unirepSocialContract.edit(
-                    postId,
-                    hashedContent,
-                    newHashedContent,
-                    publicSignals,
-                    proof
-                )
-                const receipt = await tx.wait()
-                expect(receipt.status, 'Edit post failed').to.equal(1)
-            }
+    it('submit post with the invalid proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals } = await userState.genActionProof({
+            spentRep: postReputation,
         })
-
-        it('Submit a wrong epoch key proof should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
+        const proof = Array(8).fill(0)
+        await expect(
+            unirepSocialContract.publishPost(
+                hashedContent,
+                publicSignals,
+                proof
             )
-            const id = new ZkIdentity()
-            let postId
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const epkNonce = 0
-            const content = 'some post text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            {
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                postId = data.args._postId
-            }
-
-            {
-                const wrongEpkNonce = 1
-                const { publicSignals, proof } =
-                    await userState.genVerifyEpochKeyProof(wrongEpkNonce)
-
-                const newContent = 'new post'
-                const newHashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(newContent)
-                )
-                await expect(
-                    unirepSocialContract.edit(
-                        postId,
-                        hashedContent,
-                        newHashedContent,
-                        publicSignals,
-                        proof
-                    )
-                ).to.be.revertedWith(
-                    'Unirep Social: Mismatched epoch key proof to the post or the comment id'
-                )
-            }
-        })
+        ).to.be.revertedWith('Unirep Social: proof is invalid')
+        userState.sync.stop()
     })
 
-    describe('Edit a comment', () => {
-        it('edit a comment should succeed', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
+    it('submit post with the invalid state tree root should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, idx } = await userState.genActionProof({
+            spentRep: postReputation,
+        })
+        publicSignals[idx.stateTreeRoot.toString()] = '1234'
+        await expect(
+            unirepSocialContract.publishPost(
+                hashedContent,
+                publicSignals,
+                proof
             )
-            let postId
-            let commentId
-            const content = 'some comment text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
+        ).to.be.revertedWith('Unirep Social: GST root does not exist in epoch')
+        userState.sync.stop()
+    })
+
+    it('submit post with the wrong epoch should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const wrongEpoch = 0
+        const proof = await userState.genActionProof({
+            spentRep: postReputation,
+        })
+        const stateTree = await userState.sync.genStateTree(wrongEpoch)
+        const wrongEpochControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(unirepSocialContract.address),
+            epoch: wrongEpoch,
+            nonce: 0,
+            revealNonce: 0,
+        })
+        proof.publicSignals[proof.idx.stateTreeRoot] = stateTree.root.toString()
+        proof.publicSignals[proof.idx.control0] = wrongEpochControl
+        await expect(
+            unirepSocialContract.publishPost(
+                hashedContent,
+                proof.publicSignals,
+                proof.proof
             )
-            {
-                const id = new ZkIdentity()
-                await unirepSocialContract
-                    .userSignUp(id.genIdentityCommitment())
-                    .then((t) => t.wait())
-                const userState = await genUserState(
-                    ethers.provider,
-                    unirepContract.address,
-                    id
-                )
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-                const epkNonce = 0
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
+        ).to.be.revertedWith('Unirep Social: epoch mismatches')
+        userState.sync.stop()
+    })
 
-                const content = 'some post text'
-                const hashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(content)
-                )
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                postId = data.args._postId
-            }
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const epkNonce = 0
-            {
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 20,
-                    graffitiPreImage = BigInt(0)
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultCommentReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const isProofValid = await unirepContract.verifyReputation(
-                    reputationProof.publicSignals,
-                    reputationProof.proof
-                )
-                expect(isProofValid, 'proof is not valid').to.be.true
-
-                const { logs } = await unirepSocialContract
-                    .leaveComment(
-                        postId,
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                commentId = data.args._commentId
-            }
-
-            {
-                const { publicSignals, proof } =
-                    await userState.genVerifyEpochKeyProof(epkNonce)
-
-                const newContent = 'new comment'
-                const newHashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(newContent)
-                )
-                const tx = await unirepSocialContract.edit(
-                    commentId,
-                    hashedContent,
-                    newHashedContent,
-                    publicSignals,
-                    proof
-                )
-                const receipt = await tx.wait()
-                expect(receipt.status, 'Edit post failed').to.equal(1)
-            }
+    it('submit post with the wrong attester ID should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const proof = await userState.genActionProof({
+            spentRep: postReputation,
         })
 
-        it('edit comment with wrong epoch key proof should fail', async () => {
-            const attesterId = BigInt(
-                await unirepContract.attesters(unirepSocialContract.address)
-            )
-            let postId
-            let commentId
-            const content = 'some comment text'
-            const hashedContent = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(content)
-            )
-            {
-                const id = new ZkIdentity()
-                await unirepSocialContract
-                    .userSignUp(id.genIdentityCommitment())
-                    .then((t) => t.wait())
-                const userState = await genUserState(
-                    ethers.provider,
-                    unirepContract.address,
-                    id
-                )
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 0
-                const graffitiPreImage = BigInt(0)
-                const epkNonce = 0
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultPostReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const content = 'some post text'
-                const hashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(content)
-                )
-                const { logs } = await unirepSocialContract
-                    .publishPost(
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                postId = data.args._postId
-            }
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
-            const userState = await genUserState(
-                ethers.provider,
-                unirepContract.address,
-                id
-            )
-            const epkNonce = 0
-            {
-                const proveGraffiti = BigInt(0)
-                const minPosRep = 20,
-                    graffitiPreImage = BigInt(0)
-                const reputationProof = await userState.genProveReputationProof(
-                    attesterId,
-                    epkNonce,
-                    minPosRep,
-                    proveGraffiti,
-                    graffitiPreImage,
-                    defaultCommentReputation
-                )
-                const isValid = await reputationProof.verify()
-                expect(isValid, 'Verify reputation proof off-chain failed').to
-                    .be.true
-
-                const isProofValid = await unirepContract.verifyReputation(
-                    reputationProof.publicSignals,
-                    reputationProof.proof
-                )
-                expect(isProofValid, 'proof is not valid').to.be.true
-
-                const { logs } = await unirepSocialContract
-                    .leaveComment(
-                        postId,
-                        hashedContent,
-                        reputationProof.publicSignals,
-                        reputationProof.proof,
-                        { value: DEFAULT_ATTESTING_FEE }
-                    )
-                    .then((t) => t.wait())
-                const data = unirepSocialContract.interface.parseLog(logs[2])
-                commentId = data.args._commentId
-            }
-
-            {
-                const wrongEpkNonce = 1
-                const { publicSignals, proof } =
-                    await userState.genVerifyEpochKeyProof(wrongEpkNonce)
-
-                const newContent = 'new comment'
-                const newHashedContent = ethers.utils.keccak256(
-                    ethers.utils.toUtf8Bytes(newContent)
-                )
-                await expect(
-                    unirepSocialContract.edit(
-                        commentId,
-                        hashedContent,
-                        newHashedContent,
-                        publicSignals,
-                        proof
-                    )
-                ).to.be.revertedWith(
-                    'Unirep Social: Mismatched epoch key proof to the post or the comment id'
-                )
-            }
+        const wrongControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(1234),
+            epoch: proof.epoch,
+            nonce: 0,
+            revealNonce: 0,
         })
+        proof.publicSignals[proof.idx.control0] = wrongControl
+        await expect(
+            unirepSocialContract.publishPost(
+                hashedContent,
+                proof.publicSignals,
+                proof.proof
+            )
+        ).to.be.revertedWith('Unirep Social: attesterId mismatches')
+        userState.sync.stop()
+    })
+
+    it('subsidy proof should be verified valid off-chain and on-chain', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+
+        const proof = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        const isValid = await proof.verify()
+        expect(isValid).to.be.true
+
+        const isProofValid = await unirepSocialContract.verifyActionProof(
+            proof.publicSignals,
+            proof.proof
+        )
+        expect(isProofValid).to.be.true
+    })
+
+    it('submit post subsidy should succeed', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const minRep = 0
+        const { publicSignals, proof, epoch, epochKey } =
+            await userState.genActionProof({ epkNonce, revealNonce })
+        const tx = await unirepSocialContract.publishPostSubsidy(
+            hashedContent,
+            publicSignals,
+            proof
+        )
+        await expect(tx)
+            .to.emit(unirepSocialContract, 'PostSubmitted')
+            .withArgs(epoch, postId, epochKey, hashedContent, minRep)
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with min rep should succeed', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const minRep = 10
+        const { publicSignals, proof, epoch, epochKey, proveMinRep } =
+            await userState.genActionProof({ minRep, revealNonce, epkNonce })
+        const tx = await unirepSocialContract.publishPostSubsidy(
+            hashedContent,
+            publicSignals,
+            proof
+        )
+        expect(proveMinRep).to.equal('1')
+        await expect(tx)
+            .to.emit(unirepSocialContract, 'PostSubmitted')
+            .withArgs(epoch, postId, epochKey, hashedContent, minRep)
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy without revealing epoch key nonce should fail', async () => {
+        const falseReveal = false
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            epkNonce,
+            revealNonce: falseReveal,
+        })
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with wrong epoch key nonce should fail', async () => {
+        const wrongNonce = 2
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            epkNonce: wrongNonce,
+            revealNonce,
+        })
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with the same proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof } = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        await unirepSocialContract
+            .publishPostSubsidy(hashedContent, publicSignals, proof)
+            .then((t) => t.wait())
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: the proof is submitted before')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with the invalid proof should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals } = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        const proof = Array(8).fill(0)
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: proof is invalid')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with the invalid state tree root should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const { publicSignals, proof, idx } = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        publicSignals[idx.stateTreeRoot.toString()] = '1234'
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: GST root does not exist in epoch')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with the wrong epoch should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const wrongEpoch = 0
+        const proof = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        const stateTree = await userState.sync.genStateTree(wrongEpoch)
+        const wrongEpochControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(unirepSocialContract.address),
+            epoch: wrongEpoch,
+            nonce: epkNonce,
+            revealNonce,
+        })
+        proof.publicSignals[proof.idx.stateTreeRoot] = stateTree.root.toString()
+        proof.publicSignals[proof.idx.control0] = wrongEpochControl
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                proof.publicSignals,
+                proof.proof
+            )
+        ).to.be.revertedWith('Unirep Social: epoch mismatches')
+        userState.sync.stop()
+    })
+
+    it('submit post subsidy with the wrong attester ID should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const proof = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+
+        const wrongControl = EpochKeyProof.buildControl({
+            attesterId: BigInt(1234),
+            epoch: proof.epoch,
+            nonce: epkNonce,
+            revealNonce,
+        })
+        proof.publicSignals[proof.idx.control0] = wrongControl
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                proof.publicSignals,
+                proof.proof
+            )
+        ).to.be.revertedWith('Unirep Social: attesterId mismatches')
+        userState.sync.stop()
+    })
+
+    it('requesting too much subsidy should fail', async () => {
+        const userState = await genUserState(
+            ethers.provider,
+            unirepContract.address,
+            id,
+            attesterId
+        )
+        const subsidy = await unirepSocialContract.subsidy()
+        const postReputation = await unirepSocialContract.postReputation()
+        const iterations = subsidy.toNumber() / postReputation.toNumber()
+        for (let i = 0; i < iterations; i++) {
+            const { publicSignals, proof } = await userState.genActionProof({
+                epkNonce,
+                revealNonce,
+            })
+            await unirepSocialContract
+                .publishPostSubsidy(hashedContent, publicSignals, proof)
+                .then((t) => t.wait())
+        }
+        const { publicSignals, proof } = await userState.genActionProof({
+            epkNonce,
+            revealNonce,
+        })
+        await expect(
+            unirepSocialContract.publishPostSubsidy(
+                hashedContent,
+                publicSignals,
+                proof
+            )
+        ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
+        userState.sync.stop()
     })
 })

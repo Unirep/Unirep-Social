@@ -1,16 +1,23 @@
 {
     "name": "root",
     "license": "MIT",
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "install": "yarn bootstrap",
         "bootstrap": "lerna bootstrap",
         "build": "lerna run build",
         "linkUnirep": "sh scripts/linkUnirep.sh",
-        "lint": "prettier ."
+        "lint": "prettier .",
+        "circuits": "yarn workspace @unirep-social/circuits run",
+        "core": "yarn workspace @unirep-social/core run",
+        "backend": "yarn workspace @unirep-social/backend run",
+        "frontend": "yarn workspace @unirep-social/frontend run"
     },
     "private": true,
     "devDependencies": {
-        "lerna": "^5.1.6"
+        "lerna": "^6.5.1"
     },
     "dependencies": {
         "prettier": "^2.7.1"

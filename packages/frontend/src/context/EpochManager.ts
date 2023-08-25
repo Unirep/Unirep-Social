@@ -28,7 +28,7 @@ export class EpochManager {
         this.readyToTransition = false
         this.currentEpoch = await unirepConfig.currentEpoch()
         // load the last transition time
-        ;(this as any).nextTransition = await this._nextTransition()
+        ;(this as any).nextTransition = this._nextTransition()
         const waitTime = Math.max(this.nextTransition - +new Date(), 0)
         console.log(
             `Next epoch transition in ${waitTime / (60 * 60 * 1000)} hours`
@@ -40,15 +40,16 @@ export class EpochManager {
         return waitTime
     }
 
-    private async _nextTransition() {
-        await unirepConfig.loadingPromise
-        const [lastTransition, epochLength] = await Promise.all([
-            unirepConfig.unirep.latestEpochTransitionTime(),
-            unirepConfig.epochLength,
-        ])
-        return (lastTransition.toNumber() + epochLength) * 1000
+    private _nextTransition() {
+        const now = Math.floor(+new Date() / 1000)
+        const current = Math.floor(
+            (now - unirepConfig.startTimestamp) / unirepConfig.epochLength
+        )
+        const next =
+            unirepConfig.startTimestamp +
+            unirepConfig.epochLength * (current + 1)
+        return next * 1000
     }
-
     private async tryTransition() {
         // wait for someone to actually execute the epoch transition
         for (;;) {

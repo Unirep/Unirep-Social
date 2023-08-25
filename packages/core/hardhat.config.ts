@@ -1,5 +1,4 @@
 import '@typechain/hardhat'
-import { HardhatUserConfig } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 
@@ -8,6 +7,10 @@ export default {
     networks: {
         hardhat: {
             blockGasLimit: 12000000,
+            mining: {
+                auto: true,
+                interval: 1000,
+            },
         },
         optimism: {
             url: 'https://goerli.optimism.io',
@@ -17,20 +20,17 @@ export default {
             ],
         },
         local: {
-            url: 'http://localhost:8545',
+            url: 'http://127.0.0.1:8545',
         },
     },
     solidity: {
         compilers: [
             {
-                version: '0.8.6',
-            },
-            {
-                version: '0.6.11',
+                version: '0.8.19',
             },
         ],
         settings: {
-            optimizer: { enabled: true, runs: 200 },
+            optimizer: { enabled: true, runs: 2 ** 32 - 1  },
         },
     },
     typechain: {

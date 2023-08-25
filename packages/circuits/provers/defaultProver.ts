@@ -1,15 +1,14 @@
 import path from 'path'
-import fs from 'fs'
+import { Circuit } from '@unirep/circuits'
 import * as snarkjs from 'snarkjs'
-import { SnarkProof, SnarkPublicSignals } from '@unirep/crypto'
-import { defaultProver } from '@unirep/circuits/provers/defaultProver'
+import { SnarkProof, SnarkPublicSignals } from '@unirep/utils'
 
 const buildPath = '../zksnarkBuild'
 
 /**
  * The default prover that uses the circuits in default built folder `zksnarkBuild/`
  */
-const _defaultProver = {
+export const defaultProver = {
     /**
      * Generate proof and public signals with `snarkjs.groth16.fullProve`
      * @param circuitName Name of the circuit, which can be chosen from `Circuit`
@@ -17,7 +16,7 @@ const _defaultProver = {
      * @returns snark proof and public signals
      */
     genProofAndPublicSignals: async (
-        circuitName: string,
+        circuitName: string | Circuit,
         inputs: any
     ): Promise<any> => {
         const circuitWasmPath = path.join(
@@ -25,9 +24,6 @@ const _defaultProver = {
             buildPath,
             `${circuitName}.wasm`
         )
-        if (!fs.existsSync(circuitWasmPath)) {
-            return defaultProver.genProofAndPublicSignals(circuitName, inputs)
-        }
         const zkeyPath = path.join(__dirname, buildPath, `${circuitName}.zkey`)
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             inputs,
@@ -46,24 +42,20 @@ const _defaultProver = {
      * @returns True if the proof is valid, false otherwise
      */
     verifyProof: async (
-        circuitName: string,
+        circuitName: string | Circuit,
         publicSignals: SnarkPublicSignals,
         proof: SnarkProof
     ): Promise<boolean> => {
-        const vkeyPath = path.join(
-            __dirname,
-            buildPath,
-            `${circuitName}.vkey.json`
-        )
-        if (!fs.existsSync(vkeyPath)) {
-            return defaultProver.verifyProof(circuitName, publicSignals, proof)
-        }
-        const vkey = require(vkeyPath)
+        const vkey = require(path.join(buildPath, `${circuitName}.vkey.json`))
         return snarkjs.groth16.verify(vkey, publicSignals, proof)
     },
-    getVKey: (name: string): any => {
-        return
+
+    /**
+     * Get vkey from default built folder `zksnarkBuild/`
+     * @param name Name of the circuit, which can be chosen from `Circuit`
+     * @returns vkey of the circuit
+     */
+    getVKey: async (name: string | Circuit) => {
+        return require(path.join(buildPath, `${name}.vkey.json`))
     },
 }
-
-export { _defaultProver as defaultProver }

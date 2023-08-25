@@ -1,7 +1,7 @@
 import { SERVER } from '../config'
 import * as snarkjs from 'snarkjs'
 import { Circuit } from '@unirep/circuits'
-import { SnarkPublicSignals, SnarkProof } from '@unirep/crypto'
+import { SnarkPublicSignals, SnarkProof } from '@unirep/utils'
 
 export default {
     verifyProof: async (

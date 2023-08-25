@@ -44,7 +44,7 @@ test('should render NewPage correctly with mocked .Provider data and props', asy
 
     render(
         <BrowserRouter>
-            <Redirect Redirect to="/">
+            <Redirect Redirect to="/general">
                 <UserContext.Provider value={userData}>
                     <PostContext.Provider value={postData}>
                         <NewPage />

@@ -88,7 +88,7 @@ const ActionDetail = ({
                     <div className="epk chosen">
                         <div className="rep">{hasRep}</div>
                         <span className="interline"></span>
-                        {allEpks[0]}
+                        {shortenEpochKey(allEpks[0])}
                     </div>
                     {showRep && (
                         <div
