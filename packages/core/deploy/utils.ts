@@ -10,6 +10,7 @@ import {
     maxReputationBudget,
 } from '../src/config'
 import { deployVerifierHelper } from '@unirep/contracts/deploy'
+import globalFactory from 'global-factory'
 import { Unirep__factory as UnirepFactory } from '../typechain'
 import { UnirepSocial__factory as UnirepSocialFactory } from '../typechain'
 import { UnirepSocial } from '../typechain'
@@ -37,11 +38,12 @@ const deployUnirepSocial = async (
         Circuit.proveReputation
     )
     console.log('Deploying ActionVerifier')
-    const ActionVerifierF = new ethers.ContractFactory(
+    const _ActionVerifierF = new ethers.ContractFactory(
         ActionVerifier.abi,
         ActionVerifier.bytecode,
         deployer
     )
+    const ActionVerifierF = await globalFactory(_ActionVerifierF)
     const actionVerifier = await ActionVerifierF.deploy()
     await actionVerifier.deployed()
 
@@ -57,10 +59,7 @@ const deployUnirepSocial = async (
         // settings.airdropReputation,
         settings.epkSubsidy,
         settings.epochLength,
-        settings.maxReputationBudget,
-        {
-            gasLimit: 9000000,
-        }
+        settings.maxReputationBudget
     )
     await c.deployTransaction.wait()
 

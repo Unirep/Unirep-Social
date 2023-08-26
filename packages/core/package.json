@@ -33,6 +33,7 @@
         "@types/mocha": "^10.0.1",
         "@types/node": "^18.14.3",
         "chai": "^4.2.0",
+        "global-factory": "^0.0.2",
         "hardhat": "^2.12.7",
         "ts-node": "^10.9.1",
         "typechain": "^8.1.1"
@@ -45,7 +46,6 @@
         "dotenv": "^10.0.0",
         "ethers": "^5.6.8",
         "path-browserify": "^1.0.1",
-        "snarkjs": "^0.6.7",
         "typescript": "^4.9.5"
     }
 }
