@@ -417,7 +417,7 @@ export class User {
         const id =
             typeof identity === 'string' ? new Identity(identity) : identity
         const commitment = id.commitment
-        return unirepConfig.unirepSocial.hasUserSignedUp(commitment)
+        return unirepConfig.unirep.hasUserSignedUp(commitment)
     }
 
     async signUp() {
