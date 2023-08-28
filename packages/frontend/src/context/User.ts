@@ -504,7 +504,7 @@ export class User {
     async logout() {
         if (this.userState) {
             this.userState.sync.stop()
-            // closeAndWipe not impl on my memdb -- check with @vimwitch
+            // there is no UserState table on the db in this repo -- so this will fail:
             //await (this.userState as any).db.closeAndWipe()
             this.userState = undefined
         }
