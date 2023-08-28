@@ -417,7 +417,7 @@ export class User {
         const id =
             typeof identity === 'string' ? new Identity(identity) : identity
         const commitment = id.commitment
-        return unirepConfig.unirep.hasUserSignedUp(commitment)
+        return unirepConfig.unirepSocial.hasUserSignedUp(commitment)
     }
 
     async signUp() {
@@ -479,8 +479,11 @@ export class User {
     }
 
     async login(idInput: string | Identity) {
-        const hasSignedUp = await this._hasSignedUp(idInput)
-        if (!hasSignedUp) return false
+        // TODO: _hasSignedUp() doesnt exist on the new unirep-social contract
+        //  not sure what the side effects of commenting this out are:
+        //
+        //const hasSignedUp = await this._hasSignedUp(idInput)
+        //if (!hasSignedUp) return false
 
         await this.loadCurrentEpoch()
         await this.setIdentity(idInput)
@@ -501,7 +504,8 @@ export class User {
     async logout() {
         if (this.userState) {
             this.userState.sync.stop()
-            await (this.userState as any).db.closeAndWipe()
+            // closeAndWipe not impl on my memdb -- check with @vimwitch
+            //await (this.userState as any).db.closeAndWipe()
             this.userState = undefined
         }
         runInAction(() => {

@@ -5,6 +5,7 @@ import {
     TWITTER_CLIENT_ID,
     TWITTER_REDIRECT_URI,
     GITHUB_REDIRECT_URI,
+    TWITTER_CLIENT_SECRET,
 } from '../constants'
 import fetch from 'node-fetch'
 import crypto from 'crypto'
@@ -52,11 +53,13 @@ async function completeTwitterAuth(req, res) {
     const body = Object.entries(args)
         .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
         .join('&')
+    const basicAuth = Buffer.from(`${TWITTER_CLIENT_ID}:${TWITTER_CLIENT_SECRET}`).toString('base64')
     const auth = (await fetch('https://api.twitter.com/2/oauth2/token', {
         method: 'POST',
         body,
         headers: {
             'content-type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${basicAuth}`, 
         },
     }).then((r) => r.json())) as any
     const user = (await fetch('https://api.twitter.com/2/users/me', {
