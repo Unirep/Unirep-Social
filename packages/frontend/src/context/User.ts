@@ -416,8 +416,11 @@ export class User {
         await unirepConfig.loadingPromise
         const id =
             typeof identity === 'string' ? new Identity(identity) : identity
-        const commitment = id.commitment
-        return unirepConfig.unirep.hasUserSignedUp(commitment)
+        const apiURL = makeURL(`signup/${id.commitment.toString()}`, {})
+        const r = await fetch(apiURL)
+        if (!r.ok) return false
+        const { result } = await r.json()
+        return result
     }
 
     async signUp() {
@@ -501,7 +504,7 @@ export class User {
     async logout() {
         if (this.userState) {
             this.userState.sync.stop()
-            await (this.userState as any).db.closeAndWipe()
+            await this.userState.sync.db.closeAndWipe()
             this.userState = undefined
         }
         runInAction(() => {

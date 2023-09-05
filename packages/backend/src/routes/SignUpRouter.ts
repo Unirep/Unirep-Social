@@ -5,6 +5,7 @@ import { verifySignUpProof } from '../utils'
 
 export default (app: Express) => {
     app.post('/api/signup', catchError(signup))
+    app.get('/api/signup/:commitment', catchError(hasSignedUp))
 }
 
 async function signup(req, res) {
@@ -35,4 +36,13 @@ async function signup(req, res) {
         transaction: hash,
         epoch: epoch,
     })
+}
+
+async function hasSignedUp(req, res) {
+    const user = await req.db.findOne('UserSignUp', {
+        where: {
+            commitment: req.params.commitment,
+        },
+    })
+    res.json({ result: user ? true : false })
 }
