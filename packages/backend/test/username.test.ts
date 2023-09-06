@@ -1,70 +1,70 @@
-import test from 'ava'
+// @ts-ignore
+import { ethers } from 'hardhat'
+import { expect } from 'chai'
 import { startServer } from './environment'
 import fetch from 'node-fetch'
-import { hashOne } from '@unirep/crypto'
-import { ethers } from 'ethers'
 
 import {
-    signIn,
     signUp,
     setUsername,
-    epochTransition,
     userStateTransition,
-    waitForBackendBlock,
     genUsernameProof,
+    waitForBackendBlock,
 } from './utils'
+import express from 'express'
 
-const EPOCH_LENGTH = 20000
-
-test.before(async (t: any) => {
-    const context = await startServer({ epochLength: EPOCH_LENGTH / 1000 })
-    Object.assign(t.context, context)
-})
-
-test.serial('should set a username', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-
-    // first set a username
-    // pre-image by default is 0
-    await setUsername(t, iden, 0, 'initial-test-username123')
-
-    await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
-
-    // execute the epoch transition
-    await epochTransition(t)
-
-    // user state transition
-    await userStateTransition(t, iden)
-
-    // change the username to something else
-    try {
-        await setUsername(
-            t,
-            iden,
-            'initial-test-username123',
-            'second-test-username123'
-        )
-        t.pass('pass the test!')
-    } catch (e) {
-        t.fail('set username failed with error ' + e)
+describe('username', function () {
+    this.timeout(0)
+    const epochLength = 30000
+    let t = {
+        context: {},
     }
-})
-
-test.serial(
-    'should fail to set the username that is already taken',
-    async (t: any) => {
+    const app = express()
+    before(async () => {
+        const accounts = await ethers.getSigners()
+        const deployer = new ethers.Wallet(
+            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+            accounts[0].provider
+        )
+        const context = await startServer(deployer, app, { epochLength })
+        Object.assign(t, {
+            ...t,
+            epochLength,
+            context,
+        })
+    })
+    it('should set a username', async () => {
         // sign up and sign in user
-        const { iden, commitment } = await signUp(t)
+        const { iden } = await signUp(t)
+
+        // first set a username
+        // pre-image by default is 0
+        await setUsername(t, iden, 0, 'initial-test-username123')
+
+        // user state transition
+        await userStateTransition(t, iden)
+
+        // change the username to something else
+        try {
+            await setUsername(
+                t,
+                iden,
+                'initial-test-username123',
+                'second-test-username123'
+            )
+            expect(true).to.be.true
+        } catch (e) {
+            expect(false, `set username failed with error ${e}`).to.be.true
+        }
+    })
+
+    it('should fail to set the username that is already taken', async () => {
+        // sign up and sign in user
+        const { iden } = await signUp(t)
 
         // first set a username
         // pre-image by default is 0
         await setUsername(t, iden, 0, 'username123')
-
-        await new Promise((r) => setTimeout(r, EPOCH_LENGTH))
-
-        // execute the epoch transition
-        await epochTransition(t)
 
         // user state transition
         await userStateTransition(t, iden)
@@ -72,97 +72,88 @@ test.serial(
         // try to change the username to the same one
         try {
             await setUsername(t, iden, 'username123', 'username123')
-            t.fail()
+            expect(false).to.be.true
         } catch (err: any) {
-            t.true(err.toString().startsWith('Error: /post error'))
+            expect(err.toString().startsWith('Error: /username error')).to.be
+                .true
         }
-    }
-)
-
-test.serial('should fail to set with invalid proof', async (t: any) => {
-    // sign up and sign in user
-    const { iden, commitment } = await signUp(t)
-
-    // first set a username
-    // pre-image by default is 0
-    await setUsername(t, iden, 0, 'username456')
-
-    const { proof, publicSignals, blockNumber } = await genUsernameProof(
-        t,
-        iden,
-        0
-    )
-    await waitForBackendBlock(t, blockNumber)
-
-    // epoch transition and ust
-    await epochTransition(t)
-    await userStateTransition(t, iden)
-
-    // send a invalid proof
-    const r = await fetch(`${t.context.url}/api/usernames`, {
-        method: 'POST',
-        headers: {
-            'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-            newUsername: 'username456',
-            publicSignals: publicSignals.reverse(),
-            proof: proof.reverse(),
-        }),
     })
 
-    t.is(r.ok, false)
-})
+    it('should fail to set with invalid proof', async () => {
+        // sign up and sign in user
+        const { iden } = await signUp(t)
 
-test.serial('should be able to use unused username', async (t: any) => {
-    // sign up
-    const { iden, commitment } = await signUp(t)
+        // first set a username
+        // pre-image by default is 0
+        await setUsername(t, iden, 0, 'username456')
 
-    // set username to test1
-    await setUsername(t, iden, 0, 'test1')
-    await epochTransition(t)
-    await userStateTransition(t, iden)
+        const { proof, publicSignals, blockNumber } = await genUsernameProof(
+            t,
+            iden,
+            0
+        )
+        await waitForBackendBlock(t, blockNumber)
 
-    // set username to test2
-    await setUsername(t, iden, 'test1', 'test2')
-    await epochTransition(t)
-    await userStateTransition(t, iden)
+        // epoch transition and ust
+        await userStateTransition(t, iden)
 
-    // set username to test1 again
-    try {
-        await setUsername(t, iden, 'test2', 'test1')
-        t.pass('successfully set unused username')
-    } catch (e) {
-        t.fail('fail to set unused username: ' + e)
-    }
-})
+        // send a invalid proof
+        const r = await fetch(`${(t.context as any).url}/api/usernames`, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                newUsername: 'me2',
+                publicSignals: publicSignals.reverse(),
+                proof: proof.reverse(),
+            }),
+        })
 
-test.serial(
-    'if preImage is wrong, not able to set new username',
-    async (t: any) => {
+        expect(r.ok).to.be.false
+    })
+
+    it('should be able to use unused username', async () => {
         // sign up
-        const { iden, commitment } = await signUp(t)
+        const { iden } = await signUp(t)
+
+        // set username to test1
+        await setUsername(t, iden, 0, 'test1')
+        await userStateTransition(t, iden)
+
+        // set username to test2
+        await setUsername(t, iden, 'test1', 'test2')
+        await userStateTransition(t, iden)
+
+        // set username to test1 again
+        try {
+            await setUsername(t, iden, 'test2', 'test1')
+            expect(true).to.be.true
+        } catch (e) {
+            expect(false, `fail to set unused username: ${e}`).to.be.true
+        }
+    })
+
+    it('if preImage is wrong, not able to set new username', async () => {
+        // sign up
+        const { iden } = await signUp(t)
 
         // set username to test3
         await setUsername(t, iden, 0, 'test3')
-        await epochTransition(t)
         await userStateTransition(t, iden)
 
         // try to set username from test_wrong to test4 before ust
         try {
             await setUsername(t, iden, 'test_wrong', 'test4')
-            t.fail('set preImage as test_wrong successfully')
+            expect(false, `set preImage as test_wrong successfully`).to.be.true
         } catch (e) {
-            t.pass('set preImage as test_wrong failed')
+            expect(true).to.be.true
         }
-    }
-)
+    })
 
-test.serial(
-    'cannot set username multiple times in an epoch',
-    async (t: any) => {
+    it('cannot set username multiple times in an epoch', async () => {
         // sign up
-        const { iden, commitment } = await signUp(t)
+        const { iden } = await signUp(t)
 
         // set username to test5
         await setUsername(t, iden, 0, 'test5')
@@ -170,9 +161,10 @@ test.serial(
         // set username to test6
         try {
             await setUsername(t, iden, 0, 'test6')
-            t.fail('should not allow user to set username twice')
+            expect(false, `should not allow user to set username twice`).to.be
+                .true
         } catch (e) {
-            t.pass('should fail to set username twice or more')
+            expect(true).to.be.true
         }
-    }
-)
+    })
+})

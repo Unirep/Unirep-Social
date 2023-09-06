@@ -1,54 +1,38 @@
 import { Express } from 'express'
 import catchError from '../catchError'
 import { ethers } from 'ethers'
-import {
-    UNIREP,
-    UNIREP_ABI,
-    DEFAULT_ETH_PROVIDER,
-    UNIREP_SOCIAL,
-    UNIREP_SOCIAL_ABI,
-    UNIREP_SOCIAL_ATTESTER_ID,
-    DEFAULT_USERNAME_KARMA,
-} from '../constants'
+import { DEFAULT_USERNAME_REP } from '../constants'
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { ReputationProof } from '@unirep/contracts'
 import { verifyReputationProof } from '../utils'
-import { hashOne } from '@unirep/crypto'
-import { ActionType } from '@unirep-social/core'
+import { ActionType } from '../Synchronizer'
+import { ActionProof } from '@unirep-social/circuits'
+import { Prover } from '../daemons/Prover'
 
 export default (app: Express) => {
     app.post('/api/usernames', catchError(setUsername))
 }
 
 async function setUsername(req, res) {
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // accept a requested new username and ZK proof proving the epoch key and current username (graffiti pre-image)
     const { newUsername, publicSignals, proof } = req.body
 
-    const reputationProof = new ReputationProof(
+    const usernameProof = new ActionProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
 
     // verify this reputation proof and return an error if it's invalid
     const error = await verifyReputationProof(
-        req.db,
-        reputationProof,
-        DEFAULT_USERNAME_KARMA,
-        unirepSocialId,
+        req,
+        usernameProof,
+        DEFAULT_USERNAME_REP,
+        BigInt(req.unirepSocial.address),
         currentEpoch
     )
     if (error !== undefined) {
@@ -60,17 +44,17 @@ async function setUsername(req, res) {
 
     // check that proveGraffiti is 1 if the preimage is not 0 (default value)
     if (
-        reputationProof.graffitiPreImage.toString() !== '0' &&
-        reputationProof.proveGraffiti.toString() !== '1'
+        usernameProof.graffiti.toString() !== '0' &&
+        usernameProof.proveGraffiti.toString() !== '1'
     ) {
         res.status(422).json({
-            error: `Error: prove graffiti ${reputationProof.proveGraffiti} is not 1`,
+            error: `Error: prove graffiti ${usernameProof.proveGraffiti} is not 1`,
         })
         return
     }
 
     // check if user has already set username in current epoch before
-    const epochKey = reputationProof.epochKey.toString()
+    const epochKey = usernameProof.epochKey.toString()
     const recordsCount = await req.db.count('Record', {
         from: epochKey,
         to: epochKey,
@@ -96,11 +80,11 @@ async function setUsername(req, res) {
     }
 
     // check if the requested new username is free
-    const hashedNewUsername = hashOne(
-        ethers.utils.hexlify(ethers.utils.toUtf8Bytes(newUsername))
-    ).toString()
+    const hexNewUsername = ethers.utils.hexlify(
+        ethers.utils.toUtf8Bytes(newUsername)
+    )
 
-    const isClaimed = await unirepSocialContract.usernames(hashedNewUsername)
+    const isClaimed = await req.unirepSocial.usernames(hexNewUsername)
 
     if (isClaimed) {
         res.status(409).json({ error: 'Username already exists' })
@@ -108,20 +92,17 @@ async function setUsername(req, res) {
     }
 
     // claim username via Unirep Social contract
-    const currentUsername = reputationProof.graffitiPreImage.toString()
-    const hashedCurrentUsername =
-        currentUsername === '0'
-            ? '0'
-            : hashOne(ethers.utils.hexlify(BigInt(currentUsername))).toString()
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const replNonceBits = await req.unirep.replNonceBits()
+    const currentUsername =
+        BigInt(usernameProof.graffiti) >> BigInt(replNonceBits)
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'setUsername',
-        [epochKey, hashedCurrentUsername, hashedNewUsername]
+        [epochKey, currentUsername, hexNewUsername]
     )
 
-    const { attestingFee } = await unirepContract.config()
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
-        { data: calldata, value: attestingFee }
+        req.unirepSocial.address,
+        { data: calldata }
     )
 
     await req.db.create('Record', {

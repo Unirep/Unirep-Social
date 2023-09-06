@@ -43,7 +43,7 @@ const CommentField = (props: Props) => {
                 props.post.id,
                 epkNonce,
                 reputation,
-                useUsername ? userContext.username.username : '0'
+                useUsername ? userContext.username.username : undefined
             )
             props.closeComment()
         }

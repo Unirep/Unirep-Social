@@ -1,11 +1,11 @@
-import { ZkIdentity, Strategy } from '@unirep/crypto'
-import { genEpochKey } from '@unirep/core'
 import * as config from './config'
-import { Record, Post, DataType, Comment, QueryType } from './constants'
+import { Record } from './constants'
 import UnirepContext from './context/Unirep'
 
 export const shortenEpochKey = (epk: string) => {
-    if (epk.length > 8) return `${epk.slice(0, 4)}...${epk.slice(-4)}`
+    if (!epk) return epk
+    const hexEpk = BigInt(epk).toString(16).replace('0x', '')
+    if (hexEpk.length > 8) return `${hexEpk.slice(0, 4)}...${hexEpk.slice(-4)}`
     else return epk
 }
 
@@ -19,11 +19,10 @@ export const makeURL = (_action: string, data: any = {}) => {
 }
 
 export const getRecords = async (epks: string[]) => {
-    const epksBase10 = epks.map((epk) => Number('0x' + epk))
     const unirepConfig = (UnirepContext as any)._currentValue
     await unirepConfig.loadingPromise
 
-    const paramStr = epksBase10.join('_')
+    const paramStr = epks.join('_')
     const apiURL = makeURL(`records/${paramStr}`, {})
 
     // bug: createdAt is NaN in backend
@@ -37,15 +36,8 @@ export const getRecords = async (epks: string[]) => {
                     from:
                         data[i].from === 'UnirepSocial'
                             ? 'UnirepSocial'
-                            : BigInt(data[i].from)
-                                  .toString(16)
-                                  .padStart(
-                                      unirepConfig.epochTreeDepth / 4,
-                                      '0'
-                                  ),
-                    to: BigInt(data[i].to)
-                        .toString(16)
-                        .padStart(unirepConfig.epochTreeDepth / 4, '0'),
+                            : BigInt(data[i].from).toString(),
+                    to: BigInt(data[i].to).toString(),
                     upvote: data[i].upvote,
                     downvote: data[i].downvote,
                     epoch: data[i].epoch,

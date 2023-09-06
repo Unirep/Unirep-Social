@@ -1,14 +1,15 @@
-import {
-    NUM_ATTESTATIONS_PER_PROOF,
-    MAX_REPUTATION_BUDGET,
-    USER_STATE_TREE_DEPTH,
-    EPOCH_TREE_DEPTH,
-    GLOBAL_STATE_TREE_DEPTH,
+import { CircuitConfig } from '@unirep/circuits'
+const {
+    STATE_TREE_DEPTH,
     NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-} from '@unirep/circuits'
+    FIELD_COUNT,
+    SUM_FIELD_COUNT,
+    REPL_NONCE_BITS,
+} = CircuitConfig.default
+
+export const REP_BUDGET = 10
+export const ptauName = 'powersOfTau28_hez_final_18.ptau'
 
 export const circuitContents = {
-    proveNegativeReputation: `include "../circuits/proveNegativeReputation.circom" \n\ncomponent main = ProveNegativeReputation(${GLOBAL_STATE_TREE_DEPTH}, ${USER_STATE_TREE_DEPTH}, ${EPOCH_TREE_DEPTH}, ${NUM_EPOCH_KEY_NONCE_PER_EPOCH}, 252)`,
-    proveSubsidyKey: `include "../circuits/proveSubsidyKey.circom" \n\ncomponent main = ProveSubsidyKey(${GLOBAL_STATE_TREE_DEPTH}, ${USER_STATE_TREE_DEPTH}, ${EPOCH_TREE_DEPTH}, ${NUM_EPOCH_KEY_NONCE_PER_EPOCH}, 252)`,
-    proveGraffitiPreimage: `include "../circuits/proveGraffitiPreimage.circom" \n\ncomponent main = ProveGraffitiPreimage(${GLOBAL_STATE_TREE_DEPTH}, ${USER_STATE_TREE_DEPTH}, ${EPOCH_TREE_DEPTH}, ${NUM_EPOCH_KEY_NONCE_PER_EPOCH})`,
+    actionProof: `pragma circom 2.0.0; include "../circuits/actionProof.circom"; \n\ncomponent main { public [ graffiti, sig_data, not_epoch_key ] } = ActionProof(${STATE_TREE_DEPTH}, ${NUM_EPOCH_KEY_NONCE_PER_EPOCH}, ${SUM_FIELD_COUNT}, ${FIELD_COUNT}, ${REPL_NONCE_BITS}, ${REP_BUDGET});`,
 }

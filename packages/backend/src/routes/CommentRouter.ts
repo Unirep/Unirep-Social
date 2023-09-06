@@ -3,26 +3,21 @@ import catchError from '../catchError'
 import { ethers } from 'ethers'
 import TransactionManager from '../daemons/TransactionManager'
 import { formatProofForSnarkjsVerification } from '@unirep/circuits'
-import { EpochKeyProof, ReputationProof } from '@unirep/contracts'
+import { EpochKeyLiteProof } from '@unirep/circuits'
 import {
-    verifyEpochKeyProof,
+    verifyEpochKeyLiteProof,
     verifyReputationProof,
     verifySubsidyProof,
 } from '../utils'
 import {
-    UNIREP,
-    UNIREP_SOCIAL_ABI,
-    UNIREP_ABI,
-    UNIREP_SOCIAL,
-    DEFAULT_ETH_PROVIDER,
-    DEFAULT_COMMENT_KARMA,
-    UNIREP_SOCIAL_ATTESTER_ID,
+    DEFAULT_COMMENT_REP,
     QueryType,
     LOAD_POST_COUNT,
     DELETED_CONTENT,
 } from '../constants'
-import { ActionType, SubsidyProof } from '@unirep-social/core'
 import { Prover } from '../daemons/Prover'
+import { ActionType } from '../Synchronizer'
+import { ActionProof } from '@unirep-social/circuits'
 
 export default (app: Express) => {
     app.get('/api/comment/:id', catchError(loadComment))
@@ -89,24 +84,16 @@ async function listComments(req, res, next) {
 }
 
 async function createComment(req, res) {
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
     const { publicSignals, proof, postId, content } = req.body
-    const reputationProof = new ReputationProof(
+    const reputationProof = new ActionProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const epochKey = reputationProof.epochKey.toString()
     const minRep = Number(reputationProof.minRep)
@@ -115,10 +102,10 @@ async function createComment(req, res) {
     )
 
     const error = await verifyReputationProof(
-        req.db,
+        req,
         reputationProof,
-        DEFAULT_COMMENT_KARMA,
-        unirepSocialId,
+        DEFAULT_COMMENT_REP,
+        BigInt(req.unirepSocial.address),
         currentEpoch
     )
     if (error !== undefined) {
@@ -128,7 +115,6 @@ async function createComment(req, res) {
         return
     }
 
-    const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
         where: {
             _id: postId,
@@ -140,7 +126,7 @@ async function createComment(req, res) {
         })
         return
     }
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'leaveComment',
         [
             post.onChainId,
@@ -150,18 +136,19 @@ async function createComment(req, res) {
         ]
     )
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
-            value: attestingFee,
         }
     )
 
     let graffiti
-    if (reputationProof.graffitiPreImage != '0') {
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti =
+        BigInt(reputationProof.graffiti) >> BigInt(replNonceBits)
+    if (reputationProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' +
-                BigInt(reputationProof.graffitiPreImage as string).toString(16)
+            '0x' + BigInt(shiftGraffiti).toString(16)
         )
     }
 
@@ -183,7 +170,7 @@ async function createComment(req, res) {
         to: epochKey,
         from: epochKey,
         upvote: 0,
-        downvote: DEFAULT_COMMENT_KARMA,
+        downvote: DEFAULT_COMMENT_REP,
         epoch: currentEpoch,
         action: ActionType.Comment,
         data: comment._id,
@@ -200,37 +187,28 @@ async function createComment(req, res) {
 }
 
 async function createCommentSubsidy(req, res) {
-    const unirepContract = new ethers.Contract(
-        UNIREP,
-        UNIREP_ABI,
-        DEFAULT_ETH_PROVIDER
+    const currentEpoch = Number(
+        await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
     )
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-    const currentEpoch = Number(await unirepContract.currentEpoch())
 
     // Parse Inputs
     const { publicSignals, proof, postId, content } = req.body
-    const subsidyProof = new SubsidyProof(
+    const subsidyProof = new ActionProof(
         publicSignals,
         formatProofForSnarkjsVerification(proof),
         Prover
     )
-    const epochKey = publicSignals[1]
-    const minRep = publicSignals[4]
+    const epochKey = subsidyProof.epochKey.toString()
+    const minRep = subsidyProof.minRep
     const hashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(content)
     )
-    const unirepSocialId = UNIREP_SOCIAL_ATTESTER_ID
 
-    const totalSubsidy = (await unirepSocialContract.subsidy()).toNumber()
+    const totalSubsidy = (await req.unirepSocial.subsidy()).toNumber()
     const spentSubsidy = (
-        await unirepSocialContract.subsidies(currentEpoch, epochKey)
+        await req.unirepSocial.subsidies(currentEpoch, epochKey)
     ).toNumber()
-    if (spentSubsidy + DEFAULT_COMMENT_KARMA > totalSubsidy) {
+    if (spentSubsidy + DEFAULT_COMMENT_REP > totalSubsidy) {
         const error = `Error: Request too much subsidy, only ${
             totalSubsidy - spentSubsidy
         } subsidy left`
@@ -240,10 +218,10 @@ async function createCommentSubsidy(req, res) {
         return
     }
     const error = await verifySubsidyProof(
-        req.db,
+        req,
         subsidyProof,
         currentEpoch,
-        unirepSocialId
+        BigInt(req.unirepSocial.address)
     )
     if (error !== undefined) {
         res.status(422).json({
@@ -252,7 +230,6 @@ async function createCommentSubsidy(req, res) {
         return
     }
 
-    const { attestingFee } = await unirepContract.config()
     const post = await req.db.findOne('Post', {
         where: {
             _id: postId,
@@ -264,7 +241,7 @@ async function createCommentSubsidy(req, res) {
         })
         return
     }
-    const calldata = unirepSocialContract.interface.encodeFunctionData(
+    const calldata = req.unirepSocial.interface.encodeFunctionData(
         'publishCommentSubsidy',
         [
             post.onChainId,
@@ -274,31 +251,39 @@ async function createCommentSubsidy(req, res) {
         ]
     )
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
-            value: attestingFee,
         }
     )
 
+    let graffiti
+    const replNonceBits = await req.unirep.replNonceBits()
+    const shiftGraffiti = BigInt(subsidyProof.graffiti) >> BigInt(replNonceBits)
+    if (subsidyProof.graffiti.toString() !== '0') {
+        graffiti = ethers.utils.toUtf8String(
+            '0x' + BigInt(shiftGraffiti).toString(16)
+        )
+    }
     const comment = await req.db.create('Comment', {
         postId,
         content,
         hashedContent,
         epochKey,
         epoch: currentEpoch,
-        proveMinRep: minRep !== 0 ? true : false,
+        proveMinRep: minRep.toString() !== '0' ? true : false,
         minRep: Number(minRep),
         posRep: 0,
         negRep: 0,
         status: 0,
         transactionHash: hash,
+        graffiti,
     })
     await req.db.create('Record', {
         to: epochKey,
         from: epochKey,
         upvote: 0,
-        downvote: DEFAULT_COMMENT_KARMA,
+        downvote: DEFAULT_COMMENT_REP,
         epoch: currentEpoch,
         action: ActionType.Comment,
         data: comment._id,
@@ -320,7 +305,7 @@ async function editComment(req, res) {
 
     const { transaction, error } = await editCommentOnChain(
         id,
-        req.db,
+        req,
         publicSignals,
         proof,
         content
@@ -332,15 +317,12 @@ async function editComment(req, res) {
         })
     } else {
         const comment = await req.db.findOne('Comment', { where: { _id: id } })
-        const unirepContract = new ethers.Contract(
-            UNIREP,
-            UNIREP_ABI,
-            DEFAULT_ETH_PROVIDER
+        const currentEpoch = Number(
+            await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
         )
-        const currentEpoch = Number(await unirepContract.currentEpoch())
         await req.db.create('Record', {
-            to: comment.epochKey,
-            from: comment.epochKey,
+            to: comment.epochKey.toString(),
+            from: comment.epochKey.toString(),
             upvote: 0,
             downvote: 0,
             epoch: currentEpoch,
@@ -365,7 +347,7 @@ async function deleteComment(req, res) {
 
     const { transaction, error } = await editCommentOnChain(
         id,
-        req.db,
+        req,
         publicSignals,
         proof,
         DELETED_CONTENT
@@ -377,15 +359,12 @@ async function deleteComment(req, res) {
         })
     } else {
         const comment = await req.db.findOne('Comment', { where: { _id: id } })
-        const unirepContract = new ethers.Contract(
-            UNIREP,
-            UNIREP_ABI,
-            DEFAULT_ETH_PROVIDER
+        const currentEpoch = Number(
+            await req.unirep.attesterCurrentEpoch(req.unirepSocial.address)
         )
-        const currentEpoch = Number(await unirepContract.currentEpoch())
         await req.db.create('Record', {
-            to: comment.epochKey,
-            from: comment.epochKey,
+            to: comment.epochKey.toString(),
+            from: comment.epochKey.toString(),
             upvote: 0,
             downvote: 0,
             epoch: currentEpoch,
@@ -404,17 +383,12 @@ async function deleteComment(req, res) {
     }
 }
 
-async function editCommentOnChain(id, db, publicSignals, proof, content) {
-    const unirepSocialContract = new ethers.Contract(
-        UNIREP_SOCIAL,
-        UNIREP_SOCIAL_ABI,
-        DEFAULT_ETH_PROVIDER
-    )
-
+async function editCommentOnChain(id, req, publicSignals, proof, content) {
     // Parse Inputs
-    const epkProof = new EpochKeyProof(
+    const epkProof = new EpochKeyLiteProof(
         publicSignals,
-        formatProofForSnarkjsVerification(proof)
+        formatProofForSnarkjsVerification(proof),
+        Prover
     )
     const newHashedContent = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(content)
@@ -425,16 +399,16 @@ async function editCommentOnChain(id, db, publicSignals, proof, content) {
         onChainId,
         epoch,
         epochKey,
-    } = await db.findOne('Comment', {
+    } = await req.db.findOne('Comment', {
         where: {
             _id: id,
         },
     })
 
-    const error = await verifyEpochKeyProof(db, epkProof, epoch, epochKey)
+    const error = await verifyEpochKeyLiteProof(req, epkProof, epoch, epochKey)
     if (error !== undefined) return { error }
 
-    const calldata = unirepSocialContract.interface.encodeFunctionData('edit', [
+    const calldata = req.unirepSocial.interface.encodeFunctionData('edit', [
         onChainId,
         oldHashedContent,
         newHashedContent,
@@ -443,13 +417,13 @@ async function editCommentOnChain(id, db, publicSignals, proof, content) {
     ])
 
     const hash = await TransactionManager.queueTransaction(
-        unirepSocialContract.address,
+        req.unirepSocial.address,
         {
             data: calldata,
         }
     )
 
-    await db.update('Comment', {
+    await req.db.update('Comment', {
         where: {
             _id: id,
             onChainId,

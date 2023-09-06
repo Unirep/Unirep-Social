@@ -2,10 +2,10 @@ import { useState, useEffect, useContext } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import MarkdownIt from 'markdown-it'
-import { ActionType } from '@unirep-social/core'
 
-import { Record } from '../../constants'
+import { ActionType, Record } from '../../constants'
 import PostContext from '../../context/Post'
+import { shortenEpochKey } from '../../utils'
 
 type Props = {
     record: Record
@@ -37,30 +37,48 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
 
     const translateInfo = (h: Record) => {
         if (h.action === ActionType.Post) {
-            return { who: 'I (' + h.from + ')', action: 'created a post' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'created a post',
+            }
         } else if (h.action === ActionType.Comment) {
-            return { who: 'I (' + h.from + ')', action: 'commented on a post' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'commented on a post',
+            }
         } else if (h.action === ActionType.Airdrop) {
             return { who: 'UniRep Social', action: 'Epoch Rep drop' }
         } else if (h.action === ActionType.Signup) {
             return { who: 'Unirep Social', action: 'Sign Up Rep drop' }
         } else if (h.action === ActionType.EditPost) {
-            return { who: 'I (' + h.from + ')', action: 'edited a post' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'edited a post',
+            }
         } else if (h.action === ActionType.DeletePost) {
-            return { who: 'I (' + h.from + ')', action: 'deleted a post' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'deleted a post',
+            }
         } else if (h.action === ActionType.EditComment) {
-            return { who: 'I (' + h.from + ')', action: 'edited a comment' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'edited a comment',
+            }
         } else if (h.action === ActionType.DeleteComment) {
-            return { who: 'I (' + h.from + ')', action: 'deleted a comment' }
+            return {
+                who: 'I (' + shortenEpochKey(h.from) + ')',
+                action: 'deleted a comment',
+            }
         } else if (h.action === ActionType.SetUsername) {
             return {
-                who: 'I (' + h.from + ')',
+                who: 'I (' + shortenEpochKey(h.from) + ')',
                 action: 'set my username as ' + h.data,
             }
         } else {
             if (isSpent) {
                 return {
-                    who: 'I (' + h.from + ')',
+                    who: 'I (' + shortenEpochKey(h.from) + ')',
                     action:
                         h.upvote > 0
                             ? 'boosted this post'
@@ -68,7 +86,7 @@ const ActivityWidget = ({ record, isSpent }: Props) => {
                 }
             } else {
                 return {
-                    who: h.from,
+                    who: shortenEpochKey(h.from),
                     action:
                         h.upvote > 0
                             ? 'boosted this post'

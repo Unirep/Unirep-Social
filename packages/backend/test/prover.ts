@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import * as snarkjs from 'snarkjs'
-import { SnarkProof, SnarkPublicSignals } from '@unirep/crypto'
+import { SnarkProof, SnarkPublicSignals } from '@unirep/utils'
 import { defaultProver } from '@unirep/circuits/provers/defaultProver'
 
 const buildPath = '../keys'

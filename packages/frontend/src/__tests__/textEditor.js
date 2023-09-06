@@ -32,7 +32,9 @@ test('type text into textbox', async () => {
 test('should toggle the Preview and Edit functionality', async () => {
     renderTextEditor('content', jest.fn(), false)
     expect(screen.getByText(/preview/i)).toBeInTheDocument()
-    screen.getByText(/preview/i).click()
+    await waitFor(() => {
+        screen.getByText(/preview/i).click()
+    })
     expect(screen.queryByText(/preview/i)).not.toBeInTheDocument()
     expect(screen.getByText(/edit/i)).toBeInTheDocument()
 })

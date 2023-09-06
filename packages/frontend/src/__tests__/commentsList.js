@@ -28,7 +28,7 @@ test('should render CommentLists correctly with data and populated commentIds ar
                 content: 'content from commentsById',
                 createdAt: '00',
                 reputation: 30,
-                epoch_key: 'epoch_key test',
+                epoch_key: '123',
             },
         },
     }
@@ -57,7 +57,7 @@ test('should render CommentLists with nothing in the commentIds array', () => {
                 content: 'content from commentsById',
                 createdAt: '00',
                 reputation: 30,
-                epoch_key: 'epoch_key test',
+                epoch_key: '123',
             },
         },
     }

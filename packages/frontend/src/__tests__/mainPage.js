@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import UnirepContext from '../context/Unirep'
 import UserContext from '../context/User'
@@ -45,7 +45,7 @@ test('should render MainPage with mocked data and false UserState', () => {
         userState: false,
         netReputation: 30,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
     }
 
     const UIData = {
@@ -89,7 +89,7 @@ test('should render MainPage with mocked data and true UserState', () => {
         netReputation: 30,
         subsidyReputation: 20,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['123', '456'],
     }
 
     const UIData = {
@@ -141,7 +141,7 @@ test('should page rerender after user clicks create post button', async () => {
         netReputation: 30,
         subsidyReputation: 20,
         commentReputation: 30,
-        currentEpochKeys: ['epoch_key test1', 'epoch_key test2'],
+        currentEpochKeys: ['134', '256'],
     }
 
     const postData = {
@@ -162,13 +162,17 @@ test('should page rerender after user clicks create post button', async () => {
     renderMainPage(userData, unirepData, postData, uiData)
     // simulate user clicking on the 'create post' link
     const createPostLink = screen.getByText(/create post/i)
-    await userEvent.click(createPostLink)
+    await waitFor(() => {
+        userEvent.click(createPostLink)
+    })
     expect(screen.getByText(/my rep/i)).toBeInTheDocument()
     expect(screen.getByText(`${userData.netReputation}`)).toBeInTheDocument()
     expect(
         screen.getByText(`${userData.subsidyReputation}`)
     ).toBeInTheDocument()
-    expect(screen.getByText(/epoc...est1/i)).toBeInTheDocument()
-    expect(screen.getByText(/epoc...est2/i)).toBeInTheDocument()
+    const epk1 = screen.getAllByText(/134/i)[0]
+    const epk2 = screen.getAllByText(/256/i)[0]
+    expect(epk1).toBeInTheDocument()
+    expect(epk2).toBeInTheDocument()
     expect(screen.getByText(/Transition at/i)).toBeInTheDocument()
 })

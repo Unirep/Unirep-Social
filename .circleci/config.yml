@@ -3,12 +3,22 @@ workflows:
     lint_and_test:
         jobs:
             - lint
-            - core-test
-            - core-cli-test
-            - backend-test
-            - frontend-test
-            - frontend-e2e-test
-            - circuits-test
+            - build
+            - core-test:
+                  requires:
+                      - build
+            - backend-test:
+                  requires:
+                      - build
+            - frontend-test:
+                  requires:
+                      - build
+            - frontend-e2e-test:
+                  requires:
+                      - build
+            - circuits-test:
+                  requires:
+                      - build
             - staging-deploy:
                   context: cloudflare
                   filters:
@@ -27,8 +37,47 @@ step_defs:
     - run: &check_version
           name: Check Node version
           command: node -v | grep v16
+    - run: &install_circom
+          name: Install Circom
+          command: |
+              curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
+              source "$HOME/.cargo/env"
+              cd /tmp
+              git clone https://github.com/iden3/circom.git
+              cd circom
+              cargo build --release
+              cargo install --path circom
 
 jobs:
+    build:
+        machine:
+            image: ubuntu-2204:2022.04.1
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/project
+            - run: *node_version
+            - run: *check_version
+            - run: *install_circom
+            - run:
+                  name: Install Packages
+                  command: yarn
+            - run:
+                  name: Build
+                  command: yarn build
+            - persist_to_workspace:
+                  root: ~/project
+                  paths:
+                      - node_modules
+                      - packages/circuits/zksnarkBuild
+                      - packages/circuits/dist
+                      - packages/core/artifacts
+                      - packages/core/build
+                      - packages/core/typechain
+                      - packages/core/contracts
+                      - packages/frontend/build
+                      - packages/backend/build
+                      - packages/backend/keys
     lint:
         machine:
             image: ubuntu-2204:2022.04.1
@@ -49,102 +98,65 @@ jobs:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
-                  name: Install Packages
-                  command: yarn
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core
-            - run:
-                  name: Test
-                  command: cd packages/core && yarn test --parallel
-    core-cli-test:
-        resource_class: large
-        machine:
-            image: ubuntu-2204:2022.04.1
-        steps:
-            - checkout
-            - run: *node_version
-            - run: *check_version
-            - run:
-                  name: Install Packages
-                  command: yarn
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core
-            - run:
-                  name: Test
-                  command: cd packages/core && yarn test-cli
+                  name: Core Test
+                  command: yarn core test
     backend-test:
         resource_class: large
         machine:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
-                  name: Install Packages
-                  command: yarn
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/backend
-            - run:
-                  name: Test
-                  command: cd packages/backend && yarn test
+                  name: Backend Test
+                  command: yarn backend test
     frontend-test:
         resource_class: medium
         machine:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
-                  name: Install Packages
-                  command: yarn
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/frontend
-            - run:
-                  name: Test
-                  command: cd packages/frontend && yarn test
+                  name: Frontend Test
+                  command: yarn frontend test
     frontend-e2e-test:
         resource_class: medium
         machine:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
-                  name: Install Packages
-                  command: yarn
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits --scope @unirep-social/core --scope @unirep-social/frontend
-            - run:
-                  name: E2E Test
-                  command: cd packages/frontend && yarn test:e2e
+                  name: E2e Test
+                  command: yarn frontend test:e2e
     circuits-test:
         resource_class: medium
         machine:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
-                  name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
-            - run:
-                  name: Build
-                  command: yarn build --scope @unirep-social/circuits
-            - run:
-                  name: Test
-                  command: cd packages/circuits && yarn test
+                  name: Circuit Test
+                  command: yarn circuits test
     staging-deploy:
         resource_class: medium
         machine:
@@ -161,7 +173,7 @@ jobs:
                   command: |
                       yarn build --scope @unirep-social/circuits --scope @unirep-social/core
                       cd packages/frontend
-                      echo "export default {DEFAULT_ETH_PROVIDER_URL: 'wss://opt-goerli.g.alchemy.com/v2/jmUZpyZefDikb3q-mL3W1VOwbEKM-DKN', SERVER:'https://unirep.social'}" > src/localConfig.ts
+                      echo "export default {DEFAULT_ETH_PROVIDER_URL: 'https://opt-goerli.g.alchemy.com/v2/3DDbMgNQZwgrzVl1mhaVqN3zog5OZpAU', SERVER:'https://api.unirep.social'}" > src/localConfig.ts
                       yarn build --mode production
                       yarn build:worker
             - run:

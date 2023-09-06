@@ -4,6 +4,7 @@ const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
 const webpack = require('webpack')
+const Dotenv = require('dotenv-webpack')
 
 module.exports = (env) => ({
     entry: ['./src/index.tsx'],
@@ -25,12 +26,15 @@ module.exports = (env) => ({
     resolve: {
         extensions: ['*', '.js', '.ts', '.tsx', '.json', '.scss'],
         fallback: {
+            path: require.resolve('path-browserify'),
             crypto: require.resolve('crypto-browserify'),
             assert: require.resolve('assert/'),
             stream: require.resolve('stream-browserify'),
             os: require.resolve('os-browserify/browser'),
             events: require.resolve('events/'),
             fs: false,
+            readline: false,
+            constants: false,
         },
     },
     module: {
@@ -93,6 +97,9 @@ module.exports = (env) => ({
         ],
     },
     plugins: [
+        new Dotenv({
+            systemvars: true,
+        }),
         new HtmlWebpackPlugin({
             template: 'public/index.html',
             filename: 'index.html',
@@ -103,7 +110,6 @@ module.exports = (env) => ({
         }),
         // new HtmlWebpackInlineSourcePlugin(),
         new webpack.DefinePlugin({
-            'process.env': {},
             'process.argv': [],
             'process.versions': {},
             'process.versions.node': '"12"',

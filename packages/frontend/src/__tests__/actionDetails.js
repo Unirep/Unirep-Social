@@ -1,5 +1,4 @@
 import { screen, render } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import ActionDetail from '../components/actionDetail'
 
 const renderActionDetail = (
@@ -46,7 +45,7 @@ let defaultRep = 15
 let hasRep = 33
 let showOffRep = 5
 let setShowOffRep = jest.fn(showOffRep)
-let allEpks = ['epk1', 'epk2', 'epk3']
+let allEpks = ['123', '456', '789']
 let useSubsidy = true
 let chooseToUseSubsidy = jest.fn()
 let chooseToUsePersona = jest.fn()
@@ -72,7 +71,7 @@ test('should render actionDetail component with props', () => {
     )
     // hasRep >= defaultRep && useSubsidy
     // should only show first element of allEpks array on initial render
-    expect(screen.getByText('epk1'))
+    expect(screen.getByText(allEpks[0]))
     // render default values
     const inputs = screen.getAllByDisplayValue(5)
     // range input
@@ -107,9 +106,9 @@ test('trigger falsy useSubsidy', () => {
     expect(
         screen.getByText('Personas') &&
             screen.getByText('Rep-Handout') &&
-            screen.getByText('epk1') &&
-            screen.getByText('epk2') &&
-            screen.getByText('epk3')
+            screen.getByText(allEpks[0]) &&
+            screen.getByText(allEpks[1]) &&
+            screen.getByText(allEpks[2])
     ).toBeInTheDocument()
 })
 

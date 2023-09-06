@@ -1,50 +1,59 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma abicoder v2;
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import { Unirep } from "@unirep/contracts/Unirep.sol";
-import { zkSNARKHelper } from '@unirep/contracts/libraries/zkSNARKHelper.sol';
+import '@openzeppelin/contracts/utils/Address.sol';
+import {EpochKeyLiteVerifierHelper} from '@unirep/contracts/verifierHelpers/EpochKeyLiteVerifierHelper.sol';
+import {ReputationVerifierHelper} from '@unirep/contracts/verifierHelpers/ReputationVerifierHelper.sol';
+import {Unirep} from '@unirep/contracts/Unirep.sol';
 
 interface IVerifier {
+    /**
+     * @return bool Whether the proof is valid given the hardcoded verifying key
+     *          above and the public inputs
+     */
     function verifyProof(
-        uint[2] memory a,
-        uint[2][2] memory b,
-        uint[2] memory c,
-        uint[5] memory input
-    ) external view returns (bool r);
-    function verifyProof(
-        uint[2] memory a,
-        uint[2][2] memory b,
-        uint[2] memory c,
-        uint[6] memory input
-    ) external view returns (bool r);
+        uint256[17] calldata publicSignals,
+        uint256[8] calldata proof
+    ) external view returns (bool);
 }
 
-contract UnirepSocial is zkSNARKHelper {
-    using SafeMath for uint256;
-
+contract UnirepSocial {
     Unirep public unirep;
-    IVerifier internal negativeReputationVerifier;
-    IVerifier internal subsidyKeyVerifier;
+    IVerifier internal actionVerifier;
+    EpochKeyLiteVerifierHelper public epkHelper;
+    ReputationVerifierHelper public repHelper;
 
     // Before Unirep integrates with InterRep
     // We use an admin to controll user sign up
     address internal admin;
 
     // Unirep social's attester ID
-    uint256 immutable public attesterId;
+    uint160 public immutable attesterId;
 
     // The amount of karma required to publish a post
-    uint256 immutable public postReputation;
+    uint256 public immutable postReputation;
 
     // The amount of karma required to submit a comment
-    uint256 immutable public commentReputation;
+    uint256 public immutable commentReputation;
 
     // The amount of karma airdropped to user when user signs up and executes user state transition
-    uint256 immutable public airdroppedReputation;
+    // TODO: init reputation
+    // uint256 immutable public airdroppedReputation;
+
+    // The epoch length of Unirep Social
+    uint256 public immutable epochLength;
+
+    // The most reputation can be spent in a vote
+    uint256 public immutable maxReputationBudget;
+
+    // Positive Reputation field index in Unirep protocol
+    uint256 public immutable posRepFieldIndex = 0;
+
+    // Nagative Reputation field index in Unirep protocol
+    uint256 public immutable negRepFieldIndex = 1;
+
+    // Graffiti field index in Unirep protocol
+    uint256 public immutable graffitiFieldIndex;
 
     // A mapping between user’s epoch key and if they request airdrop in the current epoch;
     // One epoch key is allowed to get airdrop once an epoch
@@ -56,8 +65,10 @@ contract UnirepSocial is zkSNARKHelper {
     mapping(uint256 => mapping(uint256 => uint256)) public subsidies;
     // proof nullifier
     mapping(bytes32 => bool) public usedProofNullifier;
+    // reputation nullifier
+    mapping(uint256 => bool) public usedRepNullifier;
 
-    uint256 immutable public subsidy;
+    uint256 public immutable subsidy;
 
     // assign posts/comments with an id
     uint256 public contentId = 1;
@@ -67,85 +78,113 @@ contract UnirepSocial is zkSNARKHelper {
 
     // help Unirep Social track event
     event UserSignedUp(
-        uint256 indexed _epoch,
-        uint256 indexed _identityCommitment
+        uint256 indexed epoch,
+        uint256 indexed identityCommitment
     );
 
-    event AirdropSubmitted(
-        uint256 indexed _epoch,
-        uint256 indexed _epochKey
-    );
+    event AirdropSubmitted(uint256 indexed epoch, uint256 indexed epochKey);
 
     event PostSubmitted(
-        uint256 indexed _epoch,
-        uint256 indexed _postId,
-        uint256 indexed _epochKey,
-        bytes32 _contentHash,
+        uint256 indexed epoch,
+        uint256 indexed postId,
+        uint256 indexed epochKey,
+        bytes32 contentHash,
         uint256 minRep
     );
 
     event CommentSubmitted(
-        uint256 indexed _epoch,
-        uint256 indexed _postId,
-        uint256 indexed _epochKey,
-        uint256 _commentId,
-        bytes32 _contentHash,
+        uint256 indexed epoch,
+        uint256 indexed postId,
+        uint256 indexed epochKey,
+        uint256 commentId,
+        bytes32 contentHash,
         uint256 minRep
     );
 
     event ContentUpdated(
-        uint256 indexed _id,
-        bytes32 _oldContentHash,
-        bytes32 _newContentHash
+        uint256 indexed id,
+        bytes32 oldContentHash,
+        bytes32 newContentHash
     );
 
     event VoteSubmitted(
-        uint256 indexed _epoch,
-        uint256 indexed _fromEpochKey,
-        uint256 indexed _toEpochKey,
+        uint256 indexed epoch,
+        uint256 indexed fromEpochKey,
+        uint256 indexed toEpochKey,
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 minRep
     );
 
+    struct ActionSignals {
+        uint256 epochKey;
+        uint256 stateTreeRoot;
+        uint256 graffiti;
+        bool proveGraffiti;
+        uint160 attesterId;
+        uint8 nonce;
+        uint48 epoch;
+        bool revealNonce;
+        bool proveMinRep;
+        bool proveMaxRep;
+        bool proveZeroRep;
+        uint256 minRep;
+        uint256 maxRep;
+        uint256 notEpochKey;
+        uint256 data;
+        uint256[] nullifiers;
+    }
 
     constructor(
         Unirep _unirepContract,
-        IVerifier _negativeReputationVerifier,
-        IVerifier _subsidyKeyVerifier,
+        IVerifier _actionVerifier,
+        EpochKeyLiteVerifierHelper _epkHelper,
+        ReputationVerifierHelper _repHelper,
         uint256 _postReputation,
         uint256 _commentReputation,
-        uint256 _airdroppedReputation,
-        uint256 _subsidy
+        // uint256 _airdroppedReputation,
+        uint256 _subsidy,
+        uint48 _epochLength,
+        uint256 _maxReputationBudget
     ) {
         // Set the unirep contracts
         unirep = _unirepContract;
-        negativeReputationVerifier = _negativeReputationVerifier;
-        subsidyKeyVerifier = _subsidyKeyVerifier;
+        actionVerifier = _actionVerifier;
+        epkHelper = _epkHelper;
+        repHelper = _repHelper;
         // Set admin user
         admin = msg.sender;
 
         // signup Unirep Social contract as an attester in Unirep contract
-        unirep.attesterSignUp();
-        attesterId = unirep.attesters(address(this));
+        unirep.attesterSignUp(_epochLength);
+        attesterId = uint160(address(this));
 
         postReputation = _postReputation;
         commentReputation = _commentReputation;
-        airdroppedReputation = _airdroppedReputation;
+        // airdroppedReputation = _airdroppedReputation;
         subsidy = _subsidy;
+        epochLength = _epochLength;
+        maxReputationBudget = _maxReputationBudget;
+
+        graffitiFieldIndex = unirep.sumFieldCount();
     }
 
     /*
      * Call Unirep contract to perform user signing up if user hasn't signed up in Unirep
-     * @param _identityCommitment Commitment of the user's identity which is a semaphore identity.
      */
-    function userSignUp(uint256 _identityCommitment) external {
-        require(msg.sender == admin, "Unirep Social: sign up should through an admin");
-        unirep.userSignUp(_identityCommitment, airdroppedReputation);
+    function userSignUp(
+        uint256[] memory publicSignals,
+        uint256[8] memory proof
+    ) external {
+        require(
+            msg.sender == admin,
+            'Unirep Social: sign up should through an admin'
+        );
+        unirep.userSignUp(publicSignals, proof);
 
         emit UserSignedUp(
-            unirep.currentEpoch(),
-            _identityCommitment
+            unirep.attesterCurrentEpoch(attesterId),
+            publicSignals[0]
         );
     }
 
@@ -156,106 +195,171 @@ contract UnirepSocial is zkSNARKHelper {
      * @param amount The amount requesting to be spent
      */
     function trySpendSubsidy(
-      uint256 epoch,
-      uint256 subsidyKey,
-      uint256 amount
+        uint256 epoch,
+        uint256 subsidyKey,
+        uint256 amount
     ) private {
         uint256 spentSubsidy = subsidies[epoch][subsidyKey];
-        assert(spentSubsidy <= subsidy);
+        require(
+            spentSubsidy <= subsidy,
+            'Unirep Social: invalid subsidy value'
+        );
         uint256 remainingSubsidy = subsidy - spentSubsidy;
-        require(amount <= remainingSubsidy, 'Unirep Social: requesting too much subsidy');
-        require(epoch == unirep.currentEpoch(), 'Unirep Social: wrong epoch');
+        require(
+            amount <= remainingSubsidy,
+            'Unirep Social: requesting too much subsidy'
+        );
         subsidies[epoch][subsidyKey] += amount;
     }
 
-    function verifyNegativeRepProof(uint256[5] memory publicSignals, uint256[8] memory proof) internal view returns (bool) {
-        return negativeReputationVerifier.verifyProof(
-            [proof[0], proof[1]],
-            [[proof[2], proof[3]], [proof[4], proof[5]]],
-            [proof[6], proof[7]],
-            publicSignals
+    function _checkProofNullifier(bytes32 nullifier) internal {
+        require(
+            !usedProofNullifier[nullifier],
+            'Unirep Social: the proof is submitted before'
         );
+        usedProofNullifier[nullifier] = true;
     }
 
-    function verifySubsidyKeyProof(uint256[6] memory publicSignals, uint256[8] memory proof) internal view returns (bool) {
-        return subsidyKeyVerifier.verifyProof(
-            [proof[0], proof[1]],
-            [[proof[2], proof[3]], [proof[4], proof[5]]],
-            [proof[6], proof[7]],
-            publicSignals
+    function verifyActionProof(
+        uint256[17] memory publicSignals,
+        uint256[8] memory proof
+    ) public view returns (bool) {
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        require(
+            unirep.attesterStateTreeRootExists(
+                attesterId,
+                uint48(signals.epoch),
+                signals.stateTreeRoot
+            ),
+            'Unirep Social: GST root does not exist in epoch'
         );
+        require(
+            signals.attesterId == attesterId,
+            'Unirep Social: attesterId mismatches'
+        );
+        require(
+            signals.epoch == unirep.attesterCurrentEpoch(attesterId),
+            'Unirep Social: epoch mismatches'
+        );
+
+        return actionVerifier.verifyProof(publicSignals, proof);
+    }
+
+    function decodeActionSignals(
+        uint256[17] memory publicSignals
+    ) public view returns (ActionSignals memory) {
+        ActionSignals memory signals;
+        signals.epochKey = publicSignals[0];
+        signals.stateTreeRoot = publicSignals[1];
+        (
+            signals.revealNonce,
+            signals.attesterId,
+            signals.epoch,
+            signals.nonce
+        ) = epkHelper.decodeEpochKeyControl(publicSignals[2]);
+        (
+            signals.minRep,
+            signals.maxRep,
+            signals.proveMinRep,
+            signals.proveMaxRep,
+            signals.proveZeroRep,
+            signals.proveGraffiti
+        ) = repHelper.decodeReputationControl(publicSignals[3]);
+
+        uint256[] memory nullifiers = new uint[](maxReputationBudget);
+        for (uint256 i = 0; i < maxReputationBudget; i++) {
+            nullifiers[i] = publicSignals[4 + i];
+        }
+        signals.nullifiers = nullifiers;
+        signals.notEpochKey = publicSignals[maxReputationBudget + 4];
+        signals.graffiti = publicSignals[maxReputationBudget + 5];
+        signals.data = publicSignals[maxReputationBudget + 6];
+        return signals;
     }
 
     /**
-     * Accepts a negative reputation proof
-     * publicSignals[0] - GST root
-     * publicSignals[1] - epoch key
-     * publicSignals[2] - epoch
-     * publicSignals[3] - attester id
-     * publicSignals[4] - maxRep
+     * Accepts an action proof
+     * publicSignals[0] - epoch key
+     * publicSignals[1] - state tree root
+     * publicSignals[2] - control0 (epoch key control)
+     * publicSignals[3] - control1 (reputation control)
+     * publicSignals[4,14] - reputation nullifiers
+     * publicSignals[14] - not epoch key
+     * publicSignals[15] - graffiti
+     * publicSignals[16] - data
      **/
     function getSubsidyAirdrop(
-      uint256[5] memory publicSignals,
-      uint256[8] memory proof
+        uint256[17] memory publicSignals,
+        uint256[8] memory proof
     ) public payable {
-        (,,,,,,,uint attestingFee,,) = unirep.config();
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-
+        _checkProofNullifier(proofNullifier);
         // verify the proof
-        require(verifyNegativeRepProof(publicSignals, proof));
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
 
-        // update the stored subsidy balances
-        uint requestedSubsidy = publicSignals[4]; // the amount proved
-        uint receivedSubsidy = subsidy < requestedSubsidy ? subsidy : requestedSubsidy;
-        uint epoch = publicSignals[2];
-        trySpendSubsidy(epoch, publicSignals[1], receivedSubsidy);
-        subsidies[epoch][publicSignals[1]] = subsidy; // don't allow a user to double request or spend more
-        require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+
+        require(
+            signals.proveMaxRep,
+            'Unirep Social: should prove max reputation'
+        );
+        require(
+            signals.revealNonce && (signals.nonce == 0),
+            'Unirep Social: epoch key nonce is not valid'
+        );
+        uint requestedSubsidy = signals.maxRep; // the amount proved
+        uint receivedSubsidy = subsidy < requestedSubsidy
+            ? subsidy
+            : requestedSubsidy;
+        uint epochKey = signals.epochKey;
+        uint48 epoch = signals.epoch;
+        trySpendSubsidy(epoch, epochKey, receivedSubsidy);
+        subsidies[epoch][epochKey] = subsidy; // don't allow a user to double request or spend more
 
         // Submit attestation to receiver's first epoch key
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.posRep = receivedSubsidy;
-        attestation.negRep = 0;
-        unirep.submitAttestation{value: attestingFee}(
-            attestation,
-            publicSignals[1] // first epoch key
-        );
+        unirep.attest(epochKey, epoch, posRepFieldIndex, receivedSubsidy);
     }
 
     /**
-     * Accepts a prove subsidy key proof
-     * publicSignals[0] - GST root
-     * publicSignals[1] - epoch key
-     * publicSignals[2] - epoch
-     * publicSignals[3] - attester id
-     * publicSignals[4] - min rep
-     * publicSignals[5] - not epoch key
+     * Accepts an action proof
+     * publicSignals[0] - epoch key
+     * publicSignals[1] - state tree root
+     * publicSignals[2] - control0 (epoch key control)
+     * publicSignals[3] - control1 (reputation control)
+     * publicSignals[4,14] - reputation nullifiers
+     * publicSignals[14] - not epoch key
+     * publicSignals[15] - graffiti preimage
+     * publicSignals[16] - data
      **/
     function publishPostSubsidy(
         bytes32 contentHash,
-        uint256[6] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        uint256 epoch = publicSignals[2];
-        uint256 epochKey = publicSignals[1];
-        require(verifySubsidyKeyProof(publicSignals, proof));
-        trySpendSubsidy(epoch, publicSignals[1], postReputation);
-        require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
+        _checkProofNullifier(proofNullifier);
+
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        require(
+            signals.revealNonce && (signals.nonce == 0),
+            'Unirep Social: epoch key nonce is not valid'
+        );
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
+        uint epoch = signals.epoch;
+        uint epochKey = signals.epochKey;
+        trySpendSubsidy(epoch, epochKey, postReputation);
 
         // saved post id and hashed content
         uint256 postId = contentId;
@@ -266,31 +370,38 @@ contract UnirepSocial is zkSNARKHelper {
             postId,
             epochKey,
             contentHash,
-            publicSignals[4] // min rep
+            signals.proveMinRep ? signals.minRep : 0 // min rep
         );
 
         // update content Id
-        contentId ++;
+        contentId++;
     }
 
     function publishCommentSubsidy(
         uint256 postId,
         bytes32 contentHash,
-        uint256[6] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        uint256 epoch = publicSignals[2];
-        uint256 epochKey = publicSignals[1];
-        require(verifySubsidyKeyProof(publicSignals, proof));
-        trySpendSubsidy(epoch, publicSignals[1], commentReputation);
-        require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
+        _checkProofNullifier(proofNullifier);
+
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        require(
+            signals.revealNonce && (signals.nonce == 0),
+            'Unirep Social: epoch key nonce is not valid'
+        );
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
+        require(postId < contentId, 'Unirep Social: post ID is invalid');
+        uint epoch = signals.epoch;
+        uint epochKey = signals.epochKey;
+        trySpendSubsidy(epoch, epochKey, commentReputation);
 
         // saved post id and hashed content
         uint256 commentId = contentId;
@@ -302,55 +413,77 @@ contract UnirepSocial is zkSNARKHelper {
             epochKey,
             commentId,
             contentHash,
-            publicSignals[4] // min rep
+            signals.proveMinRep ? signals.minRep : 0 // min rep
         );
 
-         // update content Id
-        contentId ++;
+        // update content Id
+        contentId++;
     }
 
     function voteSubsidy(
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 toEpochKey,
-        uint256[6] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        uint attestingFee = unirep.attestingFee();
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(publicSignals[3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(verifySubsidyKeyProof(publicSignals, proof));
-        uint256 voteValue = upvoteValue + downvoteValue;
-        require(voteValue > 0, "Unirep Social: should submit a positive vote value");
-        require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
+        _checkProofNullifier(proofNullifier);
 
-        uint256 epoch = publicSignals[2];
-        trySpendSubsidy(epoch, publicSignals[1], voteValue);
-        require(unirep.globalStateTreeRoots(epoch, publicSignals[0]), "Unirep Social: GST root does not exist in epoch");
-        require(publicSignals[5] == toEpochKey, "Unirep Social: must prove non-ownership of epk");
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        require(
+            signals.revealNonce && (signals.nonce == 0),
+            'Unirep Social: epoch key nonce is not valid'
+        );
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
+
+        uint256 voteValue = upvoteValue + downvoteValue;
+        require(
+            voteValue > 0,
+            'Unirep Social: should submit a positive vote value'
+        );
+        require(
+            upvoteValue * downvoteValue == 0,
+            'Unirep Social: should only choose to upvote or to downvote'
+        );
+        require(
+            signals.notEpochKey == toEpochKey,
+            'Unirep Social: must prove non-ownership of epk'
+        );
+        uint48 epoch = signals.epoch;
+        uint epochKey = signals.epochKey;
+        trySpendSubsidy(epoch, epochKey, voteValue);
 
         // Submit attestation to receiver's epoch key
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.posRep = upvoteValue;
-        attestation.negRep = downvoteValue;
-        unirep.submitAttestation{value: attestingFee}(
-            attestation,
-            toEpochKey
-        );
+        if (upvoteValue > 0) {
+            unirep.attest(
+                toEpochKey,
+                epoch,
+                posRepFieldIndex, // field index: posRep
+                upvoteValue
+            );
+        } else {
+            unirep.attest(
+                toEpochKey,
+                epoch,
+                negRepFieldIndex, // field index: negRep
+                downvoteValue
+            );
+        }
 
         emit VoteSubmitted(
             epoch,
-            publicSignals[1], // from epoch key
+            epochKey, // from epoch key
             toEpochKey,
             upvoteValue,
             downvoteValue,
-            publicSignals[4] // min rep
+            signals.proveMinRep ? signals.minRep : 0 // min rep
         );
     }
 
@@ -361,25 +494,38 @@ contract UnirepSocial is zkSNARKHelper {
      */
     function publishPost(
         bytes32 contentHash,
-        uint256[] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        uint256 epochKey = publicSignals[0];
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
+        _checkProofNullifier(proofNullifier);
 
-        uint256 epoch = publicSignals[maxReputationBudget + 2];
-        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
-        require(proofSpendAmount == postReputation, "Unirep Social: submit different nullifiers amount from the required amount for post");
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        uint256 epochKey = signals.epochKey;
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
 
         // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
+        uint48 epoch = signals.epoch;
+        for (uint256 i = 0; i < postReputation; i++) {
+            uint nullifier = signals.nullifiers[i];
+            require(
+                !usedRepNullifier[nullifier] && nullifier > 0,
+                'Unirep Social: invalid rep nullifier'
+            );
+            usedRepNullifier[nullifier] = true;
+        }
+        unirep.attest(
+            epochKey,
+            epoch,
+            negRepFieldIndex, // field index: posRep
+            postReputation
+        );
 
         // saved post id and hashed content
         uint256 postId = contentId;
@@ -390,11 +536,11 @@ contract UnirepSocial is zkSNARKHelper {
             postId,
             epochKey,
             contentHash,
-            publicSignals[maxReputationBudget + 5] // min rep
+            signals.proveMinRep ? signals.minRep : 0 // min rep
         );
 
         // update content Id
-        contentId ++;
+        contentId++;
     }
 
     /*
@@ -406,27 +552,39 @@ contract UnirepSocial is zkSNARKHelper {
     function leaveComment(
         uint256 postId,
         bytes32 contentHash,
-        uint256[] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
-        uint256 epochKey = publicSignals[0];
-        require(publicSignals[maxReputationBudget + 4] == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        require(postId < contentId, "Unirep Social: the post id is not valid");
+        _checkProofNullifier(proofNullifier);
 
-        uint256 epoch = publicSignals[maxReputationBudget + 2];
-        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
-        require(proofSpendAmount == commentReputation, "Unirep Social: submit different nullifiers amount from the required amount for comment");
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        uint256 epochKey = signals.epochKey;
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
+        require(postId < contentId, 'Unirep Social: post ID is invalid');
 
         // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
+        uint48 epoch = signals.epoch;
+        for (uint256 i = 0; i < commentReputation; i++) {
+            uint nullifier = signals.nullifiers[i];
+            require(
+                !usedRepNullifier[nullifier] && nullifier > 0,
+                'Unirep Social: invalid rep nullifier'
+            );
+            usedRepNullifier[nullifier] = true;
+        }
+        unirep.attest(
+            epochKey,
+            epoch,
+            negRepFieldIndex, // field index: posRep
+            commentReputation
+        );
 
         // saved post id and hashed content
         uint256 commentId = contentId;
@@ -438,11 +596,11 @@ contract UnirepSocial is zkSNARKHelper {
             epochKey,
             commentId,
             contentHash,
-            publicSignals[maxReputationBudget + 5] // min rep
+            signals.proveMinRep ? signals.minRep : 0
         );
 
         // update comment Id
-        contentId ++;
+        contentId++;
     }
 
     /*
@@ -460,13 +618,23 @@ contract UnirepSocial is zkSNARKHelper {
         uint256[] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        uint256 epochKey = publicSignals[0];
-        require(unirep.verifyEpochKeyValidity(publicSignals, proof), "Unirep Social: The epoch key proof is invalid");
-        require(unirep.globalStateTreeRoots(publicSignals[2], publicSignals[1]) == true, "Unirep Social: Invalid global state tree root");
-        require(hashedContentMapping[id][oldContentHash] == epochKey, "Unirep Social: Mismatched epoch key proof to the post or the comment id");
+        // check if proof is submitted before
+        bytes32 proofNullifier = keccak256(
+            abi.encodePacked(publicSignals, proof)
+        );
+        _checkProofNullifier(proofNullifier);
+
+        EpochKeyLiteVerifierHelper.EpochKeySignals memory signals = epkHelper
+            .decodeEpochKeyLiteSignals(publicSignals);
+        epkHelper.verifyAndCheck(publicSignals, proof);
+        require(id < contentId, 'Unirep Social: content ID is invalid');
+        require(
+            hashedContentMapping[id][oldContentHash] == signals.epochKey,
+            'Unirep Social: Mismatched epoch key proof to the post or the comment id'
+        );
 
         hashedContentMapping[id][oldContentHash] = 0;
-        hashedContentMapping[id][newContentHash] = epochKey;
+        hashedContentMapping[id][newContentHash] = signals.epochKey;
 
         emit ContentUpdated(id, oldContentHash, newContentHash);
     }
@@ -483,118 +651,109 @@ contract UnirepSocial is zkSNARKHelper {
         uint256 upvoteValue,
         uint256 downvoteValue,
         uint256 toEpochKey,
-        uint256[] memory publicSignals,
+        uint256[17] memory publicSignals,
         uint256[8] memory proof
     ) external payable {
-        (,,,,uint maxReputationBudget,,,uint attestingFee,,) = unirep.config();
         uint256 voteValue = upvoteValue + downvoteValue;
         // check if proof is submitted before
         bytes32 proofNullifier = keccak256(
             abi.encodePacked(publicSignals, proof)
         );
-        require(!usedProofNullifier[proofNullifier], "Unirep Social: the proof is submitted before");
-        usedProofNullifier[proofNullifier] = true;
-        require(voteValue > 0, "Unirep Social: should submit a positive vote value");
-        require(upvoteValue * downvoteValue == 0, "Unirep Social: should only choose to upvote or to downvote");
-        require(publicSignals[maxReputationBudget + 3] == attesterId, "Unirep Social: submit a proof with different attester ID from Unirep Social");
-        uint256 proofSpendAmount = publicSignals[maxReputationBudget + 4];
-        require(proofSpendAmount == voteValue, "Unirep Social: submit different nullifiers amount from the vote value");
-
-        // Spend reputation
-        unirep.spendReputation{value: attestingFee}(publicSignals, proof);
-
-        // Submit attestation to receiver's epoch key
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.posRep = upvoteValue;
-        attestation.negRep = downvoteValue;
-        unirep.submitAttestation{value: attestingFee}(
-            attestation,
-            toEpochKey
+        _checkProofNullifier(proofNullifier);
+        require(
+            voteValue > 0,
+            'Unirep Social: should submit a positive vote value'
+        );
+        require(
+            upvoteValue * downvoteValue == 0,
+            'Unirep Social: should only choose to upvote or to downvote'
         );
 
+        ActionSignals memory signals = decodeActionSignals(publicSignals);
+        require(
+            verifyActionProof(publicSignals, proof),
+            'Unirep Social: proof is invalid'
+        );
+
+        // Spend reputation
+        uint48 epoch = signals.epoch;
+        for (uint256 i = 0; i < voteValue; i++) {
+            uint nullifier = signals.nullifiers[i];
+            require(
+                !usedRepNullifier[nullifier] && nullifier > 0,
+                'Unirep Social: invalid rep nullifier'
+            );
+            usedRepNullifier[nullifier] = true;
+        }
+        unirep.attest(
+            signals.epochKey,
+            epoch,
+            negRepFieldIndex, // field index: posRep
+            voteValue
+        );
+
+        // Submit attestation to receiver's epoch key
+        // Submit attestation to receiver's epoch key
+        if (upvoteValue > 0) {
+            unirep.attest(
+                toEpochKey,
+                epoch,
+                posRepFieldIndex, // field index: posRep
+                upvoteValue
+            );
+        } else {
+            unirep.attest(
+                toEpochKey,
+                epoch,
+                negRepFieldIndex, // field index: negRep
+                downvoteValue
+            );
+        }
+
         emit VoteSubmitted(
-            unirep.currentEpoch(),
-            publicSignals[0], // from epoch key
+            epoch,
+            signals.epochKey, // from epoch key
             toEpochKey,
             upvoteValue,
             downvoteValue,
-            publicSignals[maxReputationBudget + 5] // min rep
+            signals.proveMinRep ? signals.minRep : 0
         );
     }
 
     /*
-     * Call Unirep contract to perform start user state transition
-     * @param _blindedUserState Blind user state tree before user state transition
-     * @param _blindedHashChain Blind hash chain before user state transition
-     * @param _GSTRoot User proves that he has already signed up in the global state tree
-     * @param _proof The snark proof
-     */
-    function startUserStateTransition(
-        uint256[] memory publicSignals,
-        uint256[8] memory proof
-    ) external {
-        unirep.startUserStateTransition(publicSignals, proof);
-    }
-
-    /*
-     * Call Unirep contract to perform user state transition
-     * @param _outputBlindedUserState Blind intermediate user state tree before user state transition
-     * @param _outputBlindedHashChain Blind intermediate hash chain before user state transition
-     * @param _inputBlindedUserState Input a submitted blinded user state before process the proof
-     * @param _proof The snark proof
-     */
-    function processAttestations(
-        uint256[] memory publicSignals,
-        uint256[8] memory proof
-    ) external {
-        unirep.processAttestations(publicSignals, proof);
-    }
-
-    /*
-     * Call Unirep contract to perform user state transition
-     * @param userTransitionedData The public signals and proof of the user state transition
-     * @param proofIndexes The proof indexes of start user state transition and process attestations
-     */
-    function updateUserStateRoot(
-        uint256[] memory publicSignals,
-        uint256[8] memory proof
-    ) external {
-        unirep.updateUserStateRoot(publicSignals, proof);
-    }
-
-     /*
      * Set new user name for an epochKey
      * @param epochKey epoch key that attempts to set a new uername
      * @param oldUsername oldusername that the eppch key previously claimed
      * @param newUsername requested new user name
      */
-     function setUsername(
+    function setUsername(
         uint256 epochKey,
         uint256 oldUsername,
         uint256 newUsername
-     ) external payable {
-        uint attestingFee = unirep.attestingFee();
-
+    ) external payable {
         // check if the new username is not taken
-        require(usernames[newUsername] == false, "This username is already taken");
+        require(
+            usernames[newUsername] == false,
+            'Unirep Social: This username is already taken'
+        );
 
         // only admin can call this function
-        require(msg.sender == admin, "Only admin can send transactions to this contract");
+        require(
+            msg.sender == admin,
+            'Unirep Social: Only admin can send transactions to this contract'
+        );
 
         usernames[oldUsername] = false;
         usernames[newUsername] = true;
 
-        // attest to the epoch key to give the key the username
-        Unirep.Attestation memory attestation;
-        attestation.attesterId = attesterId;
-        attestation.posRep = 0;
-        attestation.negRep = 0;
-        attestation.graffiti = newUsername;
+        uint48 epoch = unirep.attesterCurrentEpoch(attesterId);
 
-        unirep.submitAttestation{value: attestingFee}(
-            attestation,
-            epochKey
+        // attest to the epoch key to give the key the username
+        unirep.attest(
+            epochKey,
+            epoch,
+            graffitiFieldIndex, // field index: graffiti
+            newUsername
         );
-     }
+    }
 }

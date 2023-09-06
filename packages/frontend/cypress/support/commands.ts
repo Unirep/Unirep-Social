@@ -20,11 +20,11 @@ Cypress.Commands.add('start', () => {
             unirepAddress,
             unirepSocialAddress,
             unirepSocialABI,
-            ganacheUrl,
+            hardhatUrl,
             fundedKey,
         }) => {
             const signupCode = 'test_signup_code'
-            const provider = new ethers.providers.JsonRpcProvider(ganacheUrl)
+            const provider = new ethers.providers.JsonRpcProvider(hardhatUrl)
             const wallet = new ethers.Wallet(fundedKey, provider)
             const unirepSocial = new ethers.Contract(
                 unirepSocialAddress,
@@ -51,7 +51,7 @@ Cypress.Commands.add('start', () => {
             cy.intercept(`${serverUrl}/api/oauth/twitter?*`, {
                 statusCode: 301,
                 headers: {
-                    Location: `http://localhost:3000/start?signupCode=${signupCode}`,
+                    Location: `http://127.0.0.1:3000/start?signupCode=${signupCode}`,
                 },
             })
         }

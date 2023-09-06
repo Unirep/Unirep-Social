@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es2018",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "noImplicitThis": false,
+        "resolveJsonModule": true,
+        "noImplicitAny": false,
+        "declaration": true,
+        "skipLibCheck": true
+    },
+    "exclude": ["**/node_modules"]
+}

@@ -1,85 +1,112 @@
-import test from 'ava'
+// @ts-ignore
+import { ethers } from 'hardhat'
+import { expect } from 'chai'
 import { startServer } from './environment'
 
-import { createComment, createPost, signUp, vote } from './utils'
+import {
+    createCommentSubsidy,
+    createPostSubsidy,
+    signUp,
+    userStateTransition,
+    vote,
+    voteSubsidy,
+} from './utils'
+import express from 'express'
 
-test.before(async (t: any) => {
-    const context = await startServer()
-    Object.assign(t.context, context)
-})
-
-test('should vote on a post', async (t: any) => {
-    // sign up first user
-    const user1 = await signUp(t)
-
-    // first create a post
-    const { post } = await createPost(t, user1.iden)
-
-    // sign up second user
-    const user2 = await signUp(t)
-
-    // upvote the post
-    {
-        const upvote = 5
-        const downvote = 0
-        const receiver = post.epochKey.toString()
-        await vote(t, user2.iden, receiver, post._id, true, upvote, downvote)
+describe('vote', function () {
+    const epochLength = 200
+    let iden: any
+    let post: any
+    let comment: any
+    this.timeout(0)
+    let t = {
+        context: {},
     }
-
-    // downvote the post
-    {
-        const upvote = 0
-        const downvote = 2
-        const receiver = post.epochKey.toString()
-        await vote(t, user2.iden, receiver, post._id, true, upvote, downvote)
-    }
-    t.pass()
-})
-
-test('should vote on comment', async (t: any) => {
-    // sign up first user
-    const user1 = await signUp(t)
-
-    // first create a post
-    const { post } = await createPost(t, user1.iden)
-
-    // leave a comment
-    // Object.assign(t.context, { ...t.context, postId: post.transaction })
-    const { comment } = await createComment(t, user1.iden, post._id)
-
-    // sign up second user
-    const user2 = await signUp(t)
-
-    // upvote the comment
-    {
-        const upvote = 4
-        const downvote = 0
-        const receiver = comment.epochKey.toString()
-        await vote(
-            t,
-            user2.iden,
-            receiver,
-            comment._id,
-            false,
-            upvote,
-            downvote
+    const app = express()
+    before(async () => {
+        const accounts = await ethers.getSigners()
+        const deployer = new ethers.Wallet(
+            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+            accounts[0].provider
         )
-    }
+        const context = await startServer(deployer, app, { epochLength })
+        Object.assign(t, {
+            ...t,
+            epochLength,
+            context,
+        })
 
-    // downvote the comment
-    {
-        const upvote = 0
-        const downvote = 1
-        const receiver = comment.epochKey.toString()
-        await vote(
-            t,
-            user2.iden,
-            receiver,
-            comment._id,
-            false,
-            upvote,
-            downvote
-        )
-    }
-    t.pass()
+        // sign up first user
+        const user1 = await signUp(t)
+
+        // first create a post
+        const { post: post1 } = await createPostSubsidy(t, user1.iden)
+
+        // sign up second user
+        const user2 = await signUp(t)
+
+        // upvote the post
+        {
+            const upvote = 15
+            const downvote = 0
+            const receiver = post1.epochKey.toString()
+            await voteSubsidy(
+                t,
+                user2.iden,
+                receiver,
+                post1._id,
+                true,
+                upvote,
+                downvote
+            )
+        }
+
+        // user state transition
+        await userStateTransition(t, user1.iden)
+
+        // create post
+        const { post: post2 } = await createPostSubsidy(t, user1.iden)
+        const data = await createCommentSubsidy(t, user1.iden, post2._id)
+        iden = user1.iden
+        post = post2
+        comment = data.comment
+    })
+
+    it('should vote on a post', async () => {
+        // upvote the post
+        {
+            const upvote = 5
+            const downvote = 0
+            const receiver = post.epochKey.toString()
+            await vote(t, iden, receiver, post._id, true, upvote, downvote)
+        }
+
+        // downvote the post
+        {
+            const upvote = 0
+            const downvote = 2
+            const receiver = post.epochKey.toString()
+            await vote(t, iden, receiver, post._id, true, upvote, downvote)
+        }
+        expect(true).to.be.true
+    })
+
+    it('should vote on comment', async () => {
+        // upvote the comment
+        {
+            const upvote = 4
+            const downvote = 0
+            const receiver = comment.epochKey.toString()
+            await vote(t, iden, receiver, comment._id, false, upvote, downvote)
+        }
+
+        // downvote the comment
+        {
+            const upvote = 0
+            const downvote = 1
+            const receiver = comment.epochKey.toString()
+            await vote(t, iden, receiver, comment._id, false, upvote, downvote)
+        }
+        expect(true).to.be.true
+    })
 })

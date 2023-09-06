@@ -6,7 +6,7 @@ import EpochManager from '../../context/EpochManager'
 import CustomInput from '../../components/customInput'
 import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
-import { ActionType } from '@unirep-social/core'
+import { ActionType } from '../../constants'
 
 enum SetUsernameStatus {
     default = 'Apply',
@@ -52,8 +52,8 @@ const Username = () => {
                     details: 'Generating ZK proof...',
                 })
                 const { transaction, error } = await user.setUsername(
-                    user.username.oldUsername ?? '0',
-                    username
+                    username,
+                    user.username.oldUsername
                 )
                 if (error) {
                     setErrorMsg(error)

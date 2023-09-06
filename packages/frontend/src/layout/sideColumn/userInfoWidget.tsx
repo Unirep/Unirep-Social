@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
-import { ActionType } from '@unirep-social/core'
 
 import UserContext from '../../context/User'
 import EpochContext from '../../context/EpochManager'
@@ -12,7 +11,7 @@ import UIContext, { EpochStatus } from '../../context/UI'
 import HelpWidget from '../../components/helpWidget'
 import MyButton, { MyButtonType } from '../../components/myButton'
 import CustomGap from '../../components/customGap'
-import { InfoType } from '../../constants'
+import { ActionType, InfoType } from '../../constants'
 import { shortenEpochKey } from '../../utils'
 
 const UserInfoWidget = () => {
@@ -141,7 +140,8 @@ const UserInfoWidget = () => {
                                                         const {
                                                             transaction,
                                                             error,
-                                                        } = await userContext.getAirdrop()
+                                                        } =
+                                                            await userContext.getAirdrop()
                                                         if (error)
                                                             throw new Error(
                                                                 error
@@ -200,7 +200,9 @@ const UserInfoWidget = () => {
                                             : 0}
                                     </strong>
                                     <div className="interline"></div>
-                                    {userContext.currentEpochKeys[0]}
+                                    {shortenEpochKey(
+                                        userContext.currentEpochKeys[0]
+                                    )}
                                 </div>
                             </div>
 

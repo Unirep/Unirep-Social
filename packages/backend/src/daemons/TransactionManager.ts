@@ -3,17 +3,17 @@ import { DB } from 'anondb'
 
 export class TransactionManager {
     wallet?: ethers.Wallet
-    _db?: DB
+    db?: DB
 
-    configure(key: string, provider: any, db: DB) {
-        this.wallet = new ethers.Wallet(key, provider)
-        this._db = db
+    configure(wallet: ethers.Wallet, db: DB) {
+        this.wallet = wallet
+        this.db = db
     }
 
     async start() {
-        if (!this.wallet || !this._db) throw new Error('Not initialized')
+        if (!this.wallet || !this.db) throw new Error('Not initialized')
         const latestNonce = await this.wallet.getTransactionCount()
-        await this._db.upsert('AccountNonce', {
+        await this.db.upsert('AccountNonce', {
             where: {
                 address: this.wallet.address,
             },
@@ -27,9 +27,9 @@ export class TransactionManager {
     }
 
     async startDaemon() {
-        if (!this._db) throw new Error('No db connected')
+        if (!this.db) throw new Error('No db connected')
         for (;;) {
-            const nextTx = await this._db.findOne('AccountTransaction', {
+            const nextTx = await this.db.findOne('AccountTransaction', {
                 where: {},
                 orderBy: {
                     nonce: 'asc',
@@ -41,7 +41,7 @@ export class TransactionManager {
             }
             const sent = await this.tryBroadcastTransaction(nextTx.signedData)
             if (sent) {
-                await this._db.delete('AccountTransaction', {
+                await this.db.delete('AccountTransaction', {
                     where: {
                         signedData: nextTx.signedData,
                     },
@@ -84,12 +84,12 @@ export class TransactionManager {
     }
 
     async getNonce(address: string) {
-        const latest = await this._db?.findOne('AccountNonce', {
+        const latest = await this.db?.findOne('AccountNonce', {
             where: {
                 address,
             },
         })
-        const updated = await this._db?.update('AccountNonce', {
+        const updated = await this.db?.update('AccountNonce', {
             where: {
                 address,
                 nonce: latest.nonce,
@@ -131,14 +131,16 @@ export class TransactionManager {
             })
         }
         const nonce = await this.getNonce(this.wallet.address)
+        const { chainId } = await this.wallet.provider.getNetwork()
         const signedData = await this.wallet.signTransaction({
             nonce,
             to,
-            // gasPrice: 2 * 10 ** 9, // 2 gwei
-            gasPrice: 10000,
+            gasPrice: 2 * 10 ** 9, // 2 gwei
+            chainId,
+            // gasPrice: 10000,
             ...args,
         })
-        await this._db?.create('AccountTransaction', {
+        await this.db?.create('AccountTransaction', {
             address: this.wallet.address,
             signedData,
             nonce,

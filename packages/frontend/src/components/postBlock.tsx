@@ -15,6 +15,7 @@ import CommentBlock from './commentBlock'
 import BlockButton, { BlockButtonType } from './blockButton'
 import RefreshReminder from './refreshReminder'
 import MarkdownIt from 'markdown-it'
+import { shortenEpochKey } from '../utils'
 
 const markdown = new MarkdownIt({
     breaks: true,
@@ -104,7 +105,8 @@ const PostBlock = ({ postId, page }: Props) => {
                         onMouseLeave={() => setEpkHovered(false)}
                         onClick={() => setEpkHovered(!isEpkHovered)}
                     >
-                        Post by {post.username ?? post.epoch_key}
+                        Post by{' '}
+                        {post.username ?? shortenEpochKey(post.epoch_key)}
                         <img
                             src={require('../../public/images/lighting.svg')}
                         />

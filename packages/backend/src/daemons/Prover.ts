@@ -13,9 +13,19 @@ export class Prover {
         return snarkjs.groth16.verify(vkey, signals, proof)
     }
 
-    static async genProofAndPublicSignals(): Promise<any> {
-        // no need for attester to generate proofs
-        throw new Error('Not implemented')
+    static async genProofAndPublicSignals(
+        type: string | Circuit,
+        inputs: any
+    ): Promise<any> {
+        const basepath = path.join(__dirname, '../../keys/', type)
+        const zkeypath = `${basepath}.zkey`
+        const wasmpath = `${basepath}.wasm`
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+            inputs,
+            wasmpath,
+            zkeypath
+        )
+        return { proof, publicSignals }
     }
 
     static getVKey(): any {

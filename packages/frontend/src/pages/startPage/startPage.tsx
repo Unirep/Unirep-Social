@@ -33,16 +33,14 @@ const StartPage = () => {
     useEffect(() => {
         if (params.get('signupCode')) {
             // we have a signup code, register and make an identity
-            userContext
-                .signUp(params.get('signupCode') as string)
-                .then((ret) => {
-                    if (ret.error) {
-                        setError(error)
-                        setStep(StepType.error)
-                    } else {
-                        setStep(StepType.onboarded)
-                    }
-                })
+            userContext.signUp().then((ret) => {
+                if (ret.error) {
+                    setError(error)
+                    setStep(StepType.error)
+                } else {
+                    setStep(StepType.onboarded)
+                }
+            })
         } else if (params.get('signupError')) {
             setError(
                 'It seems like you already used this account to sign up before, try to sign in.'

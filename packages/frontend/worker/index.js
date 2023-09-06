@@ -4,7 +4,7 @@ import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
 const DEBUG = true
 const ENABLE_ASSET_CACHE = false
 const ENABLE_KEY_CACHE = false
-const BACKEND_URL = 'https://unirep.social'
+const BACKEND_URL = 'https://api.social.unirep.io'
 
 addEventListener('fetch', (event) => {
     event.respondWith(generateResponse(event))

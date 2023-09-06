@@ -1,556 +1,324 @@
 // @ts-ignore
 import { ethers } from 'hardhat'
-import { BigNumber } from 'ethers'
 import { expect } from 'chai'
-import * as config from '@unirep/circuits'
-import * as ContractConfig from '@unirep/contracts'
 import { deployUnirep } from '@unirep/contracts/deploy'
-import { ZkIdentity, hashOne } from '@unirep/crypto'
-
+import { genEpochKey } from '@unirep/utils'
+import { CircuitConfig } from '@unirep/circuits'
+import { Identity } from '@semaphore-protocol/identity'
 import { genUserState } from './utils'
-import { maxReputationBudget } from '../config/socialMedia'
-import { deployUnirepSocial, UnirepSocial } from '../src/utils'
-import { EPOCH_LENGTH } from '@unirep/contracts'
-
-const DEFAULT_ATTESTING_FEE = BigNumber.from(1)
+import { deployUnirepSocial, Unirep, UnirepSocial } from '../deploy'
+import { defaultEpochLength } from '../src/config'
+const { REPL_NONCE_BITS } = CircuitConfig.default
 
 describe('Username', function () {
-    this.timeout(300000)
-
-    let unirepContract
+    this.timeout(1000000)
+    let unirepContract: Unirep
     let unirepSocialContract: UnirepSocial
+    let admin
+    let attesterId
+    const id = new Identity()
 
     before(async () => {
         const accounts = await ethers.getSigners()
+        admin = accounts[0]
 
-        const _settings = {
-            numEpochKeyNoncePerEpoch: config.NUM_EPOCH_KEY_NONCE_PER_EPOCH,
-            maxReputationBudget: maxReputationBudget,
-            epochLength: ContractConfig.EPOCH_LENGTH,
-            attestingFee: DEFAULT_ATTESTING_FEE,
-        }
-        unirepContract = await deployUnirep(accounts[0], _settings)
+        unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
-            accounts[0],
-            unirepContract.address,
-            {
-                airdropReputation: 30,
-            }
+            admin,
+            unirepContract.address
         )
+        attesterId = unirepSocialContract.address
+
+        // user sign up
+        {
+            const userState = await genUserState(
+                ethers.provider,
+                unirepContract.address,
+                id,
+                attesterId
+            )
+            const { publicSignals, proof } =
+                await userState.genUserSignUpProof()
+
+            await unirepSocialContract
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
+                .then((t) => t.wait())
+            userState.sync.stop()
+        }
     })
 
+    {
+        let snapshot
+
+        beforeEach(async () => {
+            snapshot = await ethers.provider.send('evm_snapshot', [])
+        })
+
+        afterEach(async () => {
+            await ethers.provider.send('evm_revert', [snapshot])
+        })
+    }
+
     it('set a username should succeed', async () => {
-        const attesterId = BigInt(
-            await unirepContract.attesters(unirepSocialContract.address)
-        )
-        const id = new ZkIdentity()
-        await unirepSocialContract
-            .userSignUp(id.genIdentityCommitment())
-            .then((t) => t.wait())
-        const userState = await genUserState(
-            ethers.provider,
-            unirepContract.address,
-            id
-        )
-        const epkNonce = 0
-        const reputationProof = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce
-        )
+        const epoch = 0
+        const epochKey = 1
         const oldUsername = 0
         const username = 'username1'
         const username16 = ethers.utils.hexlify(
             ethers.utils.toUtf8Bytes(username)
         )
-        const hashedUsername = hashOne(username16)
-        await unirepSocialContract
-            .setUsername(
-                reputationProof.epochKey,
-                oldUsername,
-                hashedUsername,
-                { value: DEFAULT_ATTESTING_FEE }
+        const index = await unirepContract.attestationCount()
+        const tx = await unirepSocialContract.setUsername(
+            epochKey,
+            oldUsername,
+            username16
+        )
+
+        const graffitiIndex = await unirepContract.sumFieldCount()
+        expect(tx)
+            .to.emit(unirepContract, 'Attestation')
+            .withArgs(
+                epoch,
+                epochKey,
+                attesterId,
+                graffitiIndex,
+                (BigInt(username16) << BigInt(REPL_NONCE_BITS)) + BigInt(index)
             )
+    })
+
+    it('should fail if the contract call was not called by admin', async () => {
+        const accounts = await ethers.getSigners()
+        const epochKey = 1
+        const oldUsername = 0
+        const username = 'username1'
+        const username16 = ethers.utils.hexlify(
+            ethers.utils.toUtf8Bytes(username)
+        )
+        await expect(
+            unirepSocialContract
+                .connect(accounts[5])
+                .setUsername(epochKey, oldUsername, username16)
+        ).to.be.revertedWith(
+            'Unirep Social: Only admin can send transactions to this contract'
+        )
+    })
+
+    it('should fail if a username is double registered', async () => {
+        const epochKey = 1
+        const oldUsername = 0
+        const username = 'username1'
+        const username16 = ethers.utils.hexlify(
+            ethers.utils.toUtf8Bytes(username)
+        )
+        await unirepSocialContract
+            .setUsername(epochKey, oldUsername, username16)
             .then((t) => t.wait())
+
+        await expect(
+            unirepSocialContract.setUsername(epochKey, oldUsername, username16)
+        ).to.be.revertedWith('Unirep Social: This username is already taken')
+    })
+
+    it('should mark old username as not claimed', async () => {
+        const epochKey = 1
+        const oldUsername = 0
+        const username = 'username1'
+        const username16 = ethers.utils.hexlify(
+            ethers.utils.toUtf8Bytes(username)
+        )
+        await unirepSocialContract
+            .setUsername(epochKey, oldUsername, username16)
+            .then((t) => t.wait())
+        const isClaimedBefore = await unirepSocialContract.usernames(username16)
+        expect(isClaimedBefore).to.be.true
+
+        const newusername = 'username2'
+        const newUsername16 = ethers.utils.hexlify(
+            ethers.utils.toUtf8Bytes(newusername)
+        )
+        await unirepSocialContract
+            .setUsername(epochKey, username16, newUsername16)
+            .then((t) => t.wait())
+        const isClaimedAfter = await unirepSocialContract.usernames(username16)
+        expect(isClaimedAfter).to.be.false
     })
 
     it('set a username and receive an attestation should succeed UST', async () => {
-        const attesterId = BigInt(
-            await unirepContract.attesters(unirepSocialContract.address)
-        )
-        const id = new ZkIdentity()
-        await unirepSocialContract
-            .userSignUp(id.genIdentityCommitment())
-            .then((t) => t.wait())
         const userState = await genUserState(
             ethers.provider,
             unirepContract.address,
-            id
+            id,
+            attesterId
         )
-        const epkNonce = 0
-        const { epochKey } = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce
-        )
+        const epoch = 0
+        const nonce = 0
+        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
         const oldUsername = 0
         const username10 = 'username2'
         const username16 = ethers.utils.hexlify(
             ethers.utils.toUtf8Bytes(username10)
         )
-        const username = hashOne(username16)
         await unirepSocialContract
-            .setUsername(epochKey, oldUsername, username, {
-                value: DEFAULT_ATTESTING_FEE,
-            })
+            .setUsername(epochKey, oldUsername, username16)
             .then((t) => t.wait())
 
-        // vote the user
+        // sign up another user and vote
         {
-            const id = new ZkIdentity()
-            await unirepSocialContract
-                .userSignUp(id.genIdentityCommitment())
-                .then((t) => t.wait())
+            const id2 = new Identity()
             const userState2 = await genUserState(
                 ethers.provider,
                 unirepContract.address,
-                id
+                id2,
+                attesterId
             )
-            const proveGraffiti = BigInt(0)
-            const minPosRep = 0
-            const graffitiPreImage = BigInt(0)
-            const epkNonce = 0
-            const upvoteValue = 3
-            const reputationProof = await userState2.genProveReputationProof(
-                attesterId,
-                epkNonce,
-                minPosRep,
-                proveGraffiti,
-                graffitiPreImage,
-                upvoteValue
-            )
+            const { publicSignals, proof } =
+                await userState2.genUserSignUpProof()
+
             await unirepSocialContract
-                .vote(
-                    upvoteValue,
-                    0,
+                .connect(admin)
+                .userSignUp(publicSignals, proof)
+                .then((t) => t.wait())
+            await userState2.waitForSync()
+
+            const voteProof = await userState2.genActionProof({
+                revealNonce: true,
+                epkNonce: 0,
+                notEpochKey: epochKey,
+            })
+
+            const upvote = 30
+            const downvote = 0
+            await unirepSocialContract
+                .connect(admin)
+                .voteSubsidy(
+                    upvote,
+                    downvote,
                     epochKey,
-                    reputationProof.publicSignals,
-                    reputationProof.proof,
-                    { value: DEFAULT_ATTESTING_FEE.mul(2) }
+                    voteProof.publicSignals,
+                    voteProof.proof
                 )
                 .then((t) => t.wait())
-            await userState2.stop()
+            userState2.sync.stop()
         }
 
         // epoch transition
+        await ethers.provider.send('evm_increaseTime', [defaultEpochLength])
+        await ethers.provider.send('evm_mine', [])
+
+        // user state transition
         {
-            await ethers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
-            let tx = await unirepContract.beginEpochTransition()
-            let receipt = await tx.wait()
-            expect(receipt.status).equal(1)
+            await userState.waitForSync()
+            const toEpoch = await unirepContract.attesterCurrentEpoch(
+                attesterId
+            )
+            const { publicSignals, proof } =
+                await userState.genUserStateTransitionProof({ toEpoch })
+            await unirepContract
+                .userStateTransition(publicSignals, proof)
+                .then((t) => t.wait())
         }
 
-        // user1 user state transition
+        // user should prove username
         await userState.waitForSync()
-        const {
-            startTransitionProof,
-            processAttestationProofs,
-            finalTransitionProof,
-        } = await userState.genUserStateTransitionProofs()
-        let isValid = await startTransitionProof.verify()
-        expect(isValid, 'Verify start transition circuit off-chain failed').to
-            .be.true
-
-        // Verify start transition proof on-chain
-        isValid = await unirepContract.verifyStartTransitionProof(
-            startTransitionProof.publicSignals,
-            startTransitionProof.proof
-        )
-        expect(isValid, 'Verify start transition circuit on-chain failed').to.be
-            .true
-
-        let tx = await unirepSocialContract.startUserStateTransition(
-            startTransitionProof.publicSignals,
-            startTransitionProof.proof
-        )
-        let receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a start transition proof:',
-            receipt.gasUsed.toString()
-        )
-
-        for (let i = 0; i < processAttestationProofs.length; i++) {
-            expect(
-                await processAttestationProofs[i].verify(),
-                'Verify process attestations circuit off-chain failed'
-            ).to.be.true
-
-            // Verify processAttestations proof on-chain
-            const isProofValid =
-                await unirepContract.verifyProcessAttestationProof(
-                    processAttestationProofs[i].publicSignals,
-                    processAttestationProofs[i].proof
-                )
-            expect(
-                isProofValid,
-                'Verify process attestations circuit on-chain failed'
-            ).to.be.true
-
-            const tx = await unirepSocialContract.processAttestations(
-                processAttestationProofs[i].publicSignals,
-                processAttestationProofs[i].proof
-            )
-            const receipt = await tx.wait()
-            expect(
-                receipt.status,
-                'Submit process attestations proof failed'
-            ).to.equal(1)
-            console.log(
-                'Gas cost of submit a process attestations proof:',
-                receipt.gasUsed.toString()
-            )
-        }
-
-        isValid = await finalTransitionProof.verify()
-        expect(isValid, 'Verify user state transition circuit off-chain failed')
-            .to.be.true
-
-        // Verify userStateTransition proof on-chain
-        const isProofValid = await unirepContract.verifyUserStateTransition(
-            finalTransitionProof.publicSignals,
-            finalTransitionProof.proof
-        )
-        expect(
-            isProofValid,
-            'Verify user state transition circuit on-chain failed'
-        ).to.be.true
-
-        tx = await unirepContract.updateUserStateRoot(
-            finalTransitionProof.publicSignals,
-            finalTransitionProof.proof
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a user state transition proof:',
-            receipt.gasUsed.toString()
-        )
-
-        // user1 should prove username
-        await userState.waitForSync()
-        const reputationProof = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce,
-            undefined,
-            BigInt(1),
-            username16
-        )
-        expect(await reputationProof.verify()).to.be.true
+        const proof = await userState.genProveReputationProof({
+            graffiti: username16,
+        })
+        expect(await proof.verify()).to.be.true
     })
 
     it('should be able to use unused username', async () => {
-        // sign up a new user
-        const attesterId = BigInt(
-            await unirepContract.attesters(unirepSocialContract.address)
-        )
-        const id = new ZkIdentity()
-        await unirepSocialContract
-            .userSignUp(id.genIdentityCommitment())
-            .then((t) => t.wait())
+        // set username1
+        const epkNonce = 0
         const userState = await genUserState(
             ethers.provider,
             unirepContract.address,
-            id
+            id,
+            attesterId
         )
-
-        // set username1
-        const epkNonce = 0
         const { epochKey: epochKey1 } = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce
+            { epkNonce }
         )
 
         const username1_10 = 'test1'
         const username1_16 = ethers.utils.hexlify(
             ethers.utils.toUtf8Bytes(username1_10)
         )
-        const username1 = hashOne(username1_16)
         await unirepSocialContract
-            .setUsername(epochKey1, 0, username1, {
-                value: DEFAULT_ATTESTING_FEE,
-            })
+            .setUsername(epochKey1, 0, username1_16)
             .then((t) => t.wait())
-        console.log('set username to username1:', username1_10)
 
         // epoch transition 1
+        await ethers.provider.send('evm_increaseTime', [defaultEpochLength])
+        await ethers.provider.send('evm_mine', [])
+
+        // user state transition
         {
-            await ethers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
-            let tx = await unirepContract.beginEpochTransition()
-            let receipt = await tx.wait()
-            expect(receipt.status).equal(1)
-        }
-
-        //////// user state transition ////////
-        // gen proof and verify proof off-chain
-        await userState.waitForSync()
-        const {
-            startTransitionProof: startTransitionProof1,
-            processAttestationProofs: processAttestationProofs1,
-            finalTransitionProof: finalTransitionProof1,
-        } = await userState.genUserStateTransitionProofs()
-        let isValid = await startTransitionProof1.verify()
-        expect(isValid, 'Verify start transition circuit off-chain failed').to
-            .be.true
-
-        // Verify start transition proof on-chain
-        isValid = await unirepContract.verifyStartTransitionProof(
-            startTransitionProof1.publicSignals,
-            startTransitionProof1.proof
-        )
-        expect(isValid, 'Verify start transition circuit on-chain failed').to.be
-            .true
-
-        // start user state transition
-        let tx = await unirepSocialContract.startUserStateTransition(
-            startTransitionProof1.publicSignals,
-            startTransitionProof1.proof
-        )
-        let receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a start transition proof:',
-            receipt.gasUsed.toString()
-        )
-
-        // verify process attestation proofs
-        for (let i = 0; i < processAttestationProofs1.length; i++) {
-            expect(
-                await processAttestationProofs1[i].verify(),
-                'Verify process attestations circuit off-chain failed'
-            ).to.be.true
-
-            // Verify processAttestations proof on-chain
-            const isProofValid =
-                await unirepContract.verifyProcessAttestationProof(
-                    processAttestationProofs1[i].publicSignals,
-                    processAttestationProofs1[i].proof
-                )
-            expect(
-                isProofValid,
-                'Verify process attestations circuit on-chain failed'
-            ).to.be.true
-
-            const tx = await unirepSocialContract.processAttestations(
-                processAttestationProofs1[i].publicSignals,
-                processAttestationProofs1[i].proof
+            await userState.waitForSync()
+            const toEpoch = await unirepContract.attesterCurrentEpoch(
+                attesterId
             )
-            const receipt = await tx.wait()
-            expect(
-                receipt.status,
-                'Submit process attestations proof failed'
-            ).to.equal(1)
-            console.log(
-                'Gas cost of submit a process attestations proof:',
-                receipt.gasUsed.toString()
-            )
+            const { publicSignals, proof } =
+                await userState.genUserStateTransitionProof({ toEpoch })
+            await unirepContract
+                .userStateTransition(publicSignals, proof)
+                .then((t) => t.wait())
         }
-
-        // verify final transition proof
-        isValid = await finalTransitionProof1.verify()
-        expect(isValid, 'Verify user state transition circuit off-chain failed')
-            .to.be.true
-
-        // Verify userStateTransition proof on-chain
-        const isProofValid = await unirepContract.verifyUserStateTransition(
-            finalTransitionProof1.publicSignals,
-            finalTransitionProof1.proof
-        )
-        expect(
-            isProofValid,
-            'Verify user state transition circuit on-chain failed'
-        ).to.be.true
-
-        // update user state root
-        tx = await unirepContract.updateUserStateRoot(
-            finalTransitionProof1.publicSignals,
-            finalTransitionProof1.proof
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a user state transition proof:',
-            receipt.gasUsed.toString()
-        )
 
         // user1 should prove username
-        await userState.waitForSync()
-        const reputationProof1 = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce,
-            undefined,
-            BigInt(1),
-            username1_16
-        )
-        expect(await reputationProof1.verify(), 'username is not username1').to
-            .be.true
+        {
+            await userState.waitForSync()
+            const proof = await userState.genProveReputationProof({
+                graffiti: username1_16,
+            })
+            expect(await proof.verify()).to.be.true
+        }
 
         // set username2, username1 should be freed
         const { epochKey: epochKey2 } = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce
+            { epkNonce }
         )
         const username2_10 = 'test2'
         const username2_16 = ethers.utils.hexlify(
             ethers.utils.toUtf8Bytes(username2_10)
         )
-        const username2 = hashOne(username2_16)
-        receipt = await unirepSocialContract
-            .setUsername(epochKey2, username1, username2, {
-                value: DEFAULT_ATTESTING_FEE,
-            })
+        await unirepSocialContract
+            .setUsername(epochKey2, username1_16, username2_16)
             .then((t) => t.wait())
-        expect(receipt.status, 'set username to username2 failed').to.equal(1)
-        console.log('set username to username2:', username2_10)
 
         // epoch transition 2
+        await ethers.provider.send('evm_increaseTime', [defaultEpochLength])
+        await ethers.provider.send('evm_mine', [])
+
+        // user state transition
         {
-            await ethers.provider.send('evm_increaseTime', [EPOCH_LENGTH])
-            let tx = await unirepContract.beginEpochTransition()
-            let receipt = await tx.wait()
-            expect(receipt.status).equal(1)
-        }
-
-        //////// user state transition ////////
-        // gen proof and verify proof off-chain
-        await userState.waitForSync()
-        const {
-            startTransitionProof: startTransitionProof2,
-            processAttestationProofs: processAttestationProofs2,
-            finalTransitionProof: finalTransitionProof2,
-        } = await userState.genUserStateTransitionProofs()
-        isValid = await startTransitionProof2.verify()
-        expect(isValid, 'Verify start transition circuit off-chain failed').to
-            .be.true
-
-        // Verify start transition proof on-chain
-        isValid = await unirepContract.verifyStartTransitionProof(
-            startTransitionProof2.publicSignals,
-            startTransitionProof2.proof
-        )
-        expect(isValid, 'Verify start transition circuit on-chain failed').to.be
-            .true
-
-        // start user state transition
-        tx = await unirepSocialContract.startUserStateTransition(
-            startTransitionProof2.publicSignals,
-            startTransitionProof2.proof
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a start transition proof:',
-            receipt.gasUsed.toString()
-        )
-
-        // verify process attestation proofs
-        for (let i = 0; i < processAttestationProofs2.length; i++) {
-            expect(
-                await processAttestationProofs2[i].verify(),
-                'Verify process attestations circuit off-chain failed'
-            ).to.be.true
-
-            // Verify processAttestations proof on-chain
-            const isProofValid =
-                await unirepContract.verifyProcessAttestationProof(
-                    processAttestationProofs2[i].publicSignals,
-                    processAttestationProofs2[i].proof
-                )
-            expect(
-                isProofValid,
-                'Verify process attestations circuit on-chain failed'
-            ).to.be.true
-
-            const tx = await unirepSocialContract.processAttestations(
-                processAttestationProofs2[i].publicSignals,
-                processAttestationProofs2[i].proof
+            await userState.waitForSync()
+            const toEpoch = await unirepContract.attesterCurrentEpoch(
+                attesterId
             )
-            const receipt = await tx.wait()
-            expect(
-                receipt.status,
-                'Submit process attestations proof failed'
-            ).to.equal(1)
-            console.log(
-                'Gas cost of submit a process attestations proof:',
-                receipt.gasUsed.toString()
-            )
+            const { publicSignals, proof } =
+                await userState.genUserStateTransitionProof({ toEpoch })
+            await unirepContract
+                .userStateTransition(publicSignals, proof)
+                .then((t) => t.wait())
         }
-
-        // verify final transition proof
-        isValid = await finalTransitionProof2.verify()
-        expect(isValid, 'Verify user state transition circuit off-chain failed')
-            .to.be.true
-
-        // Verify userStateTransition proof on-chain
-        const isProofValid2 = await unirepContract.verifyUserStateTransition(
-            finalTransitionProof2.publicSignals,
-            finalTransitionProof2.proof
-        )
-        expect(
-            isProofValid2,
-            'Verify user state transition circuit on-chain failed'
-        ).to.be.true
-
-        // update user state root
-        tx = await unirepContract.updateUserStateRoot(
-            finalTransitionProof2.publicSignals,
-            finalTransitionProof2.proof
-        )
-        receipt = await tx.wait()
-        expect(
-            receipt.status,
-            'Submit user state transition proof failed'
-        ).to.equal(1)
-        console.log(
-            'Gas cost of submit a user state transition proof:',
-            receipt.gasUsed.toString()
-        )
 
         // user should prove username
-        await userState.waitForSync()
-        const reputationProof2 = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce,
-            undefined,
-            BigInt(1),
-            username2_16
-        )
-        expect(await reputationProof2.verify(), 'username is not username2').to
-            .be.true
+        {
+            await userState.waitForSync()
+            const proof = await userState.genProveReputationProof({
+                graffiti: username2_16,
+            })
+            expect(await proof.verify()).to.be.true
+        }
 
         // set username to username1 again
-        const { epochKey: epochKey3 } = await userState.genProveReputationProof(
-            attesterId,
-            epkNonce
-        )
-        receipt = await unirepSocialContract
-            .setUsername(epochKey3, username2, username1, {
-                value: DEFAULT_ATTESTING_FEE,
-            })
-            .then((t) => t.wait())
-        expect(receipt.status, 'Unable to use username 1').to.equal(1)
+        {
+            const { epochKey: epochKey3 } =
+                await userState.genProveReputationProof({ epkNonce })
+            await unirepSocialContract
+                .setUsername(epochKey3, username2_16, username1_16)
+                .then((t) => t.wait())
+        }
     })
 })

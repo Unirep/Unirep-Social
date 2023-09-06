@@ -63,10 +63,9 @@ const PrivateKey = () => {
                     type: 'text/plain',
                 })
             } else {
-                file = new Blob(
-                    [userContext.id?.serializeIdentity() as string],
-                    { type: 'text/plain' }
-                )
+                file = new Blob([userContext.id?.toString() as string], {
+                    type: 'text/plain',
+                })
             }
 
             element.href = URL.createObjectURL(file)

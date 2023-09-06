@@ -1,12 +1,15 @@
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import AppRouter from './router'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './app.scss'
-import './context/EpochManager'
 import { configure } from 'mobx'
 
 configure({
     enforceActions: 'never',
 })
 
-ReactDOM.render(<AppRouter />, document.getElementById('root'))
+const rootElement = document.getElementById('root')
+if (rootElement) {
+    const root = createRoot(rootElement)
+    root.render(<AppRouter />)
+}

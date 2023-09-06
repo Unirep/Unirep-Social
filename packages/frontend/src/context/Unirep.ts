@@ -11,18 +11,18 @@ import {
 export class UnirepConfig {
     unirepAddress = ''
     unirepSocialAddress = ''
-    globalStateTreeDepth = 11
-    userStateTreeDepth = 5
-    epochTreeDepth = 64
-    attestingFee = 1
+    stateTreeDepth = 12
+    epochTreeDepth = 4
+    fieldCount = 6
+    sumFieldCount = 4
     numEpochKeyNoncePerEpoch = 3
-    numAttestationsPerEpochKey = 6
+    startTimestamp = +new Date()
     epochLength = 30
     maxReputationBudget = 10
     maxUsers = 0
     postReputation = 0
     commentReputation = 0
-    airdroppedReputation = 0
+    // airdroppedReputation = 0
     attesterId = 0
     subsidy = 0
     unirep = null as any as ethers.Contract
@@ -54,58 +54,51 @@ export class UnirepConfig {
             UNIREP_SOCIAL_ABI,
             DEFAULT_ETH_PROVIDER
         )
+        const attesterFilter =
+            this.unirep.filters.AttesterSignedUp(unirepSocialAddress)
 
         const v = await Promise.all([
             this.unirepSocial.attesterId(),
             this.unirepSocial.postReputation(),
             this.unirepSocial.commentReputation(),
-            this.unirepSocial.airdroppedReputation(),
+            // this.unirepSocial.airdroppedReputation(),
             this.unirepSocial.subsidy(),
-            this.unirep.config(),
+            this.unirepSocial.maxReputationBudget(),
+            this.unirepSocial.epochLength(),
+            this.unirep.stateTreeDepth(),
+            this.unirep.epochTreeDepth(),
+            this.unirep.fieldCount(),
+            this.unirep.sumFieldCount(),
+            this.unirep.numEpochKeyNoncePerEpoch(),
+            this.unirep.queryFilter(attesterFilter),
         ])
         this.attesterId = +v[0].toString()
         this.postReputation = +v[1].toString()
         this.commentReputation = +v[2].toString()
-        this.airdroppedReputation = +v[3].toString()
-        this.subsidy = +v[4].toString()
-        const config = v[5]
-        //   struct Config {
-        //     // circuit config
-        //     uint8 globalStateTreeDepth;
-        //     uint8 userStateTreeDepth;
-        //     uint8 epochTreeDepth;
-        //     uint256 numEpochKeyNoncePerEpoch;
-        //     uint256 maxReputationBudget;
-        //     uint256 numAttestationsPerProof;
-        //     // contract config
-        //     uint256 epochLength;
-        //     uint256 attestingFee;
-        //     uint256 maxUsers;
-        //     uint256 maxAttesters;
-        // }
+        // this.airdroppedReputation = +v[3].toString()
+        this.subsidy = +v[3].toString()
+        this.maxReputationBudget = +v[4].toString()
+        this.epochLength = +v[5].toNumber()
 
-        this.globalStateTreeDepth = +config.globalStateTreeDepth
-        this.userStateTreeDepth = +config.userStateTreeDepth
-        this.epochTreeDepth = +config.epochTreeDepth
-        this.numEpochKeyNoncePerEpoch =
-            config.numEpochKeyNoncePerEpoch.toNumber()
-        this.maxReputationBudget = config.maxReputationBudget.toNumber()
-        //
-        this.epochLength = config.epochLength.toNumber()
-        this.attestingFee = config.attestingFee.toNumber()
-        this.maxUsers = config.maxUsers.toNumber()
+        this.stateTreeDepth = +v[6].toString()
+        this.epochTreeDepth = +v[7].toString()
+        this.fieldCount = +v[8].toString()
+        this.sumFieldCount = +v[9].toString()
+        this.numEpochKeyNoncePerEpoch = +v[10].toString()
+        const event = v[11][0]
+        const decodedData = this.unirep.interface.decodeEventLog(
+            'AttesterSignedUp',
+            event.data,
+            event.topics
+        )
+        const { timestamp } = decodedData
+        this.startTimestamp = timestamp
         this.loaded = true
-    }
-
-    async nextEpochTime() {
-        await this.loadingPromise
-        const lastTransition = await this.unirep.latestEpochTransitionTime()
-        return (+lastTransition.toString() + this.epochLength) * 1000
     }
 
     async currentEpoch() {
         await this.loadingPromise
-        return this.unirep.currentEpoch()
+        return this.unirep.attesterCurrentEpoch(this.unirepSocial.address)
     }
 }
 

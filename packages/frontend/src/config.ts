@@ -2,7 +2,8 @@ import { ethers } from 'ethers'
 import UnirepSocial from '@unirep-social/core/abi/UnirepSocial.json'
 import Unirep from '@unirep/contracts/abi/Unirep.json'
 
-const EXPLORER_URL = 'https://blockscout.com/optimism/goerli'
+const EXPLORER_URL =
+    process.env.EXPLORER_URL ?? 'https://goerli-optimism.etherscan.io'
 
 let config: any = {}
 try {
@@ -17,12 +18,12 @@ try {
 
 if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
     config.SERVER = 'http://testurl.invalidtld'
-    config.DEFAULT_ETH_PROVIDER_URL = 'http://localhost:18545'
+    config.DEFAULT_ETH_PROVIDER_URL = 'http://127.0.0.1:18545'
 }
 
-const SERVER = config.SERVER ?? 'http://localhost:3001'
+const SERVER = process.env.SERVER ?? 'http://127.0.0.1:3001'
 const DEFAULT_ETH_PROVIDER_URL =
-    config.DEFAULT_ETH_PROVIDER_URL ?? 'http://localhost:8545'
+    config.DEFAULT_ETH_PROVIDER_URL ?? 'http://127.0.0.1:8545'
 const DEFAULT_ETH_PROVIDER = DEFAULT_ETH_PROVIDER_URL.startsWith('http')
     ? new ethers.providers.JsonRpcProvider(DEFAULT_ETH_PROVIDER_URL)
     : new ethers.providers.WebSocketProvider(DEFAULT_ETH_PROVIDER_URL)

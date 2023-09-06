@@ -1,9 +1,9 @@
 import { useContext } from 'react'
 
-import { ActionType } from '@unirep-social/core'
 import UserContext from '../context/User'
 import QueueContext, { Metadata } from '../context/Queue'
 import EpochContetxt from '../context/EpochManager'
+import { ActionType } from '../constants'
 
 const RefreshReminder = () => {
     const userContext = useContext(UserContext)
