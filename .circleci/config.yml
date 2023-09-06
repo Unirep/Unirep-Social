@@ -21,6 +21,8 @@ workflows:
                       - build
             - staging-deploy:
                   context: cloudflare
+                  requires:
+                      - build
                   filters:
                       branches:
                           only:
@@ -163,15 +165,16 @@ jobs:
             image: ubuntu-2204:2022.04.1
         steps:
             - checkout
+            - attach_workspace:
+                  at: ~/project
             - run: *node_version
             - run: *check_version
             - run:
                   name: Install Packages
-                  command: yarn && yarn bootstrap --force-local
+                  command: yarn bootstrap --force-local
             - run:
                   name: Build
                   command: |
-                      yarn build --scope @unirep-social/circuits --scope @unirep-social/core
                       cd packages/frontend
                       echo "export default {DEFAULT_ETH_PROVIDER_URL: 'https://opt-goerli.g.alchemy.com/v2/3DDbMgNQZwgrzVl1mhaVqN3zog5OZpAU', SERVER:'https://api.unirep.social'}" > src/localConfig.ts
                       yarn build --mode production
