@@ -21,7 +21,6 @@
 </p>
 
 
-
 ## 💡 About Unirep Social
 **UniRep Social** is a social media that is built upon the [Unirep Protocol](https://github.com/Unirep/Unirep). The users of Unirep Social can publish posts, leave comments anonymously, and also give boost/squash to other users anonymously. User can also prove how much reputation he has when posting/commenting.
 
@@ -38,7 +37,7 @@ Install and build
 yarn & yarn build
 ```
 
-## Run Unirep Social in local
+## 👷 Run Unirep Social in local
 
 ### 1. Start a blockchain environment
 
@@ -48,6 +47,8 @@ cd packages/core && npx hardhat node
 
 ### 2. Deploy Unirep and Unirep Social smart contracts
 
+in new terminal window, from root:
+
 ```sh
 yarn core deploy --network local
 ```
@@ -55,9 +56,22 @@ yarn core deploy --network local
 ### 3 Start a relayer (backend)
 
 Copy the [.env.example](https://github.com/Unirep/Unirep-Social/blob/main/packages/backend/.env.example) file to an `.env` file in `packages/backend`
-Then grant permission from Twitter and [Github Oauth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
+Then grant permission from [X (Twitter) Oauth](https://developer.twitter.com/en/products/twitter-api) and [Github Oauth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
 
-Start a backend server by
+Set the authentication settings as following:
+| X (Twitter) | |
+|--|--|
+|**App permissions** | Read |
+|**Type of App** | Native App |
+|**Callback URL/Redirect URL** | `http://127.0.0.1:3001/api/oauth/twitter/callback` |
+
+
+| Github | |
+|--|--|
+|**Callback URL/Redirect URL** | `http://127.0.0.1:3001/api/oauth/github/callback` |
+
+
+in new terminal window, from root:
 
 ```sh
 yarn backend start
@@ -65,11 +79,26 @@ yarn backend start
 
 ### 4. Start a frontend
 
+in new terminal window, from root:
 ```sh
 yarn frontend start
 ```
 
 It will be running at: http://127.0.0.1:3000/ by default.
+
+## 🌈 Lint
+
+### Format the code
+
+```sh
+yarn lint:fix
+```
+
+### Check if the code is formatted
+
+```sh
+yarn lint:check
+```
 
 ## 🎯 Contributing
 
@@ -81,7 +110,7 @@ Go to [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CO
 - Twitter account: <a href="https://twitter.com/UniRep_Protocol"><img src="https://img.shields.io/twitter/follow/UniRep_Protocol?style=flat-square&logo=twitter"></a>
 - Telegram group: <a href="https://t.me/unirep"><img src="https://img.shields.io/badge/telegram-@unirep-blue.svg?style=flat-square&logo=telegram"></a>
 
-## <img height="24" src="https://ethereum.org/static/a183661dd70e0e5c70689a0ec95ef0ba/13c43/eth-diamond-purple.png"> Privacy & Scaling Explorations
+## <img height="24" src="https://pse.dev/_next/static/media/header-logo.16312102.svg"> Privacy & Scaling Explorations
 
-This project is supported by [Privacy & Scaling Explorations](https://github.com/privacy-scaling-explorations) in Ethereum Foundation.
-See more projects on: https://appliedzkp.org/.
+This project is supported by [Privacy & Scaling Explorations](https://pse.dev/) in Ethereum Foundation.
+See more projects on: https://pse.dev/projects.
