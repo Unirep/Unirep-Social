@@ -76,7 +76,6 @@ export class User {
 
     // must be called in browser, not in SSR
     async load() {
-        await this.unirepConfig.loadingPromise
         const storedIdentity = window.localStorage.getItem('identity')
         if (storedIdentity) {
             const id = new Identity(storedIdentity)
