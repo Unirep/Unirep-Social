@@ -194,6 +194,29 @@ const _schema = [
             ['email', 'String', { optional: true }],
         ],
     },
+    {
+        name: 'Config',
+        primaryKey: 'attesterId',
+        rows: [
+            ['attesterId', 'String'],
+            ['postReputation', 'Int'],
+            ['commentReputation', 'Int'],
+            ['subsidy', 'Int'],
+            ['maxReputationBudget', 'Int'],
+            ['epochLength', 'Int'],
+            ['stateTreeDepth', 'Int'],
+            ['epochTreeDepth', 'Int'],
+            ['fieldCount', 'Int'],
+            ['sumFieldCount', 'Int'],
+            ['numEpochKeyNoncePerEpoch', 'Int'],
+            ['startTimestamp', 'Int'],
+            {
+                name: 'createdAt',
+                type: 'Int',
+                default: () => +new Date(),
+            },
+        ],
+    },
 ]
 
 export default _schema
