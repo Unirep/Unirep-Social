@@ -7,7 +7,7 @@ export default (app: Express) => {
 }
 
 async function getConfig(req, res) {
-    const attesterId = UNIREP_SOCIAL
+    const attesterId = BigInt(UNIREP_SOCIAL).toString()
     const {
         postReputation,
         commentReputation,

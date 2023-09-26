@@ -35,7 +35,7 @@ async function main() {
     })
     await sync.start()
 
-    const attesterId = UNIREP_SOCIAL
+    const attesterId = BigInt(UNIREP_SOCIAL).toString()
     const epochLength = await sync.unirepContract.attesterEpochLength(
         attesterId
     )

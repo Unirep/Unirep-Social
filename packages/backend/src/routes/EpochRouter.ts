@@ -9,7 +9,7 @@ export default (app: Express) => {
 async function getEpoch(req, res) {
     const epoch = await req.db.findOne('Epoch', {
         where: {
-            attesterId: UNIREP_SOCIAL,
+            attesterId: BigInt(UNIREP_SOCIAL).toString(),
         },
     })
     res.json({
