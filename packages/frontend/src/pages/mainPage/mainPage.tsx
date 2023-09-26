@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite'
 import PostContext from '../../context/Post'
 import UserContext from '../../context/User'
 import UnirepContext from '../../context/Unirep'
+import QueueContext from '../../context/Queue'
 
 import { QueryType, AlertType } from '../../constants'
 import BasicPage from '../basicPage/basicPage'
@@ -20,13 +21,14 @@ const MainPage = ({ topic }: Props) => {
     const postContext = useContext(PostContext)
     const userContext = useContext(UserContext)
     const unirepConfig = useContext(UnirepContext)
+    const queue = useContext(QueueContext)
     const location = useLocation()
 
     const [query, setQuery] = useState<QueryType>(QueryType.New)
 
     useEffect(() => {
         loadMorePosts(topic)
-    }, [topic, query, location])
+    }, [topic, query, location, queue.daemonRunning])
 
     const loadMorePosts = (topic: string) => {
         const key = `${query}-${topic}`
