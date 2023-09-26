@@ -11,6 +11,9 @@ async function getEpoch(req, res) {
         where: {
             attesterId: BigInt(UNIREP_SOCIAL).toString(),
         },
+        orderBy: {
+            number: 'desc',
+        },
     })
     res.json({
         epoch: epoch ? epoch.number : 0,
