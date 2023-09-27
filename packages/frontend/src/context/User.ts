@@ -104,13 +104,9 @@ export class User {
     }
 
     async loadCurrentEpoch() {
-        await this.unirepConfig.loadingPromise
-        this.currentEpoch = Number(
-            await this.unirepConfig.unirep.attesterCurrentEpoch(
-                this.unirepConfig.unirepSocialAddress
-            )
-        )
-        return this.currentEpoch
+        const url = makeURL('epoch', {})
+        const { epoch } = await fetch(url.toString()).then((r) => r.json())
+        return epoch
     }
 
     calcEpoch() {
@@ -270,8 +266,8 @@ export class User {
         const db = new MemoryConnector(constructSchema(schema))
         this.userState = new SocialUserState({
             db: db as DB,
-            provider: this.unirepConfig.unirep.provider,
-            unirepAddress: this.unirepConfig.unirep.address,
+            provider: this.unirepConfig.provider,
+            unirepAddress: this.unirepConfig.unirepAddress,
             attesterId: this.unirepConfig.unirepSocialAddress,
             id: this.id,
             unirepSocialAddress: this.unirepConfig.unirepSocialAddress,
@@ -281,14 +277,7 @@ export class User {
         await this.userState.waitForSync()
         const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
             .topics as string[]
-        // const [AttestationSubmitted] =
-        //     this.unirepConfig.unirep.filters.AttestationSubmitted()
-        //         .topics as string[]
         this.userState.sync.on(EpochEnded, this.epochEnded.bind(this))
-        // this.userState.on(
-        //     AttestationSubmitted,
-        //     this.attestationSubmitted.bind(this)
-        // )
     }
 
     async updateLatestTransitionedEpoch() {
