@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 import { makeAutoObservable } from 'mobx'
 import { ethers } from 'ethers'
-import { SERVER, UNIREP_SOCIAL_ABI } from '../config'
+import { SERVER, UNIREP_ABI, UNIREP_SOCIAL_ABI } from '../config'
 
 export class UnirepConfig {
     unirepAddress = ''
@@ -21,6 +21,7 @@ export class UnirepConfig {
     // airdroppedReputation = 0
     attesterId = 0
     subsidy = 0
+    unirep = null as any as ethers.Contract
     unirepSocial = null as any as ethers.Contract
 
     loadingPromise
@@ -54,6 +55,11 @@ export class UnirepConfig {
         this.unirepAddress = unirepAddress
         this.unirepSocialAddress = unirepSocialAddress
         // now load the contract specifics
+        this.unirep = new ethers.Contract(
+            unirepAddress,
+            UNIREP_ABI,
+            this.provider
+        )
         this.unirepSocial = new ethers.Contract(
             unirepSocialAddress,
             UNIREP_SOCIAL_ABI,

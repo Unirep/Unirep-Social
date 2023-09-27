@@ -89,6 +89,13 @@ export class User {
             await this.updateLatestTransitionedEpoch()
             await this.loadRecords()
         }
+
+        // start listening for new epochs
+        this.unirepConfig.unirep.on(
+            'EpochEnded',
+            this.loadCurrentEpoch.bind(this)
+        )
+        await this.loadCurrentEpoch()
     }
 
     save() {
@@ -269,6 +276,9 @@ export class User {
         })
         await this.userState.start()
         await this.userState.waitForSync()
+        const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
+            .topics as string[]
+        this.userState.sync.on(EpochEnded, this.epochEnded.bind(this))
     }
 
     async updateLatestTransitionedEpoch() {
