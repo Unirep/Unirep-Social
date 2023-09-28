@@ -3,6 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
 const webpack = require('webpack')
 const Dotenv = require('dotenv-webpack')
 
@@ -104,9 +105,14 @@ module.exports = (env) => ({
             template: 'public/index.html',
             filename: 'index.html',
             inlineSource: '.(js|css)',
+            favicon: 'public/favicon.ico',
         }),
         new MiniCssExtractPlugin({
             filename: 'styles.css',
+        }),
+        new WebpackManifestPlugin({
+            template: 'public/manifest.json',
+            fileName: 'manifest.json',
         }),
         // new HtmlWebpackInlineSourcePlugin(),
         new webpack.DefinePlugin({
