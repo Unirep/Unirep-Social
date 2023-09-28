@@ -8,7 +8,7 @@
         "buildVerifier": "ts-node ./deploy/genVerifier.ts ",
         "abi": "node scripts/abi",
         "compile": "hardhat compile",
-        "test": "hardhat test",
+        "test": "hardhat test --network hardhat",
         "deploy": "hardhat run scripts/deploy.js"
     },
     "repository": {
