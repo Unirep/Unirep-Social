@@ -82,12 +82,11 @@ export class User {
             const id = new Identity(storedIdentity)
             await this.loadCurrentEpoch()
             await this.setIdentity(id)
-            await this.calculateAllEpks()
-            await this.startSync()
-            await this.userState?.waitForSync()
             await this.loadReputation()
-            await this.updateLatestTransitionedEpoch()
+            await this.calculateAllEpks()
             await this.loadRecords()
+            await this.startSync()
+            await this.updateLatestTransitionedEpoch()
         }
 
         // start listening for new epochs
@@ -317,7 +316,7 @@ export class User {
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
-        const epoch = await this.userState?.sync.loadCurrentEpoch()
+        const epoch = await this.loadCurrentEpoch()
         const subsidy = this.unirepConfig.subsidy
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
@@ -493,6 +492,7 @@ export class User {
     async logout() {
         if (this.userState) {
             this.userState.sync.stop()
+            await this.userState.sync.db.close()
             await this.userState.sync.db.closeAndWipe()
             this.userState = undefined
         }
