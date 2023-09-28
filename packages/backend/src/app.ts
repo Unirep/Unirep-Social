@@ -35,6 +35,44 @@ async function main() {
     })
     await sync.start()
 
+    const attesterId = BigInt(UNIREP_SOCIAL).toString()
+    const epochLength = await sync.unirepContract.attesterEpochLength(
+        attesterId
+    )
+    const startTimestamp = (
+        await sync.unirepContract.attesterStartTimestamp(attesterId)
+    ).toNumber()
+    const { postReputation, commentReputation, subsidy, maxReputationBudget } =
+        sync.socialConfig
+    const {
+        sumFieldCount,
+        fieldCount,
+        stateTreeDepth,
+        epochTreeDepth,
+        numEpochKeyNoncePerEpoch,
+    } = sync.settings
+
+    await db.upsert('Config', {
+        where: {
+            attesterId,
+        },
+        create: {
+            attesterId,
+            postReputation,
+            commentReputation,
+            subsidy,
+            maxReputationBudget,
+            epochLength,
+            startTimestamp,
+            stateTreeDepth,
+            epochTreeDepth,
+            fieldCount,
+            sumFieldCount,
+            numEpochKeyNoncePerEpoch,
+        },
+        update: {},
+    })
+
     // now start the http server
     const app = express()
     app.use(cors())

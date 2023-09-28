@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'test' || process.env.CYPRESS) {
     config.DEFAULT_ETH_PROVIDER_URL = 'http://127.0.0.1:18545'
 }
 
-const SERVER = process.env.SERVER ?? 'http://127.0.0.1:3001'
+const SERVER = config.SERVER ?? 'http://127.0.0.1:3001'
 const DEFAULT_ETH_PROVIDER_URL =
     config.DEFAULT_ETH_PROVIDER_URL ?? 'http://127.0.0.1:8545'
 const DEFAULT_ETH_PROVIDER = DEFAULT_ETH_PROVIDER_URL.startsWith('http')

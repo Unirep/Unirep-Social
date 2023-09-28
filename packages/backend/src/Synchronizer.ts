@@ -21,11 +21,12 @@ export enum ActionType {
 }
 
 export interface UnirepSocialConfig {
-    postRep: number
-    commentRep: number
+    postReputation: number
+    commentReputation: number
     airdropRep: number
     epochLength: number
     subsidy: number
+    maxReputationBudget: number
 }
 
 type EventHandlerArgs = {
@@ -36,11 +37,12 @@ type EventHandlerArgs = {
 
 export class UnirepSocialSynchronizer extends Synchronizer {
     socialConfig = {
-        postRep: 5,
-        commentRep: 3,
+        postReputation: 5,
+        commentReputation: 3,
         // airdropRep: 0,
         epochLength: 15 * 60,
         subsidy: 30,
+        maxReputationBudget: 10,
     }
     unirepSocialContract: ethers.Contract
 
@@ -82,10 +84,10 @@ export class UnirepSocialSynchronizer extends Synchronizer {
 
     async setup() {
         await super.setup()
-        this.socialConfig.postRep = (
+        this.socialConfig.postReputation = (
             await this.unirepSocialContract.postReputation()
         ).toNumber()
-        this.socialConfig.commentRep = (
+        this.socialConfig.commentReputation = (
             await this.unirepSocialContract.commentReputation()
         ).toNumber()
         // this.socialConfig.airdropRep = (await this.unirepSocialContract.airdroppedReputation()).toNumber()
@@ -94,6 +96,9 @@ export class UnirepSocialSynchronizer extends Synchronizer {
         ).toNumber()
         this.socialConfig.subsidy = (
             await this.unirepSocialContract.subsidy()
+        ).toNumber()
+        this.socialConfig.maxReputationBudget = (
+            await this.unirepSocialContract.maxReputationBudget()
         ).toNumber()
     }
 
@@ -181,7 +186,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 to: epochKey,
                 from: epochKey,
                 upvote: 0,
-                downvote: this.socialConfig.commentRep,
+                downvote: this.socialConfig.commentReputation,
                 epoch,
                 action: ActionType.Comment,
                 transactionHash,
@@ -240,7 +245,7 @@ export class UnirepSocialSynchronizer extends Synchronizer {
                 to: epochKey,
                 from: epochKey,
                 upvote: 0,
-                downvote: this.socialConfig.postRep,
+                downvote: this.socialConfig.postReputation,
                 epoch,
                 action: ActionType.Post,
                 transactionHash,

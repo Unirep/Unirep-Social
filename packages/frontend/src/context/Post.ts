@@ -94,6 +94,8 @@ export class Data {
     }
 
     async loadPost(id: string) {
+        await unirepConfig.loadingPromise
+
         const apiURL = makeURL(`post/${id}`, {})
         const r = await fetch(apiURL)
         const data = await r.json()
@@ -107,6 +109,8 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
+        await unirepConfig.loadingPromise
+
         const apiURL = makeURL(`post`, {
             query,
             // only include topic if it is truthy!
@@ -137,6 +141,8 @@ export class Data {
         lastRead = [] as string[],
         epks = [] as string[]
     ) {
+        await unirepConfig.loadingPromise
+
         const apiURL = makeURL(`comment`, {
             query,
             lastRead: lastRead.join('_'),
