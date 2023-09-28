@@ -7,13 +7,13 @@ import { ethers } from 'ethers'
 import { genEpochKey, stringifyBigInts } from '@unirep/utils'
 import { Identity } from '@semaphore-protocol/identity'
 import { makeURL } from '../utils'
-import { schema } from '@unirep/core'
+// TODO: update @unirep/core schema
+import { schema } from './schema'
 import { Prover } from '@unirep/circuits'
 import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
-import { DB, MemoryConnector } from 'anondb/web'
-import { constructSchema } from 'anondb/types'
+import { DB, IndexedDBConnector } from 'anondb/web'
 import aes from 'aes-js'
 
 export class User {
@@ -267,7 +267,7 @@ export class User {
         } else {
             this.id = identity
         }
-        const db = new MemoryConnector(constructSchema(schema))
+        const db = await IndexedDBConnector.create(schema)
         this.userState = new SocialUserState({
             db: db as DB,
             provider: this.unirepConfig.unirep.provider,
