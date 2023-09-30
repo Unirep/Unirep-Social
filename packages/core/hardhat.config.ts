@@ -3,7 +3,7 @@ import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-chai-matchers'
 
 export default {
-    defaultNetwork: 'hardhat',
+    defaultNetwork: 'local',
     networks: {
         hardhat: {
             blockGasLimit: 12000000,

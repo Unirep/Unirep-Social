@@ -7,13 +7,13 @@ import { ethers } from 'ethers'
 import { genEpochKey, stringifyBigInts } from '@unirep/utils'
 import { Identity } from '@semaphore-protocol/identity'
 import { makeURL } from '../utils'
-import { schema } from '@unirep/core'
+// TODO: update @unirep/core schema
+import { schema } from './schema'
 import { Prover } from '@unirep/circuits'
 import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
 import UnirepContext from './Unirep'
-import { DB, MemoryConnector } from 'anondb/web'
-import { constructSchema } from 'anondb/types'
+import { DB, IndexedDBConnector } from 'anondb/web'
 import aes from 'aes-js'
 
 export class User {
@@ -82,12 +82,11 @@ export class User {
             const id = new Identity(storedIdentity)
             await this.loadCurrentEpoch()
             await this.setIdentity(id)
-            await this.calculateAllEpks()
-            await this.startSync()
-            await this.userState?.waitForSync()
             await this.loadReputation()
-            await this.updateLatestTransitionedEpoch()
+            await this.calculateAllEpks()
             await this.loadRecords()
+            await this.startSync()
+            await this.updateLatestTransitionedEpoch()
         }
 
         // start listening for new epochs
@@ -264,7 +263,7 @@ export class User {
         } else {
             this.id = identity
         }
-        const db = new MemoryConnector(constructSchema(schema))
+        const db = await IndexedDBConnector.create(schema)
         this.userState = new SocialUserState({
             db: db as DB,
             provider: this.unirepConfig.provider,
@@ -317,7 +316,7 @@ export class User {
     async loadReputation() {
         if (!this.id || !this.userState) return { posRep: 0, negRep: 0 }
 
-        const epoch = await this.userState?.sync.loadCurrentEpoch()
+        const epoch = await this.loadCurrentEpoch()
         const subsidy = this.unirepConfig.subsidy
         // see the unirep social circuits for more info about this
         // the subsidy key is an epoch key that doesn't have the modulus applied
@@ -493,6 +492,7 @@ export class User {
     async logout() {
         if (this.userState) {
             this.userState.sync.stop()
+            await this.userState.sync.db.close()
             await this.userState.sync.db.closeAndWipe()
             this.userState = undefined
         }
