@@ -3,7 +3,6 @@ import { useState, useContext } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
 import { observer } from 'mobx-react-lite'
-import MarkdownIt from 'markdown-it'
 
 import UnirepContext from '../context/Unirep'
 import PostContext from '../context/Post'
@@ -17,13 +16,7 @@ import CustomGap from './customGap'
 import { DataType } from '../constants'
 import { Page } from '../constants'
 import BlockButton, { BlockButtonType } from './blockButton'
-import { shortenEpochKey } from '../utils'
-
-const markdown = new MarkdownIt({
-    breaks: true,
-    html: false,
-    linkify: true,
-})
+import { shortenEpochKey, markdown } from '../utils'
 
 type Props = {
     commentId: string

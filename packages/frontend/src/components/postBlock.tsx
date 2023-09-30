@@ -14,14 +14,7 @@ import CommentField from './commentField'
 import CommentBlock from './commentBlock'
 import BlockButton, { BlockButtonType } from './blockButton'
 import RefreshReminder from './refreshReminder'
-import MarkdownIt from 'markdown-it'
-import { shortenEpochKey } from '../utils'
-
-const markdown = new MarkdownIt({
-    breaks: true,
-    html: false,
-    linkify: true,
-})
+import { markdown, shortenEpochKey } from '../utils'
 
 type AlertProps = {
     type: AlertType

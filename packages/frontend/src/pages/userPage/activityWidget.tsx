@@ -1,11 +1,10 @@
 import { useState, useEffect, useContext } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import dateformat from 'dateformat'
-import MarkdownIt from 'markdown-it'
 
 import { ActionType, Record } from '../../constants'
 import PostContext from '../../context/Post'
-import { shortenEpochKey } from '../../utils'
+import { markdown, shortenEpochKey } from '../../utils'
 
 type Props = {
     record: Record
@@ -21,12 +20,6 @@ type ActionData = {
     title: string
     content: string
 }
-
-const markdown = new MarkdownIt({
-    breaks: true,
-    html: false,
-    linkify: true,
-})
 
 const ActivityWidget = ({ record, isSpent }: Props) => {
     const postContext = useContext(PostContext)
