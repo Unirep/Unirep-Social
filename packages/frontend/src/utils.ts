@@ -1,6 +1,8 @@
 import * as config from './config'
 import { Record } from './constants'
 import UnirepContext from './context/Unirep'
+import MarkdownIt from 'markdown-it'
+import Mathjax3 from 'markdown-it-mathjax3'
 
 export const shortenEpochKey = (epk: string) => {
     if (!epk) return epk
@@ -91,3 +93,11 @@ export const getLatestBlock = async () => {
     const data = await r.json()
     return data.blockNumber
 }
+
+const markdown = new MarkdownIt({
+    breaks: true,
+    html: false,
+    linkify: true,
+})
+markdown.use(Mathjax3)
+export { markdown }

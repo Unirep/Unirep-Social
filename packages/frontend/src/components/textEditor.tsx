@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import MarkdownIt from 'markdown-it'
+import { markdown } from '../utils'
 
 type Props = {
     content: string
@@ -15,12 +15,6 @@ enum TextStyle {
     Quote,
     List,
 }
-
-const markdown = new MarkdownIt({
-    breaks: true,
-    html: false,
-    linkify: true,
-})
 
 const TextEditor = ({ content, setContent, autoFocus }: Props) => {
     const [isPreview, setIsPreview] = useState<boolean>(false)

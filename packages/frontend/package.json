@@ -36,6 +36,7 @@
         "identity-obj-proxy": "^3.0.0",
         "jest-environment-jsdom": "^28.1.2",
         "markdown-it": "^12.3.2",
+        "markdown-it-mathjax3": "^4.3.2",
         "mobx": "^6.4.2",
         "mobx-react-lite": "^3.3.0",
         "module": "^1.2.5",
