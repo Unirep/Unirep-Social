@@ -28,17 +28,17 @@
 ## 🔋 Requirements
 
 - Intall [rust](https://www.rust-lang.org/tools/install) and [circom 2](https://docs.circom.io/getting-started/installation/)
-- Node.js >=16.14
+- Node.js == 16
 
 ## 🛠 Installation
 
 Install and build
 
 ```bash
-yarn & yarn build
+yarn && yarn build
 ```
 
-## Run Unirep Social in local
+## 🌈 Run Unirep Social in local
 
 ### 1. Start a blockchain environment
 
@@ -48,22 +48,26 @@ cd packages/core && npx hardhat node
 
 ### 2. Deploy Unirep and Unirep Social smart contracts
 
+in new terminal window, from root:
+
 ```sh
-yarn core deploy --network local
+yarn core deploy
 ```
 
 ### 3 Start a relayer (backend)
 
 Copy the [.env.example](https://github.com/Unirep/Unirep-Social/blob/main/packages/backend/.env.example) file to an `.env` file in `packages/backend`
-Then grant permission from Twitter and [Github Oauth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
+Then grant permission from [Twitter](https://developer.twitter.com/en/portal/dashboard) and [Github Oauth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
 
-Start a backend server by
+in new terminal window, from root, start a backend server by
 
 ```sh
 yarn backend start
 ```
 
 ### 4. Start a frontend
+
+in new terminal window, from root,
 
 ```sh
 yarn frontend start
@@ -81,7 +85,7 @@ Go to [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CO
 - Twitter account: <a href="https://twitter.com/UniRep_Protocol"><img src="https://img.shields.io/twitter/follow/UniRep_Protocol?style=flat-square&logo=twitter"></a>
 - Telegram group: <a href="https://t.me/unirep"><img src="https://img.shields.io/badge/telegram-@unirep-blue.svg?style=flat-square&logo=telegram"></a>
 
-## <img height="24" src="https://ethereum.org/static/a183661dd70e0e5c70689a0ec95ef0ba/13c43/eth-diamond-purple.png"> Privacy & Scaling Explorations
+## <img height="24" src="https://pse.dev/_next/static/media/header-logo.16312102.svg"> Privacy & Scaling Explorations
 
 This project is supported by [Privacy & Scaling Explorations](https://github.com/privacy-scaling-explorations) in Ethereum Foundation.
-See more projects on: https://appliedzkp.org/.
+See more projects on: https://pse.dev/.
