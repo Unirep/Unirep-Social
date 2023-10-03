@@ -10,6 +10,8 @@
         "build": "lerna run build",
         "linkUnirep": "sh scripts/linkUnirep.sh",
         "lint": "prettier .",
+        "lint:fix": "prettier . --write",
+        "lint:check": "prettier . --check",
         "circuits": "yarn workspace @unirep-social/circuits run",
         "core": "yarn workspace @unirep-social/core run",
         "backend": "yarn workspace @unirep-social/backend run",

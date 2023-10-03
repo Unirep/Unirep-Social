@@ -93,7 +93,7 @@ jobs:
                   command: yarn
             - run:
                   name: Lint
-                  command: yarn lint --check
+                  command: yarn lint:check
     core-test:
         resource_class: large
         machine:
