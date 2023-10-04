@@ -104,8 +104,9 @@ export class User {
     }
 
     async loadCurrentEpoch() {
-        const url = makeURL('epoch', {})
+        const url = makeURL('epoch')
         const { epoch } = await fetch(url.toString()).then((r) => r.json())
+        this.currentEpoch = epoch
         return epoch
     }
 
