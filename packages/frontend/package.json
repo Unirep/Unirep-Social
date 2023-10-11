@@ -33,6 +33,7 @@
         "dateformat": "^4.5.1",
         "ethers": "^5.6.8",
         "events": "^3.3.0",
+        "fake-indexeddb": "^4.0.0",
         "identity-obj-proxy": "^3.0.0",
         "jest-environment-jsdom": "^28.1.2",
         "markdown-it": "^12.3.2",
