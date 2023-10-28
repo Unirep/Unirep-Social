@@ -7,7 +7,7 @@ pragma circom 2.0.0;
         3. compute reputation nullifiers
 */
 
-include "../../../node_modules/@unirep/circuits/circuits/proveReputation.circom";
+include "../../../node_modules/@unirep/circuits/circuits/reputation.circom";
 include "../../../node_modules/@unirep/circuits/circuits/hasher.circom";
 
 
@@ -18,7 +18,7 @@ template ActionProof(STATE_TREE_DEPTH, EPOCH_KEY_NONCE_PER_EPOCH, SUM_FIELD_COUN
     // Global state tree leaf: Identity & user state root
     signal input identity_secret;
     // Global state tree
-    signal input state_tree_indexes[STATE_TREE_DEPTH];
+    signal input state_tree_indices[STATE_TREE_DEPTH];
     signal input state_tree_elements[STATE_TREE_DEPTH];
     signal output state_tree_root;
     // Attestation by the attester
@@ -31,6 +31,7 @@ template ActionProof(STATE_TREE_DEPTH, EPOCH_KEY_NONCE_PER_EPOCH, SUM_FIELD_COUN
     signal input attester_id;
     signal input epoch;
     signal input nonce;
+    signal input chain_id;
     // Reputation
     signal input min_rep;
     signal input max_rep;
@@ -46,28 +47,29 @@ template ActionProof(STATE_TREE_DEPTH, EPOCH_KEY_NONCE_PER_EPOCH, SUM_FIELD_COUN
     signal input sig_data;
 
     /* 1. Reputation proof */
-    (epoch_key, state_tree_root, control) <== ProveReputation(
+    (epoch_key, state_tree_root, control) <== Reputation(
         STATE_TREE_DEPTH, 
         EPOCH_KEY_NONCE_PER_EPOCH, 
         SUM_FIELD_COUNT, 
         FIELD_COUNT, 
         REPL_NONCE_BITS
     )(
-        identity_secret, 
-        state_tree_indexes, 
-        state_tree_elements, 
-        data, 
-        prove_graffiti, 
-        graffiti, 
-        reveal_nonce, 
-        attester_id, 
+        identity_secret,
+        state_tree_indices,
+        state_tree_elements,
+        data,
+        prove_graffiti,
+        graffiti,
+        reveal_nonce,
+        attester_id,
         epoch,
-        nonce, 
-        min_rep, 
-        max_rep, 
-        prove_min_rep, 
-        prove_max_rep, 
-        prove_zero_rep, 
+        nonce,
+        chain_id,
+        min_rep,
+        max_rep,
+        prove_min_rep,
+        prove_max_rep,
+        prove_zero_rep,
         sig_data
     );
     /* 2. Prove that user does not control a certain epoch key */
@@ -76,7 +78,13 @@ template ActionProof(STATE_TREE_DEPTH, EPOCH_KEY_NONCE_PER_EPOCH, SUM_FIELD_COUN
     signal not_equal_check[EPOCH_KEY_NONCE_PER_EPOCH];
 
     for (var i = 0; i < EPOCH_KEY_NONCE_PER_EPOCH; i++) {
-        epoch_key_hasher[i] <== EpochKeyHasher()(identity_secret, attester_id, epoch, i);
+        epoch_key_hasher[i] <== EpochKeyHasher()(
+            identity_secret, 
+            attester_id, 
+            epoch, 
+            i, 
+            chain_id
+        );
         not_equal_check[i] <== IsEqual()([not_epoch_key, epoch_key_hasher[i]]);
         not_equal_check[i] === 0;
     }

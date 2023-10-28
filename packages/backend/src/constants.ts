@@ -7,7 +7,7 @@ const { NUM_EPOCH_KEY_NONCE_PER_EPOCH } = CircuitConfig.default
 
 // Provide default values for process.env
 Object.assign(process.env, {
-    UNIREP: '0x4D137bb44553d55AE6B28B5391c6f537b06C9cc3',
+    UNIREP: '0xD91ca7eAB8ac0e37681362271DEB11a7fc4e0d4f',
     UNIREP_SOCIAL: '0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1',
     DEFAULT_ETH_PROVIDER_URL: 'http://127.0.0.1:8545',
     DEPLOYER_PRIV_KEY:

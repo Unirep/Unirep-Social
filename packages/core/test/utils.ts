@@ -30,11 +30,15 @@ export const genUserState = async (
     attesterId: string,
     db?: DB
 ) => {
-    const synchronizer = await genUnirepState(provider, address, attesterId, db)
-    return new SocialUserState({
-        synchronizer,
+    const state = new SocialUserState({
+        unirepAddress: address,
+        provider,
+        db,
         id,
         prover: defaultProver,
         unirepSocialAddress: attesterId,
     })
+    await state.start()
+    await state.waitForSync()
+    return state
 }

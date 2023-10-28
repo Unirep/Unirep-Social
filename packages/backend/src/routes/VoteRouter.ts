@@ -79,12 +79,9 @@ async function vote(req, res) {
 
     let graffiti
     let overwriteGraffiti = false
-    const replNonceBits = await req.unirep.replNonceBits()
-    const shiftGraffiti =
-        BigInt(reputationProof.graffiti) >> BigInt(replNonceBits)
     if (reputationProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' + BigInt(shiftGraffiti).toString(16)
+            '0x' + BigInt(reputationProof.graffiti).toString(16)
         )
         overwriteGraffiti = true
     }
@@ -224,12 +221,12 @@ async function voteSubsidy(req, res) {
     )
 
     let graffiti
-    const replNonceBits = await req.unirep.replNonceBits()
-    const shiftGraffiti = BigInt(subsidyProof.graffiti) >> BigInt(replNonceBits)
+    let overwriteGraffiti = false
     if (subsidyProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' + BigInt(shiftGraffiti).toString(16)
+            '0x' + BigInt(subsidyProof.graffiti).toString(16)
         )
+        overwriteGraffiti = true
     }
 
     const newVote = await req.db.create('Vote', {
@@ -240,7 +237,7 @@ async function voteSubsidy(req, res) {
         posRep: upvote,
         negRep: downvote,
         graffiti,
-        overwriteGraffiti: false,
+        overwriteGraffiti,
         postId: post ? dataId : '',
         commentId: comment ? dataId : '',
         status: 0,

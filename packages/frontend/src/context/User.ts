@@ -7,8 +7,7 @@ import { ethers } from 'ethers'
 import { genEpochKey, stringifyBigInts } from '@unirep/utils'
 import { Identity } from '@semaphore-protocol/identity'
 import { makeURL } from '../utils'
-// TODO: update @unirep/core schema
-import { schema } from './schema'
+import { schema } from '@unirep/core'
 import { Prover } from '@unirep/circuits'
 import { SocialUserState } from '@unirep-social/core'
 import prover from './prover'
@@ -29,6 +28,7 @@ export class User {
     loadingPromise
     userState?: SocialUserState
     username = {} as Username
+    chainId = 0
 
     syncStartBlock: any
     latestProcessedBlock: any
@@ -206,7 +206,8 @@ export class User {
                     this.id.secret,
                     this.unirepConfig.unirepSocialAddress,
                     BigInt(this.currentEpoch),
-                    i
+                    i,
+                    this.chainId
                 ).toString()
             })
     }
@@ -276,6 +277,7 @@ export class User {
         })
         await this.userState.start()
         await this.userState.waitForSync()
+        this.chainId = this.userState.chainId
         const [EpochEnded] = this.unirepConfig.unirep.filters.EpochEnded()
             .topics as string[]
         this.userState.sync.on(EpochEnded, this.epochEnded.bind(this))
@@ -302,7 +304,8 @@ export class User {
                     secret,
                     this.unirepConfig.unirepSocialAddress,
                     epoch,
-                    i
+                    i,
+                    this.chainId
                 ).toString()
                 epks.push(tmp)
             }
@@ -326,7 +329,8 @@ export class User {
             this.id.secret,
             this.unirepConfig.unirepSocialAddress,
             epoch,
-            0
+            0,
+            this.chainId
         )
         const spentSubsidy = await this.unirepConfig.unirepSocial.subsidies(
             epoch,
@@ -492,7 +496,7 @@ export class User {
 
     async logout() {
         if (this.userState) {
-            this.userState.sync.stop()
+            this.userState.stop()
             await this.userState.sync.db.close()
             await this.userState.sync.db.closeAndWipe()
             this.userState = undefined

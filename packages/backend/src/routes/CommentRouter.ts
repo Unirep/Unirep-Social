@@ -143,12 +143,9 @@ async function createComment(req, res) {
     )
 
     let graffiti
-    const replNonceBits = await req.unirep.replNonceBits()
-    const shiftGraffiti =
-        BigInt(reputationProof.graffiti) >> BigInt(replNonceBits)
     if (reputationProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' + BigInt(shiftGraffiti).toString(16)
+            '0x' + BigInt(reputationProof.graffiti).toString(16)
         )
     }
 
@@ -258,11 +255,9 @@ async function createCommentSubsidy(req, res) {
     )
 
     let graffiti
-    const replNonceBits = await req.unirep.replNonceBits()
-    const shiftGraffiti = BigInt(subsidyProof.graffiti) >> BigInt(replNonceBits)
     if (subsidyProof.graffiti.toString() !== '0') {
         graffiti = ethers.utils.toUtf8String(
-            '0x' + BigInt(shiftGraffiti).toString(16)
+            '0x' + BigInt(subsidyProof.graffiti).toString(16)
         )
     }
     const comment = await req.db.create('Comment', {

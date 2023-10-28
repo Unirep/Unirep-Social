@@ -15,6 +15,7 @@ describe('Subsidy Airdrop', function () {
     let unirepSocialContract: UnirepSocial
     let admin
     let attesterId
+    let chainId
     const id = new Identity()
 
     const epkNonce = 0
@@ -24,6 +25,8 @@ describe('Subsidy Airdrop', function () {
     before(async () => {
         const accounts = await ethers.getSigners()
         admin = accounts[0]
+        const network = await accounts[0].provider.getNetwork()
+        chainId = network.chainId
 
         unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
@@ -50,7 +53,13 @@ describe('Subsidy Airdrop', function () {
         // user 1 epoch key
         const epoch = await unirepContract.attesterCurrentEpoch(attesterId)
         const nonce = 0
-        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
 
         // sign up another user and vote
         {
@@ -86,7 +95,7 @@ describe('Subsidy Airdrop', function () {
                     voteProof.proof
                 )
                 .then((t) => t.wait())
-            userState2.sync.stop()
+            userState2.stop()
         }
 
         // epoch transition
@@ -106,7 +115,7 @@ describe('Subsidy Airdrop', function () {
                 .userStateTransition(publicSignals, proof)
                 .then((t) => t.wait())
         }
-        userState.sync.stop()
+        userState.stop()
     })
 
     {
@@ -165,7 +174,7 @@ describe('Subsidy Airdrop', function () {
         await expect(tx)
             .to.emit(unirepContract, 'Attestation')
             .withArgs(epoch, epochKey, attesterId, posRepField, downvote)
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy without revealing epoch key nonce should fail', async () => {
@@ -184,7 +193,7 @@ describe('Subsidy Airdrop', function () {
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy with wrong epoch key nonce should fail', async () => {
@@ -203,7 +212,7 @@ describe('Subsidy Airdrop', function () {
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy without prove max rep flag should fail', async () => {
@@ -222,7 +231,7 @@ describe('Subsidy Airdrop', function () {
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: should prove max reputation')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy with the same proof should fail', async () => {
@@ -243,7 +252,7 @@ describe('Subsidy Airdrop', function () {
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy with the invalid proof should fail', async () => {
@@ -262,7 +271,7 @@ describe('Subsidy Airdrop', function () {
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: proof is invalid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy with the invalid state tree root should fail', async () => {
@@ -277,11 +286,11 @@ describe('Subsidy Airdrop', function () {
             epkNonce,
             revealNonce,
         })
-        publicSignals[idx.stateTreeRoot] = '1234'
+        publicSignals[idx.stateTreeRoot] = BigInt(1234)
         await expect(
             unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
         ).to.be.revertedWith('Unirep Social: GST root does not exist in epoch')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit airdrop subsidy with the wrong epoch should fail', async () => {
@@ -291,7 +300,7 @@ describe('Subsidy Airdrop', function () {
             id,
             attesterId
         )
-        const wrongEpoch = 0
+        const wrongEpoch = BigInt(0)
         const proof = await userState.genActionProof({
             maxRep: downvote,
             epkNonce,
@@ -301,8 +310,9 @@ describe('Subsidy Airdrop', function () {
         const wrongEpochControl = EpochKeyProof.buildControl({
             attesterId: BigInt(unirepSocialContract.address),
             epoch: wrongEpoch,
-            nonce: epkNonce,
-            revealNonce,
+            nonce: BigInt(epkNonce),
+            revealNonce: BigInt(revealNonce),
+            chainId: BigInt(chainId),
         })
         proof.publicSignals[proof.idx.stateTreeRoot] = stateTree.root.toString()
         proof.publicSignals[proof.idx.control0] = wrongEpochControl
@@ -312,7 +322,7 @@ describe('Subsidy Airdrop', function () {
                 proof.proof
             )
         ).to.be.revertedWith('Unirep Social: epoch mismatches')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit post subsidy with the wrong attester ID should fail', async () => {
@@ -330,8 +340,9 @@ describe('Subsidy Airdrop', function () {
         const wrongControl = EpochKeyProof.buildControl({
             attesterId: BigInt(1234),
             epoch: proof.epoch,
-            nonce: epkNonce,
-            revealNonce,
+            nonce: BigInt(epkNonce),
+            revealNonce: BigInt(revealNonce),
+            chainId: BigInt(chainId),
         })
         proof.publicSignals[proof.idx.control0] = wrongControl
         await expect(
@@ -340,7 +351,7 @@ describe('Subsidy Airdrop', function () {
                 proof.proof
             )
         ).to.be.revertedWith('Unirep Social: attesterId mismatches')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('requesting airdrop subsidy twice should fail', async () => {
@@ -376,6 +387,6 @@ describe('Subsidy Airdrop', function () {
                 unirepSocialContract.getSubsidyAirdrop(publicSignals, proof)
             ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
         }
-        userState.sync.stop()
+        userState.stop()
     })
 })

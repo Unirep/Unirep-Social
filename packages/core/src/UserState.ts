@@ -32,7 +32,7 @@ export class SocialUserState extends UserState {
     }
 
     async start() {
-        super.sync.start()
+        await super.start()
         this.maxReputationBudget = (
             await this.unirepSocial.maxReputationBudget()
         ).toNumber()
@@ -123,14 +123,13 @@ export class SocialUserState extends UserState {
 
         const circuitInputs = {
             identity_secret: this.id.secret,
-            state_tree_indexes: stateTreeProof.pathIndices,
+            state_tree_indices: stateTreeProof.pathIndices,
             state_tree_elements: stateTreeProof.siblings,
             data,
-            graffiti: graffiti
-                ? BigInt(graffiti) << BigInt(this.sync.settings.replNonceBits)
-                : 0,
+            graffiti: graffiti ?? 0,
             epoch,
             nonce,
+            chain_id: this.chainId,
             attester_id: this.sync.attesterId.toString(),
             prove_graffiti: graffiti ? 1 : 0,
             min_rep: minRep ?? 0,

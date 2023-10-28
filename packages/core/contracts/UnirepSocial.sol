@@ -119,19 +119,20 @@ contract UnirepSocial {
     struct ActionSignals {
         uint256 epochKey;
         uint256 stateTreeRoot;
+        uint256 minRep;
+        uint256 maxRep;
         uint256 graffiti;
-        bool proveGraffiti;
+        uint256 data;
+        uint256 notEpochKey;
         uint160 attesterId;
-        uint8 nonce;
         uint48 epoch;
+        uint48 chainId;
+        uint8 nonce;
         bool revealNonce;
         bool proveMinRep;
         bool proveMaxRep;
         bool proveZeroRep;
-        uint256 minRep;
-        uint256 maxRep;
-        uint256 notEpochKey;
-        uint256 data;
+        bool proveGraffiti;
         uint256[] nullifiers;
     }
 
@@ -252,10 +253,11 @@ contract UnirepSocial {
         signals.epochKey = publicSignals[0];
         signals.stateTreeRoot = publicSignals[1];
         (
-            signals.revealNonce,
-            signals.attesterId,
+            signals.nonce,
             signals.epoch,
-            signals.nonce
+            signals.attesterId,
+            signals.revealNonce,
+            signals.chainId
         ) = epkHelper.decodeEpochKeyControl(publicSignals[2]);
         (
             signals.minRep,

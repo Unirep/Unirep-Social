@@ -92,9 +92,7 @@ async function setUsername(req, res) {
     }
 
     // claim username via Unirep Social contract
-    const replNonceBits = await req.unirep.replNonceBits()
-    const currentUsername =
-        BigInt(usernameProof.graffiti) >> BigInt(replNonceBits)
+    const currentUsername = BigInt(usernameProof.graffiti)
     const calldata = req.unirepSocial.interface.encodeFunctionData(
         'setUsername',
         [epochKey, currentUsername, hexNewUsername]

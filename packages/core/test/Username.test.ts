@@ -16,11 +16,14 @@ describe('Username', function () {
     let unirepSocialContract: UnirepSocial
     let admin
     let attesterId
+    let chainId
     const id = new Identity()
 
     before(async () => {
         const accounts = await ethers.getSigners()
         admin = accounts[0]
+        const network = await accounts[0].provider.getNetwork()
+        chainId = network.chainId
 
         unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
@@ -44,7 +47,7 @@ describe('Username', function () {
                 .connect(admin)
                 .userSignUp(publicSignals, proof)
                 .then((t) => t.wait())
-            userState.sync.stop()
+            userState.stop()
         }
     })
 
@@ -153,7 +156,13 @@ describe('Username', function () {
         )
         const epoch = 0
         const nonce = 0
-        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
         const oldUsername = 0
         const username10 = 'username2'
         const username16 = ethers.utils.hexlify(
@@ -199,7 +208,7 @@ describe('Username', function () {
                     voteProof.proof
                 )
                 .then((t) => t.wait())
-            userState2.sync.stop()
+            userState2.stop()
         }
 
         // epoch transition
