@@ -32,10 +32,15 @@ const deployUnirepSocial = async (
         maxReputationBudget: maxReputationBudget,
         ..._settings,
     }
-    const epkHelper = await deployVerifierHelper(deployer, Circuit.epochKeyLite)
-    const repHelper = await deployVerifierHelper(
+    const epkHelper = await deployVerifierHelper(
+        UnirepAddr,
         deployer,
-        Circuit.proveReputation
+        Circuit.epochKeyLite
+    )
+    const repHelper = await deployVerifierHelper(
+        UnirepAddr,
+        deployer,
+        Circuit.reputation
     )
     console.log('Deploying ActionVerifier')
     const _ActionVerifierF = new ethers.ContractFactory(

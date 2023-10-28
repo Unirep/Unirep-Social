@@ -14,6 +14,7 @@ describe('Vote', function () {
     let unirepSocialContract: UnirepSocial
     let admin
     let attesterId
+    let chainId
     const id = new Identity()
     const receiver = new Identity()
     const content = 'some post text'
@@ -29,6 +30,8 @@ describe('Vote', function () {
     before(async () => {
         const accounts = await ethers.getSigners()
         admin = accounts[0]
+        const network = await accounts[0].provider.getNetwork()
+        chainId = network.chainId
 
         unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
@@ -56,7 +59,13 @@ describe('Vote', function () {
         // user 1 epoch key
         const epoch = await unirepContract.attesterCurrentEpoch(attesterId)
         const nonce = 0
-        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
 
         // sign up another user and vote
         {
@@ -93,7 +102,7 @@ describe('Vote', function () {
                     voteProof.proof
                 )
                 .then((t) => t.wait())
-            userState2.sync.stop()
+            userState2.stop()
         }
 
         // epoch transition
@@ -144,7 +153,7 @@ describe('Vote', function () {
                 .publishPost(hashedContent, publicSignals, proof)
                 .then((t) => t.wait())
         }
-        userState.sync.stop()
+        userState.stop()
         const currentEpoch = await unirepContract.attesterCurrentEpoch(
             attesterId
         )
@@ -152,7 +161,8 @@ describe('Vote', function () {
             receiver.secret,
             attesterId,
             currentEpoch,
-            nonce
+            nonce,
+            chainId
         )
     })
 
@@ -196,7 +206,7 @@ describe('Vote', function () {
         await expect(tx)
             .to.emit(unirepSocialContract, 'VoteSubmitted')
             .withArgs(epoch, fromEpochKey, toEpochKey, upvoteValue, downvote, 0)
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote with min rep should succeed', async () => {
@@ -236,7 +246,7 @@ describe('Vote', function () {
                 downvote,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote with different amount of nullifiers should fail', async () => {
@@ -262,7 +272,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: invalid rep nullifier')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit vote with both upvote and downvote value should fail', async () => {
@@ -288,7 +298,7 @@ describe('Vote', function () {
         ).to.be.revertedWith(
             'Unirep Social: should only choose to upvote or to downvote'
         )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit vote with 0 value should fail', async () => {
@@ -314,7 +324,7 @@ describe('Vote', function () {
         ).to.be.revertedWith(
             'Unirep Social: should submit a positive vote value'
         )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote proof twice should fail', async () => {
@@ -341,7 +351,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('the receiver should successfully receive pos rep', async () => {
@@ -361,7 +371,7 @@ describe('Vote', function () {
             await unirepSocialContract
                 .vote(upvoteValue, downvote, toEpochKey, publicSignals, proof)
                 .then((t) => t.wait())
-            userState.sync.stop()
+            userState.stop()
         }
 
         // epoch transition
@@ -391,7 +401,7 @@ describe('Vote', function () {
         expect(repProof.proveMinRep).to.equal('1')
         expect(repProof.minRep).to.equal(upvoteValue.toString())
         expect(await repProof.verify()).to.be.true
-        userState2.sync.stop()
+        userState2.stop()
     })
 
     it('submit upvote subsidy should succeed', async () => {
@@ -431,7 +441,7 @@ describe('Vote', function () {
                 downvote,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote subsidy with min rep should succeed', async () => {
@@ -472,7 +482,7 @@ describe('Vote', function () {
                 downvote,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote subsidy without revealing epoch key nonce should fail', async () => {
@@ -499,7 +509,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote subsidy wrong epoch key nonce should fail', async () => {
@@ -526,7 +536,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: epoch key nonce is not valid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit vote subsidy with both upvote and downvote value should fail', async () => {
@@ -553,7 +563,7 @@ describe('Vote', function () {
         ).to.be.revertedWith(
             'Unirep Social: should only choose to upvote or to downvote'
         )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit vote subsidy with 0 value should fail', async () => {
@@ -580,7 +590,7 @@ describe('Vote', function () {
         ).to.be.revertedWith(
             'Unirep Social: should submit a positive vote value'
         )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit upvote subsidy proof twice should fail', async () => {
@@ -614,7 +624,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('the receiver should successfully receive pos rep with subsidy', async () => {
@@ -641,7 +651,7 @@ describe('Vote', function () {
                     proof
                 )
                 .then((t) => t.wait())
-            userState.sync.stop()
+            userState.stop()
         }
 
         // epoch transition
@@ -671,7 +681,7 @@ describe('Vote', function () {
         expect(repProof.proveMinRep).to.equal('1')
         expect(repProof.minRep).to.equal(upvoteValue.toString())
         expect(await repProof.verify()).to.be.true
-        userState2.sync.stop()
+        userState2.stop()
     })
 
     it('requesting too much subsidy should fail', async () => {
@@ -709,7 +719,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: requesting too much subsidy')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit downvote should succeed', async () => {
@@ -740,7 +750,7 @@ describe('Vote', function () {
         await expect(tx)
             .to.emit(unirepSocialContract, 'VoteSubmitted')
             .withArgs(epoch, fromEpochKey, toEpochKey, upvote, downvoteValue, 0)
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit downvote with min rep should succeed', async () => {
@@ -782,7 +792,7 @@ describe('Vote', function () {
                 downvoteValue,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit downvote with different amount of nullifiers should fail', async () => {
@@ -808,7 +818,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: invalid rep nullifier')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit downvote proof twice should fail', async () => {
@@ -835,7 +845,7 @@ describe('Vote', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('the receiver should successfully receive neg rep', async () => {
@@ -855,7 +865,7 @@ describe('Vote', function () {
             await unirepSocialContract
                 .vote(upvote, downvoteValue, toEpochKey, publicSignals, proof)
                 .then((t) => t.wait())
-            userState.sync.stop()
+            userState.stop()
         }
 
         // epoch transition
@@ -885,7 +895,7 @@ describe('Vote', function () {
         expect(repProof.proveMaxRep).to.equal('1')
         expect(repProof.maxRep).to.equal(downvoteValue.toString())
         expect(await repProof.verify()).to.be.true
-        userState2.sync.stop()
+        userState2.stop()
     })
 
     it('submit downvote subsidy should succeed', async () => {
@@ -925,7 +935,7 @@ describe('Vote', function () {
                 downvoteValue,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('submit downvote subsidy with min rep should succeed', async () => {
@@ -966,7 +976,7 @@ describe('Vote', function () {
                 downvoteValue,
                 minRep
             )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('the receiver should successfully receive neg rep with subsidy', async () => {
@@ -993,7 +1003,7 @@ describe('Vote', function () {
                     proof
                 )
                 .then((t) => t.wait())
-            userState.sync.stop()
+            userState.stop()
         }
 
         // epoch transition
@@ -1023,6 +1033,6 @@ describe('Vote', function () {
         expect(repProof.proveMaxRep).to.equal('1')
         expect(repProof.maxRep).to.equal(downvoteValue.toString())
         expect(await repProof.verify()).to.be.true
-        userState2.sync.stop()
+        userState2.stop()
     })
 })

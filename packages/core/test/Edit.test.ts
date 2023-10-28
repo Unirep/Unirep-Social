@@ -13,6 +13,7 @@ describe('Edit', function () {
     let unirepContract: Unirep
     let unirepSocialContract: UnirepSocial
     let attesterId
+    let chainId
     const id = new Identity()
     const content = 'some post text'
     const newContent = 'new post text'
@@ -27,6 +28,8 @@ describe('Edit', function () {
     before(async () => {
         const accounts = await ethers.getSigners()
         const admin = accounts[0]
+        const network = await accounts[0].provider.getNetwork()
+        chainId = network.chainId
 
         unirepContract = await deployUnirep(admin)
         unirepSocialContract = await deployUnirepSocial(
@@ -54,7 +57,13 @@ describe('Edit', function () {
         // user 1 epoch key
         const epoch = await unirepContract.attesterCurrentEpoch(attesterId)
         const nonce = 0
-        const epochKey = genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
 
         // sign up another user and vote
         {
@@ -92,7 +101,7 @@ describe('Edit', function () {
                     voteProof.proof
                 )
                 .then((t) => t.wait())
-            userState2.sync.stop()
+            userState2.stop()
         }
 
         // epoch transition
@@ -141,7 +150,7 @@ describe('Edit', function () {
                 )
         }
 
-        userState.sync.stop()
+        userState.stop()
     })
 
     {
@@ -168,7 +177,7 @@ describe('Edit', function () {
         const isValid = await proof.verify()
         expect(isValid).to.be.true
 
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('edit a post should succeed', async () => {
@@ -190,7 +199,7 @@ describe('Edit', function () {
         await expect(tx)
             .to.emit(unirepSocialContract, 'ContentUpdated')
             .withArgs(postId, hashedContent, newHashedContent)
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('edit a post with the same proof should fail', async () => {
@@ -214,7 +223,7 @@ describe('Edit', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: the proof is submitted before')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('edit a post with invalid content id should fail', async () => {
@@ -236,7 +245,7 @@ describe('Edit', function () {
                 proof
             )
         ).to.be.revertedWith('Unirep Social: content ID is invalid')
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('edit a post with the wrong epoch key should fail', async () => {
@@ -262,7 +271,7 @@ describe('Edit', function () {
         ).to.be.revertedWith(
             'Unirep Social: Mismatched epoch key proof to the post or the comment id'
         )
-        userState.sync.stop()
+        userState.stop()
     })
 
     it('edit a post with the invalid proof should fail', async () => {
@@ -284,6 +293,6 @@ describe('Edit', function () {
                 proof
             )
         ).to.be.revertedWithCustomError(unirepContract, 'InvalidProof')
-        userState.sync.stop()
+        userState.stop()
     })
 })

@@ -1,6 +1,6 @@
 {
     "name": "@unirep-social/backend",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "",
     "scripts": {
         "start": "ts-node src/app.ts",
@@ -24,8 +24,8 @@
         "typescript": "^4.4.0"
     },
     "dependencies": {
-        "@unirep-social/core": "^1.1.0",
-        "@unirep/core": "2.0.0-beta-4",
+        "@unirep-social/core": "^1.1.1",
+        "@unirep/core": "2.0.0-beta-6",
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
         "express": "^4.17.1",

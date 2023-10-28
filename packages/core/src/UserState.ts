@@ -1,6 +1,6 @@
 import { ActionProof, REP_BUDGET } from '@unirep-social/circuits'
 import { Prover } from '@unirep/circuits'
-import { Synchronizer, UserState } from '@unirep/core'
+import { UserState } from '@unirep/core'
 import { stringifyBigInts } from '@unirep/utils'
 import { Identity } from '@semaphore-protocol/identity'
 import { poseidon4 } from 'poseidon-lite'
@@ -13,18 +13,18 @@ export class SocialUserState extends UserState {
     public maxReputationBudget: number
 
     constructor(config: {
-        synchronizer?: Synchronizer
         db?: DB
-        attesterId?: bigint | bigint[]
-        unirepAddress?: string
-        provider?: ethers.providers.Provider
+        attesterId: bigint
+        unirepAddress: string
+        provider: ethers.providers.Provider
         id: Identity
         prover: Prover
-        unirepSocialAddress: string
     }) {
         super(config)
+        const unirepSocialAddress =
+            '0x' + BigInt(config.attesterId)?.toString(16).padStart(40, '0')
         this.unirepSocial = new ethers.Contract(
-            config.unirepSocialAddress,
+            unirepSocialAddress,
             UNIREP_SOCIAL_ABI,
             this.sync.provider
         )
@@ -32,7 +32,7 @@ export class SocialUserState extends UserState {
     }
 
     async start() {
-        super.sync.start()
+        await super.start()
         this.maxReputationBudget = (
             await this.unirepSocial.maxReputationBudget()
         ).toNumber()
@@ -123,14 +123,13 @@ export class SocialUserState extends UserState {
 
         const circuitInputs = {
             identity_secret: this.id.secret,
-            state_tree_indexes: stateTreeProof.pathIndices,
+            state_tree_indices: stateTreeProof.pathIndices,
             state_tree_elements: stateTreeProof.siblings,
             data,
-            graffiti: graffiti
-                ? BigInt(graffiti) << BigInt(this.sync.settings.replNonceBits)
-                : 0,
+            graffiti: graffiti ?? 0,
             epoch,
             nonce,
+            chain_id: this.chainId,
             attester_id: this.sync.attesterId.toString(),
             prove_graffiti: graffiti ? 1 : 0,
             min_rep: minRep ?? 0,

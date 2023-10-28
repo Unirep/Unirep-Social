@@ -27,23 +27,22 @@ export const genUnirepState = async (
 
 export const genUserState = async (
     provider: ethers.providers.Provider,
-    address: string,
+    unirepAddress: string,
     id: Identity,
     unirepSocialAddress: string,
     db?: DB
 ) => {
-    const synchronizer = await genUnirepState(
+    const state = new SocialUserState({
+        unirepAddress,
         provider,
-        address,
-        unirepSocialAddress,
-        db
-    )
-    return new SocialUserState({
-        synchronizer,
+        attesterId: BigInt(unirepSocialAddress),
+        db,
         id,
-        unirepSocialAddress,
         prover: defaultProver,
     })
+    await state.start()
+    await state.waitForSync()
+    return state
 }
 
 export const waitForBackendBlock = async (t, blockNumber) => {
@@ -70,7 +69,7 @@ export const signUp = async (t) => {
     const { publicSignals, proof } = await userState.genUserSignUpProof({
         epoch,
     })
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/signup`, {
         method: 'POST',
@@ -118,7 +117,7 @@ export const airdrop = async (t, iden) => {
     })
     const isValid = await actionProof.verify()
     expect(isValid).to.be.true
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/airdrop`, {
         method: 'POST',
@@ -152,7 +151,7 @@ export const createPost = async (t, iden) => {
     const { publicSignals, proof } = await userState.genActionProof({
         spentRep: proveAmount,
     })
-    userState.sync.stop()
+    userState.stop()
     const r = await fetch(`${t.context.url}/api/post`, {
         method: 'POST',
         headers: {
@@ -193,7 +192,7 @@ export const createPostSubsidy = async (t, iden) => {
     })
     const isValid = await subsidyProof.verify()
     expect(isValid).to.be.true
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/post/subsidy`, {
         method: 'POST',
@@ -235,7 +234,7 @@ export const editPost = async (t, iden, title, content) => {
     const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
         nonce,
     })
-    userState.sync.stop()
+    userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -280,7 +279,7 @@ export const deletePost = async (t, iden) => {
     const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
         nonce,
     })
-    userState.sync.stop()
+    userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -323,7 +322,7 @@ export const editComment = async (t, iden, postId, content) => {
     const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
         nonce,
     })
-    userState.sync.stop()
+    userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -368,7 +367,7 @@ export const deleteComment = async (t, iden, postId) => {
     const { publicSignals, proof } = await userState.genEpochKeyLiteProof({
         nonce,
     })
-    userState.sync.stop()
+    userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()
@@ -436,7 +435,7 @@ export const createComment = async (t, iden, postId) => {
     const { publicSignals, proof } = await userState.genActionProof({
         spentRep: proveAmount,
     })
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/comment`, {
         method: 'POST',
@@ -478,7 +477,7 @@ export const createCommentSubsidy = async (t, iden, postId) => {
     })
     const isValid = await subsidyProof.verify()
     expect(isValid).to.be.true
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/comment/subsidy`, {
         method: 'POST',
@@ -524,7 +523,7 @@ export const vote = async (
     const { publicSignals, proof } = await userState.genActionProof({
         spentRep: proveAmount,
     })
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/vote`, {
         method: 'POST',
@@ -577,7 +576,7 @@ export const voteSubsidy = async (
     })
     const isValid = await subsidyProof.verify()
     expect(isValid).to.be.true
-    userState.sync.stop()
+    userState.stop()
 
     const { publicSignals, proof } = subsidyProof
     const r = await fetch(`${t.context.url}/api/vote/subsidy`, {
@@ -630,7 +629,7 @@ export const userStateTransition = async (t, iden) => {
 
     const toEpoch = latestEpoch + 1
     const results = await userState.genUserStateTransitionProof({ toEpoch })
-    userState.sync.stop()
+    userState.stop()
 
     const r = await fetch(`${t.context.url}/api/userStateTransition`, {
         method: 'POST',
@@ -676,7 +675,7 @@ export const genUsernameProof = async (t, iden, username) => {
     if (!isValid) {
         throw new Error('usernameProof is not valid')
     }
-    userState.sync.stop()
+    userState.stop()
 
     // we need to wait for the backend to process whatever block our provider is on
     const blockNumber = await t.context.provider.getBlockNumber()

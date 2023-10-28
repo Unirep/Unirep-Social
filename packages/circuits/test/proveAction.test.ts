@@ -15,11 +15,13 @@ const {
 } = CircuitConfig.default
 
 const circuit = 'actionProof'
+const chainId = 1
 
 const genCircuitInput = (config: {
     id: Identity
     epoch: number
     nonce: number
+    chainId: number
     attesterId: number | bigint
     sumField?: (bigint | number)[]
     replField?: (bigint | number)[]
@@ -40,6 +42,7 @@ const genCircuitInput = (config: {
         id,
         epoch,
         nonce,
+        chainId,
         attesterId,
         sumField,
         replField,
@@ -69,7 +72,7 @@ const genCircuitInput = (config: {
     const startBalance = [
         ...sumField,
         ...Array(SUM_FIELD_COUNT - sumField.length).fill(0),
-        ...replField,
+        ...replField.map((n) => BigInt(n) << BigInt(REPL_NONCE_BITS)),
         ...Array(FIELD_COUNT - SUM_FIELD_COUNT - replField.length).fill(0),
     ]
     // Global state tree
@@ -78,19 +81,21 @@ const genCircuitInput = (config: {
         id.secret,
         BigInt(attesterId),
         epoch,
-        startBalance as any
+        startBalance as any,
+        chainId
     )
     stateTree.insert(hashedLeaf)
     const stateTreeProof = stateTree.createProof(0) // if there is only one GST leaf, the index is 0
 
     const circuitInputs = {
         identity_secret: id.secret,
-        state_tree_indexes: stateTreeProof.pathIndices,
+        state_tree_indices: stateTreeProof.pathIndices,
         state_tree_elements: stateTreeProof.siblings,
         data: startBalance,
         graffiti,
         epoch,
         nonce,
+        chain_id: chainId,
         attester_id: attesterId,
         prove_graffiti: proveGraffiti ? 1 : 0,
         min_rep: minRep,
@@ -136,11 +141,18 @@ describe('Prove action in Unirep Social', function () {
         const epoch = 20
         const nonce = 2
         const attesterId = BigInt(219090124810)
-        const epochKey = utils.genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = utils.genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
         const circuitInputs = genCircuitInput({
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
         })
         const { isValid, publicSignals, proof } = await genProofAndVerify(
@@ -162,18 +174,26 @@ describe('Prove action in Unirep Social', function () {
         const epoch = 20
         const nonce = 2
         const attesterId = BigInt(219090124810)
-        const epochKey = utils.genEpochKey(id.secret, attesterId, epoch, nonce)
+        const epochKey = utils.genEpochKey(
+            id.secret,
+            attesterId,
+            epoch,
+            nonce,
+            chainId
+        )
         const id2 = new Identity()
         const notEpochKey = utils.genEpochKey(
             id2.secret,
             attesterId,
             epoch,
-            nonce
+            nonce,
+            chainId
         )
         const circuitInputs = genCircuitInput({
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             notEpochKey,
         })
@@ -202,12 +222,14 @@ describe('Prove action in Unirep Social', function () {
                 id.secret,
                 attesterId,
                 epoch,
-                nonce
+                nonce,
+                chainId
             )
             const circuitInputs = genCircuitInput({
                 id,
                 epoch,
                 nonce,
+                chainId,
                 attesterId,
                 revealNonce,
             })
@@ -236,6 +258,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [20, 9],
             proveMinRep,
@@ -263,6 +286,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [9, 20],
             proveMinRep,
@@ -286,6 +310,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [9, 20],
             proveMaxRep,
@@ -313,6 +338,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [20, 9],
             proveMaxRep,
@@ -335,6 +361,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             proveZeroRep,
         })
@@ -359,6 +386,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             replField: [graffiti],
             graffiti,
@@ -387,6 +415,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [9, 20],
             replField: [graffiti],
@@ -411,6 +440,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [20, 9],
             spentRep,
@@ -448,6 +478,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [20, 9],
             spentRep,
@@ -470,6 +501,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [10, 9],
             spentRep,
@@ -492,6 +524,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [9, 20],
             spentRep,
@@ -515,6 +548,7 @@ describe('Prove action in Unirep Social', function () {
             id,
             epoch,
             nonce,
+            chainId,
             attesterId,
             sumField: [9, 20],
             maxRep,
@@ -538,12 +572,14 @@ describe('Prove action in Unirep Social', function () {
                 id.secret,
                 attesterId,
                 epoch,
-                i
+                i,
+                chainId
             )
             const circuitInputs = genCircuitInput({
                 id,
                 epoch,
                 nonce,
+                chainId,
                 attesterId,
                 sumField: [9, 20],
                 notEpochKey,
