@@ -272,7 +272,6 @@ export class User {
             unirepAddress: this.unirepConfig.unirepAddress,
             attesterId: this.unirepConfig.unirepSocialAddress,
             id: this.id,
-            unirepSocialAddress: this.unirepConfig.unirepSocialAddress,
             prover: prover as Prover,
         })
         await this.userState.start()

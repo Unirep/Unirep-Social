@@ -27,18 +27,18 @@ export const genUnirepState = async (
 
 export const genUserState = async (
     provider: ethers.providers.Provider,
-    address: string,
+    unirepAddress: string,
     id: Identity,
     unirepSocialAddress: string,
     db?: DB
 ) => {
     const state = new SocialUserState({
-        unirepAddress: address,
+        unirepAddress,
         provider,
+        attesterId: BigInt(unirepSocialAddress),
         db,
         id,
         prover: defaultProver,
-        unirepSocialAddress,
     })
     await state.start()
     await state.waitForSync()

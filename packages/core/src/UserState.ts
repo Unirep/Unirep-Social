@@ -1,6 +1,6 @@
 import { ActionProof, REP_BUDGET } from '@unirep-social/circuits'
 import { Prover } from '@unirep/circuits'
-import { Synchronizer, UserState } from '@unirep/core'
+import { UserState } from '@unirep/core'
 import { stringifyBigInts } from '@unirep/utils'
 import { Identity } from '@semaphore-protocol/identity'
 import { poseidon4 } from 'poseidon-lite'
@@ -13,18 +13,18 @@ export class SocialUserState extends UserState {
     public maxReputationBudget: number
 
     constructor(config: {
-        synchronizer?: Synchronizer
         db?: DB
-        attesterId?: bigint | bigint[]
-        unirepAddress?: string
-        provider?: ethers.providers.Provider
+        attesterId: bigint
+        unirepAddress: string
+        provider: ethers.providers.Provider
         id: Identity
         prover: Prover
-        unirepSocialAddress: string
     }) {
         super(config)
+        const unirepSocialAddress =
+            '0x' + BigInt(config.attesterId)?.toString(16).padStart(40, '0')
         this.unirepSocial = new ethers.Contract(
-            config.unirepSocialAddress,
+            unirepSocialAddress,
             UNIREP_SOCIAL_ABI,
             this.sync.provider
         )
